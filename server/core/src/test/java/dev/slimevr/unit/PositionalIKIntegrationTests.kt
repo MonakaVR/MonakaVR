@@ -150,4 +150,73 @@ class PositionalIKIntegrationTests {
 				"Before=$computedBeforeExplicitSolveX, after=$computedAfterExplicitSolveX.",
 		)
 	}
+
+	@Test
+	fun resetOffsetsAbsorbsStaticTrackerMountingOffset() {
+		val trackers = TestTrackerSet(positional = true)
+		val hpm = HumanPoseManager(listOf(trackers.head, trackers.hip))
+		hpm.setLegTweaksEnabled(false)
+
+		trackers.head.position = Vector3(0f, 1.7f, 0f)
+		trackers.head.setRotation(Quaternion.IDENTITY)
+		trackers.hip.setRotation(Quaternion.IDENTITY)
+
+		hpm.skeleton.ikSolver.enabled = false
+		hpm.update()
+
+		val computedHip = hpm.skeleton.computedHipTracker
+			?: error("Computed hip tracker was not initialized")
+		val baseline = computedHip.position
+
+		// Simulate a tracker whose physical mounting point is substantially offset
+		// from the skeleton's hip target. resetOffsets() should absorb this static
+		// displacement rather than snapping the skeleton toward the raw tracker.
+		trackers.hip.position = baseline + Vector3(0.25f, 0.08f, -0.12f)
+		hpm.skeleton.ikSolver.resetOffsets()
+		hpm.skeleton.ikSolver.enabled = true
+		hpm.update()
+
+		val jump = (computedHip.position - baseline).len()
+		assertTrue(
+			jump < 0.001f,
+			"Resetting positional IK offsets moved the computed hip by $jump m; " +
+				"a static mounting offset should be absorbed without a visible jump.",
+		)
+	}
+
+	@Test
+	fun calibratedMountingOffsetPreservesRelativeHipMotion() {
+		val trackers = TestTrackerSet(positional = true)
+		val hpm = HumanPoseManager(listOf(trackers.head, trackers.hip))
+		hpm.setLegTweaksEnabled(false)
+
+		trackers.head.position = Vector3(0f, 1.7f, 0f)
+		trackers.head.setRotation(Quaternion.IDENTITY)
+		trackers.hip.setRotation(Quaternion.IDENTITY)
+
+		hpm.skeleton.ikSolver.enabled = false
+		hpm.update()
+
+		val computedHip = hpm.skeleton.computedHipTracker
+			?: error("Computed hip tracker was not initialized")
+		val nativeBaseline = computedHip.position
+
+		trackers.hip.position = nativeBaseline + Vector3(0.25f, 0.08f, -0.12f)
+		hpm.skeleton.ikSolver.resetOffsets()
+		hpm.skeleton.ikSolver.enabled = true
+		hpm.update()
+
+		val calibratedBaseline = computedHip.position
+		trackers.hip.position += Vector3(0.10f, 0f, 0f)
+		repeat(5) {
+			hpm.update()
+		}
+
+		val displacementX = computedHip.position.x - calibratedBaseline.x
+		assertTrue(
+			displacementX > 0.005f,
+			"A calibrated positional tracker stopped contributing relative motion. " +
+				"Expected positive X displacement after +0.10 m tracker motion, got $displacementX m.",
+		)
+	}
 }
