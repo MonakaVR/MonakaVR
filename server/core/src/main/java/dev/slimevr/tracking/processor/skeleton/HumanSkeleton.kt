@@ -552,6 +552,10 @@ class HumanSkeleton(
 			// https://github.com/SlimeVR/SlimeVR-Server/issues/1297 is solved
 			headBone.updateWithConstraints(false)
 		}
+		if (!pauseTracking) {
+			ikSolver.solve()
+		}
+
 		updateComputedTrackers()
 
 		// Don't run post-processing if the tracking is paused
