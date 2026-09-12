@@ -105,8 +105,10 @@ class IKChain(
 	fun resetChain() {
 		distToTargetSqr = Float.POSITIVE_INFINITY
 
-		for (b in bones) {
-			b.rotationConstraint.initialRotation = b.getGlobalRotation()
+		for (i in bones.indices) {
+			val currentRotation = bones[i].getGlobalRotation()
+			bones[i].rotationConstraint.initialRotation = currentRotation
+			rotations[i] = currentRotation
 		}
 		prepBones()
 
