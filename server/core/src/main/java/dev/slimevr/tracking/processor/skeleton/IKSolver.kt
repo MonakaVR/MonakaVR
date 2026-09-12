@@ -186,6 +186,7 @@ class IKSolver(private val root: Bone) {
 			) {
 				constrainList.add(t)
 			}
+		}
 
 		return constrainList
 	}
@@ -215,7 +216,7 @@ class IKSolver(private val root: Bone) {
 				if (chain.distToTargetSqr > TOLERANCE_SQR) {
 					solved = false
 					break
-			}
+				}
 			}
 
 			if (solved) break
