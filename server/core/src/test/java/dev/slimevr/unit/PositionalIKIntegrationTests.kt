@@ -4,6 +4,7 @@ import dev.slimevr.tracking.processor.HumanPoseManager
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
+import kotlin.math.abs
 import kotlin.test.assertTrue
 
 /**
@@ -94,6 +95,59 @@ class PositionalIKIntegrationTests {
 			displacementX > 0.005f,
 			"Explicit IKSolver.solve() did not move the hip constraint. " +
 				"Expected positive X displacement, got $displacementX m.",
+		)
+	}
+
+	@Test
+	fun explicitSolverMustRunBeforeComputedTrackersAreRefreshed() {
+		val trackers = TestTrackerSet(positional = true)
+		val hpm = HumanPoseManager(listOf(trackers.head, trackers.hip))
+		hpm.setLegTweaksEnabled(false)
+
+		trackers.head.position = Vector3(0f, 1.7f, 0f)
+		trackers.head.setRotation(Quaternion.IDENTITY)
+		trackers.hip.setRotation(Quaternion.IDENTITY)
+
+		// Establish the native FK pose and align the external hip constraint with
+		// the generated hip tracker before initializing the IK mounting offset.
+		hpm.skeleton.ikSolver.enabled = false
+		hpm.update()
+
+		val computedHip = hpm.skeleton.computedHipTracker
+			?: error("Computed hip tracker was not initialized")
+		trackers.hip.position = hpm.skeleton.hipTrackerBone.getPosition()
+
+		hpm.skeleton.ikSolver.resetOffsets()
+		hpm.skeleton.ikSolver.enabled = true
+		hpm.skeleton.ikSolver.solve()
+
+		val baselineBoneX = hpm.skeleton.hipTrackerBone.getPosition().x
+
+		// Run the normal pose update after moving the external constraint. The
+		// current production path refreshes computed trackers here but does not run
+		// positional IK.
+		trackers.hip.position += Vector3(0.10f, 0f, 0f)
+		hpm.update()
+		val computedBeforeExplicitSolveX = computedHip.position.x
+
+		// Solving now should move the skeleton bone, but it is too late for the
+		// already-refreshed computed tracker in this tick.
+		repeat(5) {
+			hpm.skeleton.ikSolver.solve()
+		}
+
+		val boneDisplacementX = hpm.skeleton.hipTrackerBone.getPosition().x - baselineBoneX
+		val computedAfterExplicitSolveX = computedHip.position.x
+
+		assertTrue(
+			boneDisplacementX > 0.005f,
+			"Explicit IKSolver.solve() did not move the hip bone. " +
+				"Expected positive X displacement, got $boneDisplacementX m.",
+		)
+		assertTrue(
+			abs(computedAfterExplicitSolveX - computedBeforeExplicitSolveX) < 0.000001f,
+			"Computed hip changed after an explicit solve that ran after computed trackers were refreshed. " +
+				"Before=$computedBeforeExplicitSolveX, after=$computedAfterExplicitSolveX.",
 		)
 	}
 }
