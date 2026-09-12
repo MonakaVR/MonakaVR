@@ -21,6 +21,8 @@ class PositionalIKConvergenceTests {
 		val rightTarget: Vector3,
 	)
 
+	private fun copyOf(v: Vector3): Vector3 = Vector3(v.x, v.y, v.z)
+
 	private fun createMovedThreePointFixture(): Fixture {
 		val trackers = TestTrackerSet(positional = true)
 		val leftFoot = trackers.mkTrack(7, TrackerPosition.LEFT_FOOT)
@@ -34,8 +36,8 @@ class PositionalIKConvergenceTests {
 		leftFoot.setRotation(Quaternion.IDENTITY)
 		rightFoot.setRotation(Quaternion.IDENTITY)
 
-		// Establish the unconstrained FK pose, then calibrate positional offsets so
-		// the current computed tracker positions are zero-error constraint targets.
+		// Establish the unconstrained FK pose, then align the physical positional
+		// trackers with the current computed tracker positions before calibration.
 		hpm.skeleton.ikSolver.enabled = false
 		hpm.update()
 
@@ -53,14 +55,19 @@ class PositionalIKConvergenceTests {
 		hpm.skeleton.ikSolver.enabled = true
 		hpm.update()
 
-		val hipTarget = computedHip.position
-		val leftTarget = computedLeftFoot.position + Vector3(0.05f, 0f, 0f)
-		val rightTarget = computedRightFoot.position + Vector3(-0.05f, 0f, 0f)
-
+		// Move the physical trackers after calibration. The IK targets are the raw
+		// tracker positions themselves in this zero-mounting-offset fixture. Using
+		// the computed output as the target would incorrectly include any solver
+		// movement that happened during calibration.
 		leftFoot.position += Vector3(0.05f, 0f, 0f)
 		rightFoot.position += Vector3(-0.05f, 0f, 0f)
 
-		return Fixture(hpm, hipTarget, leftTarget, rightTarget)
+		return Fixture(
+			hpm = hpm,
+			hipTarget = copyOf(trackers.hip.position),
+			leftTarget = copyOf(leftFoot.position),
+			rightTarget = copyOf(rightFoot.position),
+		)
 	}
 
 	private fun maxResidual(fixture: Fixture): Float {
