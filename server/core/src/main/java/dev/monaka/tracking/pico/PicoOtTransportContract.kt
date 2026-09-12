@@ -12,6 +12,10 @@ const val PICO_OT_TRANSPORT_PROTOCOL_VERSION: Int = 1
  * used by the poses and should change whenever the producer performs a discontinuous
  * tracking-origin reset/recenter.
  *
+ * [coordinateConvention] makes the pose basis explicit at the transport boundary.
+ * The data-source bridge converts it into Monaka's canonical coordinate convention
+ * before producing [PicoOtSnapshot].
+ *
  * [trackers] is an authoritative set. A tracker omitted from a newer frame is no
  * longer present. [PicoOtTrackerSample.batteryPercent] may be omitted on high-rate
  * pose frames; the receiver preserves the last known battery value while the tracker
@@ -19,6 +23,8 @@ const val PICO_OT_TRANSPORT_PROTOCOL_VERSION: Int = 1
  */
 data class PicoOtTransportFrame(
 	val protocolVersion: Int = PICO_OT_TRANSPORT_PROTOCOL_VERSION,
+	val coordinateConvention: PicoOtCoordinateConvention =
+		PicoOtCoordinateConvention.MONAKA_RH_Y_UP_NEG_Z_FORWARD_METERS,
 	val sessionId: String,
 	val trackingSpaceId: String,
 	val sequence: Long,
