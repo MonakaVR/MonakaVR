@@ -7,6 +7,7 @@ import dev.slimevr.tracking.trackers.Tracker
  *
  * The tracker provider is evaluated on every poll so tracker add/remove and body
  * assignment changes are reflected without rebuilding the backend instance.
+ * Each poll is an authoritative snapshot of currently assigned trackers.
  */
 class SlimeTrackerObservationBackend(
 	override val backendId: String,
@@ -14,6 +15,7 @@ class SlimeTrackerObservationBackend(
 	private val trackersProvider: () -> Iterable<Tracker>,
 	sourcePrefix: String = backendId,
 ) : ObservationBackend {
+	override val sourceSetMode: ObservationSourceSetMode = ObservationSourceSetMode.AUTHORITATIVE_SNAPSHOT
 	private val adapter = SlimeTrackerPoseObservationAdapter(sourcePrefix = sourcePrefix)
 
 	init {
