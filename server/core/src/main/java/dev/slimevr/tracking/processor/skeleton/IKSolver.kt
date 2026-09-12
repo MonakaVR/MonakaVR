@@ -15,7 +15,7 @@ class IKSolver(private val root: Bone) {
 		const val MAX_ITERATIONS = 20
 		const val ANNEALING_EXPONENT = 1
 		const val DAMPENING_FACTOR = 0.5f
-		const val STATIC_DAMPENING = 0.5f
+		const val STATIC_DAMPENING = 1.0f
 		const val CORRECTION_FACTOR = 0.01f
 	}
 
