@@ -4,10 +4,11 @@ package dev.monaka.tracking.pico
  * Stateful bridge from logical transport frames to the raw snapshot contract used
  * by [PicoOtObservationBackend].
  *
- * The bridge enforces protocol/session sequencing and carries sparse battery updates
- * forward while a tracker remains present. Pose timestamps are still assigned by
- * Monaka at poll/receive time through [PicoOtDataSource], so no remote clock enters
- * the constraint pipeline.
+ * The bridge enforces protocol/session sequencing, converts the advertised transport
+ * coordinate convention into Monaka's canonical pose space, and carries sparse
+ * battery updates forward while a tracker remains present. Pose timestamps are still
+ * assigned by Monaka at poll/receive time through [PicoOtDataSource], so no remote
+ * clock enters the constraint pipeline.
  */
 class PicoOtTransportDataSource(
 	private val frameProvider: PicoOtTransportFrameProvider,
@@ -26,6 +27,9 @@ class PicoOtTransportDataSource(
 
 	val trackingSpaceId: String?
 		get() = lastFrame?.trackingSpaceId
+
+	val coordinateConvention: PicoOtCoordinateConvention?
+		get() = lastFrame?.coordinateConvention
 
 	val sequence: Long?
 		get() = lastFrame?.sequence
@@ -56,10 +60,13 @@ class PicoOtTransportDataSource(
 			batteryByTrackerId.clear()
 		}
 
-		val presentIds = frame.trackers.mapTo(mutableSetOf()) { it.trackerId }
+		val canonicalTrackers = frame.trackers.map { tracker ->
+			PicoOtCoordinateConverter.toMonaka(tracker, frame.coordinateConvention)
+		}
+		val presentIds = canonicalTrackers.mapTo(mutableSetOf()) { it.trackerId }
 		batteryByTrackerId.keys.retainAll(presentIds)
 
-		val enrichedTrackers = frame.trackers.map { tracker ->
+		val enrichedTrackers = canonicalTrackers.map { tracker ->
 			tracker.batteryPercent?.let { batteryByTrackerId[tracker.trackerId] = it }
 			tracker.copy(batteryPercent = tracker.batteryPercent ?: batteryByTrackerId[tracker.trackerId])
 		}
