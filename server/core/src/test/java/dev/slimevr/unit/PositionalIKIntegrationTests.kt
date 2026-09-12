@@ -9,9 +9,9 @@ import kotlin.test.assertTrue
 /**
  * Characterization tests for SlimeVR's existing positional IK path.
  *
- * These tests intentionally exercise HumanPoseManager.update() rather than calling
- * IKSolver.solve() directly. The production pose-update path is what MonakaVR needs
- * to constrain with external 6DoF observations.
+ * These tests intentionally distinguish the production HumanPoseManager.update()
+ * path from an explicit IKSolver.solve() call. This tells us whether a failure is
+ * caused by the solver itself or by the solver not being wired into pose updates.
  */
 class PositionalIKIntegrationTests {
 
@@ -55,6 +55,44 @@ class PositionalIKIntegrationTests {
 		assertTrue(
 			displacementX > 0.005f,
 			"Positional hip constraint did not affect the computed skeleton during pose update. " +
+				"Expected positive X displacement, got $displacementX m.",
+		)
+	}
+
+	@Test
+	fun hipPositionalConstraintRespondsWhenSolverIsCalledExplicitly() {
+		val trackers = TestTrackerSet(positional = true)
+		val hpm = HumanPoseManager(listOf(trackers.head, trackers.hip))
+		hpm.setLegTweaksEnabled(false)
+
+		trackers.head.position = Vector3(0f, 1.7f, 0f)
+		trackers.head.setRotation(Quaternion.IDENTITY)
+		trackers.hip.setRotation(Quaternion.IDENTITY)
+
+		// Build the native FK pose first, then align the positional tracker with the
+		// generated hip tracker so resetOffsets() starts from a zero-error baseline.
+		hpm.skeleton.ikSolver.enabled = false
+		hpm.update()
+		trackers.hip.position = hpm.skeleton.hipTrackerBone.getPosition()
+
+		hpm.skeleton.ikSolver.resetOffsets()
+		hpm.skeleton.ikSolver.enabled = true
+		hpm.skeleton.ikSolver.solve()
+
+		val baseline = hpm.skeleton.hipTrackerBone.getPosition()
+
+		// Bypass HumanSkeleton.updatePose() and invoke the existing solver directly.
+		// If this test passes while the update-path test fails, the CCDIK solver is
+		// operational and the missing production wiring is isolated as the defect.
+		trackers.hip.position += Vector3(0.10f, 0f, 0f)
+		repeat(5) {
+			hpm.skeleton.ikSolver.solve()
+		}
+
+		val displacementX = hpm.skeleton.hipTrackerBone.getPosition().x - baseline.x
+		assertTrue(
+			displacementX > 0.005f,
+			"Explicit IKSolver.solve() did not move the hip constraint. " +
 				"Expected positive X displacement, got $displacementX m.",
 		)
 	}
