@@ -34,8 +34,8 @@ class PositionalIKFootRotationDiagnosticsTests {
 			hasPosition = true,
 			hasRotation = hasRotation,
 			isComputed = false,
-			allowReset = true,
-			allowMounting = true,
+			allowReset = hasRotation,
+			allowMounting = hasRotation,
 			trackRotDirection = false,
 		)
 		tracker.status = TrackerStatus.OK
