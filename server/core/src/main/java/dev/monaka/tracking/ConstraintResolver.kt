@@ -30,7 +30,7 @@ class ConstraintResolver {
 		val priority: Int,
 	)
 
-	private fun <T> chooseComponent(
+	private fun <T : Any> chooseComponent(
 		observations: Iterable<PoseObservation>,
 		value: (PoseObservation) -> T?,
 		quality: (PoseObservation) -> ObservationQuality,
