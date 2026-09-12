@@ -1,0 +1,61 @@
+package dev.slimevr.unit
+
+import dev.slimevr.tracking.processor.HumanPoseManager
+import io.github.axisangles.ktmath.Quaternion
+import io.github.axisangles.ktmath.Vector3
+import org.junit.jupiter.api.Test
+import kotlin.test.assertTrue
+
+/**
+ * Characterization tests for SlimeVR's existing positional IK path.
+ *
+ * These tests intentionally exercise HumanPoseManager.update() rather than calling
+ * IKSolver.solve() directly. The production pose-update path is what MonakaVR needs
+ * to constrain with external 6DoF observations.
+ */
+class PositionalIKIntegrationTests {
+
+	@Test
+	fun hipPositionalConstraintIsAppliedDuringPoseUpdate() {
+		// One HMD/root plus one external positional+rotational tracker on the hip.
+		// This is the minimum useful 6DoF constraint configuration for the current
+		// IKSolver without involving feet, leg tweaks, or multiple constraints.
+		val trackers = TestTrackerSet(positional = true)
+		val hpm = HumanPoseManager(listOf(trackers.head, trackers.hip))
+		hpm.setLegTweaksEnabled(false)
+
+		trackers.head.position = Vector3(0f, 1.7f, 0f)
+		trackers.head.setRotation(Quaternion.IDENTITY)
+		trackers.hip.setRotation(Quaternion.IDENTITY)
+
+		// Establish a clean FK baseline before enabling positional IK. This avoids
+		// solving against the tracker's default zero position before its mounting
+		// offset has been initialized.
+		hpm.skeleton.ikSolver.enabled = false
+		hpm.update()
+
+		val computedHip = hpm.skeleton.computedHipTracker
+			?: error("Computed hip tracker was not initialized")
+
+		trackers.hip.position = computedHip.position
+		hpm.skeleton.ikSolver.resetOffsets()
+		hpm.skeleton.ikSolver.enabled = true
+		hpm.update()
+
+		val baseline = computedHip.position
+
+		// Move only the external 6DoF constraint. If IKSolver is actually part of
+		// HumanSkeleton.updatePose(), the computed skeleton hip must respond.
+		trackers.hip.position += Vector3(0.10f, 0f, 0f)
+		repeat(5) {
+			hpm.update()
+		}
+
+		val displacementX = computedHip.position.x - baseline.x
+		assertTrue(
+			displacementX > 0.005f,
+			"Positional hip constraint did not affect the computed skeleton during pose update. " +
+				"Expected positive X displacement, got $displacementX m.",
+		)
+	}
+}
