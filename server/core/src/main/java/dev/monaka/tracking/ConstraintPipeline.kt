@@ -11,6 +11,7 @@ class ConstraintPipeline(
 	private val store: ObservationStore = ObservationStore(),
 	private val resolver: ConstraintResolver = ConstraintResolver(),
 	private val freshnessPolicy: ObservationFreshnessPolicy = ObservationFreshnessPolicy(),
+	private val profileRegistry: ObservationSourceProfileRegistry = ObservationSourceProfileRegistry(),
 ) {
 	private val sourceProfiles = mutableMapOf<String, ObservationSourceProfile>()
 
@@ -30,6 +31,11 @@ class ConstraintPipeline(
 		return accepted
 	}
 
+	fun ingest(
+		observation: PoseObservation,
+		profileId: String,
+	): Boolean = ingest(observation, profileRegistry.require(profileId))
+
 	fun ingestAll(observations: Iterable<PoseObservation>): Int {
 		var accepted = 0
 		for (observation in observations) {
@@ -47,6 +53,14 @@ class ConstraintPipeline(
 			if (ingest(observation, profile)) accepted++
 		}
 		return accepted
+	}
+
+	fun ingestAll(
+		observations: Iterable<PoseObservation>,
+		profileId: String,
+	): Int {
+		val profile = profileRegistry.require(profileId)
+		return ingestAll(observations, profile)
 	}
 
 	fun resolve(target: TrackerPosition): EffectiveConstraint =
