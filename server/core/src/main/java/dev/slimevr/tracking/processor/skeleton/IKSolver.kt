@@ -13,7 +13,7 @@ class IKSolver(private val root: Bone) {
 	companion object {
 		const val TOLERANCE_SQR = 1e-8 // == 0.01 cm
 		const val MAX_ITERATIONS = 20
-		const val ANNEALING_EXPONENT = 1
+		const val ANNEALING_EXPONENT = 0
 		const val DAMPENING_FACTOR = 1.0f
 		const val STATIC_DAMPENING = 1.0f
 		const val CORRECTION_FACTOR = 0.01f
