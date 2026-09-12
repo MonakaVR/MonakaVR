@@ -1,7 +1,6 @@
 package dev.slimevr.unit
 
 import dev.slimevr.tracking.processor.HumanPoseManager
-import dev.slimevr.tracking.processor.skeleton.IKChain
 import dev.slimevr.tracking.trackers.Tracker
 import dev.slimevr.tracking.trackers.TrackerPosition
 import dev.slimevr.tracking.trackers.TrackerStatus
@@ -11,8 +10,8 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
 /**
- * Characterizes whether the first positional IK solve starts from stale cached
- * chain rotations rather than the current FK pose.
+ * Regression coverage for the first positional IK solve starting from the current
+ * FK pose rather than stale rotations cached when the IK chains were built.
  */
 class PositionalIKRotationCacheDiagnosticsTests {
 
@@ -57,7 +56,6 @@ class PositionalIKRotationCacheDiagnosticsTests {
 		trackers.head.setRotation(Quaternion.IDENTITY)
 		trackers.hip.setRotation(Quaternion.IDENTITY)
 
-		// Establish the current FK pose with positional IK disabled.
 		hpm.skeleton.ikSolver.enabled = false
 		hpm.update()
 
@@ -68,7 +66,6 @@ class PositionalIKRotationCacheDiagnosticsTests {
 		val computedRight = hpm.skeleton.computedRightFootTracker
 			?: error("Computed right foot tracker was not initialized")
 
-		// Make every positional target exactly coincide with the current skeleton.
 		trackers.hip.position = computedHip.position
 		leftFoot.position = computedLeft.position
 		rightFoot.position = computedRight.position
@@ -82,28 +79,7 @@ class PositionalIKRotationCacheDiagnosticsTests {
 		return Fixture(hpm, leftBaseline, rightBaseline)
 	}
 
-	@Suppress("UNCHECKED_CAST")
-	private fun synchronizeCachedRotations(hpm: HumanPoseManager) {
-		val solver = hpm.skeleton.ikSolver
-		val chainListField = solver.javaClass.getDeclaredField("chainList")
-		chainListField.isAccessible = true
-		val chains = chainListField.get(solver) as List<IKChain>
-
-		val rotationsField = IKChain::class.java.getDeclaredField("rotations")
-		rotationsField.isAccessible = true
-
-		for (chain in chains) {
-			val rotations = rotationsField.get(chain) as MutableList<Quaternion>
-			for (index in chain.bones.indices) {
-				rotations[index] = chain.bones[index].getGlobalRotation()
-			}
-		}
-	}
-
-	private fun solveAndMeasure(fixture: Fixture, synchronizeCache: Boolean): Drift {
-		if (synchronizeCache) synchronizeCachedRotations(fixture.hpm)
-		fixture.hpm.skeleton.ikSolver.solve()
-
+	private fun measure(fixture: Fixture): Drift {
 		val left = fixture.hpm.skeleton.leftFootTrackerBone.getTailPosition()
 		val right = fixture.hpm.skeleton.rightFootTrackerBone.getTailPosition()
 		return Drift(
@@ -112,23 +88,32 @@ class PositionalIKRotationCacheDiagnosticsTests {
 		)
 	}
 
+	private fun directSolveDrift(feetHaveRotation: Boolean): Drift {
+		val fixture = createZeroErrorFixture(feetHaveRotation)
+		fixture.hpm.skeleton.ikSolver.solve()
+		return measure(fixture)
+	}
+
+	private fun fullTickDrift(feetHaveRotation: Boolean): Drift {
+		val fixture = createZeroErrorFixture(feetHaveRotation)
+		fixture.hpm.update()
+		return measure(fixture)
+	}
+
 	@Test
-	fun refreshingCachedRotationsEliminatesZeroErrorFirstSolveDrift() {
-		val normalSixDof = solveAndMeasure(createZeroErrorFixture(feetHaveRotation = true), synchronizeCache = false)
-		val syncedSixDof = solveAndMeasure(createZeroErrorFixture(feetHaveRotation = true), synchronizeCache = true)
-		val normalPositionOnly = solveAndMeasure(createZeroErrorFixture(feetHaveRotation = false), synchronizeCache = false)
-		val syncedPositionOnly = solveAndMeasure(createZeroErrorFixture(feetHaveRotation = false), synchronizeCache = true)
+	fun zeroErrorFirstSolveDoesNotDriftAfterRotationCacheRefresh() {
+		val directSixDof = directSolveDrift(feetHaveRotation = true)
+		val fullSixDof = fullTickDrift(feetHaveRotation = true)
+		val directPositionOnly = directSolveDrift(feetHaveRotation = false)
+		val fullPositionOnly = fullTickDrift(feetHaveRotation = false)
 
-		val details = "normal6dof=${normalSixDof.maxMm} mm, synced6dof=${syncedSixDof.maxMm} mm, " +
-			"normalPositionOnly=${normalPositionOnly.maxMm} mm, syncedPositionOnly=${syncedPositionOnly.maxMm} mm"
+		val details = "direct6dof=${directSixDof.maxMm} mm, full6dof=${fullSixDof.maxMm} mm, " +
+			"directPositionOnly=${directPositionOnly.maxMm} mm, fullPositionOnly=${fullPositionOnly.maxMm} mm"
 
 		assertTrue(
-			normalSixDof.maxMm > 5f && normalPositionOnly.maxMm > 1f,
-			"Expected the current first-solve drift to be reproducible before cache synchronization: $details",
-		)
-		assertTrue(
-			syncedSixDof.maxMm < 0.5f && syncedPositionOnly.maxMm < 0.5f,
-			"Synchronizing the IKChain rotation cache did not eliminate zero-error first-solve drift: $details",
+			directSixDof.maxMm < 0.5f && fullSixDof.maxMm < 0.5f &&
+				directPositionOnly.maxMm < 0.5f && fullPositionOnly.maxMm < 0.5f,
+			"A zero-error first positional IK solve drifted away from its calibrated pose: $details",
 		)
 	}
 }
