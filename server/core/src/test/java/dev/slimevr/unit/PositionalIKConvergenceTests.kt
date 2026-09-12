@@ -110,7 +110,7 @@ class PositionalIKConvergenceTests {
 	}
 
 	@Test
-	fun multiConstraintSteadyStateResidualStaysWithinFiveMillimeters() {
+	fun multiConstraintSteadyStateResidualStaysWithinOneMillimeter() {
 		val fixture = createMovedThreePointFixture()
 
 		repeat(10) {
@@ -119,8 +119,8 @@ class PositionalIKConvergenceTests {
 
 		val residual = maxResidual(fixture)
 		assertTrue(
-			residual < 0.005f,
-			"Three-point positional IK steady-state residual exceeded 5 mm: " +
+			residual < 0.001f,
+			"Three-point positional IK steady-state residual exceeded 1 mm: " +
 				"${residual * 1000f} mm.",
 		)
 	}
