@@ -552,6 +552,13 @@ class HumanSkeleton(
 			// https://github.com/SlimeVR/SlimeVR-Server/issues/1297 is solved
 			headBone.updateWithConstraints(false)
 		}
+
+		// Apply positional IK after the native pose and joint constraints have been
+		// evaluated, but before computed trackers snapshot the skeleton state.
+		if (!pauseTracking) {
+			ikSolver.solve()
+		}
+
 		updateComputedTrackers()
 
 		// Don't run post-processing if the tracking is paused
@@ -950,27 +957,19 @@ class HumanSkeleton(
 		kneeTrackerBone.setRotation(legRot)
 
 		lowerLegTracker?.let {
-			// Get lower leg rotation
 			legRot = it.getRotation()
 		} ?: run {
-			// Use lower leg or hip's yaw
 			legRot = legRot.project(POS_Y).unit()
 		}
-		// Set lower leg rotation
 		lowerLegBone.setRotation(legRot)
 
-		// Get foot rotation
 		footTracker?.let { legRot = it.getRotation() }
-		// Set foot rotation
 		footBone.setRotation(legRot)
 		footTrackerBone.setRotation(legRot)
 
-		// Extended knee model
 		if (extendedKneeModel) {
 			upperLegTracker?.let { upper ->
 				lowerLegTracker?.let { lower ->
-					// Averages the upper leg's rotation with the local lower leg's
-					// pitch and roll and apply to the tracker node.
 					val upperRot = upper.getRotation()
 					val lowerRot = lower.getRotation()
 					val extendedRot = extendedKneeYawRoll(upperRot, lowerRot)
@@ -982,9 +981,6 @@ class HumanSkeleton(
 		}
 	}
 
-	/**
-	 * Update an arm's transforms, from its shoulder to its hand
-	 */
 	private fun updateArmTransforms(
 		isTrackingFromController: Boolean,
 		upperShoulderBone: Bone,
@@ -999,60 +995,43 @@ class HumanSkeleton(
 		lowerArmTracker: Tracker?,
 		handTracker: Tracker?,
 	) {
-		if (isTrackingFromController) { // From controller
-			// Set hand rotation and position from tracker
+		if (isTrackingFromController) {
 			handTracker?.let {
 				handTrackerBone.setPosition(it.position)
 				handTrackerBone.setRotation(it.getRotation())
 				handBone.setRotation(it.getRotation())
 			}
 
-			// Get lower arm rotation
 			var armRot = getFirstAvailableTracker(lowerArmTracker, upperArmTracker)?.getRotation() ?: IDENTITY
-			// Set lower arm rotation
 			lowerArmBone.setRotation(armRot)
 
-			// Get upper arm rotation
 			armRot = getFirstAvailableTracker(upperArmTracker, lowerArmTracker)?.getRotation() ?: IDENTITY
-			// Set elbow tracker rotation
 			elbowTrackerBone.setRotation(armRot)
-		} else { // From HMD
-			// Get shoulder rotation
+		} else {
 			var armRot = shoulderTracker?.getRotation() ?: upperChestBone.getLocalRotation()
-			// Set shoulder rotation
 			upperShoulderBone.setRotation(upperChestBone.getLocalRotation())
 			shoulderBone.setRotation(armRot)
 
 			if (upperArmTracker != null || lowerArmTracker != null) {
-				// Get upper arm rotation
 				getFirstAvailableTracker(upperArmTracker, lowerArmTracker)?.let { armRot = it.getRotation() }
-				// Set upper arm and elbow tracker rotation
 				upperArmBone.setRotation(armRot)
 				elbowTrackerBone.setRotation(armRot)
 
-				// Get lower arm rotation
 				getFirstAvailableTracker(lowerArmTracker, upperArmTracker)?.let { armRot = it.getRotation() }
-				// Set lower arm rotation
 				lowerArmBone.setRotation(armRot)
 			} else {
-				// Fallback arm rotation as upper chest
 				armRot = upperChestBone.getLocalRotation()
 				upperArmBone.setRotation(armRot)
 				elbowTrackerBone.setRotation(armRot)
 				lowerArmBone.setRotation(armRot)
 			}
 
-			// Get hand rotation
 			handTracker?.let { armRot = it.getRotation() }
-			// Set hand, and hand tracker rotation
 			handBone.setRotation(armRot)
 			handTrackerBone.setRotation(armRot)
 		}
 	}
 
-	/**
-	 * Update a finger's 3 bones' transforms
-	 */
 	private fun updateFingerTransforms(
 		handRotation: Quaternion,
 		proximalBone: Bone,
@@ -1063,14 +1042,11 @@ class HumanSkeleton(
 		distalTracker: Tracker?,
 	) {
 		if (distalTracker == null && intermediateTracker == null && proximalTracker == null) {
-			// Set fingers' rotations to the hand's if no finger tracker
 			proximalBone.setRotation(handRotation)
 			intermediateBone.setRotation(handRotation)
 			distalBone.setRotation(handRotation)
 		}
 
-		// Note: we use interpQ instead of interpR in order to slerp over 180 degrees.
-		// Start of finger
 		proximalTracker?.let {
 			val fingerRot = if (it.trackerDataType == TrackerDataType.FLEX_RESISTANCE ||
 				it.trackerDataType == TrackerDataType.FLEX_ANGLE
@@ -1084,7 +1060,6 @@ class HumanSkeleton(
 			if (intermediateTracker == null) intermediateBone.setRotation(handRotation.interpQ(fingerRot, 2.12f))
 			if (distalTracker == null) distalBone.setRotation(handRotation.interpQ(fingerRot, 3.03f))
 		}
-		// Middle of finger
 		intermediateTracker?.let {
 			val fingerRot = if (it.trackerDataType == TrackerDataType.FLEX_RESISTANCE ||
 				it.trackerDataType == TrackerDataType.FLEX_ANGLE
@@ -1098,7 +1073,6 @@ class HumanSkeleton(
 			intermediateBone.setRotation(fingerRot)
 			if (distalTracker == null) distalBone.setRotation(handRotation.interpQ(fingerRot, 1.43f))
 		}
-		// Tip of finger
 		distalTracker?.let {
 			val fingerRot = if (it.trackerDataType == TrackerDataType.FLEX_RESISTANCE ||
 				it.trackerDataType == TrackerDataType.FLEX_ANGLE
@@ -1114,44 +1088,22 @@ class HumanSkeleton(
 		}
 	}
 
-	/**
-	 * Rotates the first Quaternion to match its yaw and roll to the rotation of
-	 * the second Quaternion
-	 *
-	 * @param knee the first Quaternion
-	 * @param ankle the second Quaternion
-	 * @return the rotated Quaternion
-	 */
 	private fun extendedKneeYawRoll(knee: Quaternion, ankle: Quaternion): Quaternion {
 		val r = knee.inv() * ankle
 		val c = Quaternion(r.w, -r.x, 0f, 0f)
 		return (knee * r * c).unit()
 	}
 
-	/**
-	 * Rotates the third Quaternion to match its yaw and roll to the rotation of
-	 * the average of the first and second quaternions.
-	 *
-	 * @param leftKnee the first Quaternion
-	 * @param rightKnee the second Quaternion
-	 * @param hip the third Quaternion
-	 * @return the rotated Quaternion
-	 */
 	private fun extendedPelvisYawRoll(
 		leftKnee: Quaternion,
 		rightKnee: Quaternion,
 		hip: Quaternion,
 	): Quaternion {
-		// R = InverseHip * (LeftLeft + RightLeg)
-		// C = Quaternion(R.w, -R.x, 0, 0)
-		// Pelvis = Hip * R * C
-		// normalize(Pelvis)
 		val r = hip.inv() * (leftKnee + rightKnee)
 		val c = Quaternion(r.w, -r.x, 0f, 0f)
 		return (hip * r * c).unit()
 	}
 
-	// Update the output trackers
 	private fun updateComputedTrackers() {
 		updateComputedTracker(computedHeadTracker, headTrackerBone)
 		updateComputedTracker(computedChestTracker, chestTrackerBone)
@@ -1175,40 +1127,27 @@ class HumanSkeleton(
 		}
 	}
 
-	// Skeleton Config toggles
 	fun updateToggleState(configToggle: SkeletonConfigToggles, newValue: Boolean) {
 		when (configToggle) {
 			SkeletonConfigToggles.EXTENDED_SPINE_MODEL -> extendedSpineModel = newValue
-
 			SkeletonConfigToggles.EXTENDED_PELVIS_MODEL -> extendedPelvisModel = newValue
-
 			SkeletonConfigToggles.EXTENDED_KNEE_MODEL -> extendedKneeModel = newValue
-
 			SkeletonConfigToggles.FORCE_ARMS_FROM_HMD -> {
 				forceArmsFromHMD = newValue
-				assembleSkeletonArms(true) // Rebuilds the arm skeleton nodes attachments
-				computeDependentArmOffsets() // Refresh node offsets for arms
+				assembleSkeletonArms(true)
+				computeDependentArmOffsets()
 			}
-
 			SkeletonConfigToggles.SKATING_CORRECTION -> legTweaks.setSkatingCorrectionEnabled(newValue)
-
 			SkeletonConfigToggles.FLOOR_CLIP -> legTweaks.setFloorClipEnabled(newValue)
-
 			SkeletonConfigToggles.TOE_SNAP -> legTweaks.toeSnapEnabled = newValue
-
 			SkeletonConfigToggles.FOOT_PLANT -> legTweaks.footPlantEnabled = newValue
-
 			SkeletonConfigToggles.SELF_LOCALIZATION -> localizer.setEnabled(newValue)
-
 			SkeletonConfigToggles.USE_POSITION -> ikSolver.enabled = newValue
-
 			SkeletonConfigToggles.ENFORCE_CONSTRAINTS -> enforceConstraints = newValue
-
 			SkeletonConfigToggles.CORRECT_CONSTRAINTS -> correctConstraints = newValue
 		}
 	}
 
-	// Skeleton Config ratios
 	fun updateValueState(configValue: SkeletonConfigValues, newValue: Float) {
 		when (configValue) {
 			SkeletonConfigValues.WAIST_FROM_CHEST_HIP_AVERAGING -> waistFromChestHipAveraging = newValue
@@ -1221,15 +1160,12 @@ class HumanSkeleton(
 		}
 	}
 
-	// Skeleton Config bone lengths
 	fun updateNodeOffset(boneType: BoneType, offset: Vector3) {
 		var transOffset = offset
 
-		// If no head position, headShift and neckLength = 0
 		if ((boneType == BoneType.HEAD || boneType == BoneType.NECK) && (headTracker == null || !(headTracker!!.hasPosition && headTracker!!.hasRotation))) {
 			transOffset = NULL
 		}
-		// If trackingArmFromController, reverse
 		if (((boneType == BoneType.LEFT_LOWER_ARM || boneType == BoneType.LEFT_HAND) && isTrackingLeftArmFromController) ||
 			(
 				(boneType == BoneType.RIGHT_LOWER_ARM || boneType == BoneType.RIGHT_HAND) &&
@@ -1239,24 +1175,14 @@ class HumanSkeleton(
 			transOffset = -transOffset
 		}
 
-		// Compute bone rotation
 		val rotOffset = if (transOffset.len() > 0f) {
-			if (transOffset.unit().y == 1f) {
-				I
-			} else {
-				fromTo(NEG_Y, transOffset)
-			}
+			if (transOffset.unit().y == 1f) I else fromTo(NEG_Y, transOffset)
 		} else {
 			IDENTITY
 		}
 
-		// Get the bone
 		val bone = getBone(boneType)
-
-		// Update bone length
 		bone.length = transOffset.len()
-
-		// Set bone rotation offset
 		bone.rotationOffset = rotOffset
 	}
 
@@ -1359,9 +1285,6 @@ class HumanSkeleton(
 		else -> null
 	}
 
-	/**
-	 * Returns an array of all the non-tracker bones.
-	 */
 	val allHumanBones: Array<Bone>
 		get() = arrayOf(
 			headBone,
@@ -1420,9 +1343,6 @@ class HumanSkeleton(
 			rightLittleDistalBone,
 		)
 
-	/**
-	 * Returns all the arm bones, tracker or not.
-	 */
 	private val allArmBones: Array<Bone>
 		get() = arrayOf(
 			leftUpperShoulderBone,
@@ -1474,23 +1394,9 @@ class HumanSkeleton(
 	val hmdHeight: Float
 		get() = headTracker?.position?.y ?: 0f
 
-	/**
-	 * Runs checks to know if we should (and are) performing the tracking of the
-	 * left arm from the controller.
-	 *
-	 * @return a bool telling us if we are tracking the left arm from the
-	 * controller or not.
-	 */
 	val isTrackingLeftArmFromController: Boolean
 		get() = leftHandTracker != null && leftHandTracker!!.hasPosition && !forceArmsFromHMD
 
-	/**
-	 * Runs checks to know if we should (and are) performing the tracking of the
-	 * right arm from the controller.
-	 *
-	 * @return a bool telling us if we are tracking the right arm from the
-	 * controller or not.
-	 */
 	val isTrackingRightArmFromController: Boolean
 		get() = rightHandTracker != null && rightHandTracker!!.hasPosition && !forceArmsFromHMD
 
@@ -1554,22 +1460,17 @@ class HumanSkeleton(
 		var referenceRotation = IDENTITY
 		headTracker?.let {
 			if (bodyParts.isEmpty() || bodyParts.contains(BodyPart.HEAD)) {
-				// Always reset the head (ifs in resetsHandler)
 				it.resetsHandler.resetFull(referenceRotation)
 			}
 			referenceRotation = it.getRotation()
 		}
 
-		// Resets all axes of the trackers with the HMD as reference.
 		for (tracker in trackersToReset) {
-			// Only reset if tracker needsReset
 			if (tracker != null && (tracker.allowReset || tracker.isHmd) && (bodyParts.isEmpty() || bodyParts.contains(tracker.trackerPosition?.bodyPart))) {
 				tracker.resetsHandler.resetFull(referenceRotation)
 			}
 		}
 
-		// Tell floorclip to reset its floor level on the next update
-		// of the computed trackers
 		if (!localizer.getEnabled()) {
 			legTweaks.resetFloorLevel()
 		}
@@ -1582,11 +1483,9 @@ class HumanSkeleton(
 	@VRServerThread
 	@JvmOverloads
 	fun resetTrackersYaw(resetSourceName: String?, bodyParts: List<Int> = TrackerUtils.allBodyPartsButFingers) {
-		// Resets the yaw of the trackers with the head as reference.
 		var referenceRotation = IDENTITY
 		headTracker?.let {
 			if (bodyParts.isEmpty() || bodyParts.contains(BodyPart.HEAD)) {
-				// Only reset if head allowReset and isn't computed
 				if (it.allowReset && !it.isComputed) {
 					it.resetsHandler.resetYaw(referenceRotation)
 				}
@@ -1594,7 +1493,6 @@ class HumanSkeleton(
 			referenceRotation = it.getRotation()
 		}
 		for (tracker in trackersToReset) {
-			// Only reset if tracker allowReset
 			if (tracker != null && tracker.allowReset && (bodyParts.isEmpty() || bodyParts.contains(tracker.trackerPosition?.bodyPart))) {
 				tracker.resetsHandler.resetYaw(referenceRotation)
 			}
@@ -1603,30 +1501,19 @@ class HumanSkeleton(
 		LogManager.info("[HumanSkeleton] Reset: yaw ($resetSourceName)")
 	}
 
-	/**
-	 * if bodyParts is empty, this resets mounting for all trackers.
-	 * Keep in mind TrackerResetsHandler.kt has some logic as well for which trackers get reset (feet)
-	 */
 	@VRServerThread
 	@JvmOverloads
 	fun resetTrackersMounting(resetSourceName: String?, bodyParts: List<Int>) {
 		val trackersToReset = trackersToReset
 
-		// TODO: PLEASE rewrite this handling at some point in the future... This is so
-		//  hacky!! Surely there's a better way to check reset status - Butterscotch
-		// If there's a server present (required for status) and any tracker reports a
-		// non-zero reset status (indicates reset required), then block mounting reset,
-		// as it requires a full reset first
 		if (humanPoseManager.server != null && trackersToReset.any { it != null && it.needReset }) {
 			LogManager.info("[HumanSkeleton] Reset: mounting ($resetSourceName) failed, reset required")
 			return
 		}
 
-		// Resets the mounting orientation of the trackers with the HMD as reference.
 		var referenceRotation = IDENTITY
 		headTracker?.let {
 			if (bodyParts.isEmpty() || bodyParts.contains(BodyPart.HEAD)) {
-				// Only reset if head allowMounting or is computed but not HMD
 				if (it.allowMounting || (it.isComputed && !it.isHmd)) {
 					it.resetsHandler.resetMounting(referenceRotation)
 				}
@@ -1635,7 +1522,6 @@ class HumanSkeleton(
 		}
 
 		for (tracker in trackersToReset) {
-			// Only reset if tracker needsMounting
 			if (tracker != null && tracker.allowMounting && (bodyParts.isEmpty() || bodyParts.contains(tracker.trackerPosition?.bodyPart))) {
 				tracker.resetsHandler.resetMounting(referenceRotation)
 			}
@@ -1644,8 +1530,7 @@ class HumanSkeleton(
 		localizer.reset()
 
 		if (humanPoseManager.server != null) {
-			humanPoseManager.server.configManager.vrConfig.resetsConfig.lastMountingMethod =
-				MountingMethods.AUTOMATIC
+			humanPoseManager.server.configManager.vrConfig.resetsConfig.lastMountingMethod = MountingMethods.AUTOMATIC
 			if (!humanPoseManager.server.trackingChecklistManager.resetMountingCompleted) {
 				humanPoseManager.server.trackingChecklistManager.resetMountingCompleted = bodyParts.any { it ->
 					val defaultParts = if (humanPoseManager.server.configManager.vrConfig.resetsConfig.resetMountingFeet) {
@@ -1653,7 +1538,6 @@ class HumanSkeleton(
 					} else {
 						TrackerUtils.allBodyPartsButFingersAndFeets
 					}
-
 					return@any defaultParts.contains(it)
 				}
 			}
@@ -1672,9 +1556,7 @@ class HumanSkeleton(
 			if (it.allowMounting) it.resetsHandler.clearMounting()
 		}
 		for (tracker in trackersToReset) {
-			if (tracker != null &&
-				tracker.allowMounting
-			) {
+			if (tracker != null && tracker.allowMounting) {
 				tracker.resetsHandler.clearMounting()
 			}
 		}
@@ -1696,9 +1578,6 @@ class HumanSkeleton(
 		legTweaks.updateConfig()
 	}
 
-	/**
-	 * Does not save to config
-	 */
 	fun setLegTweaksStateTemp(
 		skatingCorrection: Boolean,
 		floorClip: Boolean,
@@ -1711,25 +1590,17 @@ class HumanSkeleton(
 		legTweaks.footPlantEnabled = footPlant
 	}
 
-	/**
-	 * Resets to config values
-	 */
 	fun clearLegTweaksStateTemp(
 		skatingCorrection: Boolean,
 		floorClip: Boolean,
 		toeSnap: Boolean,
 		footPlant: Boolean,
 	) {
-		// only reset the true values as they are a mask for what to reset
 		if (skatingCorrection) {
-			legTweaks
-				.setSkatingCorrectionEnabled(
-					humanPoseManager.getToggle(SkeletonConfigToggles.SKATING_CORRECTION),
-				)
+			legTweaks.setSkatingCorrectionEnabled(humanPoseManager.getToggle(SkeletonConfigToggles.SKATING_CORRECTION))
 		}
 		if (floorClip) {
-			legTweaks
-				.setFloorClipEnabled(humanPoseManager.getToggle(SkeletonConfigToggles.FLOOR_CLIP))
+			legTweaks.setFloorClipEnabled(humanPoseManager.getToggle(SkeletonConfigToggles.FLOOR_CLIP))
 		}
 		if (toeSnap) legTweaks.toeSnapEnabled = humanPoseManager.getToggle(SkeletonConfigToggles.TOE_SNAP)
 		if (footPlant) legTweaks.footPlantEnabled = humanPoseManager.getToggle(SkeletonConfigToggles.FOOT_PLANT)
@@ -1745,17 +1616,11 @@ class HumanSkeleton(
 			return state
 		}
 
-	/**
-	 * Master enable/disable of all leg tweaks (for Autobone)
-	 */
 	@VRServerThread
 	fun setLegTweaksEnabled(value: Boolean) {
 		legTweaks.enabled = value
 	}
 
-	/**
-	 * enable/disable IK solver (for Autobone)
-	 */
 	@VRServerThread
 	fun setIKSolverEnabled(value: Boolean) {
 		ikSolver.enabled = value
@@ -1775,12 +1640,10 @@ class HumanSkeleton(
 
 	fun setPauseTracking(pauseTracking: Boolean, sourceName: String?) {
 		if (!pauseTracking && this.pauseTracking) {
-			// If unpausing tracking, clear the legtweaks buffer
 			legTweaks.resetBuffer()
 		}
 		this.pauseTracking = pauseTracking
 		LogManager.info("[HumanSkeleton] ${if (pauseTracking) "Pause" else "Unpause"} tracking ($sourceName)")
-		// Report the new state of tracking pause
 		humanPoseManager.trackingPauseHandler.sendTrackingPauseState(pauseTracking)
 	}
 
