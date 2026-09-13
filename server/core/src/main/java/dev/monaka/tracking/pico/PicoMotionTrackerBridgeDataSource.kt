@@ -9,15 +9,19 @@ enum class PicoMotionTrackerBridgeReferenceFrame {
 }
 
 /**
- * Monaka-facing mirror of the normalized PicoMotionTrackerBridge tracker state.
+ * Monaka-facing mirror of the normalized PicoMotionTrackerBridge receiver state.
  *
  * [serial] is the persistent physical identity. [connectedSnapshot] is retained for
  * diagnostics only: PicoMotionTrackerBridge documents it as an enumeration-time
  * snapshot rather than a live presence signal, so Monaka must not use it to decide
  * whether a source exists.
  *
- * [posePcMonotonicNanos] must already be mapped into the PC monotonic clock domain by
- * the bridge receiver. This lets Monaka freshness policy age a frozen pose correctly.
+ * PicoMotionTrackerBridge always has [lastPoseReceivePcMonotonicNanos] after a pose
+ * packet has reached the PC receiver. [mappedPosePcMonotonicNanos] becomes available
+ * only when bridge clock synchronization can map the HMD/source timestamp into the PC
+ * monotonic clock domain. Monaka prefers the mapped source time when available and
+ * otherwise falls back to the PC receive time. Both are source-derived and therefore
+ * repeated Monaka polling cannot make a frozen pose fresh again.
  */
 data class PicoMotionTrackerBridgeState(
 	val serial: String,
@@ -26,12 +30,18 @@ data class PicoMotionTrackerBridgeState(
 	val orientation: Quaternion? = null,
 	val positionValid: Boolean,
 	val orientationSamplePresent: Boolean,
-	val posePcMonotonicNanos: Long,
+	val lastPoseReceivePcMonotonicNanos: Long,
+	val mappedPosePcMonotonicNanos: Long? = null,
 	val referenceFrame: PicoMotionTrackerBridgeReferenceFrame = PicoMotionTrackerBridgeReferenceFrame.PICO_OUTPUT_A,
 ) {
 	init {
 		require(serial.isNotBlank()) { "PicoMotionTrackerBridge serial must not be blank" }
-		require(posePcMonotonicNanos >= 0L) { "posePcMonotonicNanos must be non-negative" }
+		require(lastPoseReceivePcMonotonicNanos >= 0L) {
+			"lastPoseReceivePcMonotonicNanos must be non-negative"
+		}
+		require(mappedPosePcMonotonicNanos == null || mappedPosePcMonotonicNanos >= 0L) {
+			"mappedPosePcMonotonicNanos must be non-negative"
+		}
 		require(!positionValid || positionMeters != null) {
 			"positionValid requires a position sample"
 		}
@@ -39,6 +49,10 @@ data class PicoMotionTrackerBridgeState(
 			"orientationSamplePresent requires an orientation sample"
 		}
 	}
+
+	/** Best PC-clock timestamp for freshness and ordering. */
+	val observationPcMonotonicNanos: Long
+		get() = mappedPosePcMonotonicNanos ?: lastPoseReceivePcMonotonicNanos
 }
 
 /** Complete set currently retained by the PicoMotionTrackerBridge PC receiver. */
@@ -73,8 +87,8 @@ fun interface PicoMotionTrackerBridgePoseMapper {
  * - sane orientation continuing through optical loss -> rotation DEGRADED;
  * - no sane orientation sample -> rotation LOST.
  *
- * The provider's returned serial set is authoritative. [connectedSnapshot] is not used
- * as a live connection gate because the bridge explicitly documents that it is not one.
+ * The provider's returned serial set is authoritative. [PicoMotionTrackerBridgeState.connectedSnapshot]
+ * is not used as a live connection gate because the bridge explicitly documents that it is not one.
  */
 class PicoMotionTrackerBridgeDataSource(
 	private val provider: PicoMotionTrackerBridgeStateProvider,
@@ -113,7 +127,7 @@ class PicoMotionTrackerBridgeDataSource(
 						state.positionValid -> PicoOtComponentTrackingState.TRACKED
 						else -> PicoOtComponentTrackingState.DEGRADED
 					},
-					observedAtNanos = state.posePcMonotonicNanos,
+					observedAtNanos = state.observationPcMonotonicNanos,
 				)
 			},
 		)
