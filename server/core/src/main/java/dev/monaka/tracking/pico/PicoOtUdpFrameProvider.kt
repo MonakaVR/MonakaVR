@@ -24,7 +24,10 @@ import java.util.concurrent.atomic.AtomicLong
 class PicoOtUdpFrameProvider(
 	bindAddress: InetAddress,
 	port: Int = 0,
-	connectionPolicy: PicoOtTransportConnectionPolicy,
+	connectionPolicy: PicoOtTransportConnectionPolicy = PicoOtTransportConnectionPolicy(
+		staleAfterNanos = 500_000_000L,
+		disconnectedAfterNanos = 2_000_000_000L,
+	),
 	private val maxDatagramBytes: Int = 16 * 1024,
 	receiveTimeoutMillis: Int = 250,
 ) : PicoOtTransportFrameProvider, AutoCloseable {
