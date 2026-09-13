@@ -141,14 +141,16 @@ class PicoMotionTrackerBridgeDataSourceTests {
 		val runner = ObservationBackendRunner(pipeline, listOf(backend))
 
 		runner.poll("pico-bridge", 1_000L)
-		val rawObservation = pipeline.snapshot().single()
+		val rawObservation = pipeline.observations().single()
 		assertEquals(100L, rawObservation.observedAtNanos)
+
+		val agedObservation = pipeline.observations(1_000L).single()
+		assertEquals(ObservationQuality.STALE, agedObservation.positionQuality)
+		assertEquals(ObservationQuality.STALE, agedObservation.rotationQuality)
 
 		val resolved = pipeline.resolve(TrackerPosition.HIP, 1_000L)
 		assertNull(resolved.position)
-		assertEquals(ObservationQuality.STALE, resolved.positionQuality)
 		assertNull(resolved.rotation)
-		assertEquals(ObservationQuality.STALE, resolved.rotationQuality)
 	}
 
 	@Test
