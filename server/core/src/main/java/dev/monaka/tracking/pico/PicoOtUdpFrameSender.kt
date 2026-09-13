@@ -17,7 +17,7 @@ class PicoOtUdpFrameSender(
 	private val remoteAddress: InetAddress,
 	private val remotePort: Int,
 	private val maxDatagramBytes: Int = 65_507,
-) : AutoCloseable {
+) : PicoOtFrameSender, AutoCloseable {
 	private val socket = DatagramSocket()
 	private val sentFramesCounter = AtomicLong()
 
@@ -34,7 +34,7 @@ class PicoOtUdpFrameSender(
 	val isClosed: Boolean
 		get() = socket.isClosed
 
-	fun send(frame: PicoOtTransportFrame): Int {
+	override fun send(frame: PicoOtTransportFrame): Int {
 		check(!socket.isClosed) { "PICO OT UDP sender is closed" }
 
 		val payload = PicoOtJsonWireCodec.encodeLine(frame)
