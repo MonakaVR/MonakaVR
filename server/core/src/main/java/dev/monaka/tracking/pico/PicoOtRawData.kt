@@ -20,7 +20,9 @@ enum class PicoOtComponentTrackingState {
  * Raw per-tracker state delivered to Monaka by a PICO OT transport.
  *
  * [batteryPercent] is diagnostic metadata and is intentionally not consumed by the
- * constraint resolver. Snapshot omission represents source disappearance.
+ * constraint resolver. [observedAtNanos], when present, is already expressed in the
+ * Monaka/PC monotonic clock domain and prevents repeated polling of a frozen source
+ * from refreshing its freshness age. Snapshot omission represents source disappearance.
  */
 data class PicoOtTrackerSample(
 	val trackerId: String,
@@ -37,11 +39,15 @@ data class PicoOtTrackerSample(
 		PicoOtComponentTrackingState.UNAVAILABLE
 	},
 	val batteryPercent: Int? = null,
+	val observedAtNanos: Long? = null,
 ) {
 	init {
 		require(trackerId.isNotBlank()) { "trackerId must not be blank" }
 		require(batteryPercent == null || batteryPercent in 0..100) {
 			"batteryPercent must be between 0 and 100"
+		}
+		require(observedAtNanos == null || observedAtNanos >= 0L) {
+			"observedAtNanos must be non-negative"
 		}
 		require(positionState != PicoOtComponentTrackingState.TRACKED || position != null) {
 			"TRACKED position state requires a position value"
@@ -74,8 +80,9 @@ data class PicoOtSnapshot(
 /**
  * Transport boundary implemented by the actual PICO Utility/driver layer.
  *
- * The supplied timestamp is the Monaka monotonic receive/poll time. Device-local
- * clocks do not cross this boundary, avoiding cross-device clock-domain issues.
+ * The supplied timestamp is the Monaka monotonic receive/poll time. A data source
+ * that already has a source observation time in this same clock domain should put it
+ * on each [PicoOtTrackerSample.observedAtNanos].
  */
 fun interface PicoOtDataSource {
 	fun snapshot(observedAtNanos: Long): PicoOtSnapshot
