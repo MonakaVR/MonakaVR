@@ -10,7 +10,7 @@ class PicoMotionTrackerBridgeCoordinateMapperTests {
 	private val halfSqrt2 = 0.70710677f
 
 	private fun state(
-		position: Vector3? = Vector3.ZERO,
+		position: Vector3? = Vector3(0f, 0f, 0f),
 		rotation: Quaternion? = Quaternion.IDENTITY,
 		positionValid: Boolean = position != null,
 		orientationSamplePresent: Boolean = rotation != null,
@@ -27,7 +27,8 @@ class PicoMotionTrackerBridgeCoordinateMapperTests {
 
 	@Test
 	fun outputAPositionUsesValidatedMeterBasisWithoutAdditionalReflection() {
-		assertEquals(Vector3.ZERO, PicoMotionTrackerBridgeCoordinateMapper.mapPositionFromPicoOutputA(Vector3.ZERO))
+		val origin = Vector3(0f, 0f, 0f)
+		assertEquals(origin, PicoMotionTrackerBridgeCoordinateMapper.mapPositionFromPicoOutputA(origin))
 		assertEquals(Vector3(1f, 0f, 0f), PicoMotionTrackerBridgeCoordinateMapper.mapPositionFromPicoOutputA(Vector3(1f, 0f, 0f)))
 		assertEquals(Vector3(0f, 1f, 0f), PicoMotionTrackerBridgeCoordinateMapper.mapPositionFromPicoOutputA(Vector3(0f, 1f, 0f)))
 		assertEquals(Vector3(0f, 0f, 1f), PicoMotionTrackerBridgeCoordinateMapper.mapPositionFromPicoOutputA(Vector3(0f, 0f, 1f)))
