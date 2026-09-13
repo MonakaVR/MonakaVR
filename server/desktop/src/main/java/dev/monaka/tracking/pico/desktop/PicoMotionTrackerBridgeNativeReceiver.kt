@@ -38,13 +38,18 @@ data class PicoMotionTrackerBridgeNativeReceiverConfig(
 	}
 }
 
+/*
+ * These JNA ABI carrier types intentionally have public JVM visibility.
+ * JNA dispatches through reflection/proxies and a non-public Library interface
+ * causes IllegalAccessException on current Java 17 runtimes.
+ */
 @Structure.FieldOrder(
 	"listenPort",
 	"timeSyncIntervalNanos",
 	"staleTimeoutNanos",
 	"clientSessionId",
 )
-private open class NativeReceiverConfig : Structure() {
+open class NativeReceiverConfig : Structure() {
 	@JvmField var listenPort: Short = 0
 	@JvmField var timeSyncIntervalNanos: Long = 0L
 	@JvmField var staleTimeoutNanos: Long = 0L
@@ -82,7 +87,7 @@ private open class NativeReceiverConfig : Structure() {
 	"batteryBucketPresent",
 	"batteryBucketRaw",
 )
-private open class NativeTrackerState : Structure() {
+open class NativeTrackerState : Structure() {
 	@JvmField var serial: ByteArray = ByteArray(PICO_OT_BRIDGE_SERIAL_CAPACITY)
 	@JvmField var senderSessionId: Long = 0L
 	@JvmField var lastPoseSequence: Int = 0
@@ -120,12 +125,12 @@ private open class NativeTrackerState : Structure() {
 }
 
 @Structure.FieldOrder("hmdMinusPcNanos", "networkRoundTripNanos")
-private open class NativeClockEstimate : Structure() {
+open class NativeClockEstimate : Structure() {
 	@JvmField var hmdMinusPcNanos: Long = 0L
 	@JvmField var networkRoundTripNanos: Long = 0L
 }
 
-private interface PicoMotionTrackerBridgeNativeLibrary : Library {
+interface PicoMotionTrackerBridgeNativeLibrary : Library {
 	fun pico_ot_bridge_c_api_version(): Int
 	fun pico_ot_bridge_receiver_config_size(): Int
 	fun pico_ot_bridge_tracker_state_size(): Int
