@@ -29,7 +29,8 @@ class PicoMotionTrackerBridgeDataSourceTests {
 		orientationSamplePresent: Boolean = true,
 		position: Vector3? = Vector3(0.1f, 1f, 0.2f),
 		rotation: Quaternion? = Quaternion.IDENTITY,
-		posePcMonotonicNanos: Long = 100L,
+		lastPoseReceivePcMonotonicNanos: Long = 100L,
+		mappedPosePcMonotonicNanos: Long? = null,
 	) = PicoMotionTrackerBridgeState(
 		serial = serial,
 		connectedSnapshot = connectedSnapshot,
@@ -37,7 +38,8 @@ class PicoMotionTrackerBridgeDataSourceTests {
 		orientation = rotation,
 		positionValid = positionValid,
 		orientationSamplePresent = orientationSamplePresent,
-		posePcMonotonicNanos = posePcMonotonicNanos,
+		lastPoseReceivePcMonotonicNanos = lastPoseReceivePcMonotonicNanos,
+		mappedPosePcMonotonicNanos = mappedPosePcMonotonicNanos,
 	)
 
 	@Test
@@ -114,7 +116,41 @@ class PicoMotionTrackerBridgeDataSourceTests {
 	}
 
 	@Test
-	fun bridgePcTimestampDrivesMonakaFreshnessInsteadOfPollTime() {
+	fun mappedClockTimestampIsPreferredWhenBridgeClockSyncIsAvailable() {
+		val source = PicoMotionTrackerBridgeDataSource(
+			provider = PicoMotionTrackerBridgeStateProvider {
+				listOf(
+					state(
+						lastPoseReceivePcMonotonicNanos = 140L,
+						mappedPosePcMonotonicNanos = 100L,
+					),
+				)
+			},
+			poseMapper = identityMapper,
+		)
+
+		assertEquals(100L, source.snapshot(999L).trackers.single().observedAtNanos)
+	}
+
+	@Test
+	fun receiveTimestampKeepsPoseUsableBeforeBridgeClockSyncConverges() {
+		val source = PicoMotionTrackerBridgeDataSource(
+			provider = PicoMotionTrackerBridgeStateProvider {
+				listOf(
+					state(
+						lastPoseReceivePcMonotonicNanos = 140L,
+						mappedPosePcMonotonicNanos = null,
+					),
+				)
+			},
+			poseMapper = identityMapper,
+		)
+
+		assertEquals(140L, source.snapshot(999L).trackers.single().observedAtNanos)
+	}
+
+	@Test
+	fun bridgeReceiverTimestampDrivesMonakaFreshnessInsteadOfPollTime() {
 		val registry = ObservationSourceProfileRegistry(
 			listOf(
 				ObservationSourceProfile.sixDof(
@@ -128,7 +164,7 @@ class PicoMotionTrackerBridgeDataSourceTests {
 		val pipeline = ConstraintPipeline(profileRegistry = registry)
 		val source = PicoMotionTrackerBridgeDataSource(
 			provider = PicoMotionTrackerBridgeStateProvider {
-				listOf(state(posePcMonotonicNanos = 100L))
+				listOf(state(lastPoseReceivePcMonotonicNanos = 100L))
 			},
 			poseMapper = identityMapper,
 		)
@@ -175,5 +211,15 @@ class PicoMotionTrackerBridgeDataSourceTests {
 		)
 
 		assertFailsWith<IllegalArgumentException> { source.snapshot(200L) }
+	}
+
+	@Test
+	fun negativeReceiverTimestampsAreRejected() {
+		assertFailsWith<IllegalArgumentException> {
+			state(lastPoseReceivePcMonotonicNanos = -1L)
+		}
+		assertFailsWith<IllegalArgumentException> {
+			state(mappedPosePcMonotonicNanos = -1L)
+		}
 	}
 }
