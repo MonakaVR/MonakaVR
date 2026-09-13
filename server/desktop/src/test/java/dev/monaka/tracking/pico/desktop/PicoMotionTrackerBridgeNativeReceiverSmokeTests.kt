@@ -12,6 +12,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class PicoMotionTrackerBridgeNativeReceiverSmokeTests {
+	private val halfSqrt2 = 0.70710677f
+
 	@Test
 	fun syntheticPublisherCrossesNativeReceiverCAbiAndJnaBoundary() {
 		val libraryPath = requiredFileProperty("monaka.pico.bridge.library")
@@ -51,7 +53,7 @@ class PicoMotionTrackerBridgeNativeReceiverSmokeTests {
 			assertEquals(true, observed.positionValid)
 			assertEquals(true, observed.orientationSamplePresent)
 			assertEquals(Vector3(1.25f, 2.5f, -3.75f), observed.positionMeters)
-			assertEquals(Quaternion.IDENTITY, observed.orientation)
+			assertEquals(Quaternion(halfSqrt2, halfSqrt2, 0f, 0f), observed.orientation)
 			assertTrue(observed.lastPoseReceivePcMonotonicNanos > 0L)
 			assertNotNull(
 				observed.mappedPosePcMonotonicNanos,
