@@ -18,10 +18,14 @@ enum class PicoMotionTrackerBridgeReferenceFrame {
  *
  * PicoMotionTrackerBridge always has [lastPoseReceivePcMonotonicNanos] after a pose
  * packet has reached the PC receiver. [mappedPosePcMonotonicNanos] becomes available
- * only when bridge clock synchronization can map the HMD/source timestamp into the PC
- * monotonic clock domain. Monaka prefers the mapped source time when available and
- * otherwise falls back to the PC receive time. Both are source-derived and therefore
- * repeated Monaka polling cannot make a frozen pose fresh again.
+ * when bridge clock synchronization can map the HMD/source timestamp into the PC
+ * monotonic clock domain.
+ *
+ * Monaka intentionally uses the immutable local receive timestamp for observation
+ * freshness and ordering. The bridge recomputes mapped source timestamps when its clock
+ * estimate changes, so using the mapped value as an observation timestamp could make an
+ * already-received pose appear newer without a new pose packet. The mapped timestamp is
+ * retained as metadata for later prediction/latency work.
  */
 data class PicoMotionTrackerBridgeState(
 	val serial: String,
@@ -50,9 +54,9 @@ data class PicoMotionTrackerBridgeState(
 		}
 	}
 
-	/** Best PC-clock timestamp for freshness and ordering. */
+	/** Immutable PC receive time used by Monaka freshness and source ordering. */
 	val observationPcMonotonicNanos: Long
-		get() = mappedPosePcMonotonicNanos ?: lastPoseReceivePcMonotonicNanos
+		get() = lastPoseReceivePcMonotonicNanos
 }
 
 /** Complete set currently retained by the PicoMotionTrackerBridge PC receiver. */
