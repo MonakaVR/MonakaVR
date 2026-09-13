@@ -118,3 +118,16 @@ tasks.run<JavaExec> {
 	standardInput = System.`in` // this is not working
 	args = listOf("run")
 }
+
+tasks.register<JavaExec>("picoHardwareProbe") {
+	group = "verification"
+	description = "Listen for a real PICO HMD bridge sender and validate native/JNA/coordinate transport"
+	classpath = sourceSets["main"].runtimeClasspath
+	mainClass.set("dev.monaka.tracking.pico.desktop.PicoMotionTrackerBridgeHardwareProbeKt")
+	listOf(
+		"monaka.pico.bridge.library",
+		"monaka.pico.hardwareProbeSeconds",
+	).forEach { key ->
+		System.getProperty(key)?.let { value -> systemProperty(key, value) }
+	}
+}
