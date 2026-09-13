@@ -43,7 +43,7 @@ class PicoOtObservationBackend(
 			PoseObservation(
 				sourceId = "$sourcePrefix:${tracker.trackerId}",
 				target = target,
-				observedAtNanos = observedAtNanos,
+				observedAtNanos = tracker.observedAtNanos ?: observedAtNanos,
 				position = tracker.position,
 				rotation = tracker.rotation,
 				positionQuality = tracker.positionState.toObservationQuality(),
