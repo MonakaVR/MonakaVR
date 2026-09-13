@@ -93,7 +93,7 @@ class PicoUnityMotionTrackingBridgeTests {
 			locations[1L] = PicoUnityMotionTrackerLocationResult(
 				resultCode = 0,
 				isValidPose = true,
-				position = Vector3.ZERO,
+				position = Vector3(0f, 0f, 0f),
 				rotation = Quaternion.IDENTITY,
 			)
 			locations[2L] = locations.getValue(1L)
@@ -143,7 +143,7 @@ class PicoUnityMotionTrackingBridgeTests {
 			PicoUnityMotionTrackerLocationResult(
 				resultCode = 0,
 				isValidPose = true,
-				position = Vector3.ZERO,
+				position = Vector3(0f, 0f, 0f),
 				rotation = null,
 			)
 		}
