@@ -24,10 +24,12 @@ import java.util.concurrent.atomic.AtomicLong
 class PicoOtUdpFrameProvider(
 	bindAddress: InetAddress,
 	port: Int = 0,
+	connectionPolicy: PicoOtTransportConnectionPolicy,
 	private val maxDatagramBytes: Int = 16 * 1024,
 	receiveTimeoutMillis: Int = 250,
 ) : PicoOtTransportFrameProvider, AutoCloseable {
 	private val inbox = PicoOtTransportFrameInbox()
+	private val connectionMonitor = PicoOtTransportConnectionMonitor(connectionPolicy)
 	private val socket = DatagramSocket(null)
 	private val receivedDatagramsCounter = AtomicLong()
 	private val acceptedFramesCounter = AtomicLong()
@@ -80,6 +82,19 @@ class PicoOtUdpFrameProvider(
 	val isRunning: Boolean
 		get() = running && !socket.isClosed
 
+	val lastAcceptedFrameAtNanos: Long?
+		get() = connectionMonitor.lastAcceptedFrameAtNanos
+
+	fun lastAcceptedFrameAgeNanos(nowNanos: Long = System.nanoTime()): Long? =
+		connectionMonitor.ageNanos(nowNanos)
+
+	fun connectionState(nowNanos: Long = System.nanoTime()): PicoOtTransportConnectionState =
+		if (isRunning) {
+			connectionMonitor.state(nowNanos)
+		} else {
+			PicoOtTransportConnectionState.DISCONNECTED
+		}
+
 	override fun latestFrame(): PicoOtTransportFrame = inbox.latestFrame()
 
 	override fun close() {
@@ -118,7 +133,10 @@ class PicoOtUdpFrameProvider(
 				lastError = null
 
 				when (inbox.submit(frame)) {
-					PicoOtTransportFrameInbox.SubmitResult.ACCEPTED -> acceptedFramesCounter.incrementAndGet()
+					PicoOtTransportFrameInbox.SubmitResult.ACCEPTED -> {
+						acceptedFramesCounter.incrementAndGet()
+						connectionMonitor.markAcceptedFrame(System.nanoTime())
+					}
 					PicoOtTransportFrameInbox.SubmitResult.DUPLICATE,
 					PicoOtTransportFrameInbox.SubmitResult.STALE,
 					PicoOtTransportFrameInbox.SubmitResult.RETIRED_SESSION -> droppedFramesCounter.incrementAndGet()
