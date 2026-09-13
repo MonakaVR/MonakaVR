@@ -34,8 +34,10 @@ object PicoMotionTrackerBridgeCoordinateMapper : PicoMotionTrackerBridgePoseMapp
 
 	fun mapRotationFromPicoOutputA(rotation: Quaternion): Quaternion = Quaternion(
 		rotation.w,
-		-rotation.z,
+		negateWithoutNegativeZero(rotation.z),
 		rotation.y,
-		-rotation.x,
+		negateWithoutNegativeZero(rotation.x),
 	)
+
+	private fun negateWithoutNegativeZero(value: Float): Float = if (value == 0f) 0f else -value
 }
