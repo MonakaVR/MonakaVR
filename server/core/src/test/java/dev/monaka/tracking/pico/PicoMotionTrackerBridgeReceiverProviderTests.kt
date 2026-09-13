@@ -5,7 +5,6 @@ import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
 
 class PicoMotionTrackerBridgeReceiverProviderTests {
 	private fun receiverTracker(
@@ -162,6 +161,5 @@ class PicoMotionTrackerBridgeReceiverProviderTests {
 		val state = PicoMotionTrackerBridgeReceiverStateProvider(receiver).snapshot().single()
 		assertEquals(1_000L, state.observationPcMonotonicNanos)
 		assertEquals(9_000L, state.mappedPosePcMonotonicNanos)
-		assertNull(null)
 	}
 }
