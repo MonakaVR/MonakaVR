@@ -36,6 +36,10 @@ class PicoOtObservationBackend(
 		require(observedAtNanos >= 0L) { "observedAtNanos must be non-negative" }
 
 		val snapshot = dataSource.snapshot(observedAtNanos)
+		val snapshotObservedAtNanos = dataSource.observationTimestampNanos(observedAtNanos)
+		require(snapshotObservedAtNanos in 0L..observedAtNanos) {
+			"PICO OT data source observation timestamp must be non-negative and not in the future"
+		}
 		lastSnapshot = snapshot
 
 		return snapshot.trackers.mapNotNull { tracker ->
@@ -43,7 +47,7 @@ class PicoOtObservationBackend(
 			PoseObservation(
 				sourceId = "$sourcePrefix:${tracker.trackerId}",
 				target = target,
-				observedAtNanos = observedAtNanos,
+				observedAtNanos = snapshotObservedAtNanos,
 				position = tracker.position,
 				rotation = tracker.rotation,
 				positionQuality = tracker.positionState.toObservationQuality(),
