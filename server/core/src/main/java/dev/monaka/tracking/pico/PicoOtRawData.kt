@@ -74,9 +74,13 @@ data class PicoOtSnapshot(
 /**
  * Transport boundary implemented by the actual PICO Utility/driver layer.
  *
- * The supplied timestamp is the Monaka monotonic receive/poll time. Device-local
- * clocks do not cross this boundary, avoiding cross-device clock-domain issues.
+ * [snapshot] receives the current Monaka monotonic poll time. Implementations that
+ * replay the same transport frame across multiple polls should override
+ * [observationTimestampNanos] so repeated polls do not make a frozen pose appear
+ * fresh forever.
  */
 fun interface PicoOtDataSource {
 	fun snapshot(observedAtNanos: Long): PicoOtSnapshot
+
+	fun observationTimestampNanos(requestedAtNanos: Long): Long = requestedAtNanos
 }
