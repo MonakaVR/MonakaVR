@@ -116,7 +116,7 @@ class PicoMotionTrackerBridgeDataSourceTests {
 	}
 
 	@Test
-	fun mappedClockTimestampIsPreferredWhenBridgeClockSyncIsAvailable() {
+	fun mappedClockTimestampDoesNotRetimestampAlreadyReceivedPose() {
 		val source = PicoMotionTrackerBridgeDataSource(
 			provider = PicoMotionTrackerBridgeStateProvider {
 				listOf(
@@ -129,7 +129,7 @@ class PicoMotionTrackerBridgeDataSourceTests {
 			poseMapper = identityMapper,
 		)
 
-		assertEquals(100L, source.snapshot(999L).trackers.single().observedAtNanos)
+		assertEquals(140L, source.snapshot(999L).trackers.single().observedAtNanos)
 	}
 
 	@Test
@@ -150,7 +150,7 @@ class PicoMotionTrackerBridgeDataSourceTests {
 	}
 
 	@Test
-	fun bridgeReceiverTimestampDrivesMonakaFreshnessInsteadOfPollTime() {
+	fun bridgeReceiverTimestampDrivesMonakaFreshnessInsteadOfPollOrClockRemapTime() {
 		val registry = ObservationSourceProfileRegistry(
 			listOf(
 				ObservationSourceProfile.sixDof(
@@ -164,7 +164,12 @@ class PicoMotionTrackerBridgeDataSourceTests {
 		val pipeline = ConstraintPipeline(profileRegistry = registry)
 		val source = PicoMotionTrackerBridgeDataSource(
 			provider = PicoMotionTrackerBridgeStateProvider {
-				listOf(state(lastPoseReceivePcMonotonicNanos = 100L))
+				listOf(
+					state(
+						lastPoseReceivePcMonotonicNanos = 100L,
+						mappedPosePcMonotonicNanos = 990L,
+					),
+				)
 			},
 			poseMapper = identityMapper,
 		)
