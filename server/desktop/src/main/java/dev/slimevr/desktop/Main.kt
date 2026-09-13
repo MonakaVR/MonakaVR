@@ -9,6 +9,8 @@ import com.sun.jna.platform.win32.Tlhelp32
 import com.sun.jna.platform.win32.WinBase
 import com.sun.jna.platform.win32.WinDef
 import com.sun.jna.platform.win32.WinUser
+import dev.monaka.tracking.pico.desktop.PicoMotionTrackerBridgeFeatureGate
+import dev.monaka.tracking.pico.desktop.PicoMotionTrackerBridgeServerIntegration
 import dev.slimevr.FeatureFlags
 import dev.slimevr.Keybinding
 import dev.slimevr.SLIMEVR_IDENTIFIER
@@ -69,6 +71,7 @@ fun main(args: Array<String>) {
 	options.addOption("V", "version", false, "Show version")
 	options.addOption("i", "install", false, "Run the driver install")
 	options.addOption("s", "steam", false, "Run the server in steam mode")
+	options.addOption("p", "pico", false, "Enable Monaka PICO Motion Tracker input")
 	if (isLinux) {
 		options.addOption("u", "no-udev", false, "Skip checking if udev rules are installed")
 	}
@@ -128,6 +131,14 @@ fun main(args: Array<String>) {
 		return
 	}
 
+	val picoEnabled = try {
+		PicoMotionTrackerBridgeFeatureGate.isEnabled(cmd.hasOption("pico"))
+	} catch (e: IllegalArgumentException) {
+		LogManager.severe("Invalid PICO Motion Tracker feature-gate configuration", e)
+		LogManager.closeLogger()
+		return
+	}
+
 	val isInstallDisabled = System.getenv("SLIME_SERVER_DISABLE_INSTALLER")?.toInt()
 	if (featureFlags.steam && isInstallDisabled != 1) {
 		val installDrivers = InstallDrivers()
@@ -170,24 +181,44 @@ fun main(args: Array<String>) {
 			::tryOpenUri,
 			configManager = configManager,
 		)
-		vrServer.start()
-		// Start service for USB HID trackers
-		DesktopHIDManager(
-			"Sensors HID service",
-		) { tracker: Tracker -> vrServer.registerTracker(tracker) }
 
-		Keybinding(vrServer)
-		val scanner = thread {
-			while (true) {
-				if (readln() == "exit") {
-					vrServer.interrupt()
-					break
+		val picoIntegration = PicoMotionTrackerBridgeServerIntegration.startIfEnabled(
+			enabled = picoEnabled,
+			addOnTick = vrServer::addOnTick,
+			onFailure = { error ->
+				LogManager.severe("PICO Motion Tracker input disabled after runtime failure", error)
+			},
+		)
+
+		try {
+			if (picoIntegration != null) {
+				LogManager.info(
+					"PICO Motion Tracker input enabled on UDP port ${picoIntegration.runtime.listenPort}",
+				)
+			}
+
+			vrServer.start()
+			// Start service for USB HID trackers
+			DesktopHIDManager(
+				"Sensors HID service",
+			) { tracker: Tracker -> vrServer.registerTracker(tracker) }
+
+			Keybinding(vrServer)
+			val scanner = thread {
+				while (true) {
+					if (readln() == "exit") {
+						vrServer.interrupt()
+						break
+					}
 				}
 			}
+
+			vrServer.join()
+			scanner.join()
+		} finally {
+			picoIntegration?.close()
 		}
 
-		vrServer.join()
-		scanner.join()
 		LogManager.closeLogger()
 		exitProcess(0)
 	} catch (e: Throwable) {
