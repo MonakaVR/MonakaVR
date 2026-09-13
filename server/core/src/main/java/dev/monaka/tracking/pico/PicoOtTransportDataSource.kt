@@ -6,9 +6,9 @@ package dev.monaka.tracking.pico
  *
  * The bridge enforces protocol/session sequencing, converts the advertised transport
  * coordinate convention into Monaka's canonical pose space, and carries sparse
- * battery updates forward while a tracker remains present. Pose timestamps are still
- * assigned by Monaka at poll/receive time through [PicoOtDataSource], so no remote
- * clock enters the constraint pipeline.
+ * battery updates forward while a tracker remains present. Pose timestamps are
+ * assigned from the Monaka monotonic poll time only when a new transport frame is
+ * accepted, so repeated polls of the same frame still age out normally.
  */
 class PicoOtTransportDataSource(
 	private val frameProvider: PicoOtTransportFrameProvider,
@@ -16,7 +16,9 @@ class PicoOtTransportDataSource(
 ) : PicoOtDataSource {
 	private var lastFrame: PicoOtTransportFrame? = null
 	private var lastSnapshot: PicoOtSnapshot? = null
+	private var lastAcceptedObservedAtNanos: Long? = null
 	private val batteryByTrackerId = mutableMapOf<String, Int>()
+	private val retiredSessionIds = mutableSetOf<String>()
 
 	init {
 		require(supportedProtocolVersion > 0) { "supportedProtocolVersion must be positive" }
@@ -36,6 +38,9 @@ class PicoOtTransportDataSource(
 
 	val trackerCount: Int
 		get() = lastSnapshot?.trackers?.size ?: 0
+
+	override fun observationTimestampNanos(requestedAtNanos: Long): Long =
+		lastAcceptedObservedAtNanos ?: requestedAtNanos
 
 	override fun snapshot(observedAtNanos: Long): PicoOtSnapshot {
 		require(observedAtNanos >= 0L) { "observedAtNanos must be non-negative" }
@@ -57,6 +62,10 @@ class PicoOtTransportDataSource(
 				return requireNotNull(lastSnapshot)
 			}
 		} else if (previous != null) {
+			require(frame.sessionId !in retiredSessionIds) {
+				"Retired PICO OT transport session '${frame.sessionId}' cannot become active again"
+			}
+			retiredSessionIds += previous.sessionId
 			batteryByTrackerId.clear()
 		}
 
@@ -74,6 +83,7 @@ class PicoOtTransportDataSource(
 
 		lastFrame = frame
 		lastSnapshot = snapshot
+		lastAcceptedObservedAtNanos = observedAtNanos
 		return snapshot
 	}
 }
