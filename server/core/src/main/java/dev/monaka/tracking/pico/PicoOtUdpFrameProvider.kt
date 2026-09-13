@@ -121,8 +121,7 @@ class PicoOtUdpFrameProvider(
 					PicoOtTransportFrameInbox.SubmitResult.ACCEPTED -> acceptedFramesCounter.incrementAndGet()
 					PicoOtTransportFrameInbox.SubmitResult.DUPLICATE,
 					PicoOtTransportFrameInbox.SubmitResult.STALE,
-					PicoOtTransportFrameInbox.SubmitResult.RETIRED_SESSION,
-					-> droppedFramesCounter.incrementAndGet()
+					PicoOtTransportFrameInbox.SubmitResult.RETIRED_SESSION -> droppedFramesCounter.incrementAndGet()
 				}
 			} catch (exception: Exception) {
 				malformedDatagramsCounter.incrementAndGet()
