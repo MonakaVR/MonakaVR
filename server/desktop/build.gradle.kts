@@ -38,6 +38,13 @@ tasks.withType<JavaCompile> {
 }
 tasks.withType<Test> {
 	systemProperty("file.encoding", "UTF-8")
+	useJUnitPlatform()
+	listOf(
+		"monaka.pico.bridge.library",
+		"monaka.pico.bridge.smokePublisher",
+	).forEach { key ->
+		System.getProperty(key)?.let { value -> systemProperty(key, value) }
+	}
 }
 tasks.withType<Javadoc> {
 	options.encoding = "UTF-8"
@@ -66,6 +73,11 @@ dependencies {
 		exclude(group = "com.fazecast", module = "android")
 	}
 	implementation("org.hid4java:hid4java:0.8.0")
+
+	testImplementation(kotlin("test"))
+	testImplementation(platform("org.junit:junit-bom:6.0.2"))
+	testImplementation("org.junit.jupiter:junit-jupiter")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.shadowJar {
