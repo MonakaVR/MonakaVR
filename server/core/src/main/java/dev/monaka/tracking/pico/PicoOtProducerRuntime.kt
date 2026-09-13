@@ -42,10 +42,18 @@ data class PicoOtProducerPoseSample(
 	}
 }
 
-/** Complete authoritative pose set returned by one producer-side SDK read. */
+/**
+ * Complete authoritative pose set returned by one producer-side SDK read.
+ *
+ * [coordinateConvention] describes the values exactly as emitted by the concrete
+ * SDK/utility adapter. It must remain consistent with the producer session so the
+ * transport never advertises a coordinate basis different from the payload values.
+ */
 data class PicoOtProducerPoseSnapshot(
 	val trackingSpaceId: String,
 	val trackers: List<PicoOtProducerPoseSample>,
+	val coordinateConvention: PicoOtCoordinateConvention =
+		PicoOtCoordinateConvention.MONAKA_RH_Y_UP_NEG_Z_FORWARD_METERS,
 ) {
 	init {
 		require(trackingSpaceId.isNotBlank()) { "trackingSpaceId must not be blank" }
@@ -113,6 +121,9 @@ class PicoOtProducerRuntime(
 
 		val poseSnapshot = poseSource.snapshot()
 		poseSnapshotsRead++
+		require(poseSnapshot.coordinateConvention == session.coordinateConvention) {
+			"PICO OT producer pose convention ${poseSnapshot.coordinateConvention} does not match session convention ${session.coordinateConvention}"
+		}
 
 		val presentIds = poseSnapshot.trackers.mapTo(linkedSetOf()) { it.trackerId }
 		batteryByTrackerId.keys.retainAll(presentIds)
