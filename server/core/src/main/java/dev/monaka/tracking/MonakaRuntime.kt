@@ -27,16 +27,23 @@ class MonakaRuntime(
 	fun tick(paused: Boolean = false): Map<dev.slimevr.tracking.trackers.TrackerPosition, EffectiveConstraint> {
 		check(!closed)
 		val now = clock()
+		val resuming = !paused && wasPaused
 		// Drain paused traffic with its sequence watermarks, then discard its samples on either edge.
 		if (paused != wasPaused) { mtp.suspend(true); runner.invalidate("mtp") }
 		for (backend in runner.snapshot().keys) {
+			if (backend == "mtp" && resuming) continue
 			try { runner.poll(backend, now) } catch (_: Exception) {
 				runner.invalidate(backend)
 				if (backend == "mtp") mtp.invalidateSamples()
 				inbox.count("BackendFailure:$backend")
 			}
 		}
-		if (!paused && wasPaused) { inbox.clear(); mtp.suspend(false) }
+		if (resuming) {
+			// Capacity bounds this one transition. Every queued packet reaches server-owned
+			// lifetime state; none can become a post-resume constraint.
+			mtp.discardQueuedWhileUpdatingWatermarks()
+			mtp.suspend(false)
+		}
 		wasPaused = paused
 		return pipeline.resolveAll(now)
 	}
