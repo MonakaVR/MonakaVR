@@ -216,6 +216,9 @@ class VRServer @JvmOverloads constructor(
 		onTick.add(runnable)
 	}
 
+	/** Optional common constraint stage, installed before start or on the server thread. */
+	@Volatile var beforePoseUpdate: Runnable? = null
+
 	@ThreadSafe
 	fun addNewTrackerConsumer(consumer: Consumer<Tracker>) {
 		queueTask {
@@ -261,6 +264,7 @@ class VRServer @JvmOverloads constructor(
 			for (tracker in trackers) {
 				tracker.tick(fpsTimer.timePerFrame)
 			}
+			beforePoseUpdate?.run()
 			humanPoseManager.update()
 			for (bridge in bridges) {
 				bridge.dataWrite()
