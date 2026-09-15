@@ -50,3 +50,7 @@ vrconfig.yml.tmp
 
 # Nixos
 .bin/
+
+# Generated Task 5 validation and handoff (actual hashes in their external manifests)
+/dist/
+__pycache__/

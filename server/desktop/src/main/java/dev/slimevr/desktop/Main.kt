@@ -9,8 +9,9 @@ import com.sun.jna.platform.win32.Tlhelp32
 import com.sun.jna.platform.win32.WinBase
 import com.sun.jna.platform.win32.WinDef
 import com.sun.jna.platform.win32.WinUser
-import dev.monaka.tracking.pico.desktop.PicoMotionTrackerBridgeFeatureGate
-import dev.monaka.tracking.pico.desktop.PicoMotionTrackerBridgeServerIntegration
+import dev.monaka.tracking.MonakaConfiguration
+import dev.monaka.tracking.desktop.MtpFeatureGate
+import dev.monaka.tracking.desktop.MonakaServerIntegration
 import dev.slimevr.FeatureFlags
 import dev.slimevr.Keybinding
 import dev.slimevr.SLIMEVR_IDENTIFIER
@@ -71,7 +72,8 @@ fun main(args: Array<String>) {
 	options.addOption("V", "version", false, "Show version")
 	options.addOption("i", "install", false, "Run the driver install")
 	options.addOption("s", "steam", false, "Run the server in steam mode")
-	options.addOption("p", "pico", false, "Enable Monaka PICO Motion Tracker input")
+	options.addOption("p", "pico", false, "Legacy PICO option: display MTP migration warning")
+	options.addOption(null, "monaka-mtp", false, "Enable common MTP input from MonakaBridge")
 	if (isLinux) {
 		options.addOption("u", "no-udev", false, "Skip checking if udev rules are installed")
 	}
@@ -131,10 +133,15 @@ fun main(args: Array<String>) {
 		return
 	}
 
-	val picoEnabled = try {
-		PicoMotionTrackerBridgeFeatureGate.isEnabled(cmd.hasOption("pico"))
+	if (cmd.hasOption("pico") || System.getProperties().stringPropertyNames().any { it.startsWith("monaka.pico.") } ||
+		System.getenv().keys.any { it.startsWith("MONAKA_PICO_") }
+	) {
+		LogManager.warning("Legacy PICO receiver settings are inactive. Configure monaka-mtp.json and opt in with --monaka-mtp; see docs/codex/task5/migration.md.")
+	}
+	val mtpEnabled = try {
+		MtpFeatureGate.isEnabled(cmd.hasOption("monaka-mtp"))
 	} catch (e: IllegalArgumentException) {
-		LogManager.severe("Invalid PICO Motion Tracker feature-gate configuration", e)
+		LogManager.severe("Invalid Monaka MTP feature-gate configuration", e)
 		LogManager.closeLogger()
 		return
 	}
@@ -182,18 +189,28 @@ fun main(args: Array<String>) {
 			configManager = configManager,
 		)
 
-		val picoIntegration = PicoMotionTrackerBridgeServerIntegration.startIfEnabled(
-			enabled = picoEnabled,
-			addOnTick = vrServer::addOnTick,
-			onFailure = { error ->
-				LogManager.severe("PICO Motion Tracker input disabled after runtime failure", error)
-			},
-		)
+		val mtpIntegration = try {
+			MonakaServerIntegration.startIfEnabled(
+				enabled = mtpEnabled,
+				configuration = {
+					val path = System.getProperty("monaka.mtp.config")?.let { Path(it) }
+						?: File(configDir).absoluteFile.toPath().resolveSibling("monaka-mtp.json")
+					MonakaConfiguration.load(path)
+				},
+				trackers = { vrServer.allTrackers },
+				skeleton = vrServer.humanPoseManager.skeleton,
+				registerBeforePose = { vrServer.beforePoseUpdate = it },
+				onFailure = { LogManager.severe("Monaka input failure; affected constraints invalidated", it) },
+			)
+		} catch (e: Exception) {
+			LogManager.severe("Monaka MTP input could not start; Slime input remains active", e)
+			null
+		}
 
 		try {
-			if (picoIntegration != null) {
+			if (mtpIntegration != null) {
 				LogManager.info(
-					"PICO Motion Tracker input enabled on UDP port ${picoIntegration.runtime.listenPort}",
+					"Monaka MTP input enabled on loopback UDP port ${mtpIntegration.receiver.port}",
 				)
 			}
 
@@ -216,7 +233,7 @@ fun main(args: Array<String>) {
 			vrServer.join()
 			scanner.join()
 		} finally {
-			picoIntegration?.close()
+			mtpIntegration?.close()
 		}
 
 		LogManager.closeLogger()

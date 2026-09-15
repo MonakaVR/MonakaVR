@@ -16,6 +16,9 @@ plugins {
 }
 
 kotlin {
+	// Legacy receiver/JNA carrier is reference-only after the recorded migration gates passed.
+	sourceSets.getByName("main").kotlin.exclude("dev/monaka/tracking/pico/**")
+	sourceSets.getByName("test").kotlin.exclude("dev/monaka/tracking/pico/**")
 	jvmToolchain {
 		languageVersion.set(JavaLanguageVersion.of(17))
 	}
@@ -41,12 +44,6 @@ tasks.withType<Test> {
 	systemProperty("monaka.fixtures", rootProject.file("third_party/monaka-protocol/fixtures").absolutePath)
 	doFirst { systemProperty("monaka.test.classpath", sourceSets["test"].runtimeClasspath.asPath) }
 	useJUnitPlatform()
-	listOf(
-		"monaka.pico.bridge.library",
-		"monaka.pico.bridge.smokePublisher",
-	).forEach { key ->
-		System.getProperty(key)?.let { value -> systemProperty(key, value) }
-	}
 }
 tasks.withType<Javadoc> {
 	options.encoding = "UTF-8"
@@ -121,15 +118,10 @@ tasks.run<JavaExec> {
 	args = listOf("run")
 }
 
-tasks.register<JavaExec>("picoHardwareProbe") {
+tasks.register("picoHardwareProbe") {
 	group = "verification"
-	description = "Listen for a real PICO HMD bridge sender and validate native/JNA/coordinate transport"
-	classpath = sourceSets["main"].runtimeClasspath
-	mainClass.set("dev.monaka.tracking.pico.desktop.PicoMotionTrackerBridgeHardwareProbeKt")
-	listOf(
-		"monaka.pico.bridge.library",
-		"monaka.pico.hardwareProbeSeconds",
-	).forEach { key ->
-		System.getProperty(key)?.let { value -> systemProperty(key, value) }
-	}
+	description = "Explain migration of the archived PICO native probe"
+	doLast { throw GradleException("Legacy PICO receiver is reference-only. See docs/codex/task5/migration.md. Hardware: NOT RUN.") }
 }
+sourceSets.getByName("main").java.exclude("dev/monaka/tracking/pico/**")
+sourceSets.getByName("test").java.exclude("dev/monaka/tracking/pico/**")

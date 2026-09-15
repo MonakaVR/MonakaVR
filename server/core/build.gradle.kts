@@ -16,6 +16,9 @@ plugins {
 
 // FIXME: Please replace these to Java 11 as that's what they actually are
 kotlin {
+	// Preserved reference sources; removal gates and original tests are archived under docs/codex/task5/evidence.
+	sourceSets.getByName("main").kotlin.exclude("dev/monaka/tracking/pico/**")
+	sourceSets.getByName("test").kotlin.exclude("dev/monaka/tracking/pico/**")
 	jvmToolchain {
 		languageVersion.set(JavaLanguageVersion.of(17))
 	}
@@ -109,6 +112,8 @@ tasks.test {
 	useJUnitPlatform()
 	systemProperty("monaka.fixtures", rootProject.file("third_party/monaka-protocol/fixtures").absolutePath)
 }
+sourceSets.getByName("main").java.exclude("dev/monaka/tracking/pico/**")
+sourceSets.getByName("test").java.exclude("dev/monaka/tracking/pico/**")
 
 val verifyMonakaUpstream by tasks.registering(Exec::class) {
 	workingDir(rootProject.projectDir)
