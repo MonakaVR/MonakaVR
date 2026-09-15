@@ -209,6 +209,16 @@ class HumanSkeleton(
 
 	// Others
 	private var pauseTracking = false // Pauses skeleton tracking if true, resumes skeleton tracking if false
+	private var rawInputTrackers: List<Tracker> = emptyList()
+	private var constraintInputView: ((List<Tracker>) -> SkeletonInputView)? = null
+
+	/** Optional generic hook. The ordinary Slime input path remains the default. */
+	fun setConstraintInputView(view: ((List<Tracker>) -> SkeletonInputView)?) {
+		constraintInputView = view
+		refreshConstraintInputs()
+	}
+
+	fun refreshConstraintInputs() = setTrackersFromList(rawInputTrackers)
 
 	// Modules
 	var legTweaks = LegTweaks(this)
@@ -370,7 +380,10 @@ class HumanSkeleton(
 	/**
 	 * Set input trackers from a list
 	 */
-	fun setTrackersFromList(trackers: List<Tracker>) {
+	fun setTrackersFromList(rawTrackers: List<Tracker>) {
+		rawInputTrackers = rawTrackers.toList()
+		val view = constraintInputView?.invoke(rawInputTrackers)
+		val trackers = view?.rotations ?: rawInputTrackers
 		// Head
 		headTracker = getTrackerForSkeleton(trackers, TrackerPosition.HEAD)
 		neckTracker = getTrackerForSkeleton(trackers, TrackerPosition.NECK)
@@ -479,7 +492,7 @@ class HumanSkeleton(
 		userHeightCalibration?.checkTrackers()
 
 		// Rebuild Ik Solver
-		ikSolver.buildChains(trackers)
+		ikSolver.buildChains(view?.constraints ?: trackers)
 
 		// Update bones tracker field
 		refreshBoneTracker()
@@ -772,9 +785,12 @@ class HumanSkeleton(
 		headTracker?.let { head ->
 			// Set head position
 			if (head.hasPosition) headBone.setPosition(head.position)
+			else if (constraintInputView != null && !localizer.getEnabled()) headBone.setPosition(NULL)
 
 			// Get head rotation
-			headRot = head.getRotation()
+			headRot = if (constraintInputView == null || head.hasRotation) head.getRotation()
+			else getFirstAvailableTracker(neckTracker, upperChestTracker, chestTracker, waistTracker, hipTracker)
+				?.getRotation() ?: IDENTITY
 
 			// Set head rotation
 			headBone.setRotation(headRot)

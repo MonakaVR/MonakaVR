@@ -79,6 +79,9 @@ class ObservationBackendRunner(
 
 	fun ownedSources(backendId: String): Set<String> = sourcesByBackend[backendId]?.toSet() ?: emptySet()
 
+	/** Isolate a failed backend without disturbing its peers or their profiles. */
+	fun invalidate(backendId: String) = releaseBackendSources(backendId)
+
 	val size: Int
 		get() = backendsById.size
 
@@ -100,6 +103,7 @@ class ObservationBackendRunner(
 		}
 
 		val previouslyOwned = sourcesByBackend.getOrPut(backend.backendId) { linkedSetOf() }.toSet()
+		for (sourceId in backend.drainRemovedSources()) releaseSource(backend.backendId, sourceId)
 		val accepted = pipeline.ingestAll(observations, backend.profileId)
 
 		val owned = sourcesByBackend.getValue(backend.backendId)
