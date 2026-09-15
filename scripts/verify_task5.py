@@ -4,13 +4,13 @@ Windows usage: python scripts/verify_task5.py --java-home <JDK17> --cmake <cmake
 No hardware, sibling-repository writes, Git mutations or upstream regeneration.
 """
 import argparse
+import ast
 import hashlib
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
-import time
 import traceback
 import xml.etree.ElementTree as ET
 import zipfile
@@ -24,6 +24,23 @@ AUDITED = "eabf9c196c3859007139177bef3191ac83eaf97d"
 
 def sha(data):
     return hashlib.sha256(data).hexdigest()
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def optimization_safety():
+    files = (ROOT / "scripts/verify_task5.py", ROOT / "scripts/verify_task5_upstream.py")
+    for path in files:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        require(not any(isinstance(node, ast.Assert) for node in ast.walk(tree)), f"Optimization-unsafe validation statement in {path}")
+        require(
+            not any(isinstance(node, ast.Name) and node.id == "__debug__" for node in ast.walk(tree)),
+            f"Validation depends on __debug__ in {path}",
+        )
+    return {"result": "PASS", "files": [str(path.relative_to(ROOT)) for path in files], "statement_count": 0, "debug_dependency_count": 0}
 
 
 def save(path, value):
@@ -50,24 +67,35 @@ def test_evidence():
     for module in ("core", "desktop"):
         for path in sorted((ROOT / f"server/{module}/build/test-results/test").glob("TEST-*.xml")):
             suite = ET.parse(path).getroot()
-            assert int(suite.get("failures")) == 0 and int(suite.get("errors")) == 0, path
-            assert ".tracking.pico." not in suite.get("name"), path
+            failures = int(suite.get("failures", "-1"))
+            errors = int(suite.get("errors", "-1"))
+            skipped = int(suite.get("skipped", "-1"))
+            require(failures == 0, f"JUnit failures in {path}: {failures}")
+            require(errors == 0, f"JUnit errors in {path}: {errors}")
+            require(skipped == 0, f"JUnit skipped tests in {path}: {skipped}")
+            require(".tracking.pico." not in suite.get("name", ""), f"Legacy PICO test remains active: {path}")
             target = EVIDENCE / "tests" / module / path.name
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(path.read_bytes())
             suites.append({"module": module, "name": suite.get("name"), "tests": int(suite.get("tests")),
                            "skipped": int(suite.get("skipped")), "sha256": sha(path.read_bytes()),
                            "cases": [case.get("name") for case in suite.findall("testcase")]})
-    core = next(s for s in suites if s["name"] == "dev.monaka.tracking.MonakaRuntimeTests")
-    desktop = next(s for s in suites if s["name"] == "dev.monaka.tracking.desktop.MonakaDesktopTests")
-    assert core["tests"] >= 16 and core["skipped"] == 0
-    assert desktop["tests"] >= 5 and desktop["skipped"] == 0
+    core_suites = [s for s in suites if s["name"] == "dev.monaka.tracking.MonakaRuntimeTests"]
+    desktop_suites = [s for s in suites if s["name"] == "dev.monaka.tracking.desktop.MonakaDesktopTests"]
+    require(len(core_suites) == 1, "Missing or duplicate MonakaRuntimeTests result")
+    require(len(desktop_suites) == 1, "Missing or duplicate MonakaDesktopTests result")
+    core = core_suites[0]
+    desktop = desktop_suites[0]
+    require(core["tests"] >= 17 and core["skipped"] == 0, "Required core regression count/status not met")
+    require(desktop["tests"] >= 5 and desktop["skipped"] == 0, "Required desktop regression count/status not met")
     required = ["effectiveConstraintMovesComputedHipThroughExistingIkAndDoesNotRebuildPerFrame()",
                 "bothRouteExcludesDirectSolverAndPrivateButRetainsRealHmd()",
                 "pauseResumeDiscardsPoseHistoryAndRequiresNewSequence()",
+                "pauseBacklogBeyondNormalDrainAdvancesReplayWatermarkBeforeResume()",
                 "featureOffDoesNotOpenSocketRegisterHookOrChangeSlimeComputedOutput()",
                 "separateProcessUdpEntersSamePipelineAndMovesExistingIk()"]
-    assert set(required) <= set(core["cases"] + desktop["cases"])
+    missing = set(required) - set(core["cases"] + desktop["cases"])
+    require(not missing, f"Required testcases missing: {sorted(missing)}")
     result = {"result": "PASS", "suites": suites,
               "counts": {m: sum(s["tests"] for s in suites if s["module"] == m) for m in ("core", "desktop")}}
     save(EVIDENCE / "test-summary.json", result)
@@ -76,26 +104,32 @@ def test_evidence():
 
 def inspect_active_jar(jar):
     with zipfile.ZipFile(jar) as z:
-        assert z.testzip() is None
+        bad_member = z.testzip()
+        require(bad_member is None, f"Active JAR integrity failure: {bad_member}")
         entries = z.namelist()
         forbidden = (b"dev/monaka/tracking/pico/", b"dev.monaka.tracking.pico.", b"pico_ot_bridge_", b"PicoMotionTrackerBridgeNativeLibrary")
         active = [name for name in entries if name.endswith(".class") and name.startswith(("dev/monaka/", "dev/slimevr/"))]
-        assert active
+        require(bool(active), "Active JAR contains no MonakaVR application classes")
         for name in active:
             data = z.read(name)
-            assert "/tracking/pico/" not in name, name
-            assert not any(marker in data for marker in forbidden), name
-        assert "dev/monaka/protocol/v1/MonakaCodec.class" in entries
-        assert "dev/monaka/tracking/desktop/MonakaServerIntegration.class" in entries
+            require("/tracking/pico/" not in name, f"Legacy PICO class remains active: {name}")
+            hits = [marker.decode() for marker in forbidden if marker in data]
+            require(not hits, f"Forbidden active JAR symbols in {name}: {hits}")
+        require("dev/monaka/protocol/v1/MonakaCodec.class" in entries, "Fixed Task1 codec missing from active JAR")
+        require("dev/monaka/tracking/desktop/MonakaServerIntegration.class" in entries, "Task5 desktop integration missing from active JAR")
         # JNA has legitimate unrelated desktop uses and is deliberately retained.
-        assert "com/sun/jna/Native.class" in entries
+        require("com/sun/jna/Native.class" in entries, "Unrelated JNA runtime was unexpectedly removed")
     main = (ROOT / "server/desktop/src/main/java/dev/slimevr/desktop/Main.kt").read_text(encoding="utf-8")
-    assert "MonakaServerIntegration.startIfEnabled" in main and "import dev.monaka.tracking.pico" not in main
+    require("MonakaServerIntegration.startIfEnabled" in main, "Main does not compose Task5 integration")
+    require("import dev.monaka.tracking.pico" not in main, "Main imports the legacy PICO integration")
     tick = (ROOT / "server/core/src/main/java/dev/slimevr/VRServer.kt").read_text(encoding="utf-8")
     run = tick[tick.index("override fun run()") :]
-    assert run.index("for (task in onTick)") < run.index("bridge.dataRead()") < run.index("tracker.tick(") < run.index("beforePoseUpdate?.run()") < run.index("humanPoseManager.update()")
+    markers = ["for (task in onTick)", "bridge.dataRead()", "tracker.tick(", "beforePoseUpdate?.run()", "humanPoseManager.update()"]
+    positions = [run.find(marker) for marker in markers]
+    require(all(position >= 0 for position in positions), f"Tick-order marker missing: {dict(zip(markers, positions))}")
+    require(positions == sorted(positions) and len(set(positions)) == len(positions), f"VRServer tick ordering changed: {dict(zip(markers, positions))}")
     output = (ROOT / "server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt").read_text(encoding="utf-8")
-    assert ".setTrackerSerial(tracker.name)" in output
+    require(".setTrackerSerial(tracker.name)" in output, "Solver output serial no longer uses tracker identity")
     result = {"result": "PASS", "jar_sha256": sha(jar.read_bytes()), "active_classes_scanned": len(active),
               "forbidden_markers": [x.decode() for x in forbidden], "legacy_classes_found": 0,
               "unrelated_jna_retained": True, "solver_serial_namespace": "human://", "hardware": "NOT RUN"}
@@ -117,15 +151,15 @@ def interoperability(java, jar, runner):
         cpp = invoke([runner, path])
         kotlin = invoke([*jvm, path])
         if cpp.startswith(b"ERROR:"):
-            assert kotlin == cpp, (case["file"], cpp, kotlin)
+            require(kotlin == cpp, f"C++/JVM error mismatch for {case['file']}: C++={cpp!r}, JVM={kotlin!r}")
             result = {"fixture": case["file"], "error": cpp.decode(), "result": "PASS"}
         else:
-            assert not kotlin.startswith(b"ERROR:"), (case["file"], kotlin)
-            assert json.loads(cpp) == json.loads(kotlin), case["file"]
+            require(not kotlin.startswith(b"ERROR:"), f"JVM rejected C++-accepted fixture {case['file']}: {kotlin!r}")
+            require(json.loads(cpp) == json.loads(kotlin), f"C++/JVM semantic mismatch: {case['file']}")
             cpp_path = temp / f"{index}-cpp.json"; cpp_path.write_bytes(cpp)
             jvm_path = temp / f"{index}-jvm.json"; jvm_path.write_bytes(kotlin)
-            assert json.loads(invoke([*jvm, cpp_path])) == json.loads(cpp)
-            assert json.loads(invoke([runner, jvm_path])) == json.loads(kotlin)
+            require(json.loads(invoke([*jvm, cpp_path])) == json.loads(cpp), f"JVM failed C++ output: {case['file']}")
+            require(json.loads(invoke([runner, jvm_path])) == json.loads(kotlin), f"C++ failed JVM output: {case['file']}")
             result = {"fixture": case["file"], "cpp_to_jvm": "PASS", "jvm_to_cpp": "PASS", "result": "PASS"}
         results.append(result)
     evidence = {"result": "PASS", "fixtures": len(results), "cross_language_directions": 2 * sum("cpp_to_jvm" in r for r in results),
@@ -167,8 +201,10 @@ def package(head, report, jar):
         for name, data in sorted(entries.items()): z.writestr(name, data)
         z.writestr("handoff-content-manifest.json", manifest_bytes)
     with zipfile.ZipFile(archive) as z:
-        assert z.testzip() is None
-        for entry in manifest["files"]: assert sha(z.read(entry["path"])) == entry["sha256"]
+        bad_member = z.testzip()
+        require(bad_member is None, f"Task5 handoff ZIP integrity failure: {bad_member}")
+        for entry in manifest["files"]:
+            require(sha(z.read(entry["path"])) == entry["sha256"], f"Task5 handoff content mismatch: {entry['path']}")
     artifact = {"filename": archive.name, "sha256": sha(archive.read_bytes()), "source_commit": head}
     external = {"source_commit": head, "artifact": artifact, "content_manifest_sha256": sha(manifest_bytes), "hardware": "NOT RUN"}
     external_path = DIST / "monakavr-task5-handoff.handoff.json"
@@ -191,31 +227,35 @@ def main():
     save(EVIDENCE / "validation-results.json", status)
     save(DIST / "task5-final-report.json", {"HEAD_SHA": head, "phase_or_DoD_status": "RUNNING", "hardware_validation": "NOT RUN"})
     try:
-        assert not git("status", "--porcelain"), "Commit current work before final validation"
-        subprocess.check_call(["git", "merge-base", "--is-ancestor", PREPARED, head], cwd=ROOT)
-        subprocess.check_call(["git", "merge-base", "--is-ancestor", AUDITED, head], cwd=ROOT)
+        require(not git("status", "--porcelain"), "Commit current work before final validation")
+        prepared_result = subprocess.run(["git", "merge-base", "--is-ancestor", PREPARED, head], cwd=ROOT, check=False)
+        audited_result = subprocess.run(["git", "merge-base", "--is-ancestor", AUDITED, head], cwd=ROOT, check=False)
+        require(prepared_result.returncode == 0, f"HEAD {head} is not a descendant of prepared base {PREPARED}")
+        require(audited_result.returncode == 0, f"HEAD {head} is not a descendant of audited base {AUDITED}")
         env = dict(os.environ, JAVA_HOME=str(args.java_home))
         java = args.java_home / "bin" / ("java.exe" if os.name == "nt" else "java")
         checks = status["checks"]
-        checks["upstream"] = command("upstream", [sys.executable, "scripts/verify_task5_upstream.py"])
+        checks["python_optimization_safety"] = optimization_safety()
+        python_mode = ["-O"] if sys.flags.optimize else []
+        checks["upstream"] = command("upstream", [sys.executable, *python_mode, "scripts/verify_task5_upstream.py"])
         wrapper = ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew")
         checks["build"] = command("gradle", [wrapper, ":server:core:test", ":server:desktop:test", ":server:desktop:shadowJar", "--no-daemon", "--console=plain", "--rerun-tasks"], env)
         checks["tests"] = test_evidence()
         jar = ROOT / "server/desktop/build/libs/slimevr.jar"
         checks["active_dependency"] = inspect_active_jar(jar)
         checks["desktop_help"] = command("desktop-help", [java, "-jar", jar, "--help"])
-        assert "monaka-mtp" in (EVIDENCE / "desktop-help.log").read_text(encoding="utf-8")
+        require("monaka-mtp" in (EVIDENCE / "desktop-help.log").read_text(encoding="utf-8"), "Packaged desktop help lacks --monaka-mtp")
         checks["cpp_configure"] = command("cpp-configure", [args.cmake, "-S", "third_party/monaka-protocol/cpp", "-B", "build/task5-codec", "-DMONAKA_BUILD_TESTS=ON", "-DCMAKE_CXX_FLAGS=/EHsc"])
         checks["cpp_build"] = command("cpp-build", [args.cmake, "--build", "build/task5-codec", "--config", "Release"])
         ctest = args.cmake.with_name("ctest.exe" if os.name == "nt" else "ctest")
         checks["cpp_ctest"] = command("cpp-ctest", [ctest, "--test-dir", "build/task5-codec", "-C", "Release", "--output-on-failure"])
         runner = ROOT / "build/task5-codec/Release/monaka_codec_runner.exe"
         checks["codec_interop"] = interoperability(java, jar, runner)
-        assert git("rev-parse", "HEAD") == head and not git("status", "--porcelain")
+        require(git("rev-parse", "HEAD") == head, f"HEAD changed during validation: expected {head}")
+        require(not git("status", "--porcelain"), "Working tree changed during validation")
         status["status"] = "PASS"
         save(EVIDENCE / "validation-results.json", status)
         lock = json.loads((ROOT / "dependencies/task5-upstream.lock.json").read_bytes())
-        protocol = json.loads((ROOT / "dependencies/monaka-protocol.lock.json").read_bytes())
         changed = git("diff", "--name-only", PREPARED, head).splitlines()
         report = {
             "repository": "MonakaVR/MonakaVR", "audited_base_branch": "feature/pico-motion-tracker-bridge-backend", "audited_base_sha": AUDITED,

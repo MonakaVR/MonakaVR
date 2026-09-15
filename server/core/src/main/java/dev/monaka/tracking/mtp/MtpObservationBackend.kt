@@ -40,6 +40,21 @@ class MtpObservationBackend(
 			suspended = value
 		}
 	}
+
+	/**
+	 * Resume-transition drain: advance replay/session/mapping watermarks for the
+	 * current bounded queue while [suspended] prevents every pose becoming a sample.
+	 */
+	fun discardQueuedWhileUpdatingWatermarks(): Int {
+		check(suspended) { "resume backlog must be discarded while MTP is suspended" }
+		val discarded = inbox.drainAllBounded()
+		val ignoredDirtySources = linkedSetOf<LogicalTracker>()
+		for (message in discarded) admit(message, ignoredDirtySources)
+		return discarded.size
+	}
+
+	val resumeDrainBound: Int
+		get() = inbox.resumeDrainBound
 	/** Retain sequence/session tombstones so old packets cannot resurrect cleared constraints. */
 	fun invalidateSamples() {
 		if (devices.values.any { it.sample != null }) historyGeneration++

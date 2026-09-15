@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 /** Worker validates complete datagrams; only the server thread updates the pose cache. */
-class MtpInbox(capacity: Int = 1024) {
+class MtpInbox(private val capacity: Int = DEFAULT_CAPACITY) {
 	data class Received(val envelope: Envelope, val receivedAtNanos: Long)
 	private val queue = ArrayBlockingQueue<Received>(capacity)
 	private val counters = ConcurrentHashMap<String, AtomicLong>()
@@ -27,8 +27,29 @@ class MtpInbox(capacity: Int = 1024) {
 			}
 		}
 	}
-	internal fun drain(limit: Int = 256): List<Received> = buildList {
+	init {
+		require(capacity > 0) { "capacity must be positive" }
+	}
+
+	internal fun drain(limit: Int = NORMAL_DRAIN_LIMIT): List<Received> = buildList {
+		require(limit >= 0) { "limit must be non-negative" }
 		repeat(limit) { add(queue.poll() ?: return@buildList) }
 	}
+
+	/** Resume-only bounded drain. The server thread admits every returned envelope. */
+	internal fun drainAllBounded(): List<Received> = ArrayList<Received>(capacity).also {
+		// ArrayBlockingQueue drains the queue contents held at this transition under
+		// its queue lock. Producers may enqueue afterward for the resumed runtime.
+		queue.drainTo(it, capacity)
+	}
+
+	internal val resumeDrainBound: Int
+		get() = capacity
+
 	fun clear() = queue.clear()
+
+	companion object {
+		const val DEFAULT_CAPACITY = 1024
+		const val NORMAL_DRAIN_LIMIT = 256
+	}
 }

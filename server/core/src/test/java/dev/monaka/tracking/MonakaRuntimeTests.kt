@@ -266,6 +266,65 @@ class MonakaRuntimeTests {
 		}
 	}
 
+	@Test fun pauseBacklogBeyondNormalDrainAdvancesReplayWatermarkBeforeResume() {
+		val clock = Clock()
+		val trackers = TestTrackerSet()
+		trackers.head.position = Vector3(0f, 1.7f, 0f)
+		val hpm = HumanPoseManager(listOf(trackers.head, trackers.hip))
+		hpm.setLegTweaksEnabled(false)
+		runtime(clock) { listOf(trackers.head, trackers.hip) }.use { r ->
+			ConstraintIkWriteback(hpm.skeleton).use { writeback ->
+				fun step(paused: Boolean) {
+					val constraints = r.tick(paused)
+					writeback.apply(constraints, r.assignments.snapshot(), r.mtp.historyGeneration)
+					hpm.update()
+				}
+				val initial = fixture().copy(position = listOf(0.0, 1.0, 0.0))
+				submit(r, initial)
+				step(false)
+				hpm.skeleton.setPauseTracking(true, "pause backlog regression")
+				step(true)
+				val pausedComputedHip = hpm.skeleton.computedHipTracker!!.position
+
+				val backlogLast = 600L
+				assertTrue(backlogLast > MtpInbox.NORMAL_DRAIN_LIMIT)
+				assertEquals(MtpInbox.DEFAULT_CAPACITY, r.mtp.resumeDrainBound)
+				for (sequence in 1L..backlogLast) {
+					submit(
+						r,
+						initial.copy(sequence = sequence, position = listOf(10.0 + sequence, 1.0, 0.0)),
+					)
+				}
+
+				// A normal paused tick consumes only 256. The resume transition must
+				// server-admit the remaining 344 before leaving suspended state.
+				step(true)
+				assertTrue((pausedComputedHip - hpm.skeleton.computedHipTracker!!.position).len() < 0.000001f)
+				hpm.skeleton.setPauseTracking(false, "pause backlog regression")
+				step(false)
+				assertTrue(
+					kotlin.math.abs(hpm.skeleton.computedHipTracker!!.position.x) < 5f,
+					"Paused backlog position was written into the computed tracker on resume",
+				)
+				assertFalse(writeback.masks().getValue(TrackerPosition.HIP).position)
+				assertNull(r.mtp.samples()[key])
+
+				val duplicatesBefore = r.inbox.diagnostics()["DuplicateOrOldSequence"] ?: 0L
+				submit(r, initial.copy(sequence = 500, position = listOf(500.0, 1.0, 0.0)))
+				submit(r, initial.copy(sequence = backlogLast, position = listOf(600.0, 1.0, 0.0)))
+				step(false)
+				assertEquals(duplicatesBefore + 2, r.inbox.diagnostics().getValue("DuplicateOrOldSequence"))
+				assertNull(r.mtp.samples()[key])
+				assertFalse(writeback.masks().getValue(TrackerPosition.HIP).position)
+
+				submit(r, initial.copy(sequence = backlogLast + 1, position = listOf(0.1, 1.0, 0.0)))
+				step(false)
+				assertEquals(backlogLast + 1, r.mtp.samples().getValue(key).pose.sequence)
+				assertTrue(writeback.masks().getValue(TrackerPosition.HIP).position)
+			}
+		}
+	}
+
 	@Test fun headPositionAndRotationLossUseIndependentMasksWithoutRetainingOldAnchor() {
 		val clock = Clock()
 		val hpm = HumanPoseManager(emptyList())
