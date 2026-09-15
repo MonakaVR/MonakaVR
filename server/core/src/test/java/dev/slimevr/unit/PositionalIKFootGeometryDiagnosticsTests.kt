@@ -8,7 +8,6 @@ import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 /**
  * Diagnostic for the residual floor that appears only when foot rotation is also
@@ -98,15 +97,15 @@ class PositionalIKFootGeometryDiagnosticsTests {
 	}
 
 	@Test
-	fun reportResidualVersusFootLength() {
+	fun reportResidualVersusFootLength(reporter: org.junit.jupiter.api.TestReporter) {
 		val sixDof0 = steadyResidualMm(feetHaveRotation = true, footLength = 0.0f)
 		val sixDof25 = steadyResidualMm(feetHaveRotation = true, footLength = 0.025f)
 		val sixDof50 = steadyResidualMm(feetHaveRotation = true, footLength = 0.05f)
 		val sixDof100 = steadyResidualMm(feetHaveRotation = true, footLength = 0.10f)
 		val positionOnly50 = steadyResidualMm(feetHaveRotation = false, footLength = 0.05f)
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Foot geometry diagnostic. " +
 				"SIX_DOF=[0mm:$sixDof0 mm, 25mm:$sixDof25 mm, 50mm:$sixDof50 mm, 100mm:$sixDof100 mm]; " +
 				"POSITION_ONLY=[50mm:$positionOnly50 mm].",

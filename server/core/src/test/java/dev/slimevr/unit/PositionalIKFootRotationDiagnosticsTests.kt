@@ -9,7 +9,6 @@ import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
 import kotlin.math.sqrt
-import kotlin.test.assertTrue
 
 /**
  * Temporary characterization test used to determine whether multi-constraint
@@ -117,12 +116,12 @@ class PositionalIKFootRotationDiagnosticsTests {
 	}
 
 	@Test
-	fun reportSixDofFeetVersusPositionOnlyFeet() {
+	fun reportSixDofFeetVersusPositionOnlyFeet(reporter: org.junit.jupiter.api.TestReporter) {
 		val sixDofTrace = runTrace(feetHaveRotation = true)
 		val positionOnlyTrace = runTrace(feetHaveRotation = false)
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Foot rotation diagnostic. SIX_DOF=[$sixDofTrace]; " +
 				"POSITION_ONLY=[$positionOnlyTrace].",
 		)

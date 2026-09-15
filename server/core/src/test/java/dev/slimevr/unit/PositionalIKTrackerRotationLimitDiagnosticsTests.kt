@@ -9,7 +9,6 @@ import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 /**
  * Diagnostic that isolates the 15-degree tracker-backed rotation clamp from the
@@ -101,14 +100,14 @@ class PositionalIKTrackerRotationLimitDiagnosticsTests {
 	}
 
 	@Test
-	fun reportTrackerRotationLimitContribution() {
+	fun reportTrackerRotationLimitContribution(reporter: org.junit.jupiter.api.TestReporter) {
 		val limit15 = runCase(15f)
 		val limit30 = runCase(30f)
 		val limit90 = runCase(90f)
 		val limit180 = runCase(180f)
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Tracker rotation-limit diagnostic. " +
 				"15deg=[residual=${limit15.residualMm} mm, rotationDeviation=${limit15.rotationDeviationDeg} deg]; " +
 				"30deg=[residual=${limit30.residualMm} mm, rotationDeviation=${limit30.rotationDeviationDeg} deg]; " +

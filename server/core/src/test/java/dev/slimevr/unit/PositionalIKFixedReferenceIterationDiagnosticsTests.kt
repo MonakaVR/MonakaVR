@@ -9,7 +9,6 @@ import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 /**
  * Diagnostic that distinguishes a true per-solve iteration-budget limit from
@@ -108,7 +107,7 @@ class PositionalIKFixedReferenceIterationDiagnosticsTests {
 	}
 
 	@Test
-	fun reportAdditionalIterationsWithFixedTrackedRotationReference() {
+	fun reportAdditionalIterationsWithFixedTrackedRotationReference(reporter: org.junit.jupiter.api.TestReporter) {
 		val fixture = createMovedFixture()
 		val solver = fixture.hpm.skeleton.ikSolver
 		val trace = mutableListOf<String>()
@@ -125,8 +124,8 @@ class PositionalIKFixedReferenceIterationDiagnosticsTests {
 			}
 		}
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Fixed-reference iteration diagnostic. ${trace.joinToString(" | ")}",
 		)
 	}
