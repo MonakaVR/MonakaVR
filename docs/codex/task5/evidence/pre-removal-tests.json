@@ -1,0 +1,297 @@
+{
+  "source_commit": "26f971a075601156ba3d13c2f8d6dd87769d0215",
+  "result": "PASS",
+  "command": "gradlew.bat :server:core:test :server:desktop:test --tests dev.monaka.tracking.desktop.* --no-daemon --console=plain",
+  "legacy_active_during_validation": true,
+  "hardware": "NOT RUN",
+  "suites": [
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.ConstraintPipelineTests",
+      "tests": 4,
+      "skipped": 0,
+      "sha256": "b31d2908c1a10d65b9c69e9d141ea420e83d2f425131f74bdf833f02629b2892"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.ConstraintResolverTests",
+      "tests": 4,
+      "skipped": 0,
+      "sha256": "501c724f3b969a32d186cc67d8178f25dafb9ed9e83f9d5b3e447dea4108f369"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.MonakaRuntimeTests",
+      "tests": 15,
+      "skipped": 0,
+      "sha256": "fb29eeaeed475806365d78730ec469aa97fb93ca7896375dbdc6abdb7c34525e"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.ObservationBackendLifecycleTests",
+      "tests": 6,
+      "skipped": 0,
+      "sha256": "9d82a9b4cc1da4a35ce7cb66144b7541556516444d3108d1e1c4c564692181fb"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.ObservationBackendTests",
+      "tests": 3,
+      "skipped": 0,
+      "sha256": "21d9d6337053007e5a4c140e15024e19f179a6309d75ecd2a7513a333f2301e3"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.ObservationFreshnessPolicyTests",
+      "tests": 4,
+      "skipped": 0,
+      "sha256": "4e4cc9d959fffe598ba8e8e340276e1471fd7874ad8fbb527499ab1eb81ade08"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.ObservationSourceProfileRegistryTests",
+      "tests": 4,
+      "skipped": 0,
+      "sha256": "df020eda5a2c1bd5183d4a0e1e1d0eb07c4ff28c6805a1453e8894a18a070c31"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.ObservationSourceProfileTests",
+      "tests": 3,
+      "skipped": 0,
+      "sha256": "584e447e96f1e2d3cd46c146a1adb8f54bf91007584cc90af7e850734538dc1c"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.pico.PicoMotionTrackerBridgeBodyAssignmentsTests",
+      "tests": 3,
+      "skipped": 0,
+      "sha256": "2e037315157a9181f01a44e2e64ff170b5b628e2dcc0fd6b2d94d96491b63c8e"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.pico.PicoMotionTrackerBridgeCoordinateMapperTests",
+      "tests": 5,
+      "skipped": 0,
+      "sha256": "902c43165a68bdc639ce52db2226b536e195ae4011c3e045caa8a0d1915e8a5d"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.pico.PicoMotionTrackerBridgeDataSourceTests",
+      "tests": 10,
+      "skipped": 0,
+      "sha256": "c9b5469b2928ae182cd5c1caea2b31ace69cb344fdf08be02b27f7234da12e37"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.pico.PicoMotionTrackerBridgeReceiverProviderTests",
+      "tests": 7,
+      "skipped": 0,
+      "sha256": "7a6b1c859248a7da50b779d278748097e244c7a4bc68e3dda9752612abcf191c"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.pico.PicoOtObservationBackendTests",
+      "tests": 5,
+      "skipped": 0,
+      "sha256": "5ca2a9364197ad58ec1abcc1f7fdec3789d17c2e6a7c32fc052ee75e361dd498"
+    },
+    {
+      "module": "core",
+      "name": "dev.monaka.tracking.SlimeTrackerPoseObservationAdapterTests",
+      "tests": 5,
+      "skipped": 0,
+      "sha256": "87a090ae619202675d575a2dc020aeb65442de5657e0672915acd1cee6eaf0c1"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.LegTweaksTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "ff479ea9d4aff0aa3215ca28f8fe36ec2103bd7fc4969bd1a6583def665b384e"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.MountingResetTests",
+      "tests": 65,
+      "skipped": 0,
+      "sha256": "2181f4600086cdedcb2d0004bbef0623a94cf04faa57bc35bc611ebee21450df"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIK6DoFTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "c2b1d795ddd47f5c5edb91dccd9dfc055a3319e95095fdf166325abc56019af8"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKCalibrationTargetDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "e15871aebf0eb77c0305cb0d7b374294171cd162bdfa8b41379125544b00e1f6"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKConvergenceDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "9ffbf4d8c3355abbf934b01f6807e27847d3bc3962991cf874bf06f35554eff7"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKConvergenceTests",
+      "tests": 2,
+      "skipped": 0,
+      "sha256": "771f6c0c866f6b1855719585f4254fe257b01c6ed6679deb10e1d6ac32dcaa46"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKDynamicStabilityTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "10ced33a7316dba6e8211ce7567350b8e767ddc6c17019cf7d871fbdaa27b44d"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKEffectiveTargetDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "c065d93f91d5d124d2db073f39ff2677e3e9908a14ca21ed2d232e025e2a3646"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKFixedReferenceIterationDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "c450ddabf418f78f701efbfa87545c372f55b16991d4a2962f605799f6bdce54"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKFootGeometryDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "6048cda829cdf4dd2005fdd3f5475b37686802acd04ed413df917b8ce3d45a9e"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKFootRotationDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "0c9a4fc68259f87ee3a755bc7cf324d799ffe79bdc18684930ea320125cfbdfe"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKIntegrationTests",
+      "tests": 5,
+      "skipped": 0,
+      "sha256": "41462f7e9aada1e0cf0362eb1840df8b558e01bd9b81b3d4ffa17452598b4ef8"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKIterationBudgetDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "e01eca1b66ba87d19874a1850072766aa27d8ea19c72349b3725a82ba17a9d8e"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKIterationCountDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "9fbeebe77af6bc007a8717641bac8ac8ea5438e356509fd55e6bd84b502b6d62"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKMultiConstraintTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "608aaf369fac79dc89c71892a66cdd1942d95cbaff635d4c361272f7c7c06da5"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKPauseTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "6d7e582d5e52caaf7b4c275ea68765b534234aa25d12826b48fd1661943eeab6"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKRotationCacheDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "62443c7d64c2c5bd50a3ef59c7513e878bb4a5d3f7af825556acd57a9f0d746b"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKSteadyStateDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "fda3d9f506c3aa74a965b779e7ad007eb0091f1d0e93b2c80c08a206173ef2c1"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKTrackerCorrectionDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "3c34a0b27100828fc2cabd521808a5067e00f6aff0b3a546978dc31d0e8fe255"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKTrackerRotationLimitDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "11aa39358ca3a60c846a43250131ff9bed47e67fe6e51932cb309cc1fe65e630"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.PositionalIKZeroErrorDiagnosticsTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "12963285db0299ad56dcb41ab4860ff1c252f0e91b2a6ee6b30ec1b226532b3c"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.ReferenceAdjustmentsTests",
+      "tests": 10,
+      "skipped": 0,
+      "sha256": "81e45d4495a3523e4ac78b6a6708f664d5b18662354ef5c5d0fff1effa3ff182"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.SkeletonResetTests",
+      "tests": 3,
+      "skipped": 0,
+      "sha256": "1c47eb3de924e1013993a536e90c2cd24b7403a9aeb6ed57f3543b9f343069b2"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.TrackingPauseTests",
+      "tests": 1,
+      "skipped": 0,
+      "sha256": "5980c45cf84acf2dfaefeb85a90758097b33c2f62a86895bfd2fdcae07fe00d2"
+    },
+    {
+      "module": "core",
+      "name": "dev.slimevr.unit.TwinExtendedBackTests",
+      "tests": 360,
+      "skipped": 0,
+      "sha256": "ffee5c8352ca28ac7d09f5ed16a351469653c27d08b8e63e070dbdf00cb0c182"
+    },
+    {
+      "module": "core",
+      "name": "io.github.axisangles.ktmath.QuaternionTest",
+      "tests": 37,
+      "skipped": 0,
+      "sha256": "7c34d7debccca732f26197e2ab6e6af7b20a18f4fde1126152be29d5cca02d8d"
+    },
+    {
+      "module": "desktop",
+      "name": "dev.monaka.tracking.desktop.MonakaDesktopTests",
+      "tests": 5,
+      "skipped": 0,
+      "sha256": "4a1c0b6c088f8b059d05e86d65a1eb51941034332ca65a15dfff626199cd9334"
+    }
+  ],
+  "artifact_sha256": "7c7c195cebd299311cbc6bbc122bf5d0d0987bf208f4290fd168db71a35dafe8"
+}

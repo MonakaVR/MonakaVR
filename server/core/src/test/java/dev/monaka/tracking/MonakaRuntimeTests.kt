@@ -299,4 +299,20 @@ class MonakaRuntimeTests {
 			assertIs<DecodeResult.Failure>(MonakaCodec.decodeEnvelope(file.readBytes()), file.name)
 		}
 	}
+
+	@Test fun lostMetadataDoesNotRepeatedlyRebuildSlimeFallbackTopology() {
+		val clock = Clock(); val trackers = TestTrackerSet()
+		val hpm = HumanPoseManager(listOf(trackers.head, trackers.hip))
+		runtime(clock) { listOf(trackers.head, trackers.hip) }.use { r ->
+			ConstraintIkWriteback(hpm.skeleton).use { w ->
+				fun step() { val result = r.tick(); w.apply(result, r.assignments.snapshot(), r.mtp.historyGeneration) }
+				val p = fixture(); submit(r, p); step()
+				submit(r, state(p.copy(tracking_state = "lost"))); step()
+				val builds = w.topologyRebuilds
+				repeat(20) { submit(r, state(p.copy(tracking_state = "lost"), it + 1L)); step() }
+				assertEquals(builds, w.topologyRebuilds)
+				assertFalse(w.masks().getValue(TrackerPosition.HIP).position)
+			}
+		}
+	}
 }

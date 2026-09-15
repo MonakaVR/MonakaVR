@@ -42,7 +42,7 @@ class MtpObservationBackend(
 	}
 	/** Retain sequence/session tombstones so old packets cannot resurrect cleared constraints. */
 	fun invalidateSamples() {
-		historyGeneration++
+		if (devices.values.any { it.sample != null }) historyGeneration++
 		for ((key, device) in devices) { device.sample = null; removed += key.observationId }
 	}
 	fun close() {
@@ -63,7 +63,7 @@ class MtpObservationBackend(
 			// Replacement follows sequence admission, not the local timestamp ordering in ObservationStore.
 			removed += key.observationId
 			val sample = devices[key]?.sample ?: return@mapNotNull null
-			val target = assignment.entries[key] ?: return@mapNotNull null
+			val target = assignment.entries[key] ?: run { inbox.count("UnassignedPose"); return@mapNotNull null }
 			try { adapter.adapt(sample.pose, target, sample.sampleTime) } catch (_: IllegalArgumentException) {
 				devices.getValue(key).sample = null
 				inbox.count("FloatOverflow"); null
@@ -72,7 +72,7 @@ class MtpObservationBackend(
 	}
 
 	private fun removeSource(source: String) {
-		historyGeneration++
+		if (devices.any { (key, device) -> key.sourceId == source && device.sample != null }) historyGeneration++
 		for (key in devices.keys.filter { it.sourceId == source }) {
 			removed += key.observationId
 			devices.getValue(key).sample = null
@@ -127,7 +127,7 @@ class MtpObservationBackend(
 		}
 		if (pose == null) {
 			if (state!!.presence == "absent" || state.tracking_state in listOf("lost", "disconnected")) {
-				historyGeneration++
+				if (device.sample != null) historyGeneration++
 				device.sample = null; removed += key.observationId
 				device.absentAt = maxOf(device.absentAt, state.timestamp_ns)
 			}
