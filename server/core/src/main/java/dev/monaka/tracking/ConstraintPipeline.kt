@@ -4,8 +4,8 @@ import dev.slimevr.tracking.trackers.TrackerPosition
 
 /**
  * Small orchestration layer between backend observations and effective constraints.
- * This intentionally remains detached from HumanPoseManager/IK so the Monaka
- * selection semantics can be validated before any write-back path is introduced.
+ * Selection remains independent of the solver. MonakaRuntime owns the pipeline;
+ * ConstraintIkWriteback supplies its resolved components to the existing IK inputs.
  */
 class ConstraintPipeline(
 	private val store: ObservationStore = ObservationStore(),

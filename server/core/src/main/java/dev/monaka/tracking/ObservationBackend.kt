@@ -31,4 +31,7 @@ interface ObservationBackend {
 		get() = ObservationSourceSetMode.INCREMENTAL
 
 	fun poll(observedAtNanos: Long): List<PoseObservation>
+
+	/** Explicit incremental removals, consumed after poll and before its updates. */
+	fun drainRemovedSources(): Set<String> = emptySet()
 }

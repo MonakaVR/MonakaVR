@@ -32,12 +32,12 @@ data class ObservationSourceProfile(
 		rotation = if (rotation.supported) observation.rotation else null,
 		positionQuality = when {
 			!position.supported -> ObservationQuality.UNAVAILABLE
-			observation.position == null -> ObservationQuality.UNAVAILABLE
+			observation.position == null && observation.positionQuality.usable -> ObservationQuality.UNAVAILABLE
 			else -> observation.positionQuality
 		},
 		rotationQuality = when {
 			!rotation.supported -> ObservationQuality.UNAVAILABLE
-			observation.rotation == null -> ObservationQuality.UNAVAILABLE
+			observation.rotation == null && observation.rotationQuality.usable -> ObservationQuality.UNAVAILABLE
 			else -> observation.rotationQuality
 		},
 	)
