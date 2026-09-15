@@ -9,7 +9,6 @@ import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
 import kotlin.math.sqrt
-import kotlin.test.assertTrue
 
 /**
  * Diagnostic for the residual floor that remains after the stale IK rotation-cache
@@ -127,12 +126,12 @@ class PositionalIKSteadyStateDiagnosticsTests {
 	}
 
 	@Test
-	fun reportSteadyStateResidualFloorByConstraintType() {
+	fun reportSteadyStateResidualFloorByConstraintType(reporter: org.junit.jupiter.api.TestReporter) {
 		val sixDof = runCase(feetHaveRotation = true)
 		val positionOnly = runCase(feetHaveRotation = false)
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Steady-state residual diagnostic. SIX_DOF=[$sixDof]; POSITION_ONLY=[$positionOnly].",
 		)
 	}

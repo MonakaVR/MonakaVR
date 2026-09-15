@@ -5,7 +5,6 @@ import dev.slimevr.tracking.trackers.TrackerPosition
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 /**
  * Temporary characterization test used to distinguish instability inside repeated
@@ -79,7 +78,7 @@ class PositionalIKConvergenceDiagnosticsTests {
 	}
 
 	@Test
-	fun reportFullTicksVersusRepeatedSolverCalls() {
+	fun reportFullTicksVersusRepeatedSolverCalls(reporter: org.junit.jupiter.api.TestReporter) {
 		val fullTickFixture = createMovedThreePointFixture()
 		val fullTickTrace = mutableListOf<String>()
 		repeat(10) { index ->
@@ -94,8 +93,8 @@ class PositionalIKConvergenceDiagnosticsTests {
 			solverOnlyTrace += boneResiduals(solverOnlyFixture).mmString(index + 1)
 		}
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Multi-constraint convergence diagnostic. " +
 				"FULL_TICKS=[${fullTickTrace.joinToString(" | ")}]; " +
 				"SOLVER_ONLY=[${solverOnlyTrace.joinToString(" | ")}].",

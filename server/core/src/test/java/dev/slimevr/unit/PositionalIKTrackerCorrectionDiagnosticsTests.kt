@@ -8,7 +8,6 @@ import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 /**
  * Diagnostic that isolates the per-iteration correction toward a tracker-backed
@@ -99,12 +98,12 @@ class PositionalIKTrackerCorrectionDiagnosticsTests {
 	}
 
 	@Test
-	fun reportCorrectionTowardInitialContribution() {
+	fun reportCorrectionTowardInitialContribution(reporter: org.junit.jupiter.api.TestReporter) {
 		val normal = runCase(skipCorrectionTowardInitial = false)
 		val noCorrection = runCase(skipCorrectionTowardInitial = true)
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Tracker correction diagnostic. " +
 				"NORMAL=[residual=${normal.residualMm} mm, rotationDeviation=${normal.rotationDeviationDeg} deg]; " +
 				"NO_CORRECTION=[residual=${noCorrection.residualMm} mm, rotationDeviation=${noCorrection.rotationDeviationDeg} deg].",

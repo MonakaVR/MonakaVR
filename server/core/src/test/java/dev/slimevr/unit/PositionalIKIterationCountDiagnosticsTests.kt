@@ -8,7 +8,6 @@ import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 /**
  * Diagnostic that counts how many fixed-reference CCD iterations are required to
@@ -127,12 +126,12 @@ class PositionalIKIterationCountDiagnosticsTests {
 	}
 
 	@Test
-	fun reportIterationsRequiredForAccuracyThresholds() {
+	fun reportIterationsRequiredForAccuracyThresholds(reporter: org.junit.jupiter.api.TestReporter) {
 		val sixDof = runCase(feetHaveRotation = true)
 		val positionOnly = runCase(feetHaveRotation = false)
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Iteration-count diagnostic. SIX_DOF=[$sixDof]; POSITION_ONLY=[$positionOnly].",
 		)
 	}

@@ -7,7 +7,6 @@ import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 /**
  * Diagnostic for the pose shift observed immediately after positional tracker
@@ -112,7 +111,7 @@ class PositionalIKZeroErrorDiagnosticsTests {
 	}
 
 	@Test
-	fun reportZeroErrorCalibrationDriftSource() {
+	fun reportZeroErrorCalibrationDriftSource(reporter: org.junit.jupiter.api.TestReporter) {
 		val sixDofControl = runControl(feetHaveRotation = true)
 		val sixDofDirect = runDirectSolve(feetHaveRotation = true)
 		val sixDofFull = runFullTick(feetHaveRotation = true)
@@ -120,8 +119,8 @@ class PositionalIKZeroErrorDiagnosticsTests {
 		val positionOnlyDirect = runDirectSolve(feetHaveRotation = false)
 		val positionOnlyFull = runFullTick(feetHaveRotation = false)
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Zero-error calibration diagnostic. " +
 				"SIX_DOF_CONTROL=[$sixDofControl]; SIX_DOF_DIRECT_SOLVE=[$sixDofDirect]; SIX_DOF_FULL_TICK=[$sixDofFull]; " +
 				"POSITION_ONLY_CONTROL=[$positionOnlyControl]; POSITION_ONLY_DIRECT_SOLVE=[$positionOnlyDirect]; " +

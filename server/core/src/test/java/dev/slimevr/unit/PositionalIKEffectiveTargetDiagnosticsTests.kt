@@ -8,7 +8,6 @@ import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 /**
  * Diagnostic that compares the raw external tracker pose, the effective IK target
@@ -132,12 +131,12 @@ class PositionalIKEffectiveTargetDiagnosticsTests {
 	}
 
 	@Test
-	fun reportEffectiveTargetsAndOutputPoints() {
+	fun reportEffectiveTargetsAndOutputPoints(reporter: org.junit.jupiter.api.TestReporter) {
 		val sixDofTrace = runTrace(feetHaveRotation = true)
 		val positionOnlyTrace = runTrace(feetHaveRotation = false)
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Effective target diagnostic. SIX_DOF=[$sixDofTrace]; " +
 				"POSITION_ONLY=[$positionOnlyTrace].",
 		)

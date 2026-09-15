@@ -7,7 +7,6 @@ import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertTrue
 
 /**
  * Diagnostic for the residual floor that remains after the IK rotation-cache fix.
@@ -119,12 +118,12 @@ class PositionalIKIterationBudgetDiagnosticsTests {
 	}
 
 	@Test
-	fun reportResidualAfterAdditionalSolverBudgets() {
+	fun reportResidualAfterAdditionalSolverBudgets(reporter: org.junit.jupiter.api.TestReporter) {
 		val sixDof = runCase(feetHaveRotation = true)
 		val positionOnly = runCase(feetHaveRotation = false)
 
-		assertTrue(
-			false,
+		reporter.publishEntry(
+			"IK diagnostic",
 			"Iteration budget diagnostic. SIX_DOF=[$sixDof]; POSITION_ONLY=[$positionOnly].",
 		)
 	}
