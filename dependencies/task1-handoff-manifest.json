@@ -1,0 +1,9 @@
+{
+  "artifact": "monaka-protocol-kit-v1.0.zip",
+  "sha256": "eef5b7f2bc490926385b99dabcd44dc5a374228bf2a7869beea01f9dad936729",
+  "source_commit": "5f41586b51bd84bb1cea344879b5d6325fc2c47d",
+  "schema_commit": "04f2d6c831c68a65edfbfb66ff8838d1c9d78535",
+  "contract_c1_sha256": "3a76435c8b25b3975028f9a83c4dc3d1e3848806c9608d885f5bba74a1198ed3",
+  "protocol_lock_sha256": "234f0dffc46b808a179ec91da3c185794d7b7c83bc5b7d2bcb31fa73886bcb44",
+  "status": "candidate / master reconciliation pending"
+}

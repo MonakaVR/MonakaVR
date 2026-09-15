@@ -3,3 +3,7 @@
 *.png binary
 *.webp binary
 *.gif binary
+
+third_party/monaka-protocol/** -text
+dependencies/** -text
+*.zip binary

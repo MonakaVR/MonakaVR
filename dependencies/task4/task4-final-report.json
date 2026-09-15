@@ -1,0 +1,973 @@
+{
+  "repository": "MonakaVR/MonakaBridge",
+  "audited_base_branch": "main",
+  "audited_base_sha": "686392ead354292cab02422c942bf0236dee4255",
+  "actual_base_branch": "refactor/monaka-layer-separation",
+  "actual_base_sha": "6bcb0135bf086ddf233c8c01fd43f3df773f4301",
+  "base_change_reason": "Prepared branch supplies Task4 instructions on audited main ancestor; ancestry verified; no history rewrite",
+  "work_branch": "refactor/monaka-layer-separation",
+  "HEAD_SHA": "acc329dce90dd6ba21387029cd54b6fc2d82fe8c",
+  "protocol_version": "1.0 fixed candidate / master reconciliation pending",
+  "schema_commit": "04f2d6c831c68a65edfbfb66ff8838d1c9d78535",
+  "protocol_kit_sha256": "eef5b7f2bc490926385b99dabcd44dc5a374228bf2a7869beea01f9dad936729",
+  "contract_c1_sha256": "3a76435c8b25b3975028f9a83c4dc3d1e3848806c9608d885f5bba74a1198ed3",
+  "task2_handoff_source_commit": "c638f158516effd7fc6511daf179b9a927a099a6",
+  "task2_extraction_sha256": "5709881826a5ce9a5ad48060e67fc8195bb622c4fb80325e613d37fedb35a1d4",
+  "task3_handoff_source_commit": "eaaee63fcacb76d095ff743944fbff1f1427f015",
+  "task3_handoff_sha256": "d379df3a00ac93dd03a5f0216a8b06189a0e2a1834cfa0c6ec36f27c0d6227e1",
+  "changed_files": [
+    {
+      "path": ".gitattributes",
+      "reason": "Build configuration or generated-artifact/text handling rules"
+    },
+    {
+      "path": ".gitignore",
+      "reason": "Build configuration or generated-artifact/text handling rules"
+    },
+    {
+      "path": "AGENTS.md",
+      "reason": "Prepared Task4 instructions and upstream audit metadata; not implementation-generated"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "reason": "Build configuration or generated-artifact/text handling rules"
+    },
+    {
+      "path": "README.md",
+      "reason": "Architecture, configuration, crash investigation, validation limits and staged cutover documentation"
+    },
+    {
+      "path": "config/bridge.example.json",
+      "reason": "Persistent identities, profile approvals, revision validation and legacy migration backups"
+    },
+    {
+      "path": "dependencies/artifacts/monaka-protocol-kit-v1.0.zip",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/artifacts/pico-bridge-extraction.zip",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/artifacts/vive-backend-handoff.zip",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/monaka-protocol.lock.json",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/openvr.lock.json",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/reports/handoff-manifest.json",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/reports/pico-bridge-extraction.handoff.json",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/reports/task2-final-report.json",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/reports/task3-final-report.json",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/reports/vive-backend-handoff.handoff.json",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/task2-derived-files.json",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "dependencies/task2-extraction-manifest.json",
+      "reason": "Actual upstream artifacts, manifests, reports, provenance or pinned dependency hashes"
+    },
+    {
+      "path": "docs/architecture.md",
+      "reason": "Architecture, configuration, crash investigation, validation limits and staged cutover documentation"
+    },
+    {
+      "path": "docs/codex/Task4_MonakaBridge.md",
+      "reason": "Prepared Task4 instructions and upstream audit metadata; not implementation-generated"
+    },
+    {
+      "path": "docs/codex/task4/00_upstream_handoff_status.md",
+      "reason": "Prepared Task4 instructions and upstream audit metadata; not implementation-generated"
+    },
+    {
+      "path": "docs/configuration.md",
+      "reason": "Architecture, configuration, crash investigation, validation limits and staged cutover documentation"
+    },
+    {
+      "path": "docs/cutover.md",
+      "reason": "Architecture, configuration, crash investigation, validation limits and staged cutover documentation"
+    },
+    {
+      "path": "docs/direct-regression-crash.md",
+      "reason": "Architecture, configuration, crash investigation, validation limits and staged cutover documentation"
+    },
+    {
+      "path": "include/monaka_bridge/bridge.hpp",
+      "reason": "Generic vendor-independent Bridge interfaces using fixed C1 models"
+    },
+    {
+      "path": "include/monaka_bridge/calibration.hpp",
+      "reason": "Generic vendor-independent Bridge interfaces using fixed C1 models"
+    },
+    {
+      "path": "include/monaka_bridge/config.hpp",
+      "reason": "Generic vendor-independent Bridge interfaces using fixed C1 models"
+    },
+    {
+      "path": "include/monaka_bridge/direct.hpp",
+      "reason": "Generic vendor-independent Bridge interfaces using fixed C1 models"
+    },
+    {
+      "path": "include/monaka_bridge/network.hpp",
+      "reason": "Generic vendor-independent Bridge interfaces using fixed C1 models"
+    },
+    {
+      "path": "include/monaka_bridge/registry.hpp",
+      "reason": "Generic vendor-independent Bridge interfaces using fixed C1 models"
+    },
+    {
+      "path": "outputs/steamvr/driver/device_provider.cpp",
+      "reason": "Task2-derived common thin SteamVR output and one driver package"
+    },
+    {
+      "path": "outputs/steamvr/driver/device_provider.hpp",
+      "reason": "Task2-derived common thin SteamVR output and one driver package"
+    },
+    {
+      "path": "outputs/steamvr/driver/direct_pose.hpp",
+      "reason": "Task2-derived common thin SteamVR output and one driver package"
+    },
+    {
+      "path": "outputs/steamvr/driver/driver_log.hpp",
+      "reason": "Task2-derived common thin SteamVR output and one driver package"
+    },
+    {
+      "path": "outputs/steamvr/driver/hmd_driver_factory.cpp",
+      "reason": "Task2-derived common thin SteamVR output and one driver package"
+    },
+    {
+      "path": "outputs/steamvr/driver/tracker_device.cpp",
+      "reason": "Task2-derived common thin SteamVR output and one driver package"
+    },
+    {
+      "path": "outputs/steamvr/driver/tracker_device.hpp",
+      "reason": "Task2-derived common thin SteamVR output and one driver package"
+    },
+    {
+      "path": "outputs/steamvr/package/driver.vrdrivermanifest",
+      "reason": "Task2-derived common thin SteamVR output and one driver package"
+    },
+    {
+      "path": "scripts/build_gui.ps1",
+      "reason": "Reproducible build, strict provenance/verification or non-circular source/binary handoff packaging"
+    },
+    {
+      "path": "scripts/build_windows.py",
+      "reason": "Reproducible build, strict provenance/verification or non-circular source/binary handoff packaging"
+    },
+    {
+      "path": "scripts/import_upstream.py",
+      "reason": "Reproducible build, strict provenance/verification or non-circular source/binary handoff packaging"
+    },
+    {
+      "path": "scripts/package_handoff.py",
+      "reason": "Reproducible build, strict provenance/verification or non-circular source/binary handoff packaging"
+    },
+    {
+      "path": "scripts/record_provenance.py",
+      "reason": "Reproducible build, strict provenance/verification or non-circular source/binary handoff packaging"
+    },
+    {
+      "path": "scripts/verify_windows.py",
+      "reason": "Reproducible build, strict provenance/verification or non-circular source/binary handoff packaging"
+    },
+    {
+      "path": "src/calibration/calibration.cpp",
+      "reason": "PICO compatibility and generic shared world/mount transforms and derivatives"
+    },
+    {
+      "path": "src/mapping/config.cpp",
+      "reason": "Persistent identities, profile approvals, revision validation and legacy migration backups"
+    },
+    {
+      "path": "src/observation/registry.cpp",
+      "reason": "Common bounded multi-source/session registry with fixed local sample age"
+    },
+    {
+      "path": "src/routing/bridge.cpp",
+      "reason": "Common calibrated cache, bounded independent C1 fanout, loopback transport and thin MTP consumer"
+    },
+    {
+      "path": "src/routing/direct.cpp",
+      "reason": "Common calibrated cache, bounded independent C1 fanout, loopback transport and thin MTP consumer"
+    },
+    {
+      "path": "src/routing/network.cpp",
+      "reason": "Common calibrated cache, bounded independent C1 fanout, loopback transport and thin MTP consumer"
+    },
+    {
+      "path": "tests/CodecConsumer.java",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/bridge_tests.cpp",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/direct_regression.cpp",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/direct_udp_consumer.cpp",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/edge_tests.cpp",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/fixtures/vive-status-samples.jsonl",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/helpers.hpp",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/old_context_repro.cpp",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/performance.cpp",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/protocol_interop.py",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/standalone_driver_context.hpp",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/udp_regression.py",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "tests/ui_config_smoke.ps1",
+      "reason": "Actual fixture regression, isolated old driver harness, caught null-read reproduction, UDP/interop/performance evidence"
+    },
+    {
+      "path": "third_party/monaka-protocol/NOTICE",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/README.md",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/SHA256SUMS",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/cpp/CMakeLists.txt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/cpp/include/monaka/protocol/v1/codec.hpp",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/cpp/include/monaka/protocol/v1/models.hpp",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/cpp/src/codec.cpp",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/cpp/src/models_json.inc",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/cpp/src/schema.inc",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/cpp/tests/runner.cpp",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/cpp/third_party/nlohmann/LICENSE.MIT",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/cpp/third_party/nlohmann/json.hpp",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/dependencies.lock.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/docs/C1.md",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/docs/codex/Task1_MonakaProtocol.md",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/docs/design-decisions.md",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/docs/performance.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/docs/verification.md",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/consumer-scenarios.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/index.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/bad-number-type.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/bad-quaternion.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/bad-vec-length.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/battery-range.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/bom.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/comment.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/depth-17.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/derivative-without-capability.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/duplicate-capability.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/duplicate-escaped-key.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/duplicate-unknown.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/duplicate.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/empty-id.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/empty.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/extra-object.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/fractional-minor.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/future-timestamp.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/id-byte-overflow.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/id-c1-control.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/id-control.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/invalid-state.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/minor-overflow.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/missing-capability.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/missing-field.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/mtp-confidence-zero.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/mtp-revision-overflow.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/mtp-unnormalized.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/mtp-wrong-convention.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/nan.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/none-evidence-valid.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/nonfinite.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/null-valid-position.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/numeric-u63.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/overlong-utf8.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/quat-boundary-zero.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/surrogate-utf8.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/too-large.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/trailing-comma.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/truncated.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/u63-decimal.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/u63-empty.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/u63-exponent.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/u63-leading-zero.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/u63-negative.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/u63-overflow.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/unknown-enum.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/unknown-message.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/unknown-protocol.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/unpaired-surrogate.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/unsupported-major.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/uppercase-uuid.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/invalid/utf8.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/depth-16.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/derivatives.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/device-state.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/different-clock-epoch.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/future-minor.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/invalid-position-moving.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/known-battery.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/mtp-pose.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/negative-quaternion.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/observation-unnormalized.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/observation.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/orientation-only.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/position-only.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/quat-boundary-half.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/quat-boundary-onehalf.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/reordered-whitespace.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/session-reset.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/size-4096.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/tracker-state.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/u63-maximum.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/unknown-battery.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/fixtures/valid/utf8-id-limit.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/build.gradle.kts",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/libs/gson-2.11.0.jar",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/libs/kotlin-stdlib-2.3.10.jar",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/libs/monaka-protocol-jvm-0.1.0.jar",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/runtime-dependencies.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/settings.gradle.kts",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/Error.kt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/Models.kt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/ModelsJson.kt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/MonakaCodec.kt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/Schema.kt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/jvm/src/test/kotlin/dev/monaka/protocol/v1/Runner.kt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/licenses/gson-LICENSE",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/licenses/kotlin-LICENSE.txt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/licenses/kotlin-NOTICE.txt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/protocol.lock.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/schema/monaka-tracking.schema.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/schema/tracker-observation.schema.json",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/benchmark.py",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/check_boundaries.py",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/fixtures.py",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/generate.py",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/lock_dependencies.py",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/package.py",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/report.py",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/test-requirements.txt",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/test.py",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "third_party/monaka-protocol/tools/verify_kit.py",
+      "reason": "Exact supplied Task1 kit bytes; fixed contract/codec/fixtures/licenses, hash verified"
+    },
+    {
+      "path": "tools/bridge_config.cpp",
+      "reason": "Common service/config commands or migrated shared SteamVR calibrator"
+    },
+    {
+      "path": "tools/bridge_service.cpp",
+      "reason": "Common service/config commands or migrated shared SteamVR calibrator"
+    },
+    {
+      "path": "tools/steamvr_calibrator.cpp",
+      "reason": "Common service/config commands or migrated shared SteamVR calibrator"
+    },
+    {
+      "path": "ui/steamvr_control_gui_main.cs",
+      "reason": "Task2-derived common WPF/tray configuration, migration and health"
+    },
+    {
+      "path": "ui/steamvr_control_tray.cs",
+      "reason": "Task2-derived common WPF/tray configuration, migration and health"
+    },
+    {
+      "path": "ui/steamvr_control_wpf.cs",
+      "reason": "Task2-derived common WPF/tray configuration, migration and health"
+    }
+  ],
+  "build_result": "PASS Windows x64 Release service/common driver/calibrator; WPF .NET Framework 4.8 build and config-reader smoke PASS; non-Windows NOT RUN",
+  "toolchain": {
+    "generator": "Visual Studio 18 2026",
+    "compiler": "MSVC 19.51.36257.0",
+    "sdk": "10.0.26100.0",
+    "python": "3.13.15",
+    "java": "Microsoft OpenJDK 17.0.20",
+    "openvr": {
+      "repository": "https://github.com/ValveSoftware/openvr",
+      "tag": "v2.15.6",
+      "revision": "0924064316de3effbcd1acf1e309182a2deb1c05",
+      "files": {
+        "headers/openvr.h": "641ef9791fa8a281c490c85337cb3cbea8929055cfad1c78275d26cef587884f",
+        "headers/openvr_driver.h": "914a17b6dbcc73d1cac5281d6253d5563879ec5029b5db43b9dfc6863b435528",
+        "lib/win64/openvr_api.lib": "a0bf57c5920f569e8d21ab3e5bc95bac4b73e2016217f8b5b93495a2a7197bbb",
+        "bin/win64/openvr_api.dll": "bab8ac6ef64e68a9ca53315b0014d131088584b2efdfa6db511d67ec03cfcb4a",
+        "LICENSE": "9e6d1480fb68e86ceafed312f7e67dadcdc2a99b350b710d624b8f0f0f1a2329"
+      }
+    }
+  },
+  "commands": {
+    "native_build": [
+      "C:\\Users\\nynyp\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "scripts/build_windows.py",
+      "--cmake",
+      "C:/Program Files/Microsoft Visual Studio/18/Insiders/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe"
+    ],
+    "gui_build": [
+      "./scripts/build_gui.ps1"
+    ],
+    "verification": [
+      "C:\\Users\\nynyp\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "scripts/verify_windows.py",
+      "--cmake-bin",
+      "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin",
+      "--java-home",
+      "C:\\Program Files\\Microsoft\\jdk-17.0.20.101-hotspot",
+      "--dumpbin",
+      "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe"
+    ],
+    "package": [
+      "C:\\Users\\nynyp\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "scripts/package_handoff.py"
+    ],
+    "working_directory": "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge"
+  },
+  "unit_test_result": {
+    "exit_code": 0,
+    "result": "PASS",
+    "command": [
+      "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\ctest.exe",
+      "--test-dir",
+      "build",
+      "-C",
+      "Release",
+      "--output-on-failure",
+      "--timeout",
+      "40"
+    ]
+  },
+  "mock_or_cross_language_result": {
+    "udp": {
+      "result": "PASS",
+      "direct_mtp_matches": 32,
+      "task2_fixture": "verified extraction tests/protocol_tests.cpp TestPoseRoundTrip values",
+      "task3_samples": 7,
+      "hardware": "NOT RUN",
+      "cases": [
+        "separate service and Direct adapter",
+        "multi-source epochs",
+        "duplicate/reorder",
+        "source restart/retired session",
+        "partial pose",
+        "VIVE blocked and explicit synthetic profile",
+        "disabled mirror",
+        "route change",
+        "duplicate bind",
+        "consumer reopen",
+        "Bridge restart"
+      ]
+    },
+    "fixed_codec": {
+      "result": "PASS",
+      "fixtures": 74,
+      "cross_language_directions": 44,
+      "codec": "supplied fixed C++ target and JVM JAR; no reconstructed codec"
+    }
+  },
+  "direct_regression_result": {
+    "standalone": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge\\build\\Release\\direct_regression.exe"
+      ]
+    },
+    "ctest": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\ctest.exe",
+        "--test-dir",
+        "build",
+        "-C",
+        "Release",
+        "--output-on-failure",
+        "--timeout",
+        "40"
+      ]
+    },
+    "separate_process_udp": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Users\\nynyp\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "tests/udp_regression.py",
+        "--bin",
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge\\build\\Release"
+      ]
+    },
+    "initial_failure": "Real 0xc0000005 null driver context reproduced with stack; test-only mock logger and runtime-interface guards fix standalone harness",
+    "runtime_imports": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/dependents",
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge\\build\\Release\\direct_regression.exe"
+      ]
+    }
+  },
+  "hardware_validation": {
+    "PICO five trackers": "NOT RUN",
+    "VIVE official dongle with Hub stopped": "NOT RUN",
+    "VIVE physical axes/scale/map": "NOT RUN",
+    "PICO+VIVE coexistence": "NOT RUN",
+    "SteamVR restart/registration/routes": "NOT RUN",
+    "same-point Direct vs MTP hardware": "NOT RUN",
+    "interactive WPF/tray": "NOT RUN",
+    "OpenVR calibrator measurement": "NOT RUN"
+  },
+  "compatibility_status": "Actual Task2 extraction migration, PICO fixture/legacy Direct software regression and actual Task3 C1 fixture interoperability PASS; hardware cutover pending",
+  "performance_result": {
+    "samples": 10000,
+    "sources": 2,
+    "outputs": 3,
+    "measurement": "fixed C1 decode to serialized egress callback; excludes OS scheduling and hardware",
+    "process_cpu_ns_per_observation": 326562,
+    "process_cpu_percent_one_core": 99.7272,
+    "allocations_per_observation": 3114,
+    "allocated_bytes_per_observation": 151084,
+    "egress_bytes": 24457204,
+    "latency_us_p50": 289.1,
+    "latency_us_p95": 534.5,
+    "latency_us_p99": 573.9,
+    "queue_capacity_per_channel": 512,
+    "pending_after_flush": 0
+  },
+  "phase_or_DoD_status": "Task4 software implementation complete / hardware cutover pending",
+  "unresolved_issues": [
+    "Task1 fixed candidate master reconciliation pending",
+    "Hardware and interactive validation NOT RUN",
+    "Task5 consumer/exclusion contract not implemented by Task4",
+    "Legacy SteamVR serial-role migration requires user-reviewed hardware comparison",
+    "Concurrent config writers should be avoided; no cross-tool distributed lock",
+    "Non-Windows build NOT RUN",
+    "Task2 extraction has no root license grant at source base; original notices preserved"
+  ],
+  "followup_required_in_task2": "Verify this HEAD/ZIP/manifest and compatibility evidence; satisfy hardware and Task5 gates before Phase B or old-path removal",
+  "followup_required_in_task5": "Integrate fixed MTP, source/session/mapping revisions; exclude monaka-direct and own solver outputs from input; distinct solver serial namespace; verify both-route no-feedback before opt-in",
+  "handoff_artifacts": [
+    {
+      "filename": "monaka-bridge-handoff.zip",
+      "sha256": "3fe2b3c1b1703520e5433639647c25894a64432590997275da506c262f647cd3",
+      "source_commit": "acc329dce90dd6ba21387029cd54b6fc2d82fe8c"
+    },
+    {
+      "filename": "monaka-bridge-handoff.handoff.json",
+      "sha256": "c2bc55d0335d207e86a842b8d9a2ac687ce5a65414d3dfab884e63cbd23c7dc7",
+      "source_commit": "acc329dce90dd6ba21387029cd54b6fc2d82fe8c"
+    }
+  ],
+  "responsibility_split": {
+    "Bridge": "mapping/profiles/shared calibration/common cache/MTP/Direct/routing/GUI",
+    "PICO Backend": "runtime/private ABI/Android/vendor source operations",
+    "VIVE Backend": "HID/RF/raw decode/vendor source operations",
+    "MonakaVR": "roles/fusion/fallback/IK/solver output"
+  },
+  "old_path_preservation": "Task4 changes only MonakaBridge; old backends/providers/config files remain. Migration retains backups. Hardware cutover and Task2 Phase B are gated; no automatic driver install/removal."
+}

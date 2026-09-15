@@ -1,0 +1,1102 @@
+{
+  "repository": "MonakaVR/MonakaBridge",
+  "source_commit": "acc329dce90dd6ba21387029cd54b6fc2d82fe8c",
+  "hardware": "NOT RUN",
+  "files": [
+    {
+      "path": "evidence/logs/ctest.log",
+      "sha256": "0b073cb380eb9d9ab32bb21406ac290cfa8b23250d908ed65278afb2888802f6",
+      "size": 883
+    },
+    {
+      "path": "evidence/logs/derived-provenance.log",
+      "sha256": "1c2dcdfd59b179035fbdb79542930aa73d800dd5867c9d88beae425ed63f988d",
+      "size": 86
+    },
+    {
+      "path": "evidence/logs/direct-imports.log",
+      "sha256": "675d86935b8ad3c0f3852a9503c3941066e233519e6f3872469d130c08b37616",
+      "size": 819
+    },
+    {
+      "path": "evidence/logs/direct-standalone.log",
+      "sha256": "cc830b1bd60d21cd2a4078b96b2404a7f82bcf23912dbd816a259bcad5ca0272",
+      "size": 167
+    },
+    {
+      "path": "evidence/logs/fixed-codec-interop.log",
+      "sha256": "13cff96001f723a91217a68df344a7a133a1774a633b4c63db5c70e684eb1bf7",
+      "size": 144
+    },
+    {
+      "path": "evidence/logs/gui-config-smoke.log",
+      "sha256": "f40f36232cbf2bd6a28e4c4f89b9185658de2db6f3f9a75fb7d47c942e3eaa9b",
+      "size": 99
+    },
+    {
+      "path": "evidence/logs/null-read-reproduction.log",
+      "sha256": "8178696a884f3885d32f85e795003b7cb185271078ff7680e9af57e111032f4a",
+      "size": 925
+    },
+    {
+      "path": "evidence/logs/performance.log",
+      "sha256": "eb50c40d51accf9de00d2076da046ea2e9013ae743aa7cb1731b14f0013f6130",
+      "size": 448
+    },
+    {
+      "path": "evidence/logs/separate-process-udp.log",
+      "sha256": "6947350b742d4a116653e24bd7d56a9837e0de7305579069837b294ab4862fac",
+      "size": 461
+    },
+    {
+      "path": "evidence/performance-results.json",
+      "sha256": "6a83e2c94aa4c60037a1496b54d8c5d5d98dab2ac138e684486a2378b2c5b62f",
+      "size": 517
+    },
+    {
+      "path": "evidence/protocol-interop-results.json",
+      "sha256": "2b096a7cd2cd7897a7b620f21837abb52aa02370c166d14ff60b0614d413e12c",
+      "size": 156
+    },
+    {
+      "path": "evidence/udp-regression-results.json",
+      "sha256": "acc414fd309f64863ad70b93f3bf4df1bab89389fa99b48dcc513760477f5336",
+      "size": 539
+    },
+    {
+      "path": "evidence/validation-results.json",
+      "sha256": "22610d14592b7e93a2988e4db762954bfdeb9af4761f5091e25bb3b28d30a184",
+      "size": 5701
+    },
+    {
+      "path": "runtime/README.md",
+      "sha256": "cccf0005b9f3775a56c2b73ba6e04d6adb61d155673ce0c0ec9cd0778de513d8",
+      "size": 4179
+    },
+    {
+      "path": "runtime/build-gui/monaka_bridge_control.exe",
+      "sha256": "28a9d5bed1f7f6975b98809e825e87aaca05d0531a0e5b0cfaac6cc0769a6a54",
+      "size": 24576
+    },
+    {
+      "path": "runtime/build/Release/monaka_bridge_calibrator.exe",
+      "sha256": "da1e14554c06479c463d4a5e558f8ecb92e0d0b921459937d8afc42cccd3a9c9",
+      "size": 384000
+    },
+    {
+      "path": "runtime/build/Release/monaka_bridge_config.exe",
+      "sha256": "96756d1336efe85fb89eb2f615e3e88feaa5d0938ddbe25809bd003b9d93e9c1",
+      "size": 377856
+    },
+    {
+      "path": "runtime/build/Release/monaka_bridge_service.exe",
+      "sha256": "fd401ff5552449b70cdecdd27c478c6a662afc1af7e4595fc69fd347e379518a",
+      "size": 430080
+    },
+    {
+      "path": "runtime/build/Release/openvr_api.dll",
+      "sha256": "bab8ac6ef64e68a9ca53315b0014d131088584b2efdfa6db511d67ec03cfcb4a",
+      "size": 837272
+    },
+    {
+      "path": "runtime/config/bridge.json",
+      "sha256": "7d6a5abbdd4a873a03e42a6e384c6b729994e8ae16aa32351d7819568d9cc6df",
+      "size": 977
+    },
+    {
+      "path": "runtime/docs/architecture.md",
+      "sha256": "764b20889619157b1a758000e8aa4868fdc3f0eb9d55f72232c7dc5ac419f1c7",
+      "size": 4950
+    },
+    {
+      "path": "runtime/docs/configuration.md",
+      "sha256": "66539d57faf955c266a1144deb5af5690a59ab79f24f8bac98392c2181762aa1",
+      "size": 3935
+    },
+    {
+      "path": "runtime/docs/cutover.md",
+      "sha256": "99449c8273ae517c117c2ad38ea59ceccaa22073b61a3945a87988e703e547b2",
+      "size": 4052
+    },
+    {
+      "path": "runtime/docs/direct-regression-crash.md",
+      "sha256": "3b82b5842cd66d2791e930c72e7b56751102e2983348bebbad3917d3dcb4ec8e",
+      "size": 3824
+    },
+    {
+      "path": "runtime/steamvr/monaka_bridge/OpenVR-LICENSE",
+      "sha256": "9e6d1480fb68e86ceafed312f7e67dadcdc2a99b350b710d624b8f0f0f1a2329",
+      "size": 1515
+    },
+    {
+      "path": "runtime/steamvr/monaka_bridge/bin/win64/driver_monaka_bridge.dll",
+      "sha256": "efc81c6b4a6eb3be44a9ab9c80438d488e949cdfd4c530e6fcc48ab3c20d8800",
+      "size": 263680
+    },
+    {
+      "path": "runtime/steamvr/monaka_bridge/driver.vrdrivermanifest",
+      "sha256": "94430424c01039bc114bfa07deb0a4026947d32f75300af2fa154763a5982365",
+      "size": 83
+    },
+    {
+      "path": "source/.gitattributes",
+      "sha256": "8921c7900b07dee44bc4f170b2b77b68e303a8cb04fc7adfb8533adc520968c8",
+      "size": 100
+    },
+    {
+      "path": "source/.gitignore",
+      "sha256": "ce5f51e4e39cb307b5b8446f4164865d9a587ec4b7a7750f3ff1b92423b5d0b0",
+      "size": 77
+    },
+    {
+      "path": "source/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    {
+      "path": "source/AGENTS.md",
+      "sha256": "e4ab6351ffe4e12879f8872736ca8798276c33390b21ef9666720e554131a75a",
+      "size": 2466
+    },
+    {
+      "path": "source/CMakeLists.txt",
+      "sha256": "2bc4e47ac45e4d2a7a6bac526f8ccca70d0d8dad3b5ebf383dbd0e5a6f198853",
+      "size": 6577
+    },
+    {
+      "path": "source/README.md",
+      "sha256": "cccf0005b9f3775a56c2b73ba6e04d6adb61d155673ce0c0ec9cd0778de513d8",
+      "size": 4179
+    },
+    {
+      "path": "source/config/bridge.example.json",
+      "sha256": "7d6a5abbdd4a873a03e42a6e384c6b729994e8ae16aa32351d7819568d9cc6df",
+      "size": 977
+    },
+    {
+      "path": "source/dependencies/artifacts/monaka-protocol-kit-v1.0.zip",
+      "sha256": "eef5b7f2bc490926385b99dabcd44dc5a374228bf2a7869beea01f9dad936729",
+      "size": 2265518
+    },
+    {
+      "path": "source/dependencies/artifacts/pico-bridge-extraction.zip",
+      "sha256": "5709881826a5ce9a5ad48060e67fc8195bb622c4fb80325e613d37fedb35a1d4",
+      "size": 120817
+    },
+    {
+      "path": "source/dependencies/artifacts/vive-backend-handoff.zip",
+      "sha256": "d379df3a00ac93dd03a5f0216a8b06189a0e2a1834cfa0c6ec36f27c0d6227e1",
+      "size": 2260616
+    },
+    {
+      "path": "source/dependencies/monaka-protocol.lock.json",
+      "sha256": "234f0dffc46b808a179ec91da3c185794d7b7c83bc5b7d2bcb31fa73886bcb44",
+      "size": 25895
+    },
+    {
+      "path": "source/dependencies/openvr.lock.json",
+      "sha256": "73fb6498e21781470b799a411f857bb185ec93aef45d07d93a9936c08a8b3737",
+      "size": 631
+    },
+    {
+      "path": "source/dependencies/reports/handoff-manifest.json",
+      "sha256": "1020f7ba9ec430308791be20bd1b4341323c119e69d0eeaf8e99bac7074d1aad",
+      "size": 507
+    },
+    {
+      "path": "source/dependencies/reports/pico-bridge-extraction.handoff.json",
+      "sha256": "129db84b2e3aade2ecbb3b23c40f4f57e94888d4345e807094ccd0505dedf730",
+      "size": 356
+    },
+    {
+      "path": "source/dependencies/reports/task2-final-report.json",
+      "sha256": "99d730e1d92ff2495cbd1ec0a09580cfc67c8ccc08ff3eb7365d4036d4c36fc6",
+      "size": 38185
+    },
+    {
+      "path": "source/dependencies/reports/task3-final-report.json",
+      "sha256": "1f0fb9d07531ee841f44656c1971c4e0f48d86f251de9946e466da29c70cdf08",
+      "size": 32455
+    },
+    {
+      "path": "source/dependencies/reports/vive-backend-handoff.handoff.json",
+      "sha256": "9fb4e63ef63d17df6087624f84996957a63c2e245e3bc007d6bc9163c11a25d8",
+      "size": 1515
+    },
+    {
+      "path": "source/dependencies/task2-derived-files.json",
+      "sha256": "2adb2df5b889b1499b3d17769b42de0af371c6d801bf6580716e5e37317da070",
+      "size": 19693
+    },
+    {
+      "path": "source/dependencies/task2-extraction-manifest.json",
+      "sha256": "dbeebb1aec1669744c71ea376bf22248ee0c34f1e63e5fe70944d471e482cbbc",
+      "size": 60999
+    },
+    {
+      "path": "source/docs/architecture.md",
+      "sha256": "764b20889619157b1a758000e8aa4868fdc3f0eb9d55f72232c7dc5ac419f1c7",
+      "size": 4950
+    },
+    {
+      "path": "source/docs/codex/Task4_MonakaBridge.md",
+      "sha256": "f4247ab76549e35c0af27e2af5fec50d83d4a2658ab43ae3fc6cd951f3c87228",
+      "size": 16466
+    },
+    {
+      "path": "source/docs/codex/task4/00_upstream_handoff_status.md",
+      "sha256": "948d068a96b113406996e7da0a83f65cbfdac52098534d735c36c128b9c797b5",
+      "size": 4842
+    },
+    {
+      "path": "source/docs/configuration.md",
+      "sha256": "66539d57faf955c266a1144deb5af5690a59ab79f24f8bac98392c2181762aa1",
+      "size": 3935
+    },
+    {
+      "path": "source/docs/cutover.md",
+      "sha256": "99449c8273ae517c117c2ad38ea59ceccaa22073b61a3945a87988e703e547b2",
+      "size": 4052
+    },
+    {
+      "path": "source/docs/direct-regression-crash.md",
+      "sha256": "3b82b5842cd66d2791e930c72e7b56751102e2983348bebbad3917d3dcb4ec8e",
+      "size": 3824
+    },
+    {
+      "path": "source/include/monaka_bridge/bridge.hpp",
+      "sha256": "13b894a2ddabe58c8ea32a8a52755ece4779088d8048030b1979b3e43c2ab6a3",
+      "size": 1434
+    },
+    {
+      "path": "source/include/monaka_bridge/calibration.hpp",
+      "sha256": "363eb320a4c8020f5f8f039668914dc1627cb4871dd2951d793ed6f3f1fec5db",
+      "size": 2882
+    },
+    {
+      "path": "source/include/monaka_bridge/config.hpp",
+      "sha256": "0ccf56c4dd9b8da90b72ee6b5e5aabceacd08ce7d4dd3296daffd20fdac31bb0",
+      "size": 932
+    },
+    {
+      "path": "source/include/monaka_bridge/direct.hpp",
+      "sha256": "4d79768f5e26b1bd55bbce88a3b074fa03506ce61495bf0a840e7f78fff26acd",
+      "size": 550
+    },
+    {
+      "path": "source/include/monaka_bridge/network.hpp",
+      "sha256": "32b2a481d60956e2ce63ac0b2b8345e722d5bfdea260f34811d0ae1d9ded34b6",
+      "size": 504
+    },
+    {
+      "path": "source/include/monaka_bridge/registry.hpp",
+      "sha256": "e438c02fe9a020a3baa0557f16ddd3d6e1c91c03e2a5dc8e2b65747f30e704e5",
+      "size": 1003
+    },
+    {
+      "path": "source/outputs/steamvr/driver/device_provider.cpp",
+      "sha256": "725331e77aa6c0c589f62483b953fbfb2bdab602db3aeb6c89a0c8332e68cd2f",
+      "size": 1579
+    },
+    {
+      "path": "source/outputs/steamvr/driver/device_provider.hpp",
+      "sha256": "03f92fc1095292523174e3d6c4ad8397c7916e6e34c1609a1489bb03cfaf02d7",
+      "size": 538
+    },
+    {
+      "path": "source/outputs/steamvr/driver/direct_pose.hpp",
+      "sha256": "4fd37cc0eada207029cf8f7759bca83a88fb85f8015d7c451386192dd9a4d4a0",
+      "size": 1311
+    },
+    {
+      "path": "source/outputs/steamvr/driver/driver_log.hpp",
+      "sha256": "7440b0f0390e421e258b616af5b7d9538f20f1346646e84c09b40d59800d68d2",
+      "size": 540
+    },
+    {
+      "path": "source/outputs/steamvr/driver/hmd_driver_factory.cpp",
+      "sha256": "dde92ae83dadcebb3850a769ce9c46a32ebf11e8ad79548d18677e1b00d0458a",
+      "size": 798
+    },
+    {
+      "path": "source/outputs/steamvr/driver/tracker_device.cpp",
+      "sha256": "7a0540a14846a40676b553a29b1c19832c1d2857853807579359df232c87366e",
+      "size": 2739
+    },
+    {
+      "path": "source/outputs/steamvr/driver/tracker_device.hpp",
+      "sha256": "3f0f9e2aacacac4d058841b9e4b5bd01939be796e99a144761e45af0a931e680",
+      "size": 673
+    },
+    {
+      "path": "source/outputs/steamvr/package/driver.vrdrivermanifest",
+      "sha256": "94430424c01039bc114bfa07deb0a4026947d32f75300af2fa154763a5982365",
+      "size": 83
+    },
+    {
+      "path": "source/scripts/build_gui.ps1",
+      "sha256": "752949ca9ff27850f1262a96c863325e1b5b23746f488cb3b345517d38062072",
+      "size": 6060
+    },
+    {
+      "path": "source/scripts/build_windows.py",
+      "sha256": "1c92e9be9fc7e80aa91fb241461565c52b27bda3b4478758bb3ea72f9e3dbd72",
+      "size": 630
+    },
+    {
+      "path": "source/scripts/import_upstream.py",
+      "sha256": "f1e82db3ee5f3249fa9731954d7ab9d87b313049b7800e516f3a77f521a15b4d",
+      "size": 5271
+    },
+    {
+      "path": "source/scripts/package_handoff.py",
+      "sha256": "4b1ff864a214e482fdac53b0779a309d3edf67653d66dfb1f169f2436da1e1c9",
+      "size": 10284
+    },
+    {
+      "path": "source/scripts/record_provenance.py",
+      "sha256": "cd71a89001c7e26ce7b5c4003b9067a7b8c508db0ae31d674e181de70d3ba2b9",
+      "size": 4812
+    },
+    {
+      "path": "source/scripts/verify_windows.py",
+      "sha256": "244b6e264011bcdd867c491be9441933f11bc80c5c91a9b80009e1a2601e1c63",
+      "size": 3627
+    },
+    {
+      "path": "source/src/calibration/calibration.cpp",
+      "sha256": "f3df1e1a82c4884451fa8f14f5e06eb7ea1574b046a825740c3e32364fc96549",
+      "size": 1847
+    },
+    {
+      "path": "source/src/mapping/config.cpp",
+      "sha256": "fe5e8af715f060717647d2f252944ef34be6f46956c77333066463245b9a0616",
+      "size": 7449
+    },
+    {
+      "path": "source/src/observation/registry.cpp",
+      "sha256": "7734e690a64b8234931834776a4dfd1f058083848b47730fcfe427dda3c272a8",
+      "size": 3194
+    },
+    {
+      "path": "source/src/routing/bridge.cpp",
+      "sha256": "13612759394b498c509d24869b65431c4651356ba00ca1db285a5120f868ea46",
+      "size": 7644
+    },
+    {
+      "path": "source/src/routing/direct.cpp",
+      "sha256": "3ce908d9805caef4302c12b939c8ed1d674d7c0c4309dc351426c10184603363",
+      "size": 1704
+    },
+    {
+      "path": "source/src/routing/network.cpp",
+      "sha256": "220fe6ff51479c8b4d4ea6f3ed8cd5ca3c47decc2839e2ed93f92fe6ce4b9d77",
+      "size": 3464
+    },
+    {
+      "path": "source/tests/CodecConsumer.java",
+      "sha256": "7879372b86b302fbf9a362ceb814a32d3d875317ba05f3843c12932bb0617ee8",
+      "size": 642
+    },
+    {
+      "path": "source/tests/bridge_tests.cpp",
+      "sha256": "6b1b13caf1efd35d197cc99adf5f63452abafe23f87ab00b5b23f8e95e027b51",
+      "size": 5817
+    },
+    {
+      "path": "source/tests/direct_regression.cpp",
+      "sha256": "8a1809d12eb92a7c639d44c9f713eece7100a9bf60b9ecb71d84b51208ee3855",
+      "size": 3485
+    },
+    {
+      "path": "source/tests/direct_udp_consumer.cpp",
+      "sha256": "210746d0a27e6998a0155d77fcc72f71050c0ce107b5ebe6a908283f5e5a4365",
+      "size": 1456
+    },
+    {
+      "path": "source/tests/edge_tests.cpp",
+      "sha256": "3a9e847c263d9dba8d499ed6b170573df8ea3c187c6226d47537f0e4925176ca",
+      "size": 4374
+    },
+    {
+      "path": "source/tests/fixtures/vive-status-samples.jsonl",
+      "sha256": "8ab45802b32c14fce5d7a8ce61da3f17961c8de316c2df4ed88a2ecc8378456f",
+      "size": 4817
+    },
+    {
+      "path": "source/tests/helpers.hpp",
+      "sha256": "e50db1bb4a0dbb0f611c3d269ba5b53b5745d68875473c227d9a0adba79debb4",
+      "size": 2144
+    },
+    {
+      "path": "source/tests/old_context_repro.cpp",
+      "sha256": "dcfe3597098fd42d695f13d9fb72cedfe1f449eed52696e7a766eb34d2de6b8b",
+      "size": 2462
+    },
+    {
+      "path": "source/tests/performance.cpp",
+      "sha256": "6655933a02e13627ae17851219c5ff079eb5cf625313a5fa71ea90a8a8055ba3",
+      "size": 2980
+    },
+    {
+      "path": "source/tests/protocol_interop.py",
+      "sha256": "ccd914eb3d356518b081affbab35650d5735d01b1823357bc7fca9c51133b4c1",
+      "size": 1791
+    },
+    {
+      "path": "source/tests/standalone_driver_context.hpp",
+      "sha256": "f6c51adf417a62509a517f52d93d439c8cbf5e4f9aa7bd7d1a553630b5d0be24",
+      "size": 1188
+    },
+    {
+      "path": "source/tests/udp_regression.py",
+      "sha256": "7e117286b892066ca688c3ee03a6b104d3267b7f6dd5d844b508ecccf3c9e3d1",
+      "size": 8911
+    },
+    {
+      "path": "source/tests/ui_config_smoke.ps1",
+      "sha256": "bb3f4644637e86a8a187cb4d7d110784a676a29aabd9457fc9d8e5195b2dea67",
+      "size": 1051
+    },
+    {
+      "path": "source/third_party/monaka-protocol/NOTICE",
+      "sha256": "e7fe3b5af4f328fee363e1b559bb94b7f3ea97b5db5544c036a9c136cbe448ca",
+      "size": 673
+    },
+    {
+      "path": "source/third_party/monaka-protocol/README.md",
+      "sha256": "f568588923af82e7d288c57f026d46800c50281d2ed0fc12a74faf39c1ca849e",
+      "size": 3656
+    },
+    {
+      "path": "source/third_party/monaka-protocol/SHA256SUMS",
+      "sha256": "5f5b30afb2d96b6f4556e0cc7df866406d49d92bb17944f9f3221ad35b622132",
+      "size": 12008
+    },
+    {
+      "path": "source/third_party/monaka-protocol/cpp/CMakeLists.txt",
+      "sha256": "9c0fe16ae30c247bdf140bacceb3643fc5370a195f0a916be9639d120a7e90ff",
+      "size": 834
+    },
+    {
+      "path": "source/third_party/monaka-protocol/cpp/include/monaka/protocol/v1/codec.hpp",
+      "sha256": "bc714ab65d0dfce396d02c4672300f0d24ed1fa17d957ce414362be13d5a8186",
+      "size": 621
+    },
+    {
+      "path": "source/third_party/monaka-protocol/cpp/include/monaka/protocol/v1/models.hpp",
+      "sha256": "b17ea4debb02773e621f3f758fab4a828389b4e5d34157f42b0103d0a1a44550",
+      "size": 3464
+    },
+    {
+      "path": "source/third_party/monaka-protocol/cpp/src/codec.cpp",
+      "sha256": "e97ebfe3b5a6ec591b766e4f26b501ec40ede1aca5d6fe9af0a0079eda887292",
+      "size": 11361
+    },
+    {
+      "path": "source/third_party/monaka-protocol/cpp/src/models_json.inc",
+      "sha256": "d8a30506167e74a28e8f9b78883ff5b4f2f0e2106224bc3d208a83481614a7af",
+      "size": 12115
+    },
+    {
+      "path": "source/third_party/monaka-protocol/cpp/src/schema.inc",
+      "sha256": "5dc6bae1c221ffd2e81c931fdc24095960a80514a274a3a9dc703fe5a17dc303",
+      "size": 8204
+    },
+    {
+      "path": "source/third_party/monaka-protocol/cpp/tests/runner.cpp",
+      "sha256": "25603b71d09500b4ca95831192cf038aedb0af953265a94bd479b65f47794421",
+      "size": 3985
+    },
+    {
+      "path": "source/third_party/monaka-protocol/cpp/third_party/nlohmann/LICENSE.MIT",
+      "sha256": "86b998c792894ccb911a1cb7994f7a9652894e7a094c0b5e45be2f553f45cf14",
+      "size": 1076
+    },
+    {
+      "path": "source/third_party/monaka-protocol/cpp/third_party/nlohmann/json.hpp",
+      "sha256": "9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6",
+      "size": 919975
+    },
+    {
+      "path": "source/third_party/monaka-protocol/dependencies.lock.json",
+      "sha256": "083af1850a008204bb051a4103f8def8546ad0bdec42b3de0070b54751d1ffbf",
+      "size": 1618
+    },
+    {
+      "path": "source/third_party/monaka-protocol/docs/C1.md",
+      "sha256": "3a76435c8b25b3975028f9a83c4dc3d1e3848806c9608d885f5bba74a1198ed3",
+      "size": 15677
+    },
+    {
+      "path": "source/third_party/monaka-protocol/docs/codex/Task1_MonakaProtocol.md",
+      "sha256": "437f938a2d266ee37390899206fd9ab5b022bfd9ada87fa295fc43df71422f41",
+      "size": 24721
+    },
+    {
+      "path": "source/third_party/monaka-protocol/docs/design-decisions.md",
+      "sha256": "1c3dd7885948e56353d2cba5287848f5520523b82b8f7f9e207ab1cfa0782f4f",
+      "size": 2007
+    },
+    {
+      "path": "source/third_party/monaka-protocol/docs/performance.json",
+      "sha256": "d9c2887e5b091f23c22c93923ffa021c8e7788a024139935d85bed07138949b5",
+      "size": 2743
+    },
+    {
+      "path": "source/third_party/monaka-protocol/docs/verification.md",
+      "sha256": "126a467450072ca9ce4f734b9d598e92cc72dac8ad58c9b775a55d9f5aaf7688",
+      "size": 2938
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/consumer-scenarios.json",
+      "sha256": "baf210d8fc2d25c66f995d64716f495a1c0adf6fa6e45fedf7019505b6f0adfc",
+      "size": 1338
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/index.json",
+      "sha256": "4dde3eb660994b11f5253d2208b0e348a0e73b25e00760d970f1d40a1b69df99",
+      "size": 34036
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/bad-number-type.json",
+      "sha256": "2a0b9037aaa465ed1a70d403ee0efc2a09e105db3db7acd64da495f62d3cffd9",
+      "size": 639
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/bad-quaternion.json",
+      "sha256": "fc7108c6d2d104bab64669218e8dd7a7e25400d5be265d20d8ed84d327438427",
+      "size": 635
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/bad-vec-length.json",
+      "sha256": "04992455af3b69aa4bbcbca50024094213688811dc63a0b2f51e6e878a5032b5",
+      "size": 635
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/battery-range.json",
+      "sha256": "3fe5ae00006ddebb8f223309bad055b8590053ff5e1a511a33f18f8c97cb6f20",
+      "size": 703
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/bom.json",
+      "sha256": "fcecbe01e3bed288e705b88fb341220a18df86be6fbf09a038f6684016489488",
+      "size": 646
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/comment.json",
+      "sha256": "7d9a3af70be7a1a5aa186475ccb3bba78d11a4b37dabeaa5b650632e0e7248b1",
+      "size": 656
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/depth-17.json",
+      "sha256": "9db67a585e57118a8f06613bfd131ef2b0dd2a646f6014da6cfde6437fe3c48c",
+      "size": 689
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/derivative-without-capability.json",
+      "sha256": "1210bc95eb7b75fde8a20eef7618ef5ab913cc5b5c4a59966b424d3526e695ba",
+      "size": 716
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/duplicate-capability.json",
+      "sha256": "8a490f8dec45028589923e40e60bde18c24732a21ea8cf45cbd6454a2f53e67e",
+      "size": 654
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/duplicate-escaped-key.json",
+      "sha256": "3ece42bf34d95cc5bc7d0a7a7e1bb73ed40cf42a78eeccb1751a50001ae2de46",
+      "size": 663
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/duplicate-unknown.json",
+      "sha256": "78dabe9f6b5f94c99f89a570991764f1587756ddaa9e7a8694e262f5c0c8cdd2",
+      "size": 665
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/duplicate.json",
+      "sha256": "40dc98ce4397c336a48bdb3d5d49e6c5a7b15318e8e5dbaf0c22ec2dbc813792",
+      "size": 658
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/empty-id.json",
+      "sha256": "57c204c3cc462c0b6767337104190b944726701500cd9ece45707212bb72e32f",
+      "size": 634
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/empty.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/extra-object.json",
+      "sha256": "8b6e0600d381e6779fad9d927df4331c7a34709651a3e99c5c218ed021a62cf6",
+      "size": 645
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/fractional-minor.json",
+      "sha256": "4a3aef8214cf2c09e1948976b0d6e21dd88fde2d84bd3cb3ead78305db34a110",
+      "size": 645
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/future-timestamp.json",
+      "sha256": "36345d98cbe24678c6e7cfd7410fa39f7c0847d2d7f7dbb28f3decd4b60a9200",
+      "size": 646
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/id-byte-overflow.json",
+      "sha256": "c0ae6a3975b8abe734f594b60eb87dc0d36d6e437068c8a54cb02ccb535a1205",
+      "size": 733
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/id-c1-control.json",
+      "sha256": "7cd487a8f1c7ed2532190e9ab969a591c98373b7c4e8d1e9706258dbcde90b64",
+      "size": 638
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/id-control.json",
+      "sha256": "c5920c0f2bf194d17ac45e42c09f62816ab387a74f729787da7fbeda91fd06bc",
+      "size": 642
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/invalid-state.json",
+      "sha256": "97973aa1bfc4541dc7a3768400da36ab929df64e0be2f39555a884cc100e0657",
+      "size": 640
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/minor-overflow.json",
+      "sha256": "0293e5d122c07d9b7a43c2094594fe3465a48d3248ac646c5dcdf78295a69a0f",
+      "size": 647
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/missing-capability.json",
+      "sha256": "c409e31b359b9b3e699fc51514ed569bde277cc12c794c36ff69f3694762f448",
+      "size": 632
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/missing-field.json",
+      "sha256": "130e1d2b20f0d9ccb661700b64ec0c98d718cf4b0386a8e98487a10952fbe5f6",
+      "size": 628
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/mtp-confidence-zero.json",
+      "sha256": "57abf867b84a2c1a7832ed2032e783c0c92344d2207622bd3dafff0d1589c5e4",
+      "size": 760
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/mtp-revision-overflow.json",
+      "sha256": "bdeedbd21788adc56ba440be714d80c0fce9eb48151b2bcca81b07ae865dfc8c",
+      "size": 773
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/mtp-unnormalized.json",
+      "sha256": "0a2b95627f37f5577be2c147c79d06a9a61199f7a5ed74cc1efe704670670b9d",
+      "size": 758
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/mtp-wrong-convention.json",
+      "sha256": "a039790e0c157671e53f0e164223332e88b06966dd45907a558351e620313c64",
+      "size": 746
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/nan.json",
+      "sha256": "76965fa02c152840d267a6efc517fca68a7d95138dde1545e66a0ad20c949283",
+      "size": 639
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/none-evidence-valid.json",
+      "sha256": "9e0a5c0a73b17463e737523b45126d26d5cc9ac198836e58368ec1098e33b48c",
+      "size": 641
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/nonfinite.json",
+      "sha256": "60d255d2df37faaece1b96c0767183c589da2cc0269c1537ce5d2456cacd1e47",
+      "size": 641
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/null-valid-position.json",
+      "sha256": "c9eed96296c4561f89dfe4cc3ac4ade3b705861e1b9a5c84f4df1d532f7ad92d",
+      "size": 634
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/numeric-u63.json",
+      "sha256": "b2b2d5578110c5aa6c81921e3736b28ff0264c8986947afa0f49c268ad0862f6",
+      "size": 656
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/overlong-utf8.json",
+      "sha256": "bfc25cfd85c49686ec04294e6de47c5dd57651e75084d1c08d3d124cd1dd471d",
+      "size": 4
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/quat-boundary-zero.json",
+      "sha256": "8baf438d855042c7492730e3e10130e39effc0a03c0dc5cfb8d8ad56b9e96c14",
+      "size": 635
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/surrogate-utf8.json",
+      "sha256": "ee4a76500d4d714ca691afe56c1fd9e0a5fbcb42d6c8f8d7178aae4ddb683cf7",
+      "size": 5
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/too-large.json",
+      "sha256": "4f4ead552223cb2905a4828972dfae7740586dabae603924a7810598256dbdd9",
+      "size": 4097
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/trailing-comma.json",
+      "sha256": "28033e84cb64d59e9485c09b27045659215f60809b35cc460ae2bbfe3cb8e064",
+      "size": 644
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/truncated.json",
+      "sha256": "8f97051e9e03b6afe0d1cee069d5a3ea84bed23ebc614b123b4f68842019251f",
+      "size": 642
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/u63-decimal.json",
+      "sha256": "c44b18ee6d927fe3c7e238fe5dfb6932272cea5f0d5e70fe1d286f6531021003",
+      "size": 645
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/u63-empty.json",
+      "sha256": "cb71df5a99350d11b962eeb7bf7f101dfed26e7d6731753f205229c285bd78d7",
+      "size": 642
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/u63-exponent.json",
+      "sha256": "ad798c8488908cfb88d048587422ffa5f494c73da6b2c0b26b8ad35741048b82",
+      "size": 645
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/u63-leading-zero.json",
+      "sha256": "99e1d5370f9f4b04d6a04ec82eaaeb494d9d09f15548f61ace587a2a45ca6702",
+      "size": 644
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/u63-negative.json",
+      "sha256": "5847038a443890704f5b2a57d5193de58a015e9f4e8f22125afbfcb9ab225d19",
+      "size": 644
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/u63-overflow.json",
+      "sha256": "61f0d5fb1f72fc290ef4e039808aa61f881987259f5f8637ccea2d161be831fb",
+      "size": 661
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/unknown-enum.json",
+      "sha256": "99726e436e1f21e95c9c8948e5088eb9fa290632469275e6a08f9f231c1e95c8",
+      "size": 643
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/unknown-message.json",
+      "sha256": "4c25b4e1553dd78934fa74ad105a3817eec56f20931b381bab681b0f20e0262d",
+      "size": 650
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/unknown-protocol.json",
+      "sha256": "58d4a9d340531f13b8e17050b44f955fc490b4adc38192480a2b6ee191bfc34f",
+      "size": 629
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/unpaired-surrogate.json",
+      "sha256": "b595eb6054047ba825979da38993fa3c881d710959dac0be095bcf96e16cbc77",
+      "size": 640
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/unsupported-major.json",
+      "sha256": "c611c005894992c0c4f2af4fdfe96a3ce908e0502fc10899237400c40b9bf3a6",
+      "size": 643
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/uppercase-uuid.json",
+      "sha256": "76a1d18975d5601aae8ca2070ae9e57c47540f365c6cddc5e5b5e256a0462645",
+      "size": 643
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/invalid/utf8.json",
+      "sha256": "a8100ae6aa1940d0b663bb31cd466142ebbdbd5187131b92d93818987832eb89",
+      "size": 1
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/depth-16.json",
+      "sha256": "f91746bd583632f5ab5b334903d991d397864fc60d352bb601d13edf181dc844",
+      "size": 687
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/derivatives.json",
+      "sha256": "e360dc328d91fa99ed3e523bb82905897dd1c1391021b6bf48725b18d6bad322",
+      "size": 928
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/device-state.json",
+      "sha256": "6990f66ea807b4776d2c99a2f5689d49220cb6ae8cd4635ecde63094c4089710",
+      "size": 535
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/different-clock-epoch.json",
+      "sha256": "f17ef500ac3238790bebe8dd8a4c28efea2a56cbad747cb0415b42900d8f5ca0",
+      "size": 615
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/future-minor.json",
+      "sha256": "f96fe7152a15f5ccfe3a0ebe7025ec5cca8ad302e8c671229415965fefaf63a1",
+      "size": 673
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/invalid-position-moving.json",
+      "sha256": "5786dab4a70e865aff53b26d835395da6e74c7df687904a09fae181038ba3224",
+      "size": 650
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/known-battery.json",
+      "sha256": "a0a63b64752f785de9436d1182b1cace7453232e1641f5b79d00f5eb2ff66b67",
+      "size": 736
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/mtp-pose.json",
+      "sha256": "92d34abcede49e4de257d3a729ee0545c089cb526251d068573d53b751989c08",
+      "size": 764
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/negative-quaternion.json",
+      "sha256": "c877c1b2c6936a081bbcbcffe4e3d32c5ec5dccff063eecfe1aca708e2185274",
+      "size": 636
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/observation-unnormalized.json",
+      "sha256": "3a9e1b8393846dc40a973dc0aa383693047b6f888bc334ee1f16d9182a553ab9",
+      "size": 637
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/observation.json",
+      "sha256": "202f68793bc501d5dcd03c0733148532974d6433887e542e6fc3407362f24db5",
+      "size": 643
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/orientation-only.json",
+      "sha256": "20b008ba59fe6267b3e0622583cc300e82241e60f40502bb8cd8b9d81e98695f",
+      "size": 643
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/position-only.json",
+      "sha256": "448f9e2abf99579a05fb7c41908c05e3101b3f50c595a1ff4dbd357063be2e49",
+      "size": 630
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/quat-boundary-half.json",
+      "sha256": "cb5632a5fd763e6c65621a780a498951f718b9130a002c74cb883bdf0a35853f",
+      "size": 637
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/quat-boundary-onehalf.json",
+      "sha256": "5e0dbf9e393222c5d91124255c5ae3c3e431a414c029888651fca2ab1f2ab8ec",
+      "size": 637
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/reordered-whitespace.json",
+      "sha256": "c3da61ff222eaf6b991aa5a663264a067342f4f62da6208d4c6d5de83034c070",
+      "size": 768
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/session-reset.json",
+      "sha256": "4f3c61bf099467ae131c7a387a30b8517fb7a0144051353773bc96a66206d800",
+      "size": 643
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/size-4096.json",
+      "sha256": "1a4e7955a0f35e95019da702eff964fe6fa781a8008a4ce127db09ff79d87f6c",
+      "size": 4096
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/tracker-state.json",
+      "sha256": "2f9254adcbc16ae137b244cd9dce2f515efacb686c4aea7e7d19edea09a5f065",
+      "size": 564
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/u63-maximum.json",
+      "sha256": "a3a3b0d2b7926a641e2aa62ef0c8ba2d45fcd8e0b816fdfb41f300224041c83e",
+      "size": 667
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/unknown-battery.json",
+      "sha256": "ccb0968c27777d550b474e27e1c6235e0f7eac9dbcc7a414b193b64c1626a5c2",
+      "size": 706
+    },
+    {
+      "path": "source/third_party/monaka-protocol/fixtures/valid/utf8-id-limit.json",
+      "sha256": "2adcda3a208ad3dd86bf0d1a0456b37648191f6064b9b724770465f97d3506c3",
+      "size": 730
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/build.gradle.kts",
+      "sha256": "e8a54b04476ec1f3d2caa5ba02f199ce9c948abda5e3eb259c4fe67ea3600d2c",
+      "size": 309
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/libs/gson-2.11.0.jar",
+      "sha256": "57928d6e5a6edeb2abd3770a8f95ba44dce45f3b23b7a9dc2b309c581552a78b",
+      "size": 298435
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/libs/kotlin-stdlib-2.3.10.jar",
+      "sha256": "f61662c6d3a2f8ef5bd34362a02d877772c39f393cd394feb259dfaf7f4d8437",
+      "size": 1797000
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/libs/monaka-protocol-jvm-0.1.0.jar",
+      "sha256": "862149d040ee65a4f7086e33e8fe3e49897778dcb3e17eeba574a4afeadc2cbf",
+      "size": 64081
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/runtime-dependencies.json",
+      "sha256": "cfbb49ee1db72d217ebb4535f54e6856e1fa6daf224ad41d0a3ef92955ff41bf",
+      "size": 964
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/settings.gradle.kts",
+      "sha256": "be570dcdf33fa37b70793dd36d55e3a62f476510cf1a3439f5b3516fecef6a7f",
+      "size": 41
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/Error.kt",
+      "sha256": "59e8f2be192c67d7f365d8d1366876d59e3567ab6783cac43bdc16180a6ff2f7",
+      "size": 176
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/Models.kt",
+      "sha256": "330becbe421fc5799473d297a954d6ef7cd90d4be6c4c5e3103108411a622e76",
+      "size": 3057
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/ModelsJson.kt",
+      "sha256": "b47ad3bc3128f4b5c44a8b5344881243e0c7b2cad7ea32a2802290dd718e938f",
+      "size": 12704
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/MonakaCodec.kt",
+      "sha256": "c98daf0b9b412db96228f5798952ccb51c32ed6a4843b1fcffa60247c2068f64",
+      "size": 11803
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/src/main/kotlin/dev/monaka/protocol/v1/Schema.kt",
+      "sha256": "0cd0d346f24fb12849cc80aede8e427e43e4a6e3f05ec466c2bf8dd3c7b3d63b",
+      "size": 9196
+    },
+    {
+      "path": "source/third_party/monaka-protocol/jvm/src/test/kotlin/dev/monaka/protocol/v1/Runner.kt",
+      "sha256": "7b47caa7aa8d3454f7a68694fd9b19e8739392f6c8ccd6c652877931dab22400",
+      "size": 2722
+    },
+    {
+      "path": "source/third_party/monaka-protocol/licenses/gson-LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "size": 11358
+    },
+    {
+      "path": "source/third_party/monaka-protocol/licenses/kotlin-LICENSE.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "size": 11358
+    },
+    {
+      "path": "source/third_party/monaka-protocol/licenses/kotlin-NOTICE.txt",
+      "sha256": "0b09a83d3ef7795c7dec65e815866597c066c53898f2852a76599b8f5552941a",
+      "size": 482
+    },
+    {
+      "path": "source/third_party/monaka-protocol/protocol.lock.json",
+      "sha256": "234f0dffc46b808a179ec91da3c185794d7b7c83bc5b7d2bcb31fa73886bcb44",
+      "size": 25895
+    },
+    {
+      "path": "source/third_party/monaka-protocol/schema/monaka-tracking.schema.json",
+      "sha256": "a36d73f95d87812883e7ba020af633feae97c1d87b308301e76b34684ac70b58",
+      "size": 15795
+    },
+    {
+      "path": "source/third_party/monaka-protocol/schema/tracker-observation.schema.json",
+      "sha256": "fde490637f2f41c2414903634051a6bb046de770777d6c820cfeb42754e961b9",
+      "size": 15817
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/benchmark.py",
+      "sha256": "6b25ab197319c3dd38271d16515d66f3fd35e1c9be404508c3f598ec09883397",
+      "size": 1728
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/check_boundaries.py",
+      "sha256": "5c5f612e6a8980d25585c2b0c5e2992faefa7dc4db5bc3a710c36ddd0dc8e513",
+      "size": 982
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/fixtures.py",
+      "sha256": "5539012cc01cb360a483e71889b827fd51bfab795c34b3d76879d5873830ba54",
+      "size": 10021
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/generate.py",
+      "sha256": "c136032f906e57fc00cda9fce69bce47e895ae6d6bc0f447f7443eb760bc5e05",
+      "size": 9675
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/lock_dependencies.py",
+      "sha256": "377032e5f6ddad78e6775f162dde0b69ec4077d9489f67e12de06e4963e573bd",
+      "size": 2118
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/package.py",
+      "sha256": "efff84ea54c4182ebd9b99d9111816394aeca566335de207022c8f51ebf887fc",
+      "size": 2754
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/report.py",
+      "sha256": "2950c2e96d61bd17c97c064f98e9289ad699f49592094969be570827a718cd0d",
+      "size": 6111
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/test-requirements.txt",
+      "sha256": "a593b4494557bc87c50a132597f908de881735179e8a6b45502e08f16553c90f",
+      "size": 107
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/test.py",
+      "sha256": "dd66c582765f8d6530eb7d1b022d49a50b11925ad8955eb6a0f4855eb621770e",
+      "size": 3050
+    },
+    {
+      "path": "source/third_party/monaka-protocol/tools/verify_kit.py",
+      "sha256": "2a788c48bda1b85988893898642160d1608bb3ec2397d6ba95b683e6d39285c4",
+      "size": 3774
+    },
+    {
+      "path": "source/tools/bridge_config.cpp",
+      "sha256": "36a49ef7cc05d2a06d470adfd045317fa4e41109b3df5717ed07edfb318e0357",
+      "size": 1504
+    },
+    {
+      "path": "source/tools/bridge_service.cpp",
+      "sha256": "9c0728db1b01f2213513be83d7ee83715f28b258be43bf69e054784ddd77fefb",
+      "size": 3585
+    },
+    {
+      "path": "source/tools/steamvr_calibrator.cpp",
+      "sha256": "d1fad4fa180963734937d3b222ed9af8d9cdd32bf34c403d0a94eae59ac76b19",
+      "size": 17356
+    },
+    {
+      "path": "source/ui/steamvr_control_gui_main.cs",
+      "sha256": "e81541dc7511c0f064f522e1dfdb82a675e91cb4b33ed854a0f5193e06b0b194",
+      "size": 2817
+    },
+    {
+      "path": "source/ui/steamvr_control_tray.cs",
+      "sha256": "5dad8de6e3f097dd29a887cfcec337f234d07711aa3c5b1603b403b41c445c59",
+      "size": 11027
+    },
+    {
+      "path": "source/ui/steamvr_control_wpf.cs",
+      "sha256": "970a8dd7ae97bdeb046a1b0e295e0f957c9cbf4b5a335e6d7145e26ebe97bcc2",
+      "size": 9669
+    }
+  ]
+}
