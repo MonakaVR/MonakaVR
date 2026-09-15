@@ -135,6 +135,16 @@ Use the final Task 5 report, built JAR inspection and actual handoff hashes from
 completion evidence. The validation script checks that no archived PICO class
 or native carrier symbol is present in active MonakaVR classes/JAR.
 
+On Windows, run `python scripts/verify_task5.py --java-home <JDK17-directory>
+--cmake <cmake.exe>` from a clean committed tree. It runs the required Gradle
+wrapper, scans the built JAR, exercises the packaged JVM codec against the exact
+C++ kit and all fixture cases in both directions, then packages source, runtime
+and test XML/logs. C++ is a local verification build, never a replacement upstream
+artifact. Each run starts RUNNING and replaces the final report with FAIL if a
+check fails. Only a complete PASS produces the handoff with its real source HEAD
+and hashes. Generated files are deliberately outside Git; the external manifest
+records the ZIP hash without a circular self-hash claim.
+
 PICO hardware, five-tracker operation, VIVE dongle/Hub-stopped behavior, physical
 axes/scale/quaternion/map semantics, coexistence, HMD, SteamVR driver registration,
 restart/routing, same-point Direct-vs-MTP and hardware cutover are **NOT RUN**.
