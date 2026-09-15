@@ -1,0 +1,140 @@
+{
+  "status": "PASS",
+  "utc": "2026-09-15T06:44:21.597976+00:00",
+  "checks": {
+    "null-read-reproduction": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge\\build\\Release\\old_context_repro.exe"
+      ]
+    },
+    "direct-standalone": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge\\build\\Release\\direct_regression.exe"
+      ]
+    },
+    "direct-imports": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe",
+        "/dependents",
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge\\build\\Release\\direct_regression.exe"
+      ]
+    },
+    "ctest": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\ctest.exe",
+        "--test-dir",
+        "build",
+        "-C",
+        "Release",
+        "--output-on-failure",
+        "--timeout",
+        "40"
+      ]
+    },
+    "gui-config-smoke": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "tests/ui_config_smoke.ps1",
+        "-RepoRoot",
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge"
+      ]
+    },
+    "separate-process-udp": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Users\\nynyp\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "tests/udp_regression.py",
+        "--bin",
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge\\build\\Release"
+      ]
+    },
+    "fixed-codec-interop": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Users\\nynyp\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "tests/protocol_interop.py",
+        "--cpp",
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge\\build\\third_party\\monaka-protocol\\cpp\\Release\\monaka_codec_runner.exe",
+        "--java-home",
+        "C:\\Program Files\\Microsoft\\jdk-17.0.20.101-hotspot"
+      ]
+    },
+    "derived-provenance": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Users\\nynyp\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+        "scripts/record_provenance.py",
+        "--check"
+      ]
+    },
+    "performance": {
+      "exit_code": 0,
+      "result": "PASS",
+      "command": [
+        "C:\\Users\\nynyp\\Downloads\\6Dof\\MonakaBridge\\build\\Release\\bridge_performance.exe"
+      ]
+    }
+  },
+  "performance": {
+    "samples": 10000,
+    "sources": 2,
+    "outputs": 3,
+    "measurement": "fixed C1 decode to serialized egress callback; excludes OS scheduling and hardware",
+    "process_cpu_ns_per_observation": 326562,
+    "process_cpu_percent_one_core": 99.7272,
+    "allocations_per_observation": 3114,
+    "allocated_bytes_per_observation": 151084,
+    "egress_bytes": 24457204,
+    "latency_us_p50": 289.1,
+    "latency_us_p95": 534.5,
+    "latency_us_p99": 573.9,
+    "queue_capacity_per_channel": 512,
+    "pending_after_flush": 0
+  },
+  "binary_sha256": {
+    "direct_regression.exe": "a348763bcee7f586223730d9685e6e7c67bdb9709b2d8ebb06155248c6df66ce",
+    "old_context_repro.exe": "ad60955f70bf1ddfb45702f66fb39a4d03a7011f07b3ccbce5fa223de68b7ec3",
+    "monaka_bridge_service.exe": "fd401ff5552449b70cdecdd27c478c6a662afc1af7e4595fc69fd347e379518a",
+    "direct_udp_consumer.exe": "9adcf014049a542f4b89f84673bb073eac60eedcd121f9b58fb777ce3b59d6a2"
+  },
+  "hardware": "NOT RUN",
+  "initial_crash": "confirmed null OpenVR driver context in standalone harness; retained reproduction stack; isolated mock logger fixed harness",
+  "output_sha256": {
+    "build/Release/direct_regression.exe": "a348763bcee7f586223730d9685e6e7c67bdb9709b2d8ebb06155248c6df66ce",
+    "build/Release/old_context_repro.exe": "ad60955f70bf1ddfb45702f66fb39a4d03a7011f07b3ccbce5fa223de68b7ec3",
+    "build/Release/monaka_bridge_service.exe": "fd401ff5552449b70cdecdd27c478c6a662afc1af7e4595fc69fd347e379518a",
+    "build/Release/direct_udp_consumer.exe": "9adcf014049a542f4b89f84673bb073eac60eedcd121f9b58fb777ce3b59d6a2",
+    "build/Release/monaka_bridge_config.exe": "96756d1336efe85fb89eb2f615e3e88feaa5d0938ddbe25809bd003b9d93e9c1",
+    "build/Release/monaka_bridge_calibrator.exe": "da1e14554c06479c463d4a5e558f8ecb92e0d0b921459937d8afc42cccd3a9c9",
+    "build/Release/openvr_api.dll": "bab8ac6ef64e68a9ca53315b0014d131088584b2efdfa6db511d67ec03cfcb4a",
+    "build-gui/monaka_bridge_control.exe": "28a9d5bed1f7f6975b98809e825e87aaca05d0531a0e5b0cfaac6cc0769a6a54",
+    "build/steamvr/monaka_bridge/bin/win64/driver_monaka_bridge.dll": "efc81c6b4a6eb3be44a9ab9c80438d488e949cdfd4c530e6fcc48ab3c20d8800"
+  },
+  "verification_command": [
+    "C:\\Users\\nynyp\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+    "scripts/verify_windows.py",
+    "--cmake-bin",
+    "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin",
+    "--java-home",
+    "C:\\Program Files\\Microsoft\\jdk-17.0.20.101-hotspot",
+    "--dumpbin",
+    "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\dumpbin.exe"
+  ]
+}

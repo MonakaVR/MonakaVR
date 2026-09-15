@@ -1,0 +1,11 @@
+{
+  "task4_source_commit": "acc329dce90dd6ba21387029cd54b6fc2d82fe8c",
+  "task4_handoff_sha256": "3fe2b3c1b1703520e5433639647c25894a64432590997275da506c262f647cd3",
+  "task4_external_manifest_sha256": "c2bc55d0335d207e86a842b8d9a2ac687ce5a65414d3dfab884e63cbd23c7dc7",
+  "task4_report_sha256": "0fc8e980a340c18f2379b9d636937b5d48df588e6641e998318c1df771cbb8ba",
+  "task4_content_files_verified": 219,
+  "task1_kit_sha256": "eef5b7f2bc490926385b99dabcd44dc5a374228bf2a7869beea01f9dad936729",
+  "protocol_lock_sha256": "234f0dffc46b808a179ec91da3c185794d7b7c83bc5b7d2bcb31fa73886bcb44",
+  "c1_sha256": "3a76435c8b25b3975028f9a83c4dc3d1e3848806c9608d885f5bba74a1198ed3",
+  "hardware": "NOT RUN"
+}
