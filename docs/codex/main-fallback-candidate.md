@@ -9,11 +9,13 @@ Candidate files:
 - `server/core/src/main/java/dev/monaka/tracking/revision/LegacyAssignmentMigration.kt`
 - `server/core/src/main/java/dev/monaka/tracking/revision/PersistentTrackerIdentity.kt`
 - `server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackSelector.kt`
+- `server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackCandidateValidator.kt`
 - `server/core/src/test/java/dev/monaka/tracking/revision/MainFallbackPolicyTests.kt`
 - `server/core/src/test/java/dev/monaka/tracking/revision/MainFallbackAssignmentSetTests.kt`
 - `server/core/src/test/java/dev/monaka/tracking/revision/LegacyAssignmentMigrationTests.kt`
 - `server/core/src/test/java/dev/monaka/tracking/revision/PersistentTrackerIdentityTests.kt`
 - `server/core/src/test/java/dev/monaka/tracking/revision/MainFallbackSelectorTests.kt`
+- `server/core/src/test/java/dev/monaka/tracking/revision/MainFallbackCandidateValidatorTests.kt`
 
 The policy candidate encodes the current Architecture Revision default only:
 
@@ -42,8 +44,10 @@ The identity candidate mirrors only the C2 namespace shape needed to prevent acc
 
 `MainFallbackSelector` is still runtime-unwired. It accepts already-effective per-tracker usability state keyed by the full persistent identity. Only the explicitly assigned Main and optional fallback can participate. Unrelated observations never compete by quality/priority/order, and an observation with the same tracker name under another source cannot impersonate the configured tracker. A malformed FULL fallback is not treated as a usable rotation source.
 
-`CandidateTrackingModality` is deliberately local to this isolated package. `PersistentTrackerIdentity` is likewise not a substitute for MonakaProtocol v2 models/codecs. During v2 integration, map the pinned protocol fields into the runtime model or replace these candidate types after reviewing the boundary.
+`MainFallbackCandidateValidator` freezes only candidate-level fail-closed invariants. It rejects a self-fallback assignment, rejects state-map key/value identity disagreement, and requires the local modality/component shape to be canonical: `FULL` has both components, `ROTATION_ONLY` has orientation only, and `NONE` has neither. Missing assigned states remain valid because a configured tracker may simply be disconnected; unrelated extra states are also valid because the selector ignores them. This validator deliberately does not invent protocol freshness, tracking-state, lease, body-role, or vendor semantics.
 
-For the next Codex pass: treat these files as tested-design candidates, not as an instruction to preserve names or structure. Reconcile them with the current Architecture Revision and the pinned v2 kit. If Codex has independently implemented the same policy, assignment model, identity key, selector, or legacy migration, prefer one implementation after semantic comparison; do not keep duplicate active runtime policies, identity stores, or assignment stores. Existing old `ConstraintResolver` behavior remains active until an explicit integration change is made.
+`CandidateTrackingModality` is deliberately local to this isolated package. `PersistentTrackerIdentity` and candidate validation are likewise not substitutes for MonakaProtocol v2 models/codecs. During v2 integration, map the pinned protocol fields into the runtime model or replace these candidate types after reviewing the boundary.
+
+For the next Codex pass: treat these files as tested-design candidates, not as an instruction to preserve names or structure. Reconcile them with the current Architecture Revision and the pinned v2 kit. If Codex has independently implemented the same policy, assignment model, identity key, selector, validator, or legacy migration, prefer one implementation after semantic comparison; do not keep duplicate active runtime policies, identity stores, validators, or assignment stores. Existing old `ConstraintResolver` behavior remains active until an explicit integration change is made.
 
 No hardware or runtime validation is claimed by this checkpoint. Tests in these commits are unit-level specification tests only and remain `NOT RUN` until executed in a build-capable environment.
