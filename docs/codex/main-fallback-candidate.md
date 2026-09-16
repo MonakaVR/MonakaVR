@@ -1,13 +1,15 @@
 # Main/Fallback candidate checkpoint
 
-This checkpoint intentionally implements only contract-independent policy code. It is safe to review before the wire-v2 kit is imported and is **not wired into MonakaRuntime, ConstraintResolver, MTP ingestion, IK writeback, or SteamVR output**.
+This checkpoint intentionally implements only contract-independent policy and assignment code. It is safe to review before the wire-v2 kit is imported and is **not wired into MonakaRuntime, ConstraintResolver, MTP ingestion, IK writeback, or SteamVR output**.
 
 Candidate files:
 
 - `server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackPolicy.kt`
+- `server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackAssignmentSet.kt`
 - `server/core/src/test/java/dev/monaka/tracking/revision/MainFallbackPolicyTests.kt`
+- `server/core/src/test/java/dev/monaka/tracking/revision/MainFallbackAssignmentSetTests.kt`
 
-The candidate encodes the current Architecture Revision default only:
+The policy candidate encodes the current Architecture Revision default only:
 
 - usable Main `FULL` owns position and rotation, even if a fallback is available;
 - otherwise Main position is unavailable;
@@ -15,8 +17,15 @@ The candidate encodes the current Architecture Revision default only:
 - if external fallback is unavailable, usable Main rotation may be used while modality is not `NONE`;
 - `NONE` never revives Main rotation merely because stale numeric data exists.
 
+The assignment candidate encodes only configuration semantics that are independent of wire-v2 and runtime integration:
+
+- every target has one explicit Main tracker and an optional explicit rotation fallback;
+- legacy one-tracker-per-target mappings migrate to Main-only entries;
+- migration never guesses an external fallback;
+- assignment updates are immutable candidate snapshots, so changing one target does not mutate another or an earlier snapshot.
+
 `CandidateTrackingModality` is deliberately local to this isolated package. It is not a substitute for MonakaProtocol v2 and must not be serialized. During v2 integration, map the pinned protocol modality into the runtime model or replace this candidate type after reviewing the boundary.
 
-For the next Codex pass: treat this as a tested-design candidate, not as an instruction to preserve names or structure. Reconcile it with the current Architecture Revision and the pinned v2 kit. If Codex has independently implemented the same policy, prefer one implementation after semantic comparison; do not keep two active runtime policies. Existing old `ConstraintResolver` behavior remains active until an explicit integration change is made.
+For the next Codex pass: treat these files as tested-design candidates, not as an instruction to preserve names or structure. Reconcile them with the current Architecture Revision and the pinned v2 kit. If Codex has independently implemented the same policy or assignment model, prefer one implementation after semantic comparison; do not keep two active runtime policies or two competing assignment stores. Existing old `ConstraintResolver` behavior remains active until an explicit integration change is made.
 
-No hardware or runtime validation is claimed by this checkpoint. Tests in this commit are unit-level specification tests only.
+No hardware or runtime validation is claimed by this checkpoint. Tests in these commits are unit-level specification tests only and remain `NOT RUN` until executed in a build-capable environment.
