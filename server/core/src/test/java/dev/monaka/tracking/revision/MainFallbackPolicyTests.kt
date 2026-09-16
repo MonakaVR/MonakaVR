@@ -67,14 +67,14 @@ class MainFallbackPolicyTests {
 	}
 
 	@Test
-	fun incompleteFullDoesNotLeakPositionAndFallsBackBeforeUsingMainRotation() {
+	fun incompleteFullFailsClosedAndMayOnlyUseExternalFallback() {
 		val fallback = MainFallbackPolicy.decide(
 			mainModality = CandidateTrackingModality.FULL,
 			mainPositionUsable = false,
 			mainRotationUsable = true,
 			fallbackRotationUsable = true,
 		)
-		val mainRotation = MainFallbackPolicy.decide(
+		val noFallback = MainFallbackPolicy.decide(
 			mainModality = CandidateTrackingModality.FULL,
 			mainPositionUsable = false,
 			mainRotationUsable = true,
@@ -83,8 +83,21 @@ class MainFallbackPolicyTests {
 
 		assertFalse(fallback.positionFromMain)
 		assertEquals(RotationOwner.FALLBACK, fallback.rotationOwner)
-		assertFalse(mainRotation.positionFromMain)
-		assertEquals(RotationOwner.MAIN, mainRotation.rotationOwner)
+		assertFalse(noFallback.positionFromMain)
+		assertEquals(RotationOwner.NONE, noFallback.rotationOwner)
+	}
+
+	@Test
+	fun fullWithoutUsableRotationAlsoFailsClosed() {
+		val decision = MainFallbackPolicy.decide(
+			mainModality = CandidateTrackingModality.FULL,
+			mainPositionUsable = true,
+			mainRotationUsable = false,
+			fallbackRotationUsable = false,
+		)
+
+		assertFalse(decision.positionFromMain)
+		assertEquals(RotationOwner.NONE, decision.rotationOwner)
 	}
 
 	@Test

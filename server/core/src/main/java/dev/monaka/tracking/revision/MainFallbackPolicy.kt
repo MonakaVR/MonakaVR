@@ -49,8 +49,11 @@ object MainFallbackPolicy {
 			)
 		}
 
+		// A malformed/incomplete FULL sample does not silently degrade itself to
+		// rotation-only. Only an explicitly ROTATION_ONLY sample may contribute
+		// Main rotation after the FULL paired-pose path has failed.
 		val mainRotationAllowed =
-			mainModality != CandidateTrackingModality.NONE && mainRotationUsable
+			mainModality == CandidateTrackingModality.ROTATION_ONLY && mainRotationUsable
 
 		return MainFallbackDecision(
 			positionFromMain = false,

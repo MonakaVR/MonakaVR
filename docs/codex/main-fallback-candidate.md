@@ -16,8 +16,9 @@ The policy candidate encodes the current Architecture Revision default only:
 - usable Main `FULL` owns position and rotation, even if a fallback is available;
 - otherwise Main position is unavailable;
 - an externally assigned usable rotation fallback is preferred;
-- if external fallback is unavailable, usable Main rotation may be used while modality is not `NONE`;
-- `NONE` never revives Main rotation merely because stale numeric data exists.
+- if external fallback is unavailable, usable Main rotation may be used only when Main is explicitly `ROTATION_ONLY`;
+- `NONE` never revives Main rotation merely because stale numeric data exists;
+- an incomplete/malformed `FULL` sample fails closed and does not silently self-demote to rotation-only.
 
 The assignment candidate encodes only configuration semantics that are independent of wire-v2 and runtime integration:
 
