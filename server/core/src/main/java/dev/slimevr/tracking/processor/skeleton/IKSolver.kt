@@ -23,12 +23,21 @@ class IKSolver(private val root: Bone) {
 	private var chainList = mutableListOf<IKChain>()
 	private var rootChain: IKChain? = null
 	private var needsReset = false
+	private val calibration = mutableMapOf<Pair<String, Int?>, IKConstraint.Calibration>()
+	private fun key(tracker: Tracker) = tracker.name to tracker.trackerPosition?.bodyPart
+	/** Diagnostic snapshot of actual calibrated inputs, used by numerical lifecycle tests. */
+	fun calibrationSnapshot(): Map<Pair<String, Int?>, IKConstraint.Calibration> =
+		calibration + chainList.flatMap { it.positionalInputs() }.associate { key(it.tracker) to it.calibration() }
 
 	/**
 	 * Any time the skeleton is rebuilt or trackers are assigned / unassigned the chains
 	 * should be rebuilt.
 	 */
-	fun buildChains(trackers: List<Tracker>) {
+	fun buildChains(trackers: List<Tracker>, preserveCalibration: Boolean = false, retainedNames: Set<String> = trackers.map { it.name }.toSet()) {
+		if (preserveCalibration) {
+			calibration.putAll(calibrationSnapshot())
+			calibration.keys.removeAll { it.first !in retainedNames }
+		} else calibration.clear()
 		chainList.clear()
 
 		val positionalConstraints = extractPositionalConstraints(trackers)
@@ -37,6 +46,9 @@ class IKSolver(private val root: Bone) {
 		rootChain = chainBuilder(root, null, 0, positionalConstraints, rotationalConstraints)
 		populateChainList(rootChain!!)
 		addConstraints()
+		if (preserveCalibration) for (input in chainList.flatMap { it.positionalInputs() }) {
+			calibration[key(input.tracker)]?.let(input::restore)
+		}
 
 		// Check if there is any constraints (other than the head) in the model
 		rootChain = if (neededChain(rootChain!!)) rootChain else null

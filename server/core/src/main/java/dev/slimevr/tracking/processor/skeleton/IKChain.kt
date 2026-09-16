@@ -21,6 +21,7 @@ class IKChain(
 	// State variables
 	private val computedBasePosition = baseConstraint?.let { IKConstraint(it) }
 	private val computedTailPosition = tailConstraint?.let { IKConstraint(it) }
+	internal fun positionalInputs(): List<IKConstraint> = listOfNotNull(computedBasePosition, computedTailPosition)
 	var children = mutableListOf<IKChain>()
 	var target = Vector3.NULL
 	var distToTargetSqr = Float.POSITIVE_INFINITY

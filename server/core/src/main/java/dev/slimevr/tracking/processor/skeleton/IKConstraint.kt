@@ -6,8 +6,11 @@ import io.github.axisangles.ktmath.Vector3
 import solarxr_protocol.datatypes.BodyPart
 
 class IKConstraint(val tracker: Tracker) {
+	data class Calibration(val offset: Vector3, val rotationOffset: Quaternion)
 	private var offset = Vector3.NULL
 	private var rotationOffset = Quaternion.IDENTITY
+	internal fun calibration() = Calibration(offset, rotationOffset)
+	internal fun restore(value: Calibration) { offset = value.offset; rotationOffset = value.rotationOffset }
 
 	fun getPosition(): Vector3 = tracker.position + (tracker.getRotation() * rotationOffset).sandwich(offset)
 
