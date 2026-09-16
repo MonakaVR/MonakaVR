@@ -1,0 +1,186 @@
+{
+  "repo": "MonakaVR",
+  "commands": [
+    {
+      "name": "release-tool-tests",
+      "command": [
+        "{PYTHON}",
+        "scripts/test_release_v2.py"
+      ]
+    },
+    {
+      "name": "release-tool-tests-optimized",
+      "command": [
+        "{PYTHON}",
+        "-O",
+        "scripts/test_release_v2.py"
+      ]
+    },
+    {
+      "name": "java-version",
+      "command": [
+        "{JAVA}",
+        "-version"
+      ]
+    },
+    {
+      "name": "cmake-version",
+      "command": [
+        "{CMAKE}",
+        "--version"
+      ]
+    },
+    {
+      "name": "pinned-v2-kit",
+      "command": [
+        "{PYTHON}",
+        "scripts/verify_protocol_v2.py"
+      ]
+    },
+    {
+      "name": "gradle-build-tests",
+      "command": [
+        "{ROOT}/gradlew.bat",
+        ":server:core:test",
+        ":server:desktop:test",
+        ":server:desktop:shadowJar",
+        "--no-daemon",
+        "--console=plain",
+        "--rerun-tasks"
+      ]
+    },
+    {
+      "name": "cmake-configure",
+      "command": [
+        "{CMAKE}",
+        "-S",
+        "{ROOT}/third_party/monaka-protocol-v2/cpp",
+        "-B",
+        "{BUILD}",
+        "-A",
+        "x64",
+        "-DBUILD_TESTING=ON",
+        "-DMONAKA_BUILD_TESTS=ON",
+        "-DCMAKE_CXX_FLAGS=/EHsc"
+      ]
+    },
+    {
+      "name": "cmake-build",
+      "command": [
+        "{CMAKE}",
+        "--build",
+        "{BUILD}",
+        "--config",
+        "Release"
+      ]
+    },
+    {
+      "name": "ctest",
+      "command": [
+        "{CTEST}",
+        "--test-dir",
+        "{BUILD}",
+        "-C",
+        "Release",
+        "--output-on-failure",
+        "--no-tests=error",
+        "--output-junit",
+        "{WORK}/ctest.xml"
+      ]
+    },
+    {
+      "name": "active-jar",
+      "command": [
+        "{PYTHON}",
+        "scripts/check_release_jar.py",
+        "--work",
+        "{WORK}/jar"
+      ]
+    },
+    {
+      "name": "desktop-help",
+      "command": [
+        "{JAVA}",
+        "-jar",
+        "server/desktop/build/libs/slimevr.jar",
+        "--help"
+      ]
+    },
+    {
+      "name": "v2-interop",
+      "command": [
+        "{PYTHON}",
+        "scripts/release_interop.py",
+        "--kit",
+        "{ROOT}/third_party/monaka-protocol-v2",
+        "--cpp",
+        "{BUILD}/Release/monaka_codec_runner_v2.exe",
+        "--java-home",
+        "{JAVA_HOME}",
+        "--work",
+        "{WORK}/interop",
+        "--jar",
+        "{ROOT}/server/desktop/build/libs/slimevr.jar"
+      ]
+    }
+  ],
+  "required_steps": [
+    "release-tool-tests",
+    "release-tool-tests-optimized",
+    "java-version",
+    "cmake-version",
+    "pinned-v2-kit",
+    "gradle-build-tests",
+    "cmake-configure",
+    "cmake-build",
+    "ctest",
+    "active-jar",
+    "desktop-help",
+    "v2-interop"
+  ],
+  "test_groups": [
+    {
+      "name": "application",
+      "paths": [
+        "{ROOT}/server/core/build/test-results/test/TEST-*.xml",
+        "{ROOT}/server/desktop/build/test-results/test/TEST-*.xml"
+      ],
+      "required": [
+        "oneTrackerSpaceFaultCannotRemoveSiblingOrSameNameUnderOtherPublisher()",
+        "sessionLeaseRejectsCompetitorWithoutPoisoningAndDuplicatesCannotRenew()",
+        "calibrationSurvivesFullRotationFallbackRecoveryPauseAndOtherTrackerRebuild()",
+        "sameTrackerNameInDifferentSourceOrPublisherDoesNotCollide()",
+        "pauseBacklogBeyondNormalDrainAdvancesReplayWatermarkBeforeResume()",
+        "featureOffDoesNotOpenSocketRegisterHookOrChangeSlimeComputedOutput()",
+        "separateProcessUdpEntersSamePipelineAndMovesExistingIk()",
+        "v2ConfigPreservesExplicitFallbackAndV1MigrationRequiresFullIdentityMapping()"
+      ]
+    },
+    {
+      "name": "native",
+      "paths": [
+        "{WORK}/ctest.xml"
+      ],
+      "required": [
+        "model_validation",
+        "model_validation_v2"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "runtime/slimevr.jar",
+      "path": "{ROOT}/server/desktop/build/libs/slimevr.jar"
+    }
+  ],
+  "evidence": [
+    {
+      "name": "evidence/active-dependency-check.json",
+      "path": "{WORK}/jar/active-dependency-check.json"
+    },
+    {
+      "name": "evidence/v2-interop.json",
+      "path": "{WORK}/interop/result.json"
+    }
+  ]
+}
