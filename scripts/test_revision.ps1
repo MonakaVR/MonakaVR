@@ -25,8 +25,10 @@ function Invoke-RevisionStep {
     $timer = [System.Diagnostics.Stopwatch]::StartNew()
     $global:LASTEXITCODE = 0
     $exitCode = 0
+    $previousErrorActionPreference = $ErrorActionPreference
     Push-Location $RepoRoot
     try {
+        $ErrorActionPreference = 'Continue'
         & $FilePath @Arguments *> $logPath
         if ($null -ne $LASTEXITCODE) { $exitCode = [int]$LASTEXITCODE }
     }
@@ -35,6 +37,7 @@ function Invoke-RevisionStep {
         $exitCode = 1
     }
     finally {
+        $ErrorActionPreference = $previousErrorActionPreference
         Pop-Location
         $timer.Stop()
     }
