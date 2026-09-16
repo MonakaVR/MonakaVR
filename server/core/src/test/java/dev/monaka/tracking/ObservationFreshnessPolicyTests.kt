@@ -73,6 +73,7 @@ class ObservationFreshnessPolicyTests {
 	@Test
 	fun pipelineDropsStaleAbsolutePositionWhileKeepingFreshImuRotation() {
 		val pipeline = ConstraintPipeline(
+            resolver = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference("pico"), TrackerReference("imu"))) },
 			freshnessPolicy = ObservationFreshnessPolicy(
 				positionTimeoutNanos = 50L,
 				rotationTimeoutNanos = 50L,
@@ -85,6 +86,7 @@ class ObservationFreshnessPolicyTests {
 				observedAtNanos = 100L,
 				priority = 100,
 				position = Vector3(0.1f, 1f, 0.2f),
+                rotation = Quaternion.IDENTITY,
 			),
 		)
 		pipeline.ingest(
@@ -110,12 +112,13 @@ class ObservationFreshnessPolicyTests {
 				observedAtNanos = 190L,
 				priority = 100,
 				position = Vector3(0.2f, 1f, 0.2f),
+                rotation = Quaternion.IDENTITY,
 			),
 		)
 
 		val recovered = pipeline.resolve(TrackerPosition.HIP, nowNanos = 190L)
 		assertEquals("pico", recovered.position?.sourceId)
 		assertEquals(Vector3(0.2f, 1f, 0.2f), recovered.position?.value)
-		assertEquals("imu", recovered.rotation?.sourceId)
+		assertEquals("pico", recovered.rotation?.sourceId)
 	}
 }

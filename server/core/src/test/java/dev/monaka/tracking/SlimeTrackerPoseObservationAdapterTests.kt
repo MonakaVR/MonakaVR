@@ -39,7 +39,7 @@ class SlimeTrackerPoseObservationAdapterTests {
 				.adapt(tracker, observedAtNanos = 123L),
 		)
 
-		assertEquals("legacy:1", observation.sourceId)
+		assertEquals("legacy:test-1", observation.sourceId)
 		assertEquals(TrackerPosition.HIP, observation.target)
 		assertEquals(123L, observation.observedAtNanos)
 		assertEquals(42, observation.priority)
@@ -96,7 +96,7 @@ class SlimeTrackerPoseObservationAdapterTests {
 	}
 
 	@Test
-	fun resolverCanMixMirroredDegradedPositionWithTrackedRotation() {
+	fun resolverPreservesPairedDegradedMainWithExplicitFallback() {
 		val absolute = tracker(5, TrackerPosition.HIP, hasPosition = true, hasRotation = true)
 		absolute.status = TrackerStatus.BUSY
 		absolute.position = Vector3(0.2f, 1f, -0.1f)
@@ -115,14 +115,14 @@ class SlimeTrackerPoseObservationAdapterTests {
 				.adapt(imu, 110L),
 		)
 
-		val resolved = ConstraintResolver().resolve(
+		val resolved = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference(absoluteObservation.sourceId), TrackerReference(imuObservation.sourceId))) }.resolve(
 			TrackerPosition.HIP,
 			listOf(absoluteObservation, imuObservation),
 		)
 
-		assertEquals("absolute:5", resolved.position?.sourceId)
+		assertEquals("absolute:test-5", resolved.position?.sourceId)
 		assertEquals(ObservationQuality.DEGRADED, resolved.position?.quality)
-		assertEquals("imu:6", resolved.rotation?.sourceId)
-		assertEquals(ObservationQuality.TRACKED, resolved.rotation?.quality)
+		assertEquals("absolute:test-5", resolved.rotation?.sourceId)
+		assertEquals(ObservationQuality.DEGRADED, resolved.rotation?.quality)
 	}
 }

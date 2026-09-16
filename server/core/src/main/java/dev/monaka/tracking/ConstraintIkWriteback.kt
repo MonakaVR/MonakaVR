@@ -9,9 +9,8 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 	data class ComponentMask(val position: Boolean, val rotation: Boolean)
 	private var managed = emptySet<TrackerPosition>()
 	private val proxies = linkedMapOf<TrackerPosition, Tracker>()
+	private var stableNames = emptyMap<TrackerPosition, String>()
 	private var generation = -1L
-	private var historyGeneration = -1L
-	private var wasPaused = false
 	var topologyRebuilds = 0
 		private set
 	private var closed = false
@@ -25,22 +24,23 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 		// A position-only body constraint must not inject an identity rotation into FK.
 		// Head is also the positional root anchor and handles missing orientation explicitly.
 		val rotations = untouched + proxies.values.filter { it.hasRotation || it.trackerPosition == TrackerPosition.HEAD }
-		return SkeletonInputView(rotations, constraints)
+		return SkeletonInputView(rotations, constraints, untouched.map { it.name }.toSet() + stableNames.values)
 	}
 
 	fun apply(
 		constraints: Map<TrackerPosition, EffectiveConstraint>,
 		assignment: TrackerBodyAssignments.Snapshot,
-		historyRevision: Long = 0,
+		@Suppress("UNUSED_PARAMETER") historyRevision: Long = 0,
 	) {
 		check(!closed)
-		if (skeleton.getPauseTracking()) { wasPaused = true; return }
-		val targets = assignment.entries.values.toSet()
-		val resetHistory = wasPaused || historyGeneration != historyRevision
-		var rebuild = targets != managed || generation != assignment.generation || resetHistory
-		if (resetHistory) proxies.clear()
-		wasPaused = false
-		historyGeneration = historyRevision
+		if (skeleton.getPauseTracking()) return
+		val targets = assignment.targets.keys
+		var rebuild = targets != managed || generation != assignment.generation
+		// Sample/history invalidation is handled by the cache. Calibration belongs to
+		// the stable Main/body relation, not the current modality or fallback sample.
+		stableNames = assignment.targets.mapValues { (target, relation) ->
+			"monaka-private:${target.name}:${relation.mainTracker.observationId}"
+		}
 		managed = targets
 		generation = assignment.generation
 		for (target in proxies.keys.toList()) {
@@ -55,9 +55,9 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 				continue
 			}
 			var proxy = proxies[target]
-			if (proxy == null || proxy.hasPosition != (position != null) || proxy.hasRotation != (rotation != null)) {
+			if (proxy == null || proxy.name != stableNames[target] || proxy.hasPosition != (position != null) || proxy.hasRotation != (rotation != null)) {
 				proxy = Tracker(
-					null, -10000 - target.ordinal, "monaka-private:${target.name}",
+					null, -10000 - target.ordinal, stableNames.getValue(target),
 					trackerPosition = target, hasPosition = position != null, hasRotation = rotation != null,
 					allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false,
 				)

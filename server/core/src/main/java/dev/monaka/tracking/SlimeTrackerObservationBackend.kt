@@ -14,6 +14,7 @@ class SlimeTrackerObservationBackend(
 	override val profileId: String,
 	private val trackersProvider: () -> Iterable<Tracker>,
 	sourcePrefix: String = backendId,
+	private val assignments: () -> Map<dev.slimevr.tracking.trackers.TrackerPosition, MainTrackerAssignment> = { emptyMap() },
 ) : ObservationBackend {
 	override val sourceSetMode: ObservationSourceSetMode = ObservationSourceSetMode.AUTHORITATIVE_SNAPSHOT
 	private val adapter = SlimeTrackerPoseObservationAdapter(sourcePrefix = sourcePrefix)
@@ -24,5 +25,11 @@ class SlimeTrackerObservationBackend(
 	}
 
 	override fun poll(observedAtNanos: Long): List<PoseObservation> =
-		trackersProvider().mapNotNull { adapter.adapt(it, observedAtNanos) }
+		trackersProvider().mapNotNull { tracker ->
+			val id = "slime:${tracker.name}"
+			val target = assignments().entries.firstOrNull { (_, relation) ->
+				relation.mainTracker.observationId == id || relation.rotationFallbackTracker?.observationId == id
+			}?.key
+			adapter.adapt(tracker, observedAtNanos, target)
+		}
 }

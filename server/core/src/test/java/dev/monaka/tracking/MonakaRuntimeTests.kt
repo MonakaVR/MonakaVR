@@ -1,6 +1,6 @@
 package dev.monaka.tracking
 
-import dev.monaka.protocol.v1.*
+import dev.monaka.protocol.v2.*
 import dev.monaka.tracking.mtp.*
 import dev.slimevr.tracking.processor.HumanPoseManager
 import dev.slimevr.tracking.trackers.*
@@ -13,18 +13,22 @@ import kotlin.test.*
 
 class MonakaRuntimeTests {
 	private fun fixture(): MtpPose = (MonakaCodec.decodeEnvelope(
-		File(System.getProperty("monaka.fixtures"), "valid/mtp-pose.json").readBytes(),
+		File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes(),
 	) as DecodeResult.Success).value as MtpPose
-	private val key get() = LogicalTracker("backend-A", "tracker-A")
+	private val key get() = LogicalTracker("backend-A", "tracker-A", "synthetic-bridge")
 	private fun bytes(value: Envelope) = (MonakaCodec.encodeEnvelope(value) as EncodeResult.Success).value
 	private fun state(p: MtpPose, sequence: Long = 0, presence: String = "present") = MtpTrackerState(
 		p.version, p.source_id, p.session_id, p.clock_id, sequence, p.timestamp_ns, p.sent_at_ns,
-		p.timestamp_kind, p.tracker_id, presence, p.tracking_state, p.coordinate_space, p.capabilities, null, p.mapping_revision,
+		p.timestamp_kind, p.tracker_id, presence, p.tracking_state, p.coordinate_space, p.capabilities, "none", p.publisher_id, null, p.mapping_revision,
 	)
 	private class Clock(var now: Long = 1_000_000_000) { fun read() = now }
-	private fun runtime(clock: Clock, trackers: () -> Iterable<Tracker> = { emptyList() }) = MonakaRuntime(
-		trackers, fixture().coordinate_space, TrackerBodyAssignments(mapOf(key to TrackerPosition.HIP)), clock = clock::read,
-	)
+	private fun runtime(clock: Clock, trackers: () -> Iterable<Tracker> = { emptyList() }): MonakaRuntime {
+        val assignments = TrackerBodyAssignments(mapOf(key to TrackerPosition.HIP))
+        trackers().singleOrNull { it.trackerPosition == TrackerPosition.HIP && FeedbackExclusion.accepts(it) }?.let {
+            assignments.configure(TrackerPosition.HIP, TrackerReference.mtp(key), TrackerReference.slime(it.name))
+        }
+        return MonakaRuntime(trackers, fixture().coordinate_space, assignments, clock = clock::read)
+    }
 	private fun submit(runtime: MonakaRuntime, value: Envelope, receivedAt: Long = runtime.clock()) {
 		assertTrue(runtime.inbox.receive(bytes(value), receivedAt))
 	}
@@ -83,8 +87,8 @@ class MonakaRuntimeTests {
 		val clock = Clock()
 		runtime(clock).use { r ->
 			val p = fixture().copy(sequence = 20)
-			val other = p.copy(source_id = "bridge-B")
-			val otherKey = LogicalTracker(other.source_id, other.tracker_id)
+			val other = p.copy(source_id = "bridge-B", input = p.input.copy(source_id = "bridge-B"))
+			val otherKey = LogicalTracker(other.source_id, other.tracker_id, other.publisher_id)
 			r.assignments.assign(otherKey, TrackerPosition.LEFT_FOOT)
 			submit(r, p); submit(r, other); r.tick()
 			submit(r, state(p, 1000)); r.tick()
@@ -92,14 +96,15 @@ class MonakaRuntimeTests {
 			assertEquals(21, r.mtp.samples().getValue(key).pose.sequence)
 			submit(r, p.copy(sequence = 19, position = listOf(99.0, 0.0, 0.0))); r.tick()
 			assertEquals(21, r.mtp.samples().getValue(key).pose.sequence)
-			val replacement = p.copy(session_id = "33333333-3333-3333-3333-333333333333", sequence = 0)
+			clock.now += 500_000_000
+            val replacement = p.copy(session_id = "33333333-3333-3333-3333-333333333333", sequence = 0)
 			submit(r, replacement); r.tick()
 			submit(r, p.copy(sequence = 22)); r.tick()
 			assertEquals(replacement.session_id, r.mtp.samples().getValue(key).pose.session_id)
 			assertNotNull(r.mtp.samples()[otherKey])
 			submit(r, state(replacement, presence = "absent")); r.tick()
 			assertNull(r.pipeline.resolve(TrackerPosition.HIP, clock.now).position)
-			assertNotNull(r.pipeline.resolve(TrackerPosition.LEFT_FOOT, clock.now).position)
+			assertNotNull(r.mtp.samples()[otherKey])
 			submit(r, replacement.copy(sequence = 1)); r.tick()
 			assertNull(r.mtp.samples()[key]) // Same sample may not undo explicit absence.
 		}
@@ -120,34 +125,29 @@ class MonakaRuntimeTests {
 		}
 	}
 
-	@Test fun componentFallbackCombinesSimultaneousSourcesAndRemovesLostNumericFields() {
-		val clock = Clock()
-		runtime(clock).use { r ->
-			val p = fixture()
-			val other = p.copy(source_id = "vive-like", position = listOf(4.0, 5.0, 6.0))
-			r.assignments.assign(LogicalTracker(other.source_id, other.tracker_id), TrackerPosition.HIP)
-			submit(r, other)
-			clock.now++
-			submit(r, p.copy(validity = Validity(false, true), confidence = Confidence(0.0, 0.5), tracking_state = "degraded"))
-			// Same state rank gives source priority/age selection; no probability fusion.
-			val otherDegraded = other.copy(sequence = 1, validity = Validity(true, false), confidence = Confidence(1.0, 0.0), tracking_state = "degraded")
-			submit(r, otherDegraded)
-			val result = r.tick().getValue(TrackerPosition.HIP)
-			assertEquals(Vector3(4f, 5f, 6f), result.position!!.value)
-			assertEquals(key.observationId, result.rotation!!.sourceId)
-			assertNotEquals(result.position!!.sourceId, result.rotation!!.sourceId)
-			val adapted = MtpPoseAdapter().adapt(p.copy(confidence = Confidence(0.0, 0.0)), TrackerPosition.HIP, 0)
-			assertNull(adapted.position); assertNull(adapted.rotation)
-			assertEquals(ObservationQuality.LOST, adapted.positionQuality)
-			clock.now += 500_000_001
-			assertNull(r.tick().getValue(TrackerPosition.HIP).position)
-			assertNull(r.tick().getValue(TrackerPosition.HIP).rotation)
-		}
-	}
+	@Test fun explicitMainOwnsFullPoseAndFallbackOwnsOnlyLossRotation() {
+        val clock = Clock()
+        runtime(clock).use { r ->
+            val p = fixture()
+            val other = p.copy(source_id = "fallback-source", input = p.input.copy(source_id = "fallback-source"))
+            val fallback = LogicalTracker(other.source_id, other.tracker_id, other.publisher_id)
+            r.assignments.configure(TrackerPosition.HIP, TrackerReference.mtp(key), TrackerReference.mtp(fallback))
+            submit(r, other); submit(r, p)
+            var result = r.tick().getValue(TrackerPosition.HIP)
+            assertEquals(key.observationId, result.position!!.sourceId)
+            assertEquals(key.observationId, result.rotation!!.sourceId)
+            submit(r, p.copy(sequence = 1, modality = "rotation_only", validity = Validity(false, true), confidence = Confidence(0.0, 0.5), tracking_state = "degraded"))
+            result = r.tick().getValue(TrackerPosition.HIP)
+            assertNull(result.position); assertEquals(fallback.observationId, result.rotation!!.sourceId)
+            clock.now += 500_000_001
+            result = r.tick().getValue(TrackerPosition.HIP)
+            assertNull(result.position); assertNull(result.rotation)
+        }
+    }
 
-	@Test fun assignmentMigrationIsExplicitAndIdentityIsCollisionFree() {
-		assertNotEquals(LogicalTracker("a:b", "c").observationId, LogicalTracker("a", "b:c").observationId)
-		assertNotEquals(LogicalTracker("A", "c").observationId, LogicalTracker("a", "c").observationId)
+    @Test fun assignmentMigrationIsExplicitAndIdentityIsCollisionFree() {
+		assertNotEquals(LogicalTracker("a:b", "c", "publisher").observationId, LogicalTracker("a", "b:c", "publisher").observationId)
+		assertNotEquals(LogicalTracker("A", "c", "publisher").observationId, LogicalTracker("a", "c", "publisher").observationId)
 		val assignments = TrackerBodyAssignments()
 		assertFailsWith<IllegalArgumentException> { assignments.migrateLegacy(mapOf("serial" to TrackerPosition.HIP), emptyMap()) }
 		assertTrue(assignments.snapshot().entries.isEmpty())
@@ -204,7 +204,7 @@ class MonakaRuntimeTests {
 			for (o in outputs) submit(r, fixture().copy(tracker_id = o.name))
 			submit(r, fixture().copy(input = fixture().input.copy(device_id = "monaka-direct:physical-mirror")))
 			r.tick()
-			assertEquals(setOf("slime:0", key.observationId), r.pipeline.observations().map { it.sourceId }.toSet())
+			assertEquals(setOf("slime:${trackers.head.name}", key.observationId), r.pipeline.observations().map { it.sourceId }.toSet())
 			assertEquals(5, r.inbox.diagnostics().getValue("FeedbackExcluded"))
 		}
 	}
@@ -229,15 +229,15 @@ class MonakaRuntimeTests {
 				assertEquals(builds, writeback.topologyRebuilds)
 				assertEquals(trackers.head.position, hpm.skeleton.headBone.getPosition())
 				// Position loss: Slime rotation survives, stale MTP position must leave IK topology.
-				submit(r, p.copy(sequence = 2, validity = Validity(false, true), confidence = Confidence(0.0, 0.5), tracking_state = "degraded"))
+				submit(r, p.copy(sequence = 2, modality = "rotation_only", validity = Validity(false, true), confidence = Confidence(0.0, 0.5), tracking_state = "degraded"))
 				step()
 				assertEquals(ConstraintIkWriteback.ComponentMask(false, true), writeback.masks()[TrackerPosition.HIP])
 				assertTrue(kotlin.math.abs(hpm.skeleton.computedHipTracker!!.position.x - baseline.x) < 0.001f)
 				// Remove rotational Slime fallback and supply position only: FK may not see an identity quaternion.
 				trackers.hip.status = TrackerStatus.DISCONNECTED
-				submit(r, p.copy(sequence = 3, validity = Validity(true, false), confidence = Confidence(1.0, 0.0), tracking_state = "degraded"))
+				submit(r, p.copy(sequence = 3, modality = "none", validity = Validity(false, false), confidence = Confidence(0.0, 0.0), tracking_state = "lost"))
 				step()
-				assertEquals(ConstraintIkWriteback.ComponentMask(true, false), writeback.masks()[TrackerPosition.HIP])
+				assertNull(writeback.masks()[TrackerPosition.HIP])
 				assertNull(hpm.skeleton.hipTracker)
 				r.assignments.unassign(key); step(); assertTrue(writeback.masks().isEmpty())
 			}
@@ -336,13 +336,14 @@ class MonakaRuntimeTests {
 				val p = fixture().copy(position = listOf(0.2, 1.7, 0.1))
 				submit(r, p); step()
 				assertEquals(Vector3(0.2f, 1.7f, 0.1f), hpm.skeleton.headBone.getPosition())
-				submit(r, p.copy(sequence = 1, validity = Validity(false, true), confidence = Confidence(0.0, 0.5), tracking_state = "degraded")); step()
+				submit(r, p.copy(sequence = 1, modality = "rotation_only", validity = Validity(false, true), confidence = Confidence(0.0, 0.5), tracking_state = "degraded")); step()
 				assertEquals(Vector3.NULL, hpm.skeleton.headBone.getPosition())
-				submit(r, p.copy(sequence = 2, validity = Validity(true, false), confidence = Confidence(1.0, 0.0), tracking_state = "degraded")); step()
-				assertEquals(Vector3(0.2f, 1.7f, 0.1f), hpm.skeleton.headBone.getPosition())
+				submit(r, p.copy(sequence = 2, modality = "none", validity = Validity(false, false), confidence = Confidence(0.0, 0.0), tracking_state = "lost")); step()
+				assertEquals(Vector3.NULL, hpm.skeleton.headBone.getPosition())
 				assertEquals(Quaternion.IDENTITY, hpm.skeleton.headBone.getGlobalRotation())
 				val topology = w.topologyRebuilds
-				val nextSession = p.copy(sequence = 0, session_id = "55555555-5555-5555-5555-555555555555")
+				clock.now += 500_000_000
+                val nextSession = p.copy(sequence = 0, session_id = "55555555-5555-5555-5555-555555555555")
 				submit(r, nextSession); step()
 				assertTrue(w.topologyRebuilds > topology)
 			}
@@ -350,16 +351,15 @@ class MonakaRuntimeTests {
 	}
 
 	@Test fun allFixedFixturesRetainCodecCompatibility() {
-		val folder = File(System.getProperty("monaka.fixtures"))
-		for (file in File(folder, "valid").listFiles()!!.filter { it.extension == "json" }) {
-			assertIs<DecodeResult.Success>(MonakaCodec.decodeEnvelope(file.readBytes()), file.name)
-		}
-		for (file in File(folder, "invalid").listFiles()!!.filter { it.extension == "json" }) {
-			assertIs<DecodeResult.Failure>(MonakaCodec.decodeEnvelope(file.readBytes()), file.name)
-		}
-	}
+		val folder = File(System.getProperty("monaka.fixtures"), "v2")
+        val index = com.fasterxml.jackson.databind.ObjectMapper().readTree(File(folder, "index.json"))
+        for (item in index) {
+            val result = MonakaCodec.decodeEnvelope(File(folder, item["file"].asText()).readBytes())
+            if (item["error"].isNull) assertIs<DecodeResult.Success>(result) else assertIs<DecodeResult.Failure>(result)
+        }
+    }
 
-	@Test fun lostMetadataDoesNotRepeatedlyRebuildSlimeFallbackTopology() {
+    @Test fun lostMetadataDoesNotRepeatedlyRebuildSlimeFallbackTopology() {
 		val clock = Clock(); val trackers = TestTrackerSet()
 		val hpm = HumanPoseManager(listOf(trackers.head, trackers.hip))
 		runtime(clock) { listOf(trackers.head, trackers.hip) }.use { r ->

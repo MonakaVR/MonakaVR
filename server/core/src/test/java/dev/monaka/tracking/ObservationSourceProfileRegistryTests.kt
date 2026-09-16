@@ -71,7 +71,7 @@ class ObservationSourceProfileRegistryTests {
 				),
 			),
 		)
-		val pipeline = ConstraintPipeline(profileRegistry = registry)
+		val pipeline = ConstraintPipeline(profileRegistry = registry, resolver = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference("absolute:hip"), TrackerReference("imu:hip"))) })
 
 		pipeline.ingest(
 			PoseObservation(
@@ -89,6 +89,7 @@ class ObservationSourceProfileRegistryTests {
 				target = TrackerPosition.HIP,
 				observedAtNanos = 100L,
 				position = Vector3(9f, 9f, 9f),
+                modality = TrackingModality.ROTATION_ONLY,
 				rotation = Quaternion.IDENTITY,
 			),
 			profileId = "imu",

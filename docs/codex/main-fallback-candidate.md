@@ -1,3 +1,9 @@
+# Runtime integration update — 2026-09-16
+
+The checkpoint below is retained as candidate design history. The current runtime now uses MainFallbackPolicy directly through ConstraintResolver, aliases its modality enum, validates MTP identity with PersistentTrackerIdentity, and uses LegacyAssignmentMigration for unambiguous Main-only migration. The existing candidate tests remain intact.
+
+There is one active runtime assignment store (TrackerBodyAssignments) and one active policy (MainFallbackPolicy). The isolated selector/assignment-set/validator APIs remain tested specification helpers; they do not register another runtime/cache. Full identity lookup, strict fixed-codec wire validation, and effective freshness are handled at the runtime adapter boundary. A malformed or incomplete FULL Main or fallback cannot silently supply rotation-only capability.
+
 # Main/Fallback candidate checkpoint
 
 This checkpoint intentionally implements only contract-independent policy/assignment logic plus a codec-free identity boundary that mirrors the current C2 namespace rules. It is safe to review before the wire-v2 kit is imported and is **not wired into MonakaRuntime, ConstraintResolver, MTP ingestion, IK writeback, or SteamVR output**.

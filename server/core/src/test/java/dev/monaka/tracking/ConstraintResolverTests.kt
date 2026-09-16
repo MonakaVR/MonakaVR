@@ -4,122 +4,54 @@ import dev.slimevr.tracking.trackers.TrackerPosition
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import kotlin.test.*
 
 class ConstraintResolverTests {
-	private val resolver = ConstraintResolver()
-
-	@Test
-	fun resolvesPositionAndRotationIndependentlyAcrossSources() {
-		val absolute = PoseObservation(
-			sourceId = "absolute",
-			target = TrackerPosition.HIP,
-			observedAtNanos = 100L,
-			priority = 100,
-			position = Vector3(1f, 2f, 3f),
-			rotation = Quaternion.IDENTITY,
-			rotationQuality = ObservationQuality.LOST,
-		)
-		val imu = PoseObservation(
-			sourceId = "imu",
-			target = TrackerPosition.HIP,
-			observedAtNanos = 110L,
-			priority = 10,
-			rotation = Quaternion.IDENTITY,
-		)
-
-		val resolved = resolver.resolve(TrackerPosition.HIP, listOf(absolute, imu))
-
-		assertEquals("absolute", resolved.position?.sourceId)
-		assertEquals(Vector3(1f, 2f, 3f), resolved.position?.value)
-		assertEquals("imu", resolved.rotation?.sourceId)
-	}
-
-	@Test
-	fun trackedSecondaryBeatsDegradedPrimaryForThatComponent() {
-		val primary = PoseObservation(
-			sourceId = "primary",
-			target = TrackerPosition.LEFT_FOOT,
-			observedAtNanos = 200L,
-			priority = 100,
-			position = Vector3(1f, 0f, 0f),
-			positionQuality = ObservationQuality.DEGRADED,
-		)
-		val secondary = PoseObservation(
-			sourceId = "secondary",
-			target = TrackerPosition.LEFT_FOOT,
-			observedAtNanos = 190L,
-			priority = 10,
-			position = Vector3(2f, 0f, 0f),
-		)
-
-		val resolved = resolver.resolve(TrackerPosition.LEFT_FOOT, listOf(primary, secondary))
-
-		assertEquals("secondary", resolved.position?.sourceId)
-		assertEquals(Vector3(2f, 0f, 0f), resolved.position?.value)
-	}
-
-	@Test
-	fun priorityThenRecencyBreakTiesWithinSameQuality() {
-		val lowPriorityNewer = PoseObservation(
-			sourceId = "low-priority",
-			target = TrackerPosition.RIGHT_FOOT,
-			observedAtNanos = 300L,
-			priority = 10,
-			position = Vector3(1f, 0f, 0f),
-		)
-		val highPriorityOlder = PoseObservation(
-			sourceId = "high-priority",
-			target = TrackerPosition.RIGHT_FOOT,
-			observedAtNanos = 250L,
-			priority = 20,
-			position = Vector3(2f, 0f, 0f),
-		)
-		val highPriorityNewer = PoseObservation(
-			sourceId = "high-priority-newer",
-			target = TrackerPosition.RIGHT_FOOT,
-			observedAtNanos = 275L,
-			priority = 20,
-			position = Vector3(3f, 0f, 0f),
-		)
-
-		val resolved = resolver.resolve(
-			TrackerPosition.RIGHT_FOOT,
-			listOf(lowPriorityNewer, highPriorityOlder, highPriorityNewer),
-		)
-
-		assertEquals("high-priority-newer", resolved.position?.sourceId)
-		assertEquals(Vector3(3f, 0f, 0f), resolved.position?.value)
-	}
-
-	@Test
-	fun staleLostAndOtherTargetsDoNotProduceConstraints() {
-		val stale = PoseObservation(
-			sourceId = "stale",
-			target = TrackerPosition.HIP,
-			observedAtNanos = 100L,
-			position = Vector3(1f, 0f, 0f),
-			positionQuality = ObservationQuality.STALE,
-		)
-		val lost = PoseObservation(
-			sourceId = "lost",
-			target = TrackerPosition.HIP,
-			observedAtNanos = 100L,
-			rotation = Quaternion.IDENTITY,
-			rotationQuality = ObservationQuality.LOST,
-		)
-		val otherTarget = PoseObservation(
-			sourceId = "other",
-			target = TrackerPosition.CHEST,
-			observedAtNanos = 100L,
-			position = Vector3(2f, 0f, 0f),
-			rotation = Quaternion.IDENTITY,
-		)
-
-		val resolved = resolver.resolve(TrackerPosition.HIP, listOf(stale, lost, otherTarget))
-
-		assertNull(resolved.position)
-		assertNull(resolved.rotation)
-	}
+ private val target = TrackerPosition.HIP
+ private fun sample(id: String, modality: TrackingModality) = PoseObservation(id, target, 100,
+  position = if (modality == TrackingModality.FULL) Vector3(1f, 2f, 3f) else null,
+  rotation = if (modality != TrackingModality.NONE) Quaternion.IDENTITY else null, modality = modality)
+ private fun resolver(fallback: Boolean = true) = ConstraintResolver {
+  mapOf(target to MainTrackerAssignment(TrackerReference("main"), if (fallback) TrackerReference("fallback") else null))
+ }
+ @Test fun fullMainOwnsBothRegardlessOfFallbackPriorityAndRecency() {
+  val main = sample("main", TrackingModality.FULL).copy(positionQuality = ObservationQuality.DEGRADED)
+  val extra = sample("unassigned", TrackingModality.FULL).copy(priority = 999, observedAtNanos = 999)
+  val result = resolver().resolve(target, listOf(extra, sample("fallback", TrackingModality.FULL), main))
+  assertEquals("main", result.position?.sourceId); assertEquals("main", result.rotation?.sourceId)
+ }
+ @Test fun modalityAndExplicitFallbackMatrix() {
+  for (modality in TrackingModality.entries) for (fallbackAssigned in listOf(false, true)) for (fresh in listOf(false, true)) {
+   val fallback = sample("fallback", TrackingModality.ROTATION_ONLY).copy(rotationQuality = if (fresh) ObservationQuality.TRACKED else ObservationQuality.STALE)
+   val result = resolver(fallbackAssigned).resolve(target, listOf(sample("main", modality), fallback))
+   assertEquals(if (modality == TrackingModality.FULL) "main" else null, result.position?.sourceId)
+   val expected = when { modality == TrackingModality.FULL -> "main"; fallbackAssigned && fresh -> "fallback"; modality == TrackingModality.ROTATION_ONLY -> "main"; else -> null }
+   assertEquals(expected, result.rotation?.sourceId, "$modality / $fallbackAssigned / $fresh")
+  }
+ }
+ @Test fun incompleteFullCannotSelfDemoteOrServeAsFallback() {
+  val malformed = sample("main", TrackingModality.FULL).copy(positionQuality = ObservationQuality.STALE)
+  assertNull(resolver(false).resolve(target, listOf(malformed)).rotation)
+  val result = resolver().resolve(target, listOf(sample("main", TrackingModality.NONE), malformed.copy(sourceId = "fallback")))
+  assertNull(result.position); assertNull(result.rotation)
+ }
+ @Test fun lossRecoveryDoesNotRememberStaleComponents() {
+  val r = resolver()
+  for (modality in listOf(TrackingModality.FULL, TrackingModality.ROTATION_ONLY, TrackingModality.NONE, TrackingModality.FULL)) {
+   val result = r.resolve(target, listOf(sample("main", modality)))
+   assertEquals(modality == TrackingModality.FULL, result.position != null)
+   assertEquals(modality != TrackingModality.NONE, result.rotation != null)
+  }
+ }
+ @Test fun ambiguousLegacyCandidatesNeverInventMainOrFallback() {
+  val r = ConstraintResolver()
+  val result = r.resolve(target, listOf(sample("a", TrackingModality.FULL), sample("b", TrackingModality.FULL)))
+  assertNull(result.position); assertNull(result.rotation)
+ }
+ @Test fun staleLostAndOtherTargetsDoNotProduceConstraints() {
+  val result = resolver().resolve(target, listOf(
+   sample("main", TrackingModality.FULL).copy(positionQuality = ObservationQuality.STALE, rotationQuality = ObservationQuality.LOST),
+   sample("fallback", TrackingModality.ROTATION_ONLY).copy(target = TrackerPosition.CHEST)))
+  assertNull(result.position); assertNull(result.rotation)
+ }
 }
