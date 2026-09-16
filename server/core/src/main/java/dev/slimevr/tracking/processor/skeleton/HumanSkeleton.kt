@@ -211,6 +211,7 @@ class HumanSkeleton(
 	private var pauseTracking = false // Pauses skeleton tracking if true, resumes skeleton tracking if false
 	private var rawInputTrackers: List<Tracker> = emptyList()
 	private var constraintInputView: ((List<Tracker>) -> SkeletonInputView)? = null
+	private var hadConstraintInputView = false
 
 	/** Optional generic hook. The ordinary Slime input path remains the default. */
 	fun setConstraintInputView(view: ((List<Tracker>) -> SkeletonInputView)?) {
@@ -492,7 +493,12 @@ class HumanSkeleton(
 		userHeightCalibration?.checkTrackers()
 
 		// Rebuild Ik Solver
-		ikSolver.buildChains(view?.constraints ?: trackers)
+		ikSolver.buildChains(
+			view?.constraints ?: trackers,
+			preserveCalibration = view != null || hadConstraintInputView,
+			retainedNames = view?.retainedCalibrationNames ?: trackers.map { it.name }.toSet(),
+		)
+		hadConstraintInputView = view != null
 
 		// Update bones tracker field
 		refreshBoneTracker()
