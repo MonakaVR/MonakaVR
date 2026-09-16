@@ -1,0 +1,53 @@
+{
+  "sequence_scope": [
+    "protocol",
+    "type",
+    "source_id",
+    "device_id_or_tracker_id",
+    "session_id"
+  ],
+  "cases": [
+    {
+      "name": "partial-loss",
+      "frames": [
+        "valid/observation.json",
+        "valid/orientation-only.json",
+        "valid/invalid-position-moving.json"
+      ],
+      "expect": "position becomes invalid; orientation stays usable"
+    },
+    {
+      "name": "stale-replay",
+      "frames": [
+        "valid/observation.json",
+        "valid/observation.json"
+      ],
+      "expect": "consumer ignores repeated sequence; freshness unchanged"
+    },
+    {
+      "name": "session-reset",
+      "frames": [
+        "valid/observation.json",
+        "valid/session-reset.json",
+        "valid/observation.json"
+      ],
+      "expect": "accept new session; reject retired session replay"
+    },
+    {
+      "name": "clock-epoch",
+      "frames": [
+        "valid/observation.json",
+        "valid/different-clock-epoch.json"
+      ],
+      "expect": "never directly subtract timestamps from distinct clocks"
+    },
+    {
+      "name": "state-does-not-refresh-pose",
+      "frames": [
+        "valid/observation.json",
+        "valid/device-state.json"
+      ],
+      "expect": "state stream does not update pose freshness"
+    }
+  ]
+}

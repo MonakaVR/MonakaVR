@@ -1,0 +1,1450 @@
+[
+  {
+    "file": "valid/observation.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/orientation-only.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": null,
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": false,
+        "orientation": true
+      },
+      "orientation_evidence": "sample_sanity",
+      "tracking_state": "degraded",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/invalid-position-moving.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        999.0,
+        -44.0,
+        23.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": false,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "degraded",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/position-only.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": null,
+      "validity": {
+        "position": true,
+        "orientation": false
+      },
+      "orientation_evidence": "none",
+      "tracking_state": "degraded",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/unknown-battery.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": {
+        "fraction": null,
+        "charging": null,
+        "timestamp_ns": "9007199254740000"
+      },
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/known-battery.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": {
+        "fraction": 0.5,
+        "charging": false,
+        "timestamp_ns": "9007199254740993"
+      },
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation",
+        "battery_fraction",
+        "charging"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/negative-quaternion.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        -1
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/observation-unnormalized.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1.4
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/session-reset.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "33333333-3333-3333-3333-333333333333",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/different-clock-epoch.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "44444444-4444-4444-4444-444444444444",
+      "sequence": "0",
+      "timestamp_ns": "0",
+      "sent_at_ns": "100",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/u63-maximum.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "9223372036854775807",
+      "timestamp_ns": "9223372036854775807",
+      "sent_at_ns": "9223372036854775807",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/derivatives.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation",
+        "linear_velocity",
+        "angular_velocity",
+        "linear_acceleration"
+      ],
+      "linear_velocity": {
+        "value": [
+          1,
+          2,
+          3
+        ],
+        "frame": "space",
+        "evidence": "measured"
+      },
+      "angular_velocity": {
+        "value": [
+          0,
+          1,
+          0
+        ],
+        "frame": "device",
+        "evidence": "derived"
+      },
+      "linear_acceleration": {
+        "value": [
+          0,
+          0,
+          0
+        ],
+        "frame": "space",
+        "evidence": "derived"
+      }
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/future-minor.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 65535
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/reordered-whitespace.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/utf8-id-limit.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "ああああああああああああああああああああああああああああああああ",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/device-state.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "device_state",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "presence": "present"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/mtp-pose.json",
+    "decoded": {
+      "protocol": "monaka.tracking",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "tracking_state": "tracked",
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "tracker_id": "tracker-A",
+      "mapping_revision": 0,
+      "confidence": {
+        "position": 1.0,
+        "orientation": 0.5
+      },
+      "input": {
+        "device_id": "device-01",
+        "session_id": "11111111-1111-1111-1111-111111111111",
+        "sequence": "0"
+      },
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/tracker-state.json",
+    "decoded": {
+      "protocol": "monaka.tracking",
+      "type": "tracker_state",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "presence": "present",
+      "tracker_id": "tracker-A",
+      "mapping_revision": 4294967295
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/quat-boundary-zero.json",
+    "error": {
+      "code": "InvalidQuaternion"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/quat-boundary-half.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        0.5
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/quat-boundary-onehalf.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0,
+        0,
+        0,
+        1.5
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/numeric-u63.json",
+    "error": {
+      "code": "InvalidType"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/u63-negative.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/u63-leading-zero.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/u63-overflow.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/u63-decimal.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/u63-exponent.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/u63-empty.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/empty-id.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/id-byte-overflow.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/id-control.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/id-c1-control.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/uppercase-uuid.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/unknown-enum.json",
+    "error": {
+      "code": "UnsupportedValue"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/unknown-protocol.json",
+    "error": {
+      "code": "UnsupportedMessage"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/unknown-message.json",
+    "error": {
+      "code": "UnsupportedMessage"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/unsupported-major.json",
+    "error": {
+      "code": "UnsupportedVersion"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/minor-overflow.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/fractional-minor.json",
+    "error": {
+      "code": "InvalidType"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/bad-vec-length.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/bad-number-type.json",
+    "error": {
+      "code": "InvalidType"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/null-valid-position.json",
+    "error": {
+      "code": "InconsistentValidity"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/invalid-state.json",
+    "error": {
+      "code": "InconsistentValidity"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/missing-capability.json",
+    "error": {
+      "code": "InconsistentValidity"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/duplicate-capability.json",
+    "error": {
+      "code": "InconsistentValidity"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/future-timestamp.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/bad-quaternion.json",
+    "error": {
+      "code": "InvalidQuaternion"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/none-evidence-valid.json",
+    "error": {
+      "code": "InconsistentValidity"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/derivative-without-capability.json",
+    "error": {
+      "code": "InconsistentValidity"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/battery-range.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/missing-field.json",
+    "error": {
+      "code": "MissingField"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/mtp-unnormalized.json",
+    "error": {
+      "code": "InvalidQuaternion"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/mtp-confidence-zero.json",
+    "error": {
+      "code": "InconsistentValidity"
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "invalid/mtp-wrong-convention.json",
+    "error": {
+      "code": "UnsupportedValue"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/mtp-revision-overflow.json",
+    "error": {
+      "code": "OutOfRange"
+    },
+    "schema_valid": false
+  },
+  {
+    "file": "invalid/empty.json",
+    "error": {
+      "code": "MalformedJson"
+    }
+  },
+  {
+    "file": "invalid/truncated.json",
+    "error": {
+      "code": "MalformedJson"
+    }
+  },
+  {
+    "file": "invalid/extra-object.json",
+    "error": {
+      "code": "MalformedJson"
+    }
+  },
+  {
+    "file": "invalid/bom.json",
+    "error": {
+      "code": "MalformedJson"
+    }
+  },
+  {
+    "file": "invalid/utf8.json",
+    "error": {
+      "code": "InvalidUtf8"
+    }
+  },
+  {
+    "file": "invalid/overlong-utf8.json",
+    "error": {
+      "code": "InvalidUtf8"
+    }
+  },
+  {
+    "file": "invalid/surrogate-utf8.json",
+    "error": {
+      "code": "InvalidUtf8"
+    }
+  },
+  {
+    "file": "invalid/duplicate.json",
+    "error": {
+      "code": "DuplicateKey"
+    }
+  },
+  {
+    "file": "invalid/duplicate-escaped-key.json",
+    "error": {
+      "code": "DuplicateKey"
+    }
+  },
+  {
+    "file": "invalid/duplicate-unknown.json",
+    "error": {
+      "code": "DuplicateKey"
+    }
+  },
+  {
+    "file": "invalid/nonfinite.json",
+    "error": {
+      "code": "OutOfRange"
+    }
+  },
+  {
+    "file": "invalid/nan.json",
+    "error": {
+      "code": "MalformedJson"
+    }
+  },
+  {
+    "file": "invalid/comment.json",
+    "error": {
+      "code": "MalformedJson"
+    }
+  },
+  {
+    "file": "invalid/trailing-comma.json",
+    "error": {
+      "code": "MalformedJson"
+    }
+  },
+  {
+    "file": "invalid/unpaired-surrogate.json",
+    "error": {
+      "code": "MalformedJson"
+    }
+  },
+  {
+    "file": "invalid/depth-17.json",
+    "error": {
+      "code": "MalformedJson"
+    }
+  },
+  {
+    "file": "invalid/too-large.json",
+    "error": {
+      "code": "TooLarge"
+    }
+  },
+  {
+    "file": "valid/depth-16.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  },
+  {
+    "file": "valid/size-4096.json",
+    "decoded": {
+      "protocol": "monaka.observation",
+      "type": "pose",
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "source_id": "backend-A",
+      "device_id": "device-01",
+      "session_id": "11111111-1111-1111-1111-111111111111",
+      "clock_id": "22222222-2222-2222-2222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254741093",
+      "timestamp_kind": "receive",
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position": true,
+        "orientation": true
+      },
+      "orientation_evidence": "device",
+      "tracking_state": "tracked",
+      "battery": null,
+      "coordinate_space": {
+        "id": "room-A",
+        "convention": "rh_y_up_neg_z_forward",
+        "revision": 0
+      },
+      "capabilities": [
+        "position",
+        "orientation"
+      ],
+      "linear_velocity": null,
+      "angular_velocity": null,
+      "linear_acceleration": null
+    },
+    "schema_valid": true
+  }
+]
