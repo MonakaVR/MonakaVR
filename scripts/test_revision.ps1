@@ -54,6 +54,8 @@ function Invoke-RevisionStep {
 
 $Gradle = Join-Path $RepoRoot 'gradlew.bat'
 $Steps = @(
+    @{ Name='release-tooling'; File='python'; Args=@('scripts/test_release_v2.py') },
+    @{ Name='release-tooling-optimized'; File='python'; Args=@('-O','scripts/test_release_v2.py') },
     @{ Name='protocol-v2-kit'; File='python'; Args=@('scripts/verify_protocol_v2.py') }
 )
 
@@ -103,7 +105,7 @@ $summary = [ordered]@{
     pico_hardware = 'NOT RUN'
     vive_hardware = 'NOT RUN'
     hmd_hardware = 'NOT RUN'
-    release_evidence = 'NOT RUN - legacy Task5 release validator is outside this software regression runner'
+    release_evidence = 'NOT RUN - run scripts/release_v2.py separately for source-bound v2 evidence'
     steps = $StepResults
 }
 $summaryPath = Join-Path $ResultsDir 'summary.json'
