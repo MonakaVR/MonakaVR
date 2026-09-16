@@ -64,6 +64,12 @@ new protocol/runtime dependencies. Each checkout works without sibling sources.
 The workspace Quick/Full runners exercise the release-tool regression tests;
 release generation remains an explicit, additional clean-tree gate.
 
+The desktop build workflow also runs this Windows v2 gate and uploads its ZIP,
+external manifest and receipt. The tag release job depends on that job. Other
+desktop/Android installer artifacts retain their existing build pipelines; the
+Windows software receipt does not certify their platform or hardware behavior.
+Workflow changes are checked locally; remote CI execution is separately NOT RUN.
+
 ## Scope and remaining gates
 
 PASS means **Windows x64 software release evidence**, not hardware cutover,
