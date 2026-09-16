@@ -1,0 +1,14 @@
+MonakaProtocol C1 candidate implementation
+
+Third-party components distributed with the kit:
+
+- nlohmann/json 3.11.3: Copyright (c) 2013-2023 Niels Lohmann.
+  MIT license, cpp/third_party/nlohmann/LICENSE.MIT.
+- Google Gson 2.11.0: Copyright Google Inc. Apache License 2.0,
+  licenses/gson-LICENSE.
+- Kotlin standard library 2.3.10: Copyright JetBrains s.r.o. and contributors.
+  Apache License 2.0, licenses/kotlin-LICENSE.txt and kotlin-NOTICE.txt.
+
+Exact dependency file hashes are in dependencies.lock.json and the kit lock.
+The repository owner has not supplied a license for original project source;
+this notice does not invent or change the owner's licensing terms.

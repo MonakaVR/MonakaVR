@@ -1,0 +1,35 @@
+{
+  "protocol": "monaka.tracking",
+  "type": "tracker_state",
+  "version": {
+    "major": 2,
+    "minor": 0
+  },
+  "source_id": "backend-A",
+  "session_id": "11111111-1111-1111-1111-111111111111",
+  "clock_id": "22222222-2222-2222-2222-222222222222",
+  "sequence": "0",
+  "timestamp_ns": "9007199254740993",
+  "sent_at_ns": "9007199254741093",
+  "timestamp_kind": "receive",
+  "tracking_state": "tracked",
+  "battery": {
+    "fraction": null,
+    "charging": null,
+    "timestamp_ns": "9007199254741093"
+  },
+  "coordinate_space": {
+    "id": "room-A",
+    "convention": "rh_y_up_neg_z_forward",
+    "revision": 0
+  },
+  "capabilities": [
+    "position",
+    "orientation"
+  ],
+  "presence": "present",
+  "tracker_id": "tracker-A",
+  "mapping_revision": 4294967295,
+  "modality": "none",
+  "publisher_id": "synthetic-bridge"
+}

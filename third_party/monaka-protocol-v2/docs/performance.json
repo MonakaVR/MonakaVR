@@ -1,0 +1,53 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+  "iterations": 1000,
+  "cpp_warmup": 100,
+  "jvm_warmup": 1000,
+  "samples": [
+    {
+      "language": "cpp",
+      "frame": "observation",
+      "input_bytes": 643,
+      "measurements": "decode ns/op=45258.7 process_cpu_ns/op=46875 allocations/op=413 allocated_bytes/op=17911 payload_bytes=717\nencode ns/op=89716.6 process_cpu_ns/op=93750 allocations/op=748 allocated_bytes/op=35761 payload_bytes=717"
+    },
+    {
+      "language": "cpp",
+      "frame": "derivatives",
+      "input_bytes": 928,
+      "measurements": "decode ns/op=64996.9 process_cpu_ns/op=62500 allocations/op=591 allocated_bytes/op=25367 payload_bytes=946\nencode ns/op=123641 process_cpu_ns/op=109375 allocations/op=1019 allocated_bytes/op=47758 payload_bytes=946"
+    },
+    {
+      "language": "cpp",
+      "frame": "mtp-pose",
+      "input_bytes": 764,
+      "measurements": "decode ns/op=62492.3 process_cpu_ns/op=46875 allocations/op=507 allocated_bytes/op=22331 payload_bytes=838\nencode ns/op=121108 process_cpu_ns/op=125000 allocations/op=914 allocated_bytes/op=44718 payload_bytes=838"
+    },
+    {
+      "language": "jvm",
+      "frame": "observation",
+      "input_bytes": 643,
+      "measurements": "decode ns/op=40117.3 thread_cpu_ns/op=31250.0 allocated_bytes/op=34233.64 payload_bytes=717\nencode ns/op=80282.4 thread_cpu_ns/op=78125.0 allocated_bytes/op=73271.912 payload_bytes=717"
+    },
+    {
+      "language": "jvm",
+      "frame": "derivatives",
+      "input_bytes": 928,
+      "measurements": "decode ns/op=47148.2 thread_cpu_ns/op=31250.0 allocated_bytes/op=43458.688 payload_bytes=946\nencode ns/op=98886.1 thread_cpu_ns/op=46875.0 allocated_bytes/op=91142.672 payload_bytes=946"
+    },
+    {
+      "language": "jvm",
+      "frame": "mtp-pose",
+      "input_bytes": 764,
+      "measurements": "decode ns/op=46013.6 thread_cpu_ns/op=46875.0 allocated_bytes/op=42506.68 payload_bytes=838\nencode ns/op=78501.3 thread_cpu_ns/op=62500.0 allocated_bytes/op=90358.176 payload_bytes=838"
+    }
+  ],
+  "limitations": [
+    "Single local run, not a latency percentile or throughput guarantee.",
+    "C++ allocation counts cover ordinary global new/new[] only; not malloc or aligned allocations.",
+    "JVM allocated bytes use HotSpot ThreadMXBean; object allocation count not available.",
+    "JVM CPU measures calling thread only; JIT/GC worker CPU is excluded.",
+    "C++ CPU uses GetProcessTimes on Windows and std::clock elsewhere; timer resolution limits precision.",
+    "Encode includes validation and a decode verification pass. No transport or hardware work is measured."
+  ]
+}

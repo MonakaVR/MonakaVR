@@ -1,0 +1,45 @@
+{
+  "language_levels": {
+    "cpp": "C++17",
+    "jvm": 17
+  },
+  "selected_toolchains": {
+    "kotlin": "2.3.10",
+    "gradle": "8.14.4",
+    "python": "3.13.15",
+    "cmake": "4.3.1-msvc1",
+    "windows_compiler": "MSVC 19.51.36257.0",
+    "java": "Microsoft OpenJDK 17.0.20.1+1-LTS"
+  },
+  "linux_compiler": {
+    "selection": "GCC C++17 via ubuntu-latest CI runner",
+    "local_verification": "NOT RUN; no Linux/WSL installed"
+  },
+  "vendored_files": {
+    "cpp/third_party/nlohmann/json.hpp": {
+      "name": "nlohmann/json",
+      "version": "3.11.3",
+      "sha256": "9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6",
+      "upstream": "https://raw.githubusercontent.com/nlohmann/json/v3.11.3/single_include/nlohmann/json.hpp"
+    },
+    "jvm/libs/gson-2.11.0.jar": {
+      "name": "com.google.code.gson:gson",
+      "version": "2.11.0",
+      "sha256": "57928d6e5a6edeb2abd3770a8f95ba44dce45f3b23b7a9dc2b309c581552a78b",
+      "upstream": "https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar"
+    },
+    "jvm/libs/kotlin-stdlib-2.3.10.jar": {
+      "name": "org.jetbrains.kotlin:kotlin-stdlib",
+      "version": "2.3.10",
+      "sha256": "f61662c6d3a2f8ef5bd34362a02d877772c39f393cd394feb259dfaf7f4d8437",
+      "upstream": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.3.10/kotlin-stdlib-2.3.10.jar"
+    }
+  },
+  "test_dependencies": [
+    "jsonschema==4.26.0",
+    "attrs==26.1.0",
+    "jsonschema-specifications==2025.9.1",
+    "referencing==0.37.0",
+    "rpds-py==2026.6.3"
+  ]
+}
