@@ -50,7 +50,7 @@ class ObservationBackendTests {
 				),
 			),
 		)
-		val pipeline = ConstraintPipeline(profileRegistry = registry)
+		val pipeline = ConstraintPipeline(profileRegistry = registry, resolver = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference("pico:hip"), TrackerReference("imu:hip"))) })
 		val absolute = FakeBackend("pico-backend", "absolute") { now ->
 			listOf(
 				PoseObservation(
@@ -122,7 +122,7 @@ class ObservationBackendTests {
 
 		val firstPoll = backend.poll(100L)
 		assertEquals(1, firstPoll.size)
-		assertEquals("legacy:1", firstPoll.single().sourceId)
+		assertEquals("legacy:test-1", firstPoll.single().sourceId)
 		assertEquals(TrackerPosition.HIP, firstPoll.single().target)
 
 		val foot = tracker(3, TrackerPosition.LEFT_FOOT).apply {
@@ -133,7 +133,7 @@ class ObservationBackendTests {
 		currentTrackers = listOf(assigned, foot)
 
 		val secondPoll = backend.poll(200L)
-		assertEquals(setOf("legacy:1", "legacy:3"), secondPoll.map { it.sourceId }.toSet())
+		assertEquals(setOf("legacy:test-1", "legacy:test-3"), secondPoll.map { it.sourceId }.toSet())
 		assertEquals(setOf(TrackerPosition.HIP, TrackerPosition.LEFT_FOOT), secondPoll.map { it.target }.toSet())
 	}
 }

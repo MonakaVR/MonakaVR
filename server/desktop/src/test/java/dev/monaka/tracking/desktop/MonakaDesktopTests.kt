@@ -1,6 +1,6 @@
 package dev.monaka.tracking.desktop
 
-import dev.monaka.protocol.v1.*
+import dev.monaka.protocol.v2.*
 import dev.monaka.tracking.*
 import dev.slimevr.tracking.processor.HumanPoseManager
 import dev.slimevr.tracking.trackers.*
@@ -18,7 +18,7 @@ import kotlin.test.*
 
 class MonakaDesktopTests {
 	@TempDir lateinit var temporary: Path
-	private fun fixture() = (MonakaCodec.decodeEnvelope(File(System.getProperty("monaka.fixtures"), "valid/mtp-pose.json").readBytes()) as DecodeResult.Success).value as MtpPose
+	private fun fixture() = (MonakaCodec.decodeEnvelope(File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes()) as DecodeResult.Success).value as MtpPose
 	private fun tracker(id: Int, body: TrackerPosition, position: Boolean = false) = Tracker(
 		null, id, "slime-input:$id", trackerPosition = body, hasPosition = position, hasRotation = true,
 		allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false,
@@ -57,7 +57,7 @@ class MonakaDesktopTests {
 	}
 
 	@Test fun persistentAssignmentsRoundTripAndExplicitMigration() {
-		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id)
+		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
 		val config = MonakaConfiguration(p.coordinate_space)
 		config.assignments.migrateLegacy(mapOf("legacy-serial" to TrackerPosition.LEFT_FOOT), mapOf("legacy-serial" to key))
 		val path = temporary.resolve("monaka-mtp.json")
@@ -70,7 +70,7 @@ class MonakaDesktopTests {
 	}
 
 	@Test fun loopbackWorkerSurvivesMalformedInputAndStopsOnUnregister() {
-		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id)
+		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
 		val head = tracker(0, TrackerPosition.HEAD, true).also { it.position = Vector3(0f, 1.7f, 0f) }
 		val hpm = HumanPoseManager(listOf(head)); hpm.setLegTweaksEnabled(false)
 		var hook: Runnable? = null
@@ -97,7 +97,7 @@ class MonakaDesktopTests {
 	}
 
 	@Test fun separateProcessUdpEntersSamePipelineAndMovesExistingIk() {
-		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id)
+		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
 		val head = tracker(0, TrackerPosition.HEAD, true).also { it.position = Vector3(0f, 1.7f, 0f) }
 		val hpm = HumanPoseManager(listOf(head)); hpm.setLegTweaksEnabled(false)
 		hpm.skeleton.ikSolver.enabled = false; hpm.update()
@@ -108,14 +108,15 @@ class MonakaDesktopTests {
 			{ listOf(head) }, hpm.skeleton, { hook = it }, { throw it },
 		)!!
 		integration.use {
-			val fixtureFile = temporary.resolve("pose.json").toFile()
+			val senderPort = DatagramSocket(0).use { it.localPort }
+            val fixtureFile = temporary.resolve("pose.json").toFile()
 			fixtureFile.writeBytes(encoded(p.copy(position = listOf(hip.x.toDouble(), hip.y.toDouble(), hip.z.toDouble()))))
 			fun publish(offset: Double, sequence: Long) {
 				val output = temporary.resolve("publisher-$sequence.log").toFile()
 				val process = ProcessBuilder(
 					File(System.getProperty("java.home"), "bin/java.exe").absolutePath,
 					"-cp", System.getProperty("monaka.test.classpath"), "dev.monaka.tracking.desktop.MtpTestPublisher",
-					fixtureFile.absolutePath, integration.receiver.port.toString(), offset.toString(), sequence.toString(),
+					fixtureFile.absolutePath, integration.receiver.port.toString(), offset.toString(), sequence.toString(), senderPort.toString(),
 				).redirectErrorStream(true).redirectOutput(output).start()
 				assertTrue(process.waitFor(15, TimeUnit.SECONDS), "Publisher timed out: ${output.readText()}")
 				assertEquals(0, process.exitValue(), output.readText())
@@ -131,7 +132,29 @@ class MonakaDesktopTests {
 		}
 	}
 
-	private fun await(condition: () -> Boolean) {
+    @Test fun v2ConfigPreservesExplicitFallbackAndV1MigrationRequiresFullIdentityMapping() {
+        val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
+        val config = MonakaConfiguration(p.coordinate_space)
+        config.assignments.configure(TrackerPosition.HIP, TrackerReference.mtp(key), TrackerReference.slime("stable-slime"))
+        val path = temporary.resolve("composition.json")
+        config.save(path)
+        val restored = MonakaConfiguration.load(path)
+        assertEquals(config.assignments.snapshot().targets, restored.assignments.snapshot().targets)
+        assertFailsWith<IllegalArgumentException> {
+            restored.assignments.configure(TrackerPosition.LEFT_FOOT, TrackerReference.slime("stable-slime"))
+        }
+        val legacy = temporary.resolve("legacy.json")
+        val old = """{"version":1,"space":{"id":"room-A","revision":0,"convention":"rh_y_up_neg_z_forward"},"assignments":[{"source_id":"old-bridge","tracker_id":"tracker-A","body":"HIP"}]}"""
+        legacy.toFile().writeText(old)
+        assertFailsWith<IllegalArgumentException> { MonakaConfiguration.load(legacy) }
+        assertEquals(old, legacy.toFile().readText())
+        val migrated = MonakaConfiguration.migrate(legacy, mapOf(("old-bridge" to "tracker-A") to key))
+        assertNull(migrated.assignments.snapshot().targets.getValue(TrackerPosition.HIP).rotationFallbackTracker)
+        assertEquals(old, temporary.resolve("legacy.json.pre-c2.bak").toFile().readText())
+        assertEquals(key, MonakaConfiguration.load(legacy).assignments.snapshot().targets.getValue(TrackerPosition.HIP).mainTracker.mtp)
+    }
+
+    private fun await(condition: () -> Boolean) {
 		val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
 		while (!condition()) { assertTrue(System.nanoTime() < deadline, "UDP condition timed out"); Thread.sleep(5) }
 	}
@@ -143,7 +166,7 @@ object MtpTestPublisher {
 		val p = (MonakaCodec.decodeEnvelope(File(args[0]).readBytes()) as DecodeResult.Success).value as MtpPose
 		val pose = p.copy(sequence = args[3].toLong(), position = p.position!!.mapIndexed { i, n -> if (i == 0) n + args[2].toDouble() else n })
 		val bytes = (MonakaCodec.encodeEnvelope(pose) as EncodeResult.Success).value
-		DatagramSocket().use { it.send(DatagramPacket(bytes, bytes.size, InetAddress.getByName("127.0.0.1"), args[1].toInt())) }
+		DatagramSocket(args[4].toInt()).use { it.send(DatagramPacket(bytes, bytes.size, InetAddress.getByName("127.0.0.1"), args[1].toInt())) }
 		println("PASS fixed-codec separate-process UDP sequence=${pose.sequence}")
 	}
 }

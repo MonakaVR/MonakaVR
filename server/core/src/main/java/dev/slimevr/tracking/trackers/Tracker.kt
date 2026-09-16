@@ -134,6 +134,8 @@ class Tracker @JvmOverloads constructor(
 	private val velocityState = VelocityState()
 
 	var position = Vector3.NULL
+	/** Optional upstream sample capability. Only the opt-in Monaka adapter reads it. */
+	var sampleModality: dev.monaka.tracking.TrackingModality? = null
 	val resetsHandler: TrackerResetsHandler = TrackerResetsHandler(this)
 	val filteringHandler: TrackerFilteringHandler = TrackerFilteringHandler()
 	val trackerFlexHandler: TrackerFlexHandler = TrackerFlexHandler(this)

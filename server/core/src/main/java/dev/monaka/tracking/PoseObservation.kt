@@ -13,6 +13,11 @@ data class PoseObservation(
 	val rotation: Quaternion? = null,
 	val positionQuality: ObservationQuality = if (position != null) ObservationQuality.TRACKED else ObservationQuality.UNAVAILABLE,
 	val rotationQuality: ObservationQuality = if (rotation != null) ObservationQuality.TRACKED else ObservationQuality.UNAVAILABLE,
+	val modality: TrackingModality = when {
+		position != null && rotation != null -> TrackingModality.FULL
+		rotation != null -> TrackingModality.ROTATION_ONLY
+		else -> TrackingModality.NONE
+	},
 ) {
 	init {
 		require(sourceId.isNotBlank()) { "sourceId must not be blank" }

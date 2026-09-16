@@ -80,6 +80,7 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 	@VRServerThread
 	protected fun trackerOverrideUpdate(source: Tracker, target: Tracker) {
 		target.position = source.position
+		target.sampleModality = source.sampleModality
 		target.setRotation(source.getRotation())
 		target.status = source.status
 		target.setVelocity(source.getVelocity())
@@ -164,6 +165,11 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 	protected fun positionReceived(positionMessage: ProtobufMessages.Position) {
 		val tracker = getInternalRemoteTrackerById(positionMessage.trackerId)
 		if (tracker != null) {
+			tracker.sampleModality = when (positionMessage.dataSource) {
+				Position.DataSource.FULL -> dev.monaka.tracking.TrackingModality.FULL
+				Position.DataSource.IMU -> dev.monaka.tracking.TrackingModality.ROTATION_ONLY
+				else -> dev.monaka.tracking.TrackingModality.NONE
+			}
 			if (positionMessage.hasX()) {
 				tracker
 					.position = Vector3(

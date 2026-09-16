@@ -54,3 +54,6 @@ vrconfig.yml.tmp
 # Generated Task 5 validation and handoff (actual hashes in their external manifests)
 /dist/
 __pycache__/
+
+# Local compiler diagnostic retained outside versioned evidence.
+/build-revision-compile.log

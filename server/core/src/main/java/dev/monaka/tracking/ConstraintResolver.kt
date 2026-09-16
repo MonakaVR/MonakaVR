@@ -1,63 +1,33 @@
 package dev.monaka.tracking
 
+import dev.monaka.tracking.revision.MainFallbackPolicy
+import dev.monaka.tracking.revision.RotationOwner
 import dev.slimevr.tracking.trackers.TrackerPosition
-import io.github.axisangles.ktmath.Quaternion
-import io.github.axisangles.ktmath.Vector3
 
-class ConstraintResolver {
-	fun resolve(
-		target: TrackerPosition,
-		observations: Iterable<PoseObservation>,
-	): EffectiveConstraint {
-		val matching = observations.filter { it.target == target }
-		return EffectiveConstraint(
-			target = target,
-			position = chooseComponent(
-				matching,
-				value = { it.position },
-				quality = { it.positionQuality },
-			),
-			rotation = chooseComponent(
-				matching,
-				value = { it.rotation },
-				quality = { it.rotationQuality },
-			),
-		)
-	}
-
-	private data class Candidate<T>(
-		val component: ResolvedComponent<T>,
-		val priority: Int,
-	)
-
-	private fun <T : Any> chooseComponent(
-		observations: Iterable<PoseObservation>,
-		value: (PoseObservation) -> T?,
-		quality: (PoseObservation) -> ObservationQuality,
-	): ResolvedComponent<T>? {
-		return observations
-			.mapNotNull { observation ->
-				val componentQuality = quality(observation)
-				val componentValue = value(observation)
-				if (!componentQuality.usable || componentValue == null) {
-					return@mapNotNull null
-				}
-				Candidate(
-					component = ResolvedComponent(
-						value = componentValue,
-						sourceId = observation.sourceId,
-						quality = componentQuality,
-						observedAtNanos = observation.observedAtNanos,
-					),
-					priority = observation.priority,
-				)
-			}
-			.maxWithOrNull(
-				compareBy<Candidate<T>> { it.component.quality.rank }
-					.thenBy { it.priority }
-					.thenBy { it.component.observedAtNanos }
-					.thenBy { it.component.sourceId },
-			)
-			?.component
-	}
+/** Runtime adapter for the reviewed Main/Fallback policy; no competing selection policy. */
+class ConstraintResolver(
+ private val assignments: () -> Map<TrackerPosition, MainTrackerAssignment> = { emptyMap() },
+) {
+ fun resolve(target: TrackerPosition, observations: Iterable<PoseObservation>): EffectiveConstraint {
+  val matching = observations.filter { it.target == target }.associateBy { it.sourceId }
+  val relation = assignments()[target]
+  val main = relation?.let { matching[it.mainTracker.observationId] }
+   ?: if (relation == null && matching.size == 1) matching.values.single() else null
+  val fallback = relation?.rotationFallbackTracker?.let { matching[it.observationId] }
+  fun positionUsable(p: PoseObservation?) = p?.position != null && p.positionQuality.usable
+  fun rotationUsable(p: PoseObservation?) = p?.rotation != null && p.rotationQuality.usable
+  val fallbackUsable = when (fallback?.modality) {
+   TrackingModality.FULL -> positionUsable(fallback) && rotationUsable(fallback)
+   TrackingModality.ROTATION_ONLY -> rotationUsable(fallback)
+   else -> false
+  }
+  val decision = MainFallbackPolicy.decide(
+   main?.modality ?: TrackingModality.NONE, positionUsable(main), rotationUsable(main), fallbackUsable,
+  )
+  val rotation = when (decision.rotationOwner) { RotationOwner.MAIN -> main; RotationOwner.FALLBACK -> fallback; else -> null }
+  return EffectiveConstraint(target,
+   if (decision.positionFromMain) ResolvedComponent(requireNotNull(main?.position), main.sourceId, main.positionQuality, main.observedAtNanos) else null,
+   rotation?.let { ResolvedComponent(requireNotNull(it.rotation), it.sourceId, it.rotationQuality, it.observedAtNanos) },
+  )
+ }
 }

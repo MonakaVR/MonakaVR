@@ -1,6 +1,6 @@
 package dev.monaka.tracking
 
-import dev.monaka.protocol.v1.CoordinateSpace
+import dev.monaka.protocol.v2.CoordinateSpace
 import dev.monaka.tracking.mtp.*
 import dev.slimevr.tracking.trackers.Tracker
 
@@ -17,10 +17,10 @@ class MonakaRuntime(
 		ObservationSourceProfile.sixDof("slime", 0, Long.MAX_VALUE, Long.MAX_VALUE),
 		ObservationSourceProfile.sixDof("mtp", 100, timeoutNanos, timeoutNanos),
 	))
-	val pipeline = ConstraintPipeline(profileRegistry = profiles)
+	val pipeline = ConstraintPipeline(profileRegistry = profiles, resolver = ConstraintResolver { assignments.snapshot().targets })
 	val mtp = MtpObservationBackend(inbox, assignments, expectedSpace)
 	val runner = ObservationBackendRunner(pipeline, listOf(
-		SlimeTrackerObservationBackend("slime", "slime", { trackers().filter(FeedbackExclusion::accepts) }), mtp,
+		SlimeTrackerObservationBackend("slime", "slime", { trackers().filter(FeedbackExclusion::accepts) }, assignments = { assignments.snapshot().targets }), mtp,
 	))
 	private var closed = false
 	private var wasPaused = false

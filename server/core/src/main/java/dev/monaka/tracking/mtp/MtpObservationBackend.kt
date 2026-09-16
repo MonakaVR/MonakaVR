@@ -1,6 +1,6 @@
 package dev.monaka.tracking.mtp
 
-import dev.monaka.protocol.v1.*
+import dev.monaka.protocol.v2.*
 import dev.monaka.tracking.*
 
 /** Server-thread incremental cache. Watermarks survive loss/pause; pose age never changes. */
@@ -12,8 +12,9 @@ class MtpObservationBackend(
 	override val profileId: String = "mtp",
 ) : ObservationBackend {
 	data class Sample(val pose: MtpPose, val sampleTime: Long)
-	private class Lifetime(val session: String, val clock: String, val retired: MutableSet<String>) {
+	private class Lifetime(val session: String, val clock: String, val peer: String, val retired: MutableSet<String>) {
 		var quarantined = false
+        var lastAccepted = -1L
 	}
 	private class Device {
 		var poseSequence = -1L
@@ -87,8 +88,8 @@ class MtpObservationBackend(
 	}
 
 	private fun removeSource(source: String) {
-		if (devices.any { (key, device) -> key.sourceId == source && device.sample != null }) historyGeneration++
-		for (key in devices.keys.filter { it.sourceId == source }) {
+		if (devices.any { (key, device) -> key.lifetimeId == source && device.sample != null }) historyGeneration++
+		for (key in devices.keys.filter { it.lifetimeId == source }) {
 			removed += key.observationId
 			devices.getValue(key).sample = null
 		}
@@ -96,32 +97,35 @@ class MtpObservationBackend(
 	private fun admit(received: MtpInbox.Received, dirty: MutableSet<LogicalTracker>) {
 		val pose = received.envelope as? MtpPose
 		val state = received.envelope as? MtpTrackerState
-		val key = if (pose != null) LogicalTracker(pose.source_id, pose.tracker_id)
-			else LogicalTracker(requireNotNull(state).source_id, state.tracker_id)
+		val key = if (pose != null) LogicalTracker(pose.source_id, pose.tracker_id, pose.publisher_id)
+			else LogicalTracker(requireNotNull(state).source_id, state.tracker_id, state.publisher_id)
 		if (key.isFeedback || (pose != null && FeedbackExclusion.isOutput(pose.input.device_id))) {
 			inbox.count("FeedbackExcluded"); return
 		}
 		val session = pose?.session_id ?: state!!.session_id
 		val clock = pose?.clock_id ?: state!!.clock_id
-		var lifetime = lifetimes[key.sourceId]
+		var lifetime = lifetimes[key.lifetimeId]
 		if (lifetime == null) {
 			if (lifetimes.size >= 64) { inbox.count("SourceLimit"); return }
-			lifetime = Lifetime(session, clock, linkedSetOf())
-			lifetimes[key.sourceId] = lifetime
+			lifetime = Lifetime(session, clock, received.peer, linkedSetOf())
+			lifetimes[key.lifetimeId] = lifetime
 		} else {
 			if (lifetime.quarantined || session in lifetime.retired) { inbox.count("RetiredSession"); return }
-			if (session != lifetime.session) {
-				removeSource(key.sourceId)
+			if (session == lifetime.session && received.peer != lifetime.peer) { inbox.count("PeerMismatch"); return }
+            if (session != lifetime.session) {
+                if (received.receivedAtNanos - lifetime.lastAccepted < 500_000_000) { inbox.count("ActiveLease"); return }
+				removeSource(key.lifetimeId)
 				// Do not evict retired UUIDs and accidentally allow replay. Saturation fails closed.
 				if (lifetime.retired.size >= 256) {
 					lifetime.quarantined = true; inbox.count("SessionLimit"); return
 				}
 				lifetime.retired += lifetime.session
-				lifetimes[key.sourceId] = Lifetime(session, clock, lifetime.retired)
-				devices.keys.filter { it.sourceId == key.sourceId }.forEach { devices.remove(it) }
+				lifetimes[key.lifetimeId] = Lifetime(session, clock, received.peer, lifetime.retired)
+				devices.keys.filter { it.lifetimeId == key.lifetimeId }.forEach { devices.remove(it) }
 				inbox.count("SessionChanged")
 			} else if (clock != lifetime.clock) {
-				removeSource(key.sourceId); inbox.count("ClockMismatch"); return
+				devices[key]?.let { it.sample = null }; removed += key.observationId
+                inbox.count("ClockMismatch"); return
 			}
 		}
 		if (key !in devices && devices.size >= 1024) { inbox.count("TrackerLimit"); return }
@@ -132,7 +136,8 @@ class MtpObservationBackend(
 		if (pose != null) device.poseSequence = sequence else device.stateSequence = sequence
 		val space = pose?.coordinate_space ?: state!!.coordinate_space
 		if (space != expectedSpace) {
-			removeSource(key.sourceId); inbox.count("SpaceMismatch"); return
+			if (device.sample != null) historyGeneration++
+			device.sample = null; removed += key.observationId; inbox.count("SpaceMismatch"); return
 		}
 		val revision = pose?.mapping_revision ?: state!!.mapping_revision
 		if (revision < device.mappingRevision) { inbox.count("OldMappingRevision"); return }
@@ -142,15 +147,20 @@ class MtpObservationBackend(
 		}
 		if (pose == null) {
 			if (state!!.presence == "absent" || state.tracking_state in listOf("lost", "disconnected")) {
-				if (device.sample != null) historyGeneration++
-				device.sample = null; removed += key.observationId
 				device.absentAt = maxOf(device.absentAt, state.timestamp_ns)
+				if (device.sample?.pose?.timestamp_ns?.let { it <= device.absentAt } != false) {
+					if (device.sample != null) historyGeneration++
+					device.sample = null; removed += key.observationId
+				}
 			}
-			return // Present/battery heartbeat cannot repair or refresh a pose.
+			lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
+            return // Present/battery heartbeat cannot repair or refresh a pose.
 		}
 		dirty += key
 		device.sample = null
-		if (suspended || pose.timestamp_ns <= device.absentAt) return
+		if (pose.timestamp_ns <= device.absentAt) return
+        lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
+        if (suspended) return
 		val age = pose.sent_at_ns - pose.timestamp_ns // Both U63, codec checked timestamp <= sent_at.
 		if (age > received.receivedAtNanos) { inbox.count("BeforeLocalEpoch"); return }
 		device.sample = Sample(pose, received.receivedAtNanos - age)

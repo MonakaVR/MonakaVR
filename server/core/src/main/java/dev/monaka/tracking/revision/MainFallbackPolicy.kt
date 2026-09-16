@@ -3,9 +3,9 @@ package dev.monaka.tracking.revision
 /**
  * Contract-independent candidate model for the coordinated Main/Fallback revision.
  *
- * This package is intentionally not wired into MonakaRuntime yet. It exists so the
- * policy can be reviewed and tested before protocol-v2 ingestion and runtime
- * integration are switched over.
+ * ConstraintResolver now invokes this policy after fixed-v2 admission and freshness.
+ * CandidateTrackingModality is also the runtime TrackingModality alias; this is
+ * the single active decision policy, independent of transport and IK.
  */
 enum class CandidateTrackingModality {
 	FULL,

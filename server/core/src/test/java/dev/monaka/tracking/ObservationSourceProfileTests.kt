@@ -34,7 +34,7 @@ class ObservationSourceProfileTests {
 	}
 
 	@Test
-	fun pipelineAppliesFreshnessPerSourceProfileAndFallsBackByComponent() {
+	fun pipelineAppliesFreshnessBeforeExplicitFallback() {
 		val absoluteProfile = ObservationSourceProfile.sixDof(
 			profileId = "absolute",
 			priority = 100,
@@ -46,7 +46,7 @@ class ObservationSourceProfileTests {
 			priority = 10,
 			rotationTimeoutNanos = 200L,
 		)
-		val pipeline = ConstraintPipeline()
+		val pipeline = ConstraintPipeline(resolver = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference("absolute:hip"), TrackerReference("imu:hip"))) })
 
 		pipeline.ingest(
 			PoseObservation(
@@ -91,7 +91,7 @@ class ObservationSourceProfileTests {
 			priority = 10,
 			rotationTimeoutNanos = 200L,
 		)
-		val pipeline = ConstraintPipeline()
+		val pipeline = ConstraintPipeline(resolver = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference("absolute:hip"), TrackerReference("imu:hip"))) })
 
 		pipeline.ingest(
 			PoseObservation(

@@ -19,23 +19,31 @@ class SlimeTrackerPoseObservationAdapter(
 	fun adapt(
 		tracker: Tracker,
 		observedAtNanos: Long,
+		targetOverride: dev.slimevr.tracking.trackers.TrackerPosition? = null,
 	): PoseObservation? {
 		require(observedAtNanos >= 0L) { "observedAtNanos must be non-negative" }
 
-		val target = tracker.trackerPosition ?: return null
-		val statusQuality = tracker.status.toObservationQuality()
-		val position = if (tracker.hasPosition) tracker.position else null
-		val rotation = if (tracker.hasRotation) tracker.getRotation() else null
+		val target = targetOverride ?: tracker.trackerPosition ?: return null
+		val modality = tracker.sampleModality ?: when {
+			tracker.hasPosition && tracker.hasRotation -> TrackingModality.FULL
+			tracker.hasRotation -> TrackingModality.ROTATION_ONLY
+			else -> TrackingModality.NONE
+		}
+		val statusQuality = if (tracker.status == TrackerStatus.OCCLUDED && modality == TrackingModality.ROTATION_ONLY)
+			ObservationQuality.DEGRADED else tracker.status.toObservationQuality()
+		val position = if (tracker.hasPosition && modality == TrackingModality.FULL) tracker.position else null
+		val rotation = if (tracker.hasRotation && modality != TrackingModality.NONE) tracker.getRotation() else null
 
 		return PoseObservation(
-			sourceId = "$sourcePrefix:${tracker.id}",
+			sourceId = "$sourcePrefix:${tracker.name}",
 			target = target,
 			observedAtNanos = observedAtNanos,
 			priority = priority,
 			position = position,
 			rotation = rotation,
-			positionQuality = if (tracker.hasPosition) statusQuality else ObservationQuality.UNAVAILABLE,
-			rotationQuality = if (tracker.hasRotation) statusQuality else ObservationQuality.UNAVAILABLE,
+			positionQuality = if (position != null) statusQuality else ObservationQuality.UNAVAILABLE,
+			rotationQuality = if (rotation != null) statusQuality else ObservationQuality.UNAVAILABLE,
+			modality = modality,
 		)
 	}
 

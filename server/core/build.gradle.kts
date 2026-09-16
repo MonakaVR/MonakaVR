@@ -62,8 +62,8 @@ allprojects {
 
 dependencies {
 	// Exact JVM codec from the accepted Task 1 artifact (never a local codec fork).
-	api(files(rootProject.file("third_party/monaka-protocol/jvm/libs/monaka-protocol-jvm-0.1.0.jar")))
-	implementation(files(rootProject.file("third_party/monaka-protocol/jvm/libs/gson-2.11.0.jar")))
+	api(files(rootProject.file("third_party/monaka-protocol-v2/jvm/libs/monaka-protocol-jvm-0.1.0.jar")))
+	implementation(files(rootProject.file("third_party/monaka-protocol-v2/jvm/libs/gson-2.11.0.jar")))
 	implementation(project(":solarxr-protocol"))
 
 	// This dependency is used internally,
@@ -110,13 +110,13 @@ dependencies {
 
 tasks.test {
 	useJUnitPlatform()
-	systemProperty("monaka.fixtures", rootProject.file("third_party/monaka-protocol/fixtures").absolutePath)
+	systemProperty("monaka.fixtures", rootProject.file("third_party/monaka-protocol-v2/fixtures").absolutePath)
 }
 sourceSets.getByName("main").java.exclude("dev/monaka/tracking/pico/**")
 sourceSets.getByName("test").java.exclude("dev/monaka/tracking/pico/**")
 
 val verifyMonakaUpstream by tasks.registering(Exec::class) {
 	workingDir(rootProject.projectDir)
-	commandLine("python", "scripts/verify_task5_upstream.py")
+	commandLine("python", "scripts/verify_protocol_v2.py")
 }
 tasks.named("compileKotlin") { dependsOn(verifyMonakaUpstream) }

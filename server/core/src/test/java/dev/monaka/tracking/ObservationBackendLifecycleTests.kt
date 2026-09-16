@@ -51,7 +51,7 @@ class ObservationBackendLifecycleTests {
 
 	@Test
 	fun authoritativeSnapshotRemovesDisappearedSourcesImmediately() {
-		val pipeline = ConstraintPipeline(profileRegistry = registry())
+		val pipeline = ConstraintPipeline(profileRegistry = registry(), resolver = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference("pico:hip"), TrackerReference("imu:hip"))) })
 		var absoluteObservations = listOf(
 			hipObservation(
 				sourceId = "pico:hip",

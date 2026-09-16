@@ -41,7 +41,7 @@ tasks.withType<JavaCompile> {
 }
 tasks.withType<Test> {
 	systemProperty("file.encoding", "UTF-8")
-	systemProperty("monaka.fixtures", rootProject.file("third_party/monaka-protocol/fixtures").absolutePath)
+	systemProperty("monaka.fixtures", rootProject.file("third_party/monaka-protocol-v2/fixtures").absolutePath)
 	doFirst { systemProperty("monaka.test.classpath", sourceSets["test"].runtimeClasspath.asPath) }
 	useJUnitPlatform()
 }
