@@ -15,6 +15,10 @@ import traceback
 import xml.etree.ElementTree as ET
 import zipfile
 
+
+if __name__ == "__main__":
+    raise SystemExit("Historical wire-v1 report is retired at current v2 HEAD. Use python scripts/release_v2.py; see docs/release-v2.md. Historical supplied artifacts remain immutable provenance.")
+
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "build/task5-validation"
 DIST = ROOT / "dist"
@@ -102,7 +106,7 @@ def test_evidence():
     return result
 
 
-def inspect_active_jar(jar):
+def inspect_active_jar(jar, wire_major=1):
     with zipfile.ZipFile(jar) as z:
         bad_member = z.testzip()
         require(bad_member is None, f"Active JAR integrity failure: {bad_member}")
@@ -115,7 +119,7 @@ def inspect_active_jar(jar):
             require("/tracking/pico/" not in name, f"Legacy PICO class remains active: {name}")
             hits = [marker.decode() for marker in forbidden if marker in data]
             require(not hits, f"Forbidden active JAR symbols in {name}: {hits}")
-        require("dev/monaka/protocol/v1/MonakaCodec.class" in entries, "Fixed Task1 codec missing from active JAR")
+        require(f"dev/monaka/protocol/v{wire_major}/MonakaCodec.class" in entries, "Selected fixed codec missing from active JAR")
         require("dev/monaka/tracking/desktop/MonakaServerIntegration.class" in entries, "Task5 desktop integration missing from active JAR")
         # JNA has legitimate unrelated desktop uses and is deliberately retained.
         require("com/sun/jna/Native.class" in entries, "Unrelated JNA runtime was unexpectedly removed")

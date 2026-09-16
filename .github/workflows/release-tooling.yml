@@ -1,0 +1,19 @@
+name: v2-release-tooling
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  fail-closed-validation:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Normal Python release gate regressions
+        run: python scripts/test_release_v2.py
+      - name: Optimized Python release gate regressions
+        run: python -O scripts/test_release_v2.py
+      # Unit tests only. Release artifacts require the documented clean-tree
+      # scripts/release_v2.py build on a configured Windows x64 release host.
