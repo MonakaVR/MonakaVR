@@ -50,6 +50,16 @@
       ]
     },
     {
+      "name": "mtp-process-e2e",
+      "command": [
+        "{ROOT}/gradlew.bat",
+        ":server:desktop:mtpProcessE2E",
+        "-PmonakaE2EOutput={WORK}/mtp-process-e2e",
+        "--no-daemon",
+        "--console=plain"
+      ]
+    },
+    {
       "name": "cmake-configure",
       "command": [
         "{CMAKE}",
@@ -131,6 +141,7 @@
     "cmake-version",
     "pinned-v2-kit",
     "gradle-build-tests",
+    "mtp-process-e2e",
     "cmake-configure",
     "cmake-build",
     "ctest",
@@ -174,6 +185,14 @@
     }
   ],
   "evidence": [
+    {
+      "name": "evidence/mtp-process-e2e/result.json",
+      "path": "{WORK}/mtp-process-e2e/result.json"
+    },
+    {
+      "name": "evidence/mtp-process-e2e/e2e.log",
+      "path": "{WORK}/mtp-process-e2e/e2e.log"
+    },
     {
       "name": "evidence/active-dependency-check.json",
       "path": "{WORK}/jar/active-dependency-check.json"

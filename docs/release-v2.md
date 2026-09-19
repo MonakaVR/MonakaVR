@@ -81,6 +81,11 @@ Direct standalone, CTest and separate-process UDP tests are software tests.
 MonakaVR verifies the actual app JAR's v2 codec with C++/JVM fixture interop,
 active legacy dependency exclusion, tick ordering and required numerical IK,
 fallback, identity, replay and feature-off regressions.
+It also runs the standalone [MTP process E2E](mtp-process-e2e.md): an external
+synthetic publisher sends multiple UDP frames through production intake and
+existing IK to captured protobuf output. Its required command, result and
+detailed log are included in each new source-bound release receipt/archive.
+This is not a SteamVR runtime or real vendor-backend validation.
 
 Historical license/provenance questions (F11) remain separate; this change does
 not invent a license grant. F12 (Direct UDP port configurability) is untouched.

@@ -81,6 +81,11 @@ else {
         File=$Gradle
         Args=@(':server:core:test',':server:desktop:test',':server:desktop:shadowJar','--no-daemon')
     }
+    $Steps += @{
+        Name='mtp-process-e2e'
+        File=$Gradle
+        Args=@(':server:desktop:mtpProcessE2E', ('-PmonakaE2EOutput=' + (Join-Path $ResultsDir 'mtp-process-e2e')), '--no-daemon', '--console=plain')
+    }
 }
 
 foreach ($step in $Steps) {
@@ -109,6 +114,13 @@ $summary = [ordered]@{
     steps = $StepResults
 }
 $summaryPath = Join-Path $ResultsDir 'summary.json'
+$e2eResult = Join-Path $ResultsDir 'mtp-process-e2e/result.json'
+if (Test-Path -LiteralPath $e2eResult) {
+    $summary['mtp_process_e2e'] = Get-Content -LiteralPath $e2eResult -Raw | ConvertFrom-Json
+    if ($summary['mtp_process_e2e'].result -eq 'FAIL') {
+        Write-Host ('FAIL mtp-process-e2e stopped_at=' + $summary['mtp_process_e2e'].failed_stage)
+    }
+}
 $summary | ConvertTo-Json -Depth 6 | Set-Content -Path $summaryPath -Encoding UTF8
 Write-Host ("RESULT={0} repo=MonakaVR mode={1} failed_step={2} summary={3}" -f $result, $Mode, $FailedStep, $summaryPath)
 if ($result -eq 'FAIL') { exit 1 }
