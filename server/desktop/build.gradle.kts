@@ -7,6 +7,7 @@
  */
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.UUID
 
 plugins {
 	kotlin("jvm")
@@ -74,6 +75,7 @@ dependencies {
 	implementation("org.hid4java:hid4java:0.8.0")
 
 	testImplementation(kotlin("test"))
+	testImplementation(files(rootProject.file("third_party/monaka-protocol-v2/jvm/libs/gson-2.11.0.jar")))
 	testImplementation(platform("org.junit:junit-bom:6.0.2"))
 	testImplementation("org.junit.jupiter:junit-jupiter")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -125,3 +127,19 @@ tasks.register("picoHardwareProbe") {
 }
 sourceSets.getByName("main").java.exclude("dev/monaka/tracking/pico/**")
 sourceSets.getByName("test").java.exclude("dev/monaka/tracking/pico/**")
+
+// Explicit software E2E only: no native driver/runtime, isolated ephemeral loopback ports.
+tasks.register<JavaExec>("mtpProcessE2E") {
+	group = "verification"
+	description = "Separate-process MTP v2 UDP through existing Slime IK and captured protobuf output"
+	dependsOn(tasks.testClasses)
+	classpath = sourceSets["test"].runtimeClasspath
+	mainClass.set("dev.monaka.tracking.desktop.MtpProcessE2E")
+	javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+	systemProperty("monaka.fixtures", rootProject.file("third_party/monaka-protocol-v2/fixtures").absolutePath)
+	doFirst {
+		val output = providers.gradleProperty("monakaE2EOutput").orNull
+			?: layout.buildDirectory.dir("mtp-process-e2e/${UUID.randomUUID()}").get().asFile.absolutePath
+		args(rootProject.file(output).absolutePath)
+	}
+}
