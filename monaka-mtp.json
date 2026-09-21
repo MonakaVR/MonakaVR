@@ -1,0 +1,22 @@
+﻿{
+    "version":  2,
+    "port":  29811,
+    "timeout_ns":  "500000000",
+    "space":  {
+                  "id":  "monaka-world-local",
+                  "revision":  0,
+                  "convention":  "rh_y_up_neg_z_forward"
+              },
+    "assignments":  [
+                        {
+                            "body":  "HIP",
+                            "mainTracker":  {
+                                                "kind":  "mtp",
+                                                "publisher_id":  "monaka-bridge-local-1",
+                                                "source_id":  "vive-local-1",
+                                                "tracker_id":  "altra-0"
+                                            },
+                            "rotationFallbackTracker":  null
+                        }
+                    ]
+}
