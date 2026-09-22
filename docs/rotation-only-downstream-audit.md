@@ -124,8 +124,8 @@ $bridge = Get-Content '..\MonakaBridge\config\bridge.json' -Raw | ConvertFrom-Js
 $hilMappings = @($bridge.mappings | Where-Object { $_.source_id -eq 'vive-local-1' -and $_.device_id -eq '23:34:e4:5a:fe:39' })
 if ($hilMappings.Count -ne 1) { throw 'Expected one explicitly configured VIVE mapping; review current device identity.' }
 $mapping = $hilMappings[0]
-$profile = $bridge.profiles.PSObject.Properties[$mapping.profile].Value
-if (-not $mapping.space_approved -or -not $profile.approved -or -not $profile.evidence -or $bridge.policy -notin @('monaka','both')) { throw 'Bridge output/profile/space gate is not approved.' }
+$hilProfile = $bridge.profiles.PSObject.Properties[$mapping.profile].Value
+if (-not $mapping.space_approved -or -not $hilProfile.approved -or -not $hilProfile.evidence -or $bridge.policy -notin @('monaka','both')) { throw 'Bridge output/profile/space gate is not approved.' }
 $cfg = Get-Content '.\server\desktop\monaka-mtp.json' -Raw | ConvertFrom-Json
 if ($cfg.version -ne 2 -or $cfg.assignments.Count -ne 1 -or $cfg.assignments[0].body -ne 'HIP' -or $null -ne $cfg.assignments[0].rotationFallbackTracker) { throw 'Expected one HIP Main with no external fallback.' }
 if ($cfg.space.id -ne $mapping.world_space -or $cfg.space.revision -ne $mapping.world_revision -or $cfg.space.convention -ne 'rh_y_up_neg_z_forward' -or $cfg.port -ne 29811 -or $cfg.timeout_ns -ne '500000000') { throw 'World/port/timeout mismatch; review config explicitly.' }
