@@ -88,6 +88,10 @@ UDP. A diagnostic capture by itself is never a hardware PASS.
 
 ## Next manual HIL capture
 
+For the production VRServer, existing IK, OpenVR driver and SteamVR procedure,
+use [Production SteamVR ROTATION_ONLY HIL](steamvr-rotation-only-hil.md). The
+diagnostic capture below remains a separate no-IK/no-SteamVR evidence path.
+
 The existing Bridge mirror on 29813 provides accepted Common Observation from
 29810; it is not a raw ingress sniffer and can omit rejected/dropped packets.
 Health JSON is only a 500ms diagnostic snapshot, insufficient for proving every
