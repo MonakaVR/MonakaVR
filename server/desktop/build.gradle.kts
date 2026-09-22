@@ -143,3 +143,21 @@ tasks.register<JavaExec>("mtpProcessE2E") {
 		args(rootProject.file(output).absolutePath)
 	}
 }
+
+// Explicit diagnostic receiver; test classpath only, never shipped in the server JAR.
+tasks.register<JavaExec>("mtpHilCapture") {
+	group = "verification"
+	description = "Capture Observation mirror, MTP and actual MonakaRuntime constraints for manual HIL review"
+	dependsOn(tasks.testClasses)
+	classpath = sourceSets["test"].runtimeClasspath
+	mainClass.set("dev.monaka.tracking.desktop.MtpHilCapture")
+	javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+	doFirst {
+		args(
+			rootProject.file(providers.gradleProperty("monakaHilConfig").get()).absolutePath,
+			rootProject.file(providers.gradleProperty("monakaHilOutput").get()).absolutePath,
+			providers.gradleProperty("monakaHilSeconds").getOrElse("60"),
+			providers.gradleProperty("monakaHilMirrorPort").getOrElse("29813"),
+		)
+	}
+}
