@@ -45,7 +45,7 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 	/** Startup-only: explicit output objects never become raw tracker inputs. */
 	fun configureDirectOutputs(trackers: List<Tracker>) {
 		check(directOutputTrackers.isEmpty())
-		require(trackers.all { it.resolvedDirectConstraint != null })
+		require(trackers.all { it.monakaOutputPose != null })
 		directOutputTrackers = trackers.toList()
 	}
 
@@ -122,7 +122,7 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 
 	@VRServerThread
 	protected fun writeTrackerUpdate(localTracker: Tracker) {
-		localTracker.resolvedDirectConstraint?.let { constraint ->
+		localTracker.monakaOutputPose?.let { constraint ->
 			if (!directOutputSupported) return
 			val builder = Position.newBuilder().setTrackerId(localTracker.id)
 			val rotation = constraint.rotation
@@ -286,7 +286,7 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 			}
 			if (accepted) {
 				LogManager.info("[$bridgeName] Compatible Direct output driver confirmed")
-				sharedTrackers.filter { it.resolvedDirectConstraint != null }.forEach(::announceTracker)
+				sharedTrackers.filter { it.monakaOutputPose != null }.forEach(::announceTracker)
 			}
 			return
 		}
@@ -364,7 +364,7 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 	}
 
 	private fun announceTracker(tracker: Tracker) {
-		if (tracker.resolvedDirectConstraint != null && !directOutputSupported) return
+		if (tracker.monakaOutputPose != null && !directOutputSupported) return
 		val builder = TrackerAdded
 			.newBuilder()
 			.setTrackerId(tracker.id)

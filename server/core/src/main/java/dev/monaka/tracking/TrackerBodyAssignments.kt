@@ -24,14 +24,22 @@ data class TrackerReference(val observationId: String, val mtp: LogicalTracker? 
 	}
 }
 
-enum class OutputMode { IK, DIRECT }
+enum class OutputMode { IK, DIRECT, HYBRID }
+
+enum class ContinuityPolicy { NONE, BACKGROUND_IK }
 
 data class MainTrackerAssignment(
 	val mainTracker: TrackerReference,
 	val rotationFallbackTracker: TrackerReference? = null,
 	val outputMode: OutputMode = OutputMode.IK,
+	val useAsIkConstraint: Boolean = true,
+	val continuity: ContinuityPolicy = if (outputMode == OutputMode.HYBRID) ContinuityPolicy.BACKGROUND_IK else ContinuityPolicy.NONE,
 ) {
-	init { require(mainTracker != rotationFallbackTracker) { "Main cannot be its own external fallback" } }
+	init {
+		require(mainTracker != rotationFallbackTracker) { "Main cannot be its own external fallback" }
+		require((outputMode == OutputMode.HYBRID) == (continuity == ContinuityPolicy.BACKGROUND_IK)) { "Background continuity requires hybrid output" }
+		require(outputMode != OutputMode.HYBRID || useAsIkConstraint) { "Hybrid requires live background IK participation" }
+	}
 }
 
 /** Persistent identity only. Sessions, hardware slots and body roles never enter C1. */
@@ -47,7 +55,7 @@ class TrackerBodyAssignments(initial: Map<LogicalTracker, TrackerPosition> = emp
 		replaceTargets(migrate(entries))
 	}
 	@Synchronized fun replaceTargets(targets: Map<TrackerPosition, MainTrackerAssignment>) {
-        val directRoles = targets.filterValues { it.outputMode == OutputMode.DIRECT }.keys.map {
+        val directRoles = targets.filterValues { it.outputMode != OutputMode.IK }.keys.map {
             requireNotNull(it.trackerRole) { "Direct output requires a SteamVR role: $it" }
         }
         require(directRoles.distinct().size == directRoles.size) { "Direct output roles must be unique" }
@@ -58,14 +66,17 @@ class TrackerBodyAssignments(initial: Map<LogicalTracker, TrackerPosition> = emp
 		require(refs.map { it.observationId }.distinct().size == refs.size) { "A tracker can belong to only one body target" }
 		if (state.targets != targets) state = Snapshot(state.generation + 1, targets.toMap())
 	}
-	@Synchronized fun configure(target: TrackerPosition, main: TrackerReference, fallback: TrackerReference? = null, outputMode: OutputMode = OutputMode.IK) =
-		replaceTargets(state.targets + (target to MainTrackerAssignment(main, fallback, outputMode)))
+	@Synchronized fun configure(
+		target: TrackerPosition, main: TrackerReference, fallback: TrackerReference? = null,
+		outputMode: OutputMode = OutputMode.IK, useAsIkConstraint: Boolean = true,
+		continuity: ContinuityPolicy = if (outputMode == OutputMode.HYBRID) ContinuityPolicy.BACKGROUND_IK else ContinuityPolicy.NONE,
+	) = replaceTargets(state.targets + (target to MainTrackerAssignment(main, fallback, outputMode, useAsIkConstraint, continuity)))
 	@Synchronized fun assign(key: LogicalTracker, target: TrackerPosition) {
         val previous = state.targets.values.singleOrNull { it.mainTracker.mtp == key }
         val next = without(key)
         val current = next[target]
         require(current == null || current.mainTracker.mtp == key) { "Target already has a Main; use configure for explicit replacement" }
-        replaceTargets(next + (target to MainTrackerAssignment(TrackerReference.mtp(key), previous?.rotationFallbackTracker, previous?.outputMode ?: OutputMode.IK)))
+        replaceTargets(next + (target to (previous ?: MainTrackerAssignment(TrackerReference.mtp(key)))))
     }
     private fun without(key: LogicalTracker) = state.targets.mapNotNull { (target, value) ->
         when (key) {

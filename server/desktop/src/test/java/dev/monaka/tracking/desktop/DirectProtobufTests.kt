@@ -28,7 +28,7 @@ class DirectProtobufTests {
 
 	@Test fun directSerializationKeepsIdentityAndOmitsPositionOnRotationOnlyAndNone() {
 		val bridge = Capture()
-		DirectConstraintOutput(assignments().snapshot()) { 100 }.use { output ->
+		DirectConstraintOutput(assignments().snapshot(), CoordinateSpace("test-world", "rh_y_up_neg_z_forward", 0)) { 100 }.use { output ->
 			val tracker = output.trackers.getValue(body)
 			bridge.configureDirectOutputs(listOf(tracker)); bridge.addSharedTracker(tracker)
 			bridge.connect(); bridge.flush()
@@ -65,7 +65,7 @@ class DirectProtobufTests {
 			File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes(),
 		)).value)
 		val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
-		val assignment = TrackerBodyAssignments().also { it.configure(body, TrackerReference.mtp(key), outputMode = OutputMode.DIRECT) }
+		val assignment = TrackerBodyAssignments().also { it.configure(body, TrackerReference.mtp(key), outputMode = OutputMode.DIRECT, useAsIkConstraint = false) }
 		val skeleton = HumanPoseManager(emptyList()).skeleton
 		val bridge = Capture()
 		var hook: Runnable? = null
@@ -107,14 +107,14 @@ class DirectProtobufTests {
 			assertTrue(failures.isEmpty())
 		}
 		assertNull(hook); assertFalse(integration.receiver.isAlive)
-		assertNull(integration.directOutput.trackers.getValue(body).resolvedDirectConstraint!!.position)
+		assertNull(integration.directOutput.trackers.getValue(body).monakaOutputPose!!.position)
 	}
 
 	@Test fun oldDriverAndReconnectFailClosedWhileLegacySerializationIsUnchanged() {
 		val bridge = Capture()
 		val legacy = Tracker(null, 2, "human://Hip", trackerPosition = body, hasPosition = true, hasRotation = true,
 			allowFiltering = false, allowReset = false).also { it.position = Vector3(9f, 8f, 7f) }
-		DirectConstraintOutput(assignments().snapshot()) { 100 }.use { output ->
+		DirectConstraintOutput(assignments().snapshot(), CoordinateSpace("test-world", "rh_y_up_neg_z_forward", 0)) { 100 }.use { output ->
 			val tracker = output.trackers.getValue(body); output.apply(mapOf(body to full()))
 			bridge.configureDirectOutputs(listOf(tracker)); bridge.addSharedTracker(legacy); bridge.addSharedTracker(tracker)
 			bridge.connect(); bridge.flush()

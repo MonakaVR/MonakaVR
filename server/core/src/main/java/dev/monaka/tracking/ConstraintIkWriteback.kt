@@ -34,7 +34,7 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 	) {
 		check(!closed)
 		if (skeleton.getPauseTracking()) return
-		val ikAssignments = assignment.targets.filterValues { it.outputMode == OutputMode.IK }
+		val ikAssignments = assignment.targets.filterValues { it.useAsIkConstraint }
 		val targets = ikAssignments.keys
 		var rebuild = targets != managed || generation != assignment.generation
 		// Sample/history invalidation is handled by the cache. Calibration belongs to

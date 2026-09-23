@@ -285,7 +285,7 @@ abstract class SteamVRBridge(
 	// Battery Status
 	@VRServerThread
 	override fun writeBatteryUpdate(localTracker: Tracker) {
-		if (localTracker.resolvedDirectConstraint != null) return
+		if (localTracker.monakaOutputPose != null) return
 		var lowestLevel = 200f // Arbitrarily higher than expected battery
 		// percentage
 		var trackerLevel = 0f // Tracker battery percentage on a scale from 0

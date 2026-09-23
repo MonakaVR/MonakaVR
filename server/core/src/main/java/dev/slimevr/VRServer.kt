@@ -218,6 +218,8 @@ class VRServer @JvmOverloads constructor(
 
 	/** Optional common constraint stage, installed before start or on the server thread. */
 	@Volatile var beforePoseUpdate: Runnable? = null
+	/** Optional output composition stage; observes this tick's completed existing IK. */
+	@Volatile var afterPoseUpdate: Runnable? = null
 
 	@ThreadSafe
 	fun addNewTrackerConsumer(consumer: Consumer<Tracker>) {
@@ -266,6 +268,7 @@ class VRServer @JvmOverloads constructor(
 			}
 			beforePoseUpdate?.run()
 			humanPoseManager.update()
+			afterPoseUpdate?.run()
 			for (bridge in bridges) {
 				bridge.dataWrite()
 			}
