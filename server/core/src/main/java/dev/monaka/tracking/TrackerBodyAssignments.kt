@@ -24,7 +24,13 @@ data class TrackerReference(val observationId: String, val mtp: LogicalTracker? 
 	}
 }
 
-data class MainTrackerAssignment(val mainTracker: TrackerReference, val rotationFallbackTracker: TrackerReference? = null) {
+enum class OutputMode { IK, DIRECT }
+
+data class MainTrackerAssignment(
+	val mainTracker: TrackerReference,
+	val rotationFallbackTracker: TrackerReference? = null,
+	val outputMode: OutputMode = OutputMode.IK,
+) {
 	init { require(mainTracker != rotationFallbackTracker) { "Main cannot be its own external fallback" } }
 }
 
@@ -41,18 +47,25 @@ class TrackerBodyAssignments(initial: Map<LogicalTracker, TrackerPosition> = emp
 		replaceTargets(migrate(entries))
 	}
 	@Synchronized fun replaceTargets(targets: Map<TrackerPosition, MainTrackerAssignment>) {
+        val directRoles = targets.filterValues { it.outputMode == OutputMode.DIRECT }.keys.map {
+            requireNotNull(it.trackerRole) { "Direct output requires a SteamVR role: $it" }
+        }
+        require(directRoles.distinct().size == directRoles.size) { "Direct output roles must be unique" }
+        require(directRoles.all { role -> targets.keys.count { it.trackerRole == role } == 1 }) {
+            "Direct and IK assignments cannot share the same SteamVR output role"
+        }
 		val refs = targets.values.flatMap { listOfNotNull(it.mainTracker, it.rotationFallbackTracker) }
 		require(refs.map { it.observationId }.distinct().size == refs.size) { "A tracker can belong to only one body target" }
 		if (state.targets != targets) state = Snapshot(state.generation + 1, targets.toMap())
 	}
-	@Synchronized fun configure(target: TrackerPosition, main: TrackerReference, fallback: TrackerReference? = null) =
-		replaceTargets(state.targets + (target to MainTrackerAssignment(main, fallback)))
+	@Synchronized fun configure(target: TrackerPosition, main: TrackerReference, fallback: TrackerReference? = null, outputMode: OutputMode = OutputMode.IK) =
+		replaceTargets(state.targets + (target to MainTrackerAssignment(main, fallback, outputMode)))
 	@Synchronized fun assign(key: LogicalTracker, target: TrackerPosition) {
         val previous = state.targets.values.singleOrNull { it.mainTracker.mtp == key }
         val next = without(key)
         val current = next[target]
         require(current == null || current.mainTracker.mtp == key) { "Target already has a Main; use configure for explicit replacement" }
-        replaceTargets(next + (target to MainTrackerAssignment(TrackerReference.mtp(key), previous?.rotationFallbackTracker)))
+        replaceTargets(next + (target to MainTrackerAssignment(TrackerReference.mtp(key), previous?.rotationFallbackTracker, previous?.outputMode ?: OutputMode.IK)))
     }
     private fun without(key: LogicalTracker) = state.targets.mapNotNull { (target, value) ->
         when (key) {

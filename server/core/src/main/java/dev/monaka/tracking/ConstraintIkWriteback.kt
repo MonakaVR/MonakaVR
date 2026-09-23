@@ -34,11 +34,12 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 	) {
 		check(!closed)
 		if (skeleton.getPauseTracking()) return
-		val targets = assignment.targets.keys
+		val ikAssignments = assignment.targets.filterValues { it.outputMode == OutputMode.IK }
+		val targets = ikAssignments.keys
 		var rebuild = targets != managed || generation != assignment.generation
 		// Sample/history invalidation is handled by the cache. Calibration belongs to
 		// the stable Main/body relation, not the current modality or fallback sample.
-		stableNames = assignment.targets.mapValues { (target, relation) ->
+		stableNames = ikAssignments.mapValues { (target, relation) ->
 			"monaka-private:${target.name}:${relation.mainTracker.observationId}"
 		}
 		managed = targets
