@@ -14,10 +14,12 @@ data class MonakaConfiguration(
  val assignments: TrackerBodyAssignments = TrackerBodyAssignments(),
  val port: Int = 29811,
  val timeoutNanos: Long = 500_000_000,
+ val backgroundIkSharedSpace: CoordinateSpace? = null,
 ) {
  init {
   require(space.id.isNotBlank() && space.convention == "rh_y_up_neg_z_forward" && space.revision in 0..4294967295L)
   require(port in 0..65535 && timeoutNanos >= 0)
+  require(backgroundIkSharedSpace == null || backgroundIkSharedSpace == space) { "Background IK shared-space assertion must match the configured MTP space/revision" }
  }
  fun save(path: Path) {
   fun reference(ref: TrackerReference): Map<String, String> = ref.mtp?.let {
@@ -29,9 +31,13 @@ data class MonakaConfiguration(
   val document = mapOf(
    "version" to 2, "port" to port, "timeout_ns" to timeoutNanos.toString(),
    "space" to mapOf("id" to space.id, "revision" to space.revision, "convention" to space.convention),
+   "backgroundIkAlignment" to backgroundIkSharedSpace?.let {
+    mapOf("kind" to "confirmed_same_space", "space" to mapOf("id" to it.id, "revision" to it.revision, "convention" to it.convention))
+   },
    "assignments" to assignments.snapshot().targets.map { (body, relation) ->
     mapOf("body" to body.name, "outputMode" to relation.outputMode.name.lowercase(), "mainTracker" to reference(relation.mainTracker),
-     "rotationFallbackTracker" to relation.rotationFallbackTracker?.let(::reference))
+     "rotationFallbackTracker" to relation.rotationFallbackTracker?.let(::reference),
+     "useAsIkConstraint" to relation.useAsIkConstraint, "continuity" to relation.continuity.name.lowercase())
    },
   )
   val absolute = path.toAbsolutePath()
@@ -73,17 +79,29 @@ data class MonakaConfiguration(
     val targets = entries.map {
      val fallback = it["rotationFallbackTracker"]?.takeUnless { value -> value.isNull }?.let(::reference)
      val mode = it["outputMode"]?.let { value ->
-      require(value.isTextual) { "outputMode must be ik or direct" }
-      when (value.asText()) { "ik" -> OutputMode.IK; "direct" -> OutputMode.DIRECT; else -> error("Unknown outputMode") }
+      require(value.isTextual) { "outputMode must be ik, direct or hybrid" }
+      when (value.asText()) { "ik" -> OutputMode.IK; "direct" -> OutputMode.DIRECT; "hybrid" -> OutputMode.HYBRID; else -> error("Unknown outputMode") }
      } ?: OutputMode.IK
-     TrackerPosition.valueOf(text(it, "body")) to MainTrackerAssignment(reference(requireNotNull(it["mainTracker"])), fallback, mode)
+     val participation = it["useAsIkConstraint"]?.let { value -> require(value.isBoolean); value.booleanValue() } ?: true
+     val continuity = it["continuity"]?.let { value ->
+      require(value.isTextual)
+      when (value.asText()) { "none" -> ContinuityPolicy.NONE; "background_ik" -> ContinuityPolicy.BACKGROUND_IK; else -> error("Unknown continuity") }
+     } ?: if (mode == OutputMode.HYBRID) ContinuityPolicy.BACKGROUND_IK else ContinuityPolicy.NONE
+     TrackerPosition.valueOf(text(it, "body")) to MainTrackerAssignment(reference(requireNotNull(it["mainTracker"])), fallback, mode, participation, continuity)
     }
     require(targets.map { it.first }.distinct().size == targets.size)
     assignments.replaceTargets(targets.toMap())
    }
    val port = root["port"]?.let { require(it.isIntegralNumber && it.canConvertToInt()); it.asInt() } ?: 29811
    val timeout = root["timeout_ns"]?.let { require(it.isTextual); it.asText().toLong() } ?: 500_000_000
-   return MonakaConfiguration(CoordinateSpace(text(space, "id"), text(space, "convention"), revision.asLong()), assignments, port, timeout)
+   val shared = root["backgroundIkAlignment"]?.takeUnless { it.isNull }?.let { alignment ->
+    require(text(alignment, "kind") == "confirmed_same_space") { "Unsupported background IK alignment" }
+    val declared = requireNotNull(alignment["space"])
+    val declaredRevision = requireNotNull(declared["revision"])
+    require(declaredRevision.isIntegralNumber && declaredRevision.canConvertToLong())
+    CoordinateSpace(text(declared, "id"), text(declared, "convention"), declaredRevision.longValue())
+   }
+   return MonakaConfiguration(CoordinateSpace(text(space, "id"), text(space, "convention"), revision.asLong()), assignments, port, timeout, shared)
   }
   fun migrate(path: Path, legacyMapping: Map<Pair<String, String>, LogicalTracker>): MonakaConfiguration {
    val config = load(path, legacyMapping) // Validate everything before any write.

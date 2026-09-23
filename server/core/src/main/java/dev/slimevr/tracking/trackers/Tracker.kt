@@ -136,8 +136,8 @@ class Tracker @JvmOverloads constructor(
 	var position = Vector3.NULL
 	/** Optional upstream sample capability. Only the opt-in Monaka adapter reads it. */
 	var sampleModality: dev.monaka.tracking.TrackingModality? = null
-	/** Non-null only on explicit Direct output objects. Null preserves legacy serialization. */
-	var resolvedDirectConstraint: dev.monaka.tracking.EffectiveConstraint? = null
+	/** Non-null only on explicit Direct/Hybrid output objects. Null preserves legacy serialization. */
+	var monakaOutputPose: dev.monaka.tracking.OutputPose? = null
 		internal set
 	val resetsHandler: TrackerResetsHandler = TrackerResetsHandler(this)
 	val filteringHandler: TrackerFilteringHandler = TrackerFilteringHandler()

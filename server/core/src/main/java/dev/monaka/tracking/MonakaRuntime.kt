@@ -7,7 +7,7 @@ import dev.slimevr.tracking.trackers.Tracker
 /** One clock, profile registry, runner, assignment registry and pipeline for every input. */
 class MonakaRuntime(
 	trackers: () -> Iterable<Tracker>,
-	expectedSpace: CoordinateSpace,
+	val expectedSpace: CoordinateSpace,
 	val assignments: TrackerBodyAssignments = TrackerBodyAssignments(),
 	val inbox: MtpInbox = MtpInbox(),
 	val clock: () -> Long = monotonicClock(),
@@ -24,9 +24,12 @@ class MonakaRuntime(
 	))
 	private var closed = false
 	private var wasPaused = false
+	var lastTickNanos: Long = 0
+		private set
 	fun tick(paused: Boolean = false): Map<dev.slimevr.tracking.trackers.TrackerPosition, EffectiveConstraint> {
 		check(!closed)
 		val now = clock()
+		lastTickNanos = now
 		val resuming = !paused && wasPaused
 		// Drain paused traffic with its sequence watermarks, then discard its samples on either edge.
 		if (paused != wasPaused) { mtp.suspend(true); runner.invalidate("mtp") }
@@ -46,6 +49,16 @@ class MonakaRuntime(
 		}
 		wasPaused = paused
 		return pipeline.resolveAll(now)
+	}
+
+	/** Wrap the already-selected components. Fresh Main metadata is diagnostic only. */
+	fun resolvedTrackingPoses(constraints: Map<dev.slimevr.tracking.trackers.TrackerPosition, EffectiveConstraint>): Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose> {
+		val assignments = assignments.snapshot().targets
+		val observations = pipeline.observations(lastTickNanos).associateBy { it.sourceId }
+		return (constraints.keys + assignments.keys).associateWith { target ->
+			ResolvedTrackingPose.from(constraints[target] ?: EffectiveConstraint(target), expectedSpace,
+				assignments[target]?.mainTracker?.observationId?.let(observations::get))
+		}
 	}
 	override fun close() {
 		if (closed) return

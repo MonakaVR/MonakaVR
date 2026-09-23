@@ -42,6 +42,7 @@ class MonakaDesktopTests {
 		val integration = MonakaServerIntegration.startIfEnabled(
 			false, { error("Disabled input read configuration or attempted socket creation") }, { right }, actual.skeleton,
 			{ error("Disabled input registered a hook") },
+			registerAfterPose = { error("Disabled input registered an output hook") },
 		)
 		assertNull(integration)
 		repeat(50) { frame ->

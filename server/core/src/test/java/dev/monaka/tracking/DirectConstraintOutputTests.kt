@@ -35,7 +35,7 @@ class DirectConstraintOutputTests {
 					if (externalFallback) TrackerReference.slime(fallback.name) else null, OutputMode.DIRECT)
 			}
 			var ids = 100
-			DirectConstraintOutput(assignments.snapshot()) { ids++ }.use { output ->
+			DirectConstraintOutput(assignments.snapshot(), p.coordinate_space) { ids++ }.use { output ->
 				val tracker = output.trackers.getValue(TrackerPosition.HIP)
 				val identity = Triple(tracker.id, tracker.name, tracker.trackerPosition)
 				// Include the output in input enumeration to prove self-feedback exclusion.
@@ -43,7 +43,8 @@ class DirectConstraintOutputTests {
 					fun step(): EffectiveConstraint {
 						val resolved = runtime.tick(); output.apply(resolved)
 						val constraint = resolved.getValue(TrackerPosition.HIP)
-						assertSame(constraint, tracker.resolvedDirectConstraint)
+						assertSame(constraint.position, tracker.monakaOutputPose!!.position)
+						assertSame(constraint.rotation, tracker.monakaOutputPose!!.rotation)
 						assertSame(tracker, output.trackers.getValue(TrackerPosition.HIP))
 						assertEquals(identity, Triple(tracker.id, tracker.name, tracker.trackerPosition))
 						assertFalse(FeedbackExclusion.accepts(tracker))
@@ -80,15 +81,15 @@ class DirectConstraintOutputTests {
 					val expired = step(); assertNull(expired.position)
 					if (externalFallback) assertEquals("slime:${fallback.name}", expired.rotation!!.sourceId) else assertNull(expired.rotation)
 					output.apply(runtime.tick(), paused = true)
-					assertNull(tracker.resolvedDirectConstraint!!.rotation)
-					output.close(); assertNull(tracker.resolvedDirectConstraint!!.position)
+					assertNull(tracker.monakaOutputPose!!.rotation)
+					output.close(); assertNull(tracker.monakaOutputPose!!.position)
 					assertEquals(101, ids) // exactly one allocation throughout all transitions
 				}
 			}
 		}
 	}
 
-	@Test fun directIsExcludedFromIkButDefaultIkStillWritesExistingSkeleton() {
+	@Test fun explicitSolverOptOutExcludesDirectButDefaultIkStillWritesExistingSkeleton() {
 		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
 		val assignments = TrackerBodyAssignments(mapOf(key to TrackerPosition.HIP))
 		val head = TestTrackerSet().head.also { it.position = Vector3(0f, 1.7f, 0f) }
@@ -99,10 +100,10 @@ class DirectConstraintOutputTests {
 			ConstraintIkWriteback(hpm.skeleton).use { writeback ->
 				writeback.apply(resolved, assignments.snapshot()); hpm.update()
 				assertEquals(ConstraintIkWriteback.ComponentMask(true, true), writeback.masks()[TrackerPosition.HIP])
-				assignments.configure(TrackerPosition.HIP, TrackerReference.mtp(key), outputMode = OutputMode.DIRECT)
+				assignments.configure(TrackerPosition.HIP, TrackerReference.mtp(key), outputMode = OutputMode.DIRECT, useAsIkConstraint = false)
 				writeback.apply(resolved, assignments.snapshot()); hpm.update()
 				assertFalse(writeback.masks().containsKey(TrackerPosition.HIP)); assertNull(hpm.skeleton.hipTracker)
-				DirectConstraintOutput(assignments.snapshot()) { 500 }.use { direct ->
+				DirectConstraintOutput(assignments.snapshot(), p.coordinate_space) { 500 }.use { direct ->
 					direct.apply(resolved)
 					assertEquals(Vector3(1f, 2f, 3f), direct.trackers.getValue(TrackerPosition.HIP).position)
 					assertNotEquals(hpm.skeleton.computedHipTracker!!.position, direct.trackers.getValue(TrackerPosition.HIP).position)
