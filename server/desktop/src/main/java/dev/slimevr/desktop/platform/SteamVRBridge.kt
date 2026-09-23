@@ -112,10 +112,14 @@ abstract class SteamVRBridge(
 	private var bindingsProviderManager: BindingsProviderManager? = null
 	protected val config: BridgeConfig = server.configManager.vrConfig.getBridge(bridgeSettingsKey)
 	var connected: Boolean = false
+	private val outputTrackers: List<Tracker>
+		get() = shareableTrackers.filter { tracker ->
+			directOutputTrackers.none { it.trackerPosition?.trackerRole == tracker.trackerPosition?.trackerRole }
+		} + directOutputTrackers
 
 	@VRServerThread
 	override fun startBridge() {
-		for (tr in shareableTrackers) {
+		for (tr in outputTrackers) {
 			val role = tr.trackerPosition?.trackerRole
 			changeShareSettings(
 				role,
@@ -134,7 +138,7 @@ abstract class SteamVRBridge(
 
 	@VRServerThread
 	override fun getShareSetting(role: TrackerRole): Boolean {
-		for (tr in shareableTrackers) {
+		for (tr in outputTrackers) {
 			if (tr.trackerPosition?.trackerRole == role) {
 				return sharedTrackers.contains(tr)
 			}
@@ -190,7 +194,12 @@ abstract class SteamVRBridge(
 	@VRServerThread
 	override fun changeShareSettings(role: TrackerRole?, share: Boolean) {
 		if (role == null) return
-		for (tr in shareableTrackers) {
+		// Explicit Direct assignments stay registered through loss and skeleton topology changes.
+		directOutputTrackers.singleOrNull { it.trackerPosition?.trackerRole == role }?.let {
+			addSharedTracker(it)
+			return
+		}
+		for (tr in outputTrackers) {
 			if (tr.trackerPosition?.trackerRole == role) {
 				if (share) {
 					addSharedTracker(tr)
@@ -276,6 +285,7 @@ abstract class SteamVRBridge(
 	// Battery Status
 	@VRServerThread
 	override fun writeBatteryUpdate(localTracker: Tracker) {
+		if (localTracker.resolvedDirectConstraint != null) return
 		var lowestLevel = 200f // Arbitrarily higher than expected battery
 		// percentage
 		var trackerLevel = 0f // Tracker battery percentage on a scale from 0
