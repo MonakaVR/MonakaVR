@@ -30,7 +30,7 @@ data class MonakaConfiguration(
    "version" to 2, "port" to port, "timeout_ns" to timeoutNanos.toString(),
    "space" to mapOf("id" to space.id, "revision" to space.revision, "convention" to space.convention),
    "assignments" to assignments.snapshot().targets.map { (body, relation) ->
-    mapOf("body" to body.name, "mainTracker" to reference(relation.mainTracker),
+    mapOf("body" to body.name, "outputMode" to relation.outputMode.name.lowercase(), "mainTracker" to reference(relation.mainTracker),
      "rotationFallbackTracker" to relation.rotationFallbackTracker?.let(::reference))
    },
   )
@@ -72,7 +72,11 @@ data class MonakaConfiguration(
    } else {
     val targets = entries.map {
      val fallback = it["rotationFallbackTracker"]?.takeUnless { value -> value.isNull }?.let(::reference)
-     TrackerPosition.valueOf(text(it, "body")) to MainTrackerAssignment(reference(requireNotNull(it["mainTracker"])), fallback)
+     val mode = it["outputMode"]?.let { value ->
+      require(value.isTextual) { "outputMode must be ik or direct" }
+      when (value.asText()) { "ik" -> OutputMode.IK; "direct" -> OutputMode.DIRECT; else -> error("Unknown outputMode") }
+     } ?: OutputMode.IK
+     TrackerPosition.valueOf(text(it, "body")) to MainTrackerAssignment(reference(requireNotNull(it["mainTracker"])), fallback, mode)
     }
     require(targets.map { it.first }.distinct().size == targets.size)
     assignments.replaceTargets(targets.toMap())
