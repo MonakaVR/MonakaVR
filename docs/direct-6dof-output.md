@@ -1,5 +1,10 @@
 # Direct resolved 6DoF output
 
+The [Hybrid tracking foundation](hybrid-tracking-foundation.md) supersedes the
+original mutually exclusive Direct/IK design. Direct now participates in IK by
+default; `useAsIkConstraint: false` is an explicit opt-out. The native driver
+compatibility contract below is unchanged.
+
 Base: `17c4c9bb712b425bd72911837c7df010dee5bd62`. This is an opt-in local
 composition/output feature. MTP wire v2, its pinned codec, source identities,
 coordinate convention, UDP ports and Main/Fallback policy are unchanged.
@@ -10,9 +15,9 @@ coordinate convention, UDP ports and Main/Fallback policy are unchanged.
 MTP UDP / existing Slime trackers
   -> existing admission, lifetime and freshness
   -> ConstraintResolver / MainFallbackPolicy
-  -> EffectiveConstraint (component value + owner + age)
-       IK assignment     -> ConstraintIkWriteback -> HumanSkeleton -> computed tracker
-       Direct assignment -> DirectConstraintOutput -> ProtobufBridge -> compatible OpenVR driver
+  -> ResolvedTrackingPose (selected component value + owner + age + space)
+       useAsIkConstraint -> ConstraintIkWriteback -> HumanSkeleton -> computed tracker
+       Direct output     -> OutputPose -> DirectConstraintOutput -> ProtobufBridge -> compatible OpenVR driver
 ```
 
 Config remains version 2. Add `"outputMode": "direct"` to the desired assignment
@@ -40,7 +45,9 @@ Omit `rotationFallbackTracker` if none is intended. Direct bodies must have a
 SteamVR role. Assignments sharing a Direct SteamVR role (for example HIP and
 WAIST) are rejected, including a competing IK assignment. Changing the set of
 Direct output bodies/modes requires a server restart; runtime attempts fail
-closed. Changing samples/modality never changes topology or output identity.
+closed. Changing samples/modality never changes output registration or identity.
+Private solver input proxies can still rebuild on component capability changes;
+that existing solver limitation is documented in the Hybrid foundation.
 
 One internal computed output object is allocated per Direct body at startup,
 with serial `monaka-direct:resolved-v1:<BODY>`. Its numeric ID and body role stay
@@ -51,8 +58,9 @@ the same role. Automatic skeleton-based sharing cannot remove it on loss.
 Other roles retain existing sharing settings. Direct selection explicitly
 enables output for that role; GUI mode editing is outside this change.
 
-Direct consumes the resolver's exact `EffectiveConstraint`, not raw packets or
-a second fallback selector. Main FULL owns both components. Otherwise the
+Direct consumes the resolver's selected components through `ResolvedTrackingPose`
+and `OutputPose`, not raw packets or a second fallback selector. Main FULL owns
+both components. Otherwise the
 existing explicit usable rotation fallback wins, then usable Main rotation;
 neither yields an unavailable pose. No fallback/IK/held position is serialized.
 The existing MTP 500ms age policy alone decides sample freshness. Pausing clears
@@ -160,10 +168,11 @@ executable are NOT RUN here. Upstream non-transport unit tests can be run with
 `build/direct-native/Release/tests.exe '~[Bridge]'`.
 
 Tests cover resolver owner selection with/without Slime fallback, all modalities,
-freshness, stable identity, IK exclusion/default compatibility, config roundtrip,
+freshness, stable identity, explicit IK opt-out/default compatibility, config roundtrip,
 feedback rejection, UDP -> production hook -> Direct protobuf, old-driver and
 reconnect gating, real generated JVM/native protobuf decoding, and malformed
-driver input. Software results recorded during implementation:
+driver input. Historical Direct baseline results at
+`fcdf98bca8e8d1ecb68150f0a417b2564ea6d567` (current results are in the Hybrid document):
 
 - Core: 592 tests, 0 failures/errors/skips (3 new Direct regression tests).
 - Desktop: 12 tests, 0 failures/errors/skips (3 new Direct regression tests).
