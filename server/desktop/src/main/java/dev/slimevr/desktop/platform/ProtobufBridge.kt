@@ -36,6 +36,18 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 	@Synchronize("self")
 	private val remoteTrackersByTrackerId: MutableMap<Int, Tracker> = HashMap()
 	private var hadNewData = false
+	@Volatile private var directOutputSupported = false
+	@Volatile private var directCapabilityToken: String? = null
+	private val directCapabilityLock = Any()
+	protected var directOutputTrackers: List<Tracker> = emptyList()
+		private set
+
+	/** Startup-only: explicit output objects never become raw tracker inputs. */
+	fun configureDirectOutputs(trackers: List<Tracker>) {
+		check(directOutputTrackers.isEmpty())
+		require(trackers.all { it.resolvedDirectConstraint != null })
+		directOutputTrackers = trackers.toList()
+	}
 
 	/**
 	 * Wakes the bridge thread, implementation is platform-specific.
@@ -63,9 +75,14 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 	protected fun updateMessageQueue() {
 		var message: ProtobufMessage?
 		while ((outputQueue.poll().also { message = it }) != null) {
+			if (!directOutputSupported && isDirectMessage(message!!)) continue
 			if (!sendMessageReal(message)) return
 		}
 	}
+
+	private fun isDirectMessage(message: ProtobufMessage): Boolean =
+		(message.hasPosition() && directOutputTrackers.any { it.id == message.position.trackerId }) ||
+			(message.hasTrackerAdded() && directOutputTrackers.any { it.id == message.trackerAdded.trackerId })
 
 	@VRServerThread
 	override fun dataRead() {
@@ -105,6 +122,24 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 
 	@VRServerThread
 	protected fun writeTrackerUpdate(localTracker: Tracker) {
+		localTracker.resolvedDirectConstraint?.let { constraint ->
+			if (!directOutputSupported) return
+			val builder = Position.newBuilder().setTrackerId(localTracker.id)
+			val rotation = constraint.rotation
+			val position = constraint.position
+			builder.dataSource = when {
+				rotation == null -> Position.DataSource.NONE
+				position != null -> Position.DataSource.FULL
+				else -> Position.DataSource.IMU
+			}
+			if (rotation != null) {
+				val q = rotation.value
+				builder.setQw(q.w).setQx(q.x).setQy(q.y).setQz(q.z)
+				position?.value?.let { builder.setX(it.x).setY(it.y).setZ(it.z) }
+			}
+			sendMessage(ProtobufMessage.newBuilder().setPosition(builder).build())
+			return
+		}
 		val builder = ProtobufMessages.Position.newBuilder()
 			.setTrackerId(localTracker.id)
 
@@ -240,6 +275,21 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 
 	@VRServerThread
 	protected fun userActionReceived(userAction: ProtobufMessages.UserAction) {
+		if (userAction.name == DIRECT_CAPABILITY) {
+			val accepted = synchronized(directCapabilityLock) {
+				if (!directOutputSupported && directOutputTrackers.isNotEmpty() &&
+					directCapabilityToken != null && userAction.actionArgumentsMap["connection"] == directCapabilityToken
+				) {
+					directOutputSupported = true
+					true
+				} else false
+			}
+			if (accepted) {
+				LogManager.info("[$bridgeName] Compatible Direct output driver confirmed")
+				sharedTrackers.filter { it.resolvedDirectConstraint != null }.forEach(::announceTracker)
+			}
+			return
+		}
 		val resetSourceName = String.format("%s: %s", resetSourceNamePrefix, bridgeName)
 		when (userAction.name) {
 			"reset" -> // TODO : Check pose field
@@ -277,19 +327,28 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 
 	@VRServerThread
 	protected fun reconnected() {
+		val token = java.util.UUID.randomUUID().toString()
+		synchronized(directCapabilityLock) {
+			directOutputSupported = false
+			directCapabilityToken = token
+		}
+		// Never replay a queued Direct pose/registration into a different driver connection.
+		outputQueue.removeIf(::isDirectMessage)
 		for (tracker in sharedTrackers) {
-			val builder = TrackerAdded
-				.newBuilder()
-				.setTrackerId(tracker.id)
-				.setTrackerName(tracker.name)
-				.setTrackerSerial(tracker.name)
-				.setTrackerRole(tracker.trackerPosition!!.trackerRole!!.id)
-			sendMessage(ProtobufMessage.newBuilder().setTrackerAdded(builder).build())
+			announceTracker(tracker)
+		}
+		if (directOutputTrackers.isNotEmpty()) {
+			sendMessage(ProtobufMessage.newBuilder().setUserAction(UserAction.newBuilder().setName("$DIRECT_CAPABILITY?").putActionArguments("connection", token)).build())
+			LogManager.info("[$bridgeName] Direct output waiting for compatible driver capability: $DIRECT_CAPABILITY")
 		}
 	}
 
 	@VRServerThread
 	protected fun disconnected() {
+		synchronized(directCapabilityLock) {
+			directOutputSupported = false
+			directCapabilityToken = null
+		}
 		synchronized(remoteTrackersByTrackerId) {
 			for ((_, value) in remoteTrackersByTrackerId) {
 				value.status = TrackerStatus.DISCONNECTED
@@ -301,6 +360,11 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 	override fun addSharedTracker(tracker: Tracker?) {
 		if (sharedTrackers.contains(tracker) || tracker == null) return
 		sharedTrackers.add(tracker)
+		announceTracker(tracker)
+	}
+
+	private fun announceTracker(tracker: Tracker) {
+		if (tracker.resolvedDirectConstraint != null && !directOutputSupported) return
 		val builder = TrackerAdded
 			.newBuilder()
 			.setTrackerId(tracker.id)
@@ -324,6 +388,7 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 	}
 
 	companion object {
+		const val DIRECT_CAPABILITY = "monaka-direct-output-v1"
 		private const val resetSourceNamePrefix = "ProtobufBridge"
 		private const val PROTOCOL_VERSION = 2
 	}

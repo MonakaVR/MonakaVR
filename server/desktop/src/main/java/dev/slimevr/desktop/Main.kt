@@ -200,6 +200,12 @@ fun main(args: Array<String>) {
 				trackers = { vrServer.allTrackers },
 				skeleton = vrServer.humanPoseManager.skeleton,
 				registerBeforePose = { vrServer.beforePoseUpdate = it },
+				configureDirectOutputs = { trackers ->
+					if (trackers.isNotEmpty()) {
+						val bridge = vrServer.getVRBridge { it is SteamVRBridge && it.getBridgeConfigKey() == "steamvr" } as? SteamVRBridge
+						requireNotNull(bridge) { "Direct output requires the primary SteamVR bridge" }.configureDirectOutputs(trackers)
+					}
+				},
 				onFailure = { LogManager.severe("Monaka input failure; affected constraints invalidated", it) },
 			)
 		} catch (e: Exception) {
