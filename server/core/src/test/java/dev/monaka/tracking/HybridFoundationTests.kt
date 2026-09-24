@@ -31,6 +31,7 @@ class HybridFoundationTests {
 			assertTrue(assignments.snapshot().targets.getValue(TrackerPosition.HIP).useAsIkConstraint)
 			val hpm = HumanPoseManager(listOf(head, imu, legImu)); hpm.setLegTweaksEnabled(false)
 			hpm.skeleton.ikSolver.enabled = false; hpm.update()
+			val computedIdentity = hpm.skeleton.computedHipTracker
 			val baseline = hpm.skeleton.computedHipTracker!!.position
 			var now = 1_000_000_000L
 			var allocations = 0
@@ -46,6 +47,7 @@ class HybridFoundationTests {
 							val main = resolved.getValue(TrackerPosition.HIP)
 							writeback.apply(resolved.mapValues { it.value.ikConstraint() }, assignments.snapshot(), runtime.mtp.historyGeneration)
 							hpm.update()
+							assertSame(computedIdentity, hpm.skeleton.computedHipTracker)
 							val background = reader.read(TrackerPosition.HIP, p.coordinate_space, now)
 							val composed = controller.update(main, background, now)
 							output.applyPoses(mapOf(TrackerPosition.HIP to composed))
