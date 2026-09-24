@@ -27,13 +27,16 @@ class HybridServerIntegrationTests {
 		val events = mutableListOf<OutputTransition>(); val failures = mutableListOf<Exception>()
 		val outputs = mutableListOf<Tracker>()
 		val integration = MonakaServerIntegration.startIfEnabled(true,
-			{ MonakaConfiguration(p.coordinate_space, a, port = 0, backgroundIkSharedSpace = p.coordinate_space) },
+			{ MonakaConfiguration(p.coordinate_space, a, port = 0, backgroundIkSharedSpace = p.coordinate_space,
+				continuityTuning = ContinuityTuning(10, 20, 10)) },
 			{ listOf(head, imu) }, hpm.skeleton, { before = it }, { failures += it }, { now },
 			configureDirectOutputs = { outputs += it }, nextTrackerId = { 100 }, registerAfterPose = { after = it }, onTransition = events::add,
 		)!!
 		integration.use {
 			val output = outputs.single(); val identity = Triple(output.id, output.name, output.trackerPosition)
-			for ((sequence, mode) in listOf("full", "full", "rotation_only", "rotation_only", "full").withIndex()) {
+			var lastEmitted: OutputPose? = null
+			var startOfReacquisition: OutputPose? = null
+			for ((sequence, mode) in listOf("full", "full", "rotation_only", "rotation_only", "full", "full", "full", "full").withIndex()) {
 				now += 10_000_000
 				val pose = p.copy(sequence = sequence.toLong(), modality = mode,
 					position = if (mode == "full") listOf(.1, 1.0, .1) else null,
@@ -49,14 +52,30 @@ class HybridServerIntegrationTests {
 				if (sequence < 2) {
 					assertEquals(Vector3(.1f, 1f, .1f), output.monakaOutputPose!!.position!!.value)
 					assertEquals(OutputPositionSource.RESOLVED_MAIN, output.monakaOutputPose!!.positionSource)
-				} else {
+				} else if (sequence == 2) {
+					assertEquals(lastEmitted!!.position!!.value, output.monakaOutputPose!!.position!!.value)
+				} else if (sequence == 3) {
 					assertEquals(hpm.skeleton.computedHipTracker!!.position, output.monakaOutputPose!!.position!!.value)
 					assertEquals(OutputPositionSource.BACKGROUND_IK, output.monakaOutputPose!!.positionSource)
-					assertEquals(if (mode == "full") key.observationId else "slime:${imu.name}", output.monakaOutputPose!!.rotationOwner)
+				} else if (sequence == 4) {
+					assertEquals(lastEmitted!!.position!!.value, output.monakaOutputPose!!.position!!.value)
+				} else if (sequence == 5) {
+					assertEquals(OutputPositionSource.CONVERGENCE, output.monakaOutputPose!!.positionSource)
+					assertEquals(lastEmitted!!.position!!.value, output.monakaOutputPose!!.position!!.value)
+					startOfReacquisition = output.monakaOutputPose
+				} else if (sequence == 6) {
+					assertEquals(OutputPositionSource.CONVERGENCE, output.monakaOutputPose!!.positionSource)
+					val start = startOfReacquisition!!.position!!.value
+					assertEquals(start * .5f + Vector3(.1f, 1f, .1f) * .5f, output.monakaOutputPose!!.position!!.value)
+				} else if (sequence == 7) {
+					assertEquals(Vector3(.1f, 1f, .1f), output.monakaOutputPose!!.position!!.value)
+					assertEquals(OutputPositionSource.RESOLVED_MAIN, output.monakaOutputPose!!.positionSource)
 				}
+				lastEmitted = output.monakaOutputPose
 				val eventCount = events.size; after!!.run(); assertEquals(eventCount, events.size) // frame consumed once
 			}
-			assertEquals(listOf(ContinuityState.MAIN_DIRECT, ContinuityState.FALLBACK_ACTIVE, ContinuityState.REACQUIRING), events.map { it.state })
+			assertEquals(listOf(ContinuityState.MAIN_DIRECT, ContinuityState.FALLBACK_ACTIVE,
+				ContinuityState.FALLBACK_ACTIVE, ContinuityState.REACQUIRING, ContinuityState.MAIN_DIRECT), events.map { it.state })
 			assertTrue(failures.isEmpty())
 		}
 		assertNull(before); assertNull(after); assertFalse(integration.receiver.isAlive)

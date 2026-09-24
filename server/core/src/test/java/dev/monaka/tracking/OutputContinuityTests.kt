@@ -37,54 +37,52 @@ class OutputContinuityTests {
 		c.update(main(0), background(0), 0)
 		val fallback = c.update(main(1, false), background(1), 1)
 		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
-		assertEquals(background(1).pose!!.position, fallback.position)
+		assertEquals(main(0).position!!.value, fallback.position!!.value) // loss begins at the emitted pose
 		assertEquals("imu", fallback.rotation!!.sourceId)
 		assertEquals(TrackingModality.FULL, fallback.modality) // output validity differs from Main modality
 		assertFalse(c.mainPose!!.positionValid); assertTrue(fallback.positionValid)
+		assertEquals(background(150_000_001).pose!!.position!!.value,
+			c.update(main(150_000_001, false), background(150_000_001), 150_000_001).position!!.value)
 		for ((now, bad) in listOf(
-			2L to background(1), // previous tick cannot masquerade as live IK
-			3L to background(3).let { it.copy(pose = it.pose!!.copy(space = space.copy(revision = 1))) },
-			4L to BackgroundIkResult(null, "alignment_unverified"),
+			150_000_002L to background(1), // previous tick cannot masquerade as live IK
+			150_000_003L to background(150_000_003).let { it.copy(pose = it.pose!!.copy(space = space.copy(revision = 1))) },
+			150_000_004L to BackgroundIkResult(null, "alignment_unverified"),
 		)) {
 			val out = c.update(main(now, false), bad, now)
 			assertNull(out.position); assertFalse(out.positionValid)
 			assertEquals(TrackingModality.ROTATION_ONLY, out.modality)
 		}
-		val none = c.update(main(5, false, false), background(5), 5)
+		val none = c.update(main(150_000_005, false, false), background(150_000_005), 150_000_005)
 		assertNull(none.position); assertNull(none.rotation); assertEquals(ContinuityState.UNAVAILABLE, c.state)
 	}
 
-	@Test fun reacquisitionIsAnExplicitPendingBoundaryAndInjectedPolicyUsesDeterministicTime() {
+	@Test fun stableFullDwellThenPositionAndRotationConvergeOnDeterministicClock() {
 		val events = mutableListOf<OutputTransition>()
-		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, onTransition = events::add)
+		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(3, 10, 2), events::add)
 		c.update(main(0), background(0), 0)
-		c.update(main(1, false), background(1), 1)
-		for (now in 2L..100L) {
-			val out = c.update(main(now), background(now), now)
-			assertEquals(ContinuityState.REACQUIRING, c.state)
-			assertEquals(background(now).pose!!.position, out.position)
-			assertEquals("main", out.rotation!!.sourceId)
-			assertNull(c.blendProgress); assertEquals(2L, c.transitionStartedAt)
-			assertEquals(.5f, c.positionResidual); assertEquals(0f, c.rotationResidual)
-		}
-		assertEquals(3, events.size)
-		val contexts = mutableListOf<ReacquisitionContext>()
-		val withPolicy = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK,
-			reacquisition = ReacquisitionStrategy { context ->
-				contexts += context
-				if (context.now - context.startedAt < 10) ConvergenceStep(Vector3(2.75f, 2f, 1f), .5f, false)
-				else ConvergenceStep(context.main.position!!.value, 1f, true)
-			})
-		withPolicy.update(main(0), background(0), 0)
-		withPolicy.update(main(1, false), background(1), 1)
-		assertEquals(Vector3(2.75f, 2f, 1f), withPolicy.update(main(2), background(2), 2).position!!.value)
-		assertEquals(ContinuityState.REACQUIRING, withPolicy.state)
-		val settled = withPolicy.update(main(12), background(12), 12)
-		assertEquals(ContinuityState.MAIN_DIRECT, withPolicy.state)
-		assertEquals(main(12).position, settled.position)
-		assertEquals(2, contexts.size)
-		assertEquals(1f, withPolicy.blendProgress)
-		assertFails { withPolicy.update(main(11), background(11), 11) }
+		c.update(main(1_000_000, false), background(1_000_000), 1_000_000)
+		val loss = c.update(main(3_000_000, false), background(3_000_000), 3_000_000)
+		assertEquals(background(3_000_000).pose!!.position!!.value, loss.position!!.value)
+		assertEquals(loss.position!!.value, c.update(main(4_000_000), background(4_000_000), 4_000_000).position!!.value)
+		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
+		val duringDwell = c.update(main(6_000_000),
+			background(6_000_000, Vector3(2.6f, 2f, 1f)), 6_000_000)
+		assertTrue(duringDwell.position!!.value.x > 2.5f && duringDwell.position!!.value.x < 2.6f)
+		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
+		val first = c.update(main(7_000_000), background(7_000_000), 7_000_000)
+		assertEquals(duringDwell.position!!.value, first.position!!.value)
+		assertEquals(ContinuityState.REACQUIRING, c.state)
+		val half = c.update(main(12_000_000), background(12_000_000), 12_000_000)
+		assertEquals(first.position!!.value * .5f + main(12_000_000).position!!.value * .5f, half.position!!.value)
+		assertEquals(OutputPositionSource.CONVERGENCE, half.positionSource)
+		assertEquals(.5f, c.blendProgress)
+		val settled = c.update(main(17_000_000), background(17_000_000), 17_000_000)
+		assertEquals(ContinuityState.MAIN_DIRECT, c.state)
+		assertEquals(main(17_000_000).position, settled.position)
+		assertEquals(main(17_000_000).rotation, settled.rotation)
+		assertEquals(listOf(ContinuityState.MAIN_DIRECT, ContinuityState.FALLBACK_ACTIVE,
+			ContinuityState.FALLBACK_ACTIVE, ContinuityState.REACQUIRING, ContinuityState.MAIN_DIRECT), events.map { it.state })
+		assertFails { c.update(main(16_000_000), background(16_000_000), 16_000_000) }
 	}
 
 	@Test fun directOnlyAndPauseNeverBorrowBackgroundOrHeldPosition() {
@@ -95,6 +93,53 @@ class OutputContinuityTests {
 		assertEquals(TrackingModality.NONE, paused.modality)
 		assertNull(paused.position); assertNull(paused.rotation)
 		assertEquals(ContinuityState.UNAVAILABLE, c.state)
+	}
+
+	@Test fun oneFullPacketDoesNotReacquireAndRelossReturnsFromLastEmittedPose() {
+		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(3, 10, 2))
+		c.update(main(0), background(0), 0)
+		c.update(main(1_000_000, false), background(1_000_000), 1_000_000)
+		c.update(main(3_000_000, false), background(3_000_000), 3_000_000)
+		val onePacket = c.update(main(4_000_000), background(4_000_000), 4_000_000)
+		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
+		c.update(main(4_000_000), background(8_000_000), 8_000_000) // same accepted sample, later server tick
+		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
+		val lostAgain = c.update(main(9_000_000, false), background(9_000_000), 9_000_000)
+		assertEquals(onePacket.position!!.value, lostAgain.position!!.value)
+		c.update(main(10_000_000), background(10_000_000), 10_000_000)
+		val start = c.update(main(13_000_000), background(13_000_000), 13_000_000)
+		assertEquals(ContinuityState.REACQUIRING, c.state)
+		val halfway = c.update(main(18_000_000), background(18_000_000), 18_000_000)
+		assertTrue(halfway.position!!.value.x > start.position!!.value.x)
+		assertTrue(halfway.position!!.value.x < main(18_000_000).position!!.value.x)
+		val backToFallback = c.update(main(19_000_000, false), background(19_000_000), 19_000_000)
+		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
+		assertEquals(halfway.position!!.value, backToFallback.position!!.value)
+		assertEquals(OutputPositionSource.BACKGROUND_IK, backToFallback.positionSource)
+		assertEquals(background(21_000_000).pose!!.position!!.value,
+			c.update(main(21_000_000, false), background(21_000_000), 21_000_000).position!!.value)
+	}
+
+	@Test fun rotationConvergenceTakesShortestPathAndFullToNoneInvalidatesOutput() {
+		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(1, 10, 1))
+		c.update(main(0), background(0), 0)
+		val none = c.update(main(1_000_000, false, false), background(1_000_000), 1_000_000)
+		assertEquals(ContinuityState.UNAVAILABLE, c.state)
+		assertFalse(none.positionValid); assertFalse(none.rotationValid)
+		val fallback = c.update(main(2_000_000, false), background(2_000_000), 2_000_000)
+		assertEquals(background(2_000_000).pose!!.position!!.value, fallback.position!!.value)
+		val desired = -Quaternion.rotationAroundYAxis(1f)
+		fun targetAt(now: Long) = main(now).copy(rotation = ResolvedComponent(desired, "main", ObservationQuality.TRACKED, now))
+		c.update(targetAt(3_000_000), background(3_000_000), 3_000_000)
+		val first = c.update(targetAt(4_000_000), background(4_000_000), 4_000_000)
+		assertEquals(fallback.rotation!!.value, first.rotation!!.value)
+		val half = c.update(targetAt(9_000_000), background(9_000_000), 9_000_000)
+		val expected = Quaternion.rotationAroundYAxis(.5f)
+		assertTrue(kotlin.math.abs(half.rotation!!.value.dot(expected)) > .999f)
+		assertEquals(ContinuityState.REACQUIRING, c.state)
+		val full = c.update(targetAt(14_000_000), background(14_000_000), 14_000_000)
+		assertEquals(desired, full.rotation!!.value)
+		assertEquals(ContinuityState.MAIN_DIRECT, c.state)
 	}
 
 	@Test fun alignmentIsNeverInferredFromNumericallySimilarCoordinates() {
