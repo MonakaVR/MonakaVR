@@ -1,5 +1,10 @@
 # Hybrid tracking foundation
 
+The subsequent [HIP continuity vertical slice](hybrid-continuity-vertical-slice.md)
+adds production dwell and convergence. This document records the earlier
+foundation at `39612f33dca59d7fe0dbf9a194d32a49645232d1`; its pending
+reacquisition statements describe that historical checkpoint.
+
 This is a foundation, not completed continuous Hybrid tracking or an HIL PASS.
 Work continues on `feature/direct-6dof-output` from
 `fcdf98bca8e8d1ecb68150f0a417b2564ea6d567`. The feature worktree was clean at
