@@ -15,6 +15,7 @@ data class MonakaConfiguration(
  val port: Int = 29811,
  val timeoutNanos: Long = 500_000_000,
  val backgroundIkSharedSpace: CoordinateSpace? = null,
+ val continuityTuning: ContinuityTuning = ContinuityTuning(),
 ) {
  init {
   require(space.id.isNotBlank() && space.convention == "rh_y_up_neg_z_forward" && space.revision in 0..4294967295L)
@@ -34,6 +35,8 @@ data class MonakaConfiguration(
    "backgroundIkAlignment" to backgroundIkSharedSpace?.let {
     mapOf("kind" to "confirmed_same_space", "space" to mapOf("id" to it.id, "revision" to it.revision, "convention" to it.convention))
    },
+   "continuityTuning" to mapOf("stableFullDwellMs" to continuityTuning.stableFullDwellMs,
+    "reacquireDurationMs" to continuityTuning.reacquireDurationMs, "fallbackBlendMs" to continuityTuning.fallbackBlendMs),
    "assignments" to assignments.snapshot().targets.map { (body, relation) ->
     mapOf("body" to body.name, "outputMode" to relation.outputMode.name.lowercase(), "mainTracker" to reference(relation.mainTracker),
      "rotationFallbackTracker" to relation.rotationFallbackTracker?.let(::reference),
@@ -101,7 +104,20 @@ data class MonakaConfiguration(
     require(declaredRevision.isIntegralNumber && declaredRevision.canConvertToLong())
     CoordinateSpace(text(declared, "id"), text(declared, "convention"), declaredRevision.longValue())
    }
-   return MonakaConfiguration(CoordinateSpace(text(space, "id"), text(space, "convention"), revision.asLong()), assignments, port, timeout, shared)
+   val tuning = root["continuityTuning"]?.takeUnless { it.isNull }?.let { node ->
+    require(node.isObject) { "continuityTuning must be an object" }
+    require(node.fieldNames().asSequence().all { it in setOf("stableFullDwellMs", "reacquireDurationMs", "fallbackBlendMs") }) {
+     "Unknown continuityTuning field"
+    }
+    fun duration(name: String, fallback: Long): Long = node[name]?.let { value ->
+     require(value.isIntegralNumber && value.canConvertToLong()) { "$name must be an integer" }
+     value.longValue()
+    } ?: fallback
+    val defaults = ContinuityTuning()
+    ContinuityTuning(duration("stableFullDwellMs", defaults.stableFullDwellMs),
+     duration("reacquireDurationMs", defaults.reacquireDurationMs), duration("fallbackBlendMs", defaults.fallbackBlendMs))
+   } ?: ContinuityTuning()
+   return MonakaConfiguration(CoordinateSpace(text(space, "id"), text(space, "convention"), revision.asLong()), assignments, port, timeout, shared, tuning)
   }
   fun migrate(path: Path, legacyMapping: Map<Pair<String, String>, LogicalTracker>): MonakaConfiguration {
    val config = load(path, legacyMapping) // Validate everything before any write.

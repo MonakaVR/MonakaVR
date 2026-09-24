@@ -15,13 +15,14 @@ class MonakaServerIntegration private constructor(
 	private val onFailure: (Exception) -> Unit,
 	private val registerAfterPose: ((Runnable?) -> Unit)?,
 	private val backgroundIk: BackgroundIkPoseReader,
+	private val tuning: ContinuityTuning,
 	private val onTransition: (OutputTransition) -> Unit,
 ) : AutoCloseable {
 	private var closed = false
 	private var transportReported = false
 	private val outputAssignments = runtime.assignments.snapshot().targets.filterValues { it.outputMode != OutputMode.IK }
 	private val controllers = outputAssignments.mapValues { (target, relation) ->
-		OutputContinuityController(target, relation.continuity, onTransition = onTransition)
+		OutputContinuityController(target, relation.continuity, tuning, onTransition)
 	}
 	private var pendingPoses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>? = null
 	fun tick() {
@@ -91,7 +92,7 @@ class MonakaServerIntegration private constructor(
 			try { configureDirectOutputs(direct.trackers.values.toList()) } catch (e: Exception) {
 				direct.close(); writeback.close(); receiver.close(); runtime.close(); throw e
 			}
-			return MonakaServerIntegration(runtime, receiver, writeback, direct, skeleton, registerBeforePose, onFailure, registerAfterPose, background, onTransition).also {
+			return MonakaServerIntegration(runtime, receiver, writeback, direct, skeleton, registerBeforePose, onFailure, registerAfterPose, background, config.continuityTuning, onTransition).also {
 				registerBeforePose(Runnable(it::tick))
 				registerAfterPose?.invoke(Runnable(it::finishPoseUpdate))
 			}

@@ -1,29 +1,24 @@
 package dev.monaka.tracking
 
 import dev.slimevr.tracking.trackers.TrackerPosition
+import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 
 enum class ContinuityState { MAIN_DIRECT, FALLBACK_ACTIVE, REACQUIRING, UNAVAILABLE }
 
-data class ReacquisitionContext(
-	val startedAt: Long,
-	val now: Long,
-	val lastOutput: OutputPose?,
-	val background: OutputPose,
-	val main: ResolvedTrackingPose,
-	val positionResidual: Float,
-	val rotationResidual: Float,
-)
-
-/** Only convergence, never eligibility or source selection. No tuned algorithm is implied. */
-fun interface ReacquisitionStrategy {
-	fun advance(context: ReacquisitionContext): ConvergenceStep?
-	companion object {
-		// Production foundation deliberately waits; it must not snap to reacquired Main.
-		val NOT_CONFIGURED = ReacquisitionStrategy { null }
+/** Provisional software defaults; none of these values is calibrated on hardware. */
+data class ContinuityTuning(
+	val stableFullDwellMs: Long = 150,
+	val reacquireDurationMs: Long = 300,
+	val fallbackBlendMs: Long = 150,
+) {
+	init {
+		require(stableFullDwellMs in 1..10_000 && reacquireDurationMs in 1..10_000 && fallbackBlendMs in 1..10_000)
 	}
+	val stableFullDwellNs get() = stableFullDwellMs * 1_000_000
+	val reacquireDurationNs get() = reacquireDurationMs * 1_000_000
+	val fallbackBlendNs get() = fallbackBlendMs * 1_000_000
 }
-data class ConvergenceStep(val position: Vector3, val progress: Float, val complete: Boolean)
 
 data class OutputTransition(
 	val target: TrackerPosition,
@@ -41,7 +36,7 @@ data class OutputTransition(
 class OutputContinuityController(
 	private val target: TrackerPosition,
 	private val policy: ContinuityPolicy,
-	private val reacquisition: ReacquisitionStrategy = ReacquisitionStrategy.NOT_CONFIGURED,
+	private val tuning: ContinuityTuning = ContinuityTuning(),
 	private val onTransition: (OutputTransition) -> Unit = {},
 ) {
 	var state = ContinuityState.UNAVAILABLE
@@ -63,6 +58,27 @@ class OutputContinuityController(
 	private var previousEvent: OutputTransition? = null
 	private var lossSeen = false
 	private var lastTime = -1L
+	private var fullSince: Long? = null
+	private var firstFullSampleAt = -1L
+	private var newerFullSampleSeen = false
+	private var dwellStart: OutputPose? = null
+	private var fallbackStart: OutputPose? = null
+	private var fallbackStartedAt = 0L
+	private var reacquireStart: OutputPose? = null
+
+	private fun fraction(now: Long, start: Long, duration: Long) =
+		((now - start).toDouble() / duration).coerceIn(0.0, 1.0).toFloat()
+	private fun interpolate(a: Vector3, b: Vector3, t: Float) = a * (1f - t) + b * t
+	private fun interpolate(a: Quaternion, b: Quaternion, t: Float) = a.unit().interpR(b.unit(), t).unit()
+	private fun blend(start: OutputPose, end: OutputPose, t: Float, source: OutputPositionSource, now: Long): OutputPose {
+		val position = ResolvedComponent(interpolate(start.position!!.value, end.position!!.value, t),
+			if (source == OutputPositionSource.CONVERGENCE) "monaka-solver:convergence:${target.name}" else end.position.sourceId,
+			end.position.quality, now)
+		val rotation = ResolvedComponent(interpolate(start.rotation!!.value, end.rotation!!.value, t),
+			if (source == OutputPositionSource.CONVERGENCE) "monaka-solver:convergence:${target.name}" else end.rotation.sourceId,
+			end.rotation.quality, now)
+		return OutputPose(target, end.space, position, rotation, source)
+	}
 
 	fun update(main: ResolvedTrackingPose, background: BackgroundIkResult, now: Long, paused: Boolean = false): OutputPose {
 		require(main.target == target && now >= 0 && now >= lastTime)
@@ -87,35 +103,66 @@ class OutputContinuityController(
 		blendProgress = null
 		when {
 			paused -> {
-				next = ContinuityState.UNAVAILABLE; reason = "paused"; lossSeen = lossSeen || lastOutput?.positionValid == true
+				next = ContinuityState.UNAVAILABLE; reason = "paused"
+				lossSeen = false; fullSince = null; firstFullSampleAt = -1L; newerFullSampleSeen = false
+				dwellStart = null; fallbackStart = null; reacquireStart = null
 				output = OutputPose(target, main.space)
 			}
 			policy == ContinuityPolicy.NONE -> {
 				next = if (full) ContinuityState.MAIN_DIRECT else if (main.rotationValid) ContinuityState.FALLBACK_ACTIVE else ContinuityState.UNAVAILABLE
 				reason = "resolved_components_only"
 			}
-			full && !lossSeen -> { next = ContinuityState.MAIN_DIRECT; reason = "main_full" }
+			full && !lossSeen -> { next = ContinuityState.MAIN_DIRECT; reason = "main_full"; dwellStart = null }
 			full -> {
-				next = ContinuityState.REACQUIRING; reason = "reacquisition_policy_pending"
-				if (state != next) transitionStartedAt = now
-				output = OutputPose(target, main.space, fallback?.position, main.rotation,
-					if (fallback == null) OutputPositionSource.NONE else OutputPositionSource.BACKGROUND_IK)
-				if (fallback != null) {
-					val step = reacquisition.advance(ReacquisitionContext(transitionStartedAt, now, lastOutput, fallback, main, positionResidual!!, rotationResidual!!))
-					if (step != null) {
-						require(step.progress.isFinite() && step.progress in 0f..1f && listOf(step.position.x, step.position.y, step.position.z).all { it.isFinite() })
-						require(!step.complete || (step.progress == 1f && step.position == main.position!!.value))
-						blendProgress = step.progress
-						output = output.copy(position = ResolvedComponent(step.position, "monaka-solver:convergence:${target.name}", ObservationQuality.TRACKED, now), positionSource = OutputPositionSource.CONVERGENCE)
-						if (step.complete) { next = ContinuityState.MAIN_DIRECT; lossSeen = false; output = main.directOutput(); reason = "convergence_complete" }
+				val sampleAt = minOf(main.position!!.observedAtNanos, main.rotation!!.observedAtNanos)
+				val since = fullSince ?: now.also { fullSince = it; firstFullSampleAt = sampleAt }
+				if (sampleAt > firstFullSampleAt) newerFullSampleSeen = true
+				val previous = lastOutput?.takeIf { it.positionValid && it.rotationValid && it.space == main.space } ?: fallback
+				if (fallback == null || previous == null) {
+					next = ContinuityState.UNAVAILABLE; reason = "reacquisition_background_unavailable:${background.reason}"
+					output = OutputPose(target, main.space)
+					reacquireStart = null; fullSince = null; firstFullSampleAt = -1L; newerFullSampleSeen = false; dwellStart = null
+				} else if (reacquireStart == null && (now - since < tuning.stableFullDwellNs || !newerFullSampleSeen)) {
+					next = ContinuityState.FALLBACK_ACTIVE; reason = "main_full_dwell"
+					// Follow the current IK position gradually; one FULL packet must not snap either component.
+					val anchor = dwellStart ?: previous.also { dwellStart = it }
+					val position = ResolvedComponent(interpolate(anchor.position!!.value, fallback.position!!.value,
+						fraction(now, since, tuning.stableFullDwellNs)), fallback.position.sourceId,
+						fallback.position.quality, now)
+					output = OutputPose(target, main.space, position, anchor.rotation, OutputPositionSource.BACKGROUND_IK)
+				} else {
+					if (reacquireStart == null) {
+						reacquireStart = previous
+						dwellStart = null
+						transitionStartedAt = now
 					}
-				} else reason = "reacquisition_background_unavailable:${background.reason}"
+					val progress = fraction(now, transitionStartedAt, tuning.reacquireDurationNs)
+					blendProgress = progress
+					if (progress == 1f) {
+						next = ContinuityState.MAIN_DIRECT; reason = "convergence_complete"
+						output = main.directOutput(); lossSeen = false; fullSince = null; firstFullSampleAt = -1L
+						newerFullSampleSeen = false; dwellStart = null; reacquireStart = null
+					} else {
+						next = ContinuityState.REACQUIRING; reason = "main_full_stable"
+						output = blend(reacquireStart!!, main.directOutput(), progress, OutputPositionSource.CONVERGENCE, now)
+					}
+				}
 			}
 			else -> {
+				fullSince = null; firstFullSampleAt = -1L; newerFullSampleSeen = false
+				dwellStart = null; reacquireStart = null
 				val position = if (main.rotationValid) fallback?.position else null
 				lossSeen = lossSeen || lastOutput?.positionValid == true || position != null
-				output = OutputPose(target, main.space, position, main.rotation,
+				val selected = OutputPose(target, main.space, position, main.rotation,
 					if (position == null) OutputPositionSource.NONE else OutputPositionSource.BACKGROUND_IK)
+				if (position != null && state != ContinuityState.FALLBACK_ACTIVE) {
+					fallbackStart = lastOutput?.takeIf { it.positionValid && it.rotationValid && it.space == main.space }
+					fallbackStartedAt = now
+				}
+				output = if (position != null && fallbackStart != null)
+					blend(fallbackStart!!, selected, fraction(now, fallbackStartedAt, tuning.fallbackBlendNs), OutputPositionSource.BACKGROUND_IK, now)
+				else selected
+				if (position == null || now - fallbackStartedAt >= tuning.fallbackBlendNs) fallbackStart = null
 				next = if (main.rotationValid) ContinuityState.FALLBACK_ACTIVE else ContinuityState.UNAVAILABLE
 				reason = if (position != null) "main_loss_current_background" else "main_loss_no_pose_fallback:${background.reason}"
 			}
