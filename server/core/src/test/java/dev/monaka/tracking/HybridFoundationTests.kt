@@ -84,14 +84,19 @@ class HybridFoundationTests {
 							assertEquals(main.position!!.value, hpm.skeleton.hipTracker!!.position)
 						}
 						assertTrue(hpm.skeleton.computedHipTracker!!.position.x - before.x > .005f, "Existing IK must respond while visible output stays Direct")
+						val lastVisibleBeforeLoss = visible.monakaOutputPose!!.position!!.value
 						val (lost, fallback) = send(9, "rotation_only")
 						assertFalse(lost.positionValid); assertNull(lost.position)
 						assertEquals("slime:${imu.name}", lost.rotation!!.sourceId)
-						assertEquals(lost.rotation, fallback.rotation)
+						assertEquals(lost.rotation!!.sourceId, fallback.rotationOwner)
 						if (mode == OutputMode.HYBRID) {
-							assertEquals(hpm.skeleton.computedHipTracker!!.position, fallback.position!!.value)
+							assertEquals(lastVisibleBeforeLoss, fallback.position!!.value) // no loss-edge teleport
 							assertEquals(OutputPositionSource.BACKGROUND_IK, fallback.positionSource)
 						} else assertNull(fallback.position)
+						if (mode == OutputMode.HYBRID) {
+							now += 150_000_000
+							assertEquals(hpm.skeleton.computedHipTracker!!.position, step().second.position!!.value)
+						}
 						val builds = writeback.topologyRebuilds
 						val lossPosition = hpm.skeleton.computedHipTracker!!.position
 						for (seq in 10L..15L) {
@@ -102,7 +107,13 @@ class HybridFoundationTests {
 						assertNotEquals(lossPosition, hpm.skeleton.computedHipTracker!!.position)
 						assertEquals(calibration, hpm.skeleton.ikSolver.calibrationSnapshot())
 						send(16, "full", baseline.x + .08f)
-						assertEquals(if (mode == OutputMode.HYBRID) ContinuityState.REACQUIRING else ContinuityState.MAIN_DIRECT, controller.state)
+						assertEquals(if (mode == OutputMode.HYBRID) ContinuityState.FALLBACK_ACTIVE else ContinuityState.MAIN_DIRECT, controller.state)
+						if (mode == OutputMode.HYBRID) {
+							now += 150_000_000
+							step(); assertEquals(ContinuityState.FALLBACK_ACTIVE, controller.state) // same FULL sample
+							send(17, "full", baseline.x + .08f)
+							assertEquals(ContinuityState.REACQUIRING, controller.state)
+						}
 						assertEquals(calibration, hpm.skeleton.ikSolver.calibrationSnapshot())
 						val last = runtime.mtp.samples().getValue(key)
 						now = last.sampleTime + 500_000_001
@@ -119,17 +130,20 @@ class HybridFoundationTests {
 	@Test fun localConfigSeparatesOutputParticipationContinuityAndExplicitAlignment(@TempDir directory: Path) {
 		val p = fixture(); val a = TrackerBodyAssignments()
 		a.configure(TrackerPosition.HIP, TrackerReference.slime("main"), TrackerReference.slime("fallback"), OutputMode.HYBRID)
-		val config = MonakaConfiguration(p.coordinate_space, a, backgroundIkSharedSpace = p.coordinate_space)
+		val config = MonakaConfiguration(p.coordinate_space, a, backgroundIkSharedSpace = p.coordinate_space,
+			continuityTuning = ContinuityTuning(25, 200, 75))
 		val path = directory.resolve("hybrid.json"); config.save(path)
 		val loaded = MonakaConfiguration.load(path)
 		assertEquals(a.snapshot().targets, loaded.assignments.snapshot().targets)
 		assertEquals(config.backgroundIkSharedSpace, loaded.backgroundIkSharedSpace)
+		assertEquals(config.continuityTuning, loaded.continuityTuning)
 		val mapper = ObjectMapper(); val json = mapper.readTree(path.toFile()) as ObjectNode
 		val assignment = json["assignments"][0] as ObjectNode
-		assignment.remove(listOf("outputMode", "continuity", "useAsIkConstraint")); json.remove("backgroundIkAlignment")
+		assignment.remove(listOf("outputMode", "continuity", "useAsIkConstraint")); json.remove("backgroundIkAlignment"); json.remove("continuityTuning")
 		mapper.writeValue(path.toFile(), json)
 		val legacy = MonakaConfiguration.load(path)
 		assertNull(legacy.backgroundIkSharedSpace)
+		assertEquals(ContinuityTuning(), legacy.continuityTuning)
 		val relation = legacy.assignments.snapshot().targets.getValue(TrackerPosition.HIP)
 		assertEquals(OutputMode.IK, relation.outputMode); assertTrue(relation.useAsIkConstraint); assertEquals(ContinuityPolicy.NONE, relation.continuity)
 		assignment.put("outputMode", "direct"); mapper.writeValue(path.toFile(), json)
@@ -139,5 +153,11 @@ class HybridFoundationTests {
 		assignment.put("outputMode", "hybrid"); mapper.writeValue(path.toFile(), json)
 		assertFails { MonakaConfiguration.load(path) }
 		assertFails { MonakaConfiguration(p.coordinate_space, backgroundIkSharedSpace = p.coordinate_space.copy(revision = 1)) }
+		json.putObject("continuityTuning").put("stableFullDwellMs", -1)
+		mapper.writeValue(path.toFile(), json)
+		assertFails { MonakaConfiguration.load(path) }
+		json.putObject("continuityTuning").put("stableFullDwellMss", 25)
+		mapper.writeValue(path.toFile(), json)
+		assertFails { MonakaConfiguration.load(path) }
 	}
 }
