@@ -159,6 +159,34 @@ class OutputContinuityTests {
 		assertTrue(started.positionValid && started.rotationValid)
 	}
 
+	@Test fun unavailableWithoutBackgroundRecoversOnlyAfterAcceptedFullObservationsSpanDwell() {
+		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(150, 20, 10))
+		val missing = BackgroundIkResult(null, "alignment_unverified")
+		c.update(main(0), background(0), 0)
+		val lost = c.update(main(1_000_000, false, false), missing, 1_000_000)
+		assertEquals(ContinuityState.UNAVAILABLE, c.state)
+		assertFalse(lost.positionValid)
+		assertFalse(lost.rotationValid)
+
+		for ((sampleAt, now) in listOf(
+			20_000_000L to 20_000_000L,
+			21_000_000L to 21_000_000L,
+			21_000_000L to 200_000_000L,
+		)) {
+			val unavailable = c.update(main(sampleAt), missing, now)
+			assertEquals(ContinuityState.UNAVAILABLE, c.state)
+			assertFalse(unavailable.positionValid)
+			assertFalse(unavailable.rotationValid)
+		}
+
+		val recovered = c.update(main(170_000_000), missing, 201_000_000)
+		assertEquals(ContinuityState.MAIN_DIRECT, c.state)
+		assertEquals(main(170_000_000).position, recovered.position)
+		assertEquals(main(170_000_000).rotation, recovered.rotation)
+		assertEquals(OutputPositionSource.RESOLVED_MAIN, recovered.positionSource)
+		assertNull(c.blendProgress) // There was no valid pose to blend from.
+	}
+
 	@Test fun missingBackgroundAfterReacquisitionStartsDoesNotInterruptConvergence() {
 		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(2, 10, 1))
 		c.update(main(0), background(0), 0)

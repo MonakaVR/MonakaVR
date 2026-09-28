@@ -27,6 +27,10 @@ For a Hybrid HIP assignment:
 | `MAIN_DIRECT` after convergence | At the configured duration, use exact current Main components again. |
 | `UNAVAILABLE` | Pause or no selected rotation. No valid position is manufactured from zero or old numeric tracker storage. |
 
+After a loss with no valid last output or aligned IK anchor, FULL remains
+`UNAVAILABLE` until accepted FULL observations span the stable dwell. It then
+returns directly to Main; there is no pose from which to interpolate.
+
 Loss during convergence starts a new fallback transition at the **last emitted**
 pose. Subsequent FULL must again satisfy the dwell. During valid Main FULL,
 temporary background loss does not invalidate a valid last output or interrupt
