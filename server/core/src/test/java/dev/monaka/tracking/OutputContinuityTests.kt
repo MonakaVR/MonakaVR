@@ -120,6 +120,82 @@ class OutputContinuityTests {
 			c.update(main(21_000_000, false), background(21_000_000), 21_000_000).position!!.value)
 	}
 
+	@Test fun acceptedFullSamplesMustSpanDwellEvenWhenServerTicksContinue() {
+		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(150, 20, 10))
+		c.update(main(0), background(0), 0)
+		c.update(main(1_000_000, false), background(1_000_000), 1_000_000)
+		c.update(main(11_000_000, false), background(11_000_000), 11_000_000)
+		c.update(main(20_000_000), background(20_000_000), 20_000_000) // accepted FULL A
+		c.update(main(21_000_000), background(21_000_000), 21_000_000) // accepted FULL B, only 1ms later
+		for (now in listOf(50_000_000L, 150_000_000L, 220_000_000L)) {
+			val heldSample = c.update(main(21_000_000), background(now), now)
+			assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
+			assertTrue(heldSample.positionValid && heldSample.rotationValid)
+		}
+		val before = c.lastOutput!!
+		val reacquiring = c.update(main(170_000_000), background(221_000_000), 221_000_000) // accepted C spans 150ms
+		assertEquals(ContinuityState.REACQUIRING, c.state)
+		assertEquals(before.position!!.value, reacquiring.position!!.value)
+		assertEquals(before.rotation!!.value, reacquiring.rotation!!.value)
+	}
+
+	@Test fun missingBackgroundDuringDwellKeepsOutputAndDoesNotResetFullStability() {
+		val events = mutableListOf<OutputTransition>()
+		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(150, 20, 10), events::add)
+		c.update(main(0), background(0), 0)
+		c.update(main(1_000_000, false), background(1_000_000), 1_000_000)
+		c.update(main(11_000_000, false), background(11_000_000), 11_000_000)
+		c.update(main(20_000_000), background(20_000_000), 20_000_000)
+		val beforeMissing = c.lastOutput!!
+		val missing = BackgroundIkResult(null, "no_valid_root_anchor")
+		val duringMissing = c.update(main(21_000_000), missing, 21_000_000)
+		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
+		assertTrue(duringMissing.positionValid && duringMissing.rotationValid)
+		assertEquals(beforeMissing.position!!.value, duringMissing.position!!.value)
+		assertEquals("main_full_dwell_background_missing", events.last().reason)
+		val started = c.update(main(170_000_000), missing, 171_000_000)
+		assertEquals(ContinuityState.REACQUIRING, c.state)
+		assertEquals(duringMissing.position!!.value, started.position!!.value)
+		assertTrue(started.positionValid && started.rotationValid)
+	}
+
+	@Test fun missingBackgroundAfterReacquisitionStartsDoesNotInterruptConvergence() {
+		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(2, 10, 1))
+		c.update(main(0), background(0), 0)
+		c.update(main(1_000_000, false), background(1_000_000), 1_000_000)
+		c.update(main(2_000_000, false), background(2_000_000), 2_000_000)
+		c.update(main(3_000_000), background(3_000_000), 3_000_000)
+		val start = c.update(main(5_000_000), background(5_000_000), 5_000_000)
+		assertEquals(ContinuityState.REACQUIRING, c.state)
+		val missing = BackgroundIkResult(null, "alignment_unverified")
+		val half = c.update(main(10_000_000), missing, 10_000_000)
+		assertEquals(ContinuityState.REACQUIRING, c.state)
+		assertTrue(half.position!!.value.x > start.position!!.value.x)
+		assertTrue(half.position!!.value.x < main(10_000_000).position!!.value.x)
+		val complete = c.update(main(15_000_000), missing, 15_000_000)
+		assertEquals(ContinuityState.MAIN_DIRECT, c.state)
+		assertEquals(main(15_000_000).position, complete.position)
+		assertEquals(main(15_000_000).rotation, complete.rotation)
+	}
+
+	@Test fun dwellRotationTracksCurrentResolverSelectionInsteadOfFreezing() {
+		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(150, 20, 1))
+		c.update(main(0), background(0), 0)
+		c.update(main(1_000_000, false), background(1_000_000), 1_000_000)
+		c.update(main(2_000_000, false), background(2_000_000), 2_000_000)
+		fun selected(sampleAt: Long, angle: Float) = main(sampleAt).copy(rotation =
+			ResolvedComponent(Quaternion.rotationAroundYAxis(angle), "main", ObservationQuality.TRACKED, sampleAt))
+		val a = c.update(selected(10_000_000, .2f), background(10_000_000), 10_000_000)
+		val b = c.update(selected(50_000_000, .4f), background(50_000_000), 50_000_000)
+		val d = c.update(selected(100_000_000, .6f), background(100_000_000), 100_000_000)
+		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
+		assertEquals(Quaternion.IDENTITY, a.rotation!!.value)
+		assertTrue(kotlin.math.abs(b.rotation!!.value.dot(a.rotation.value)) < .9999f)
+		assertTrue(kotlin.math.abs(d.rotation!!.value.dot(b.rotation.value)) < .9999f)
+		assertEquals("main", b.rotationOwner)
+		assertEquals("main", d.rotationOwner)
+	}
+
 	@Test fun rotationConvergenceTakesShortestPathAndFullToNoneInvalidatesOutput() {
 		val c = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK, ContinuityTuning(1, 10, 1))
 		c.update(main(0), background(0), 0)
