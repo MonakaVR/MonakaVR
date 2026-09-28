@@ -17,6 +17,82 @@ import kotlin.test.*
 class HybridFoundationTests {
 	private fun fixture() = (MonakaCodec.decodeEnvelope(File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes()) as DecodeResult.Success).value as MtpPose
 
+	@Test fun solverEnabledTracksMainWhileDirectIsVisibleAndKeepsComputedIdentityOnLoss() {
+		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
+		val head = TestTrackerSet().head.also { it.position = Vector3(0f, 1.7f, 0f) }
+		val imu = Tracker(null, 194, "solver-enabled-imu", trackerPosition = TrackerPosition.HIP,
+			hasPosition = false, hasRotation = true, allowFiltering = false, allowReset = false,
+			allowMounting = false, trackRotDirection = false).also { it.status = TrackerStatus.OK }
+		val assignments = TrackerBodyAssignments().also {
+			it.configure(TrackerPosition.HIP, TrackerReference.mtp(key), TrackerReference.slime(imu.name), OutputMode.HYBRID)
+		}
+		val hpm = HumanPoseManager(listOf(head, imu)); hpm.setLegTweaksEnabled(false)
+		val skeleton = hpm.skeleton; val solver = skeleton.ikSolver
+		solver.enabled = true; hpm.update()
+		val computed = skeleton.computedHipTracker!!
+		val baseline = computed.position
+		var now = 1_000_000_000L
+		DirectConstraintOutput(assignments.snapshot(), p.coordinate_space) { 705 }.use { output ->
+			val visible = output.trackers.getValue(TrackerPosition.HIP)
+			val identity = Triple(visible.id, visible.name, visible.trackerPosition)
+			val reader = BackgroundIkPoseReader(skeleton, BackgroundIkAlignment.confirmedSameSpace(p.coordinate_space))
+			val controller = OutputContinuityController(TrackerPosition.HIP, ContinuityPolicy.BACKGROUND_IK)
+			MonakaRuntime({ listOf(head, imu, visible) }, p.coordinate_space, assignments, clock = { now }).use { runtime ->
+				ConstraintIkWriteback(skeleton).use { writeback ->
+					fun send(sequence: Long, full: Boolean, x: Float = baseline.x): Pair<ResolvedTrackingPose, OutputPose> {
+						now += 10_000_000
+						val sample = p.copy(sequence = sequence, timestamp_ns = p.timestamp_ns + sequence * 10_000_000,
+							sent_at_ns = p.timestamp_ns + sequence * 10_000_000 + 100,
+							modality = if (full) "full" else "rotation_only",
+							position = if (full) listOf(x.toDouble(), baseline.y.toDouble(), baseline.z.toDouble()) else null,
+							orientation = listOf(0.0, 0.0, 0.0, 1.0), validity = Validity(full, true),
+							confidence = Confidence(if (full) 1.0 else 0.0, 1.0),
+							tracking_state = if (full) "tracked" else "degraded")
+						assertTrue(runtime.inbox.receive((MonakaCodec.encodeEnvelope(sample) as EncodeResult.Success).value, now))
+						val resolved = runtime.resolvedTrackingPoses(runtime.tick()).getValue(TrackerPosition.HIP)
+						writeback.apply(mapOf(TrackerPosition.HIP to resolved.ikConstraint()), assignments.snapshot(), runtime.mtp.historyGeneration)
+						hpm.update()
+						assertTrue(solver.enabled)
+						assertSame(solver, skeleton.ikSolver)
+						assertSame(computed, skeleton.computedHipTracker)
+						val composed = controller.update(resolved, reader.read(TrackerPosition.HIP, p.coordinate_space, now), now)
+						output.applyPoses(mapOf(TrackerPosition.HIP to composed))
+						assertSame(visible, output.trackers.getValue(TrackerPosition.HIP))
+						assertEquals(identity, Triple(visible.id, visible.name, visible.trackerPosition))
+						assertFalse(FeedbackExclusion.accepts(visible))
+						return resolved to composed
+					}
+					send(0, true)
+					solver.resetOffsets(); hpm.update()
+					val calibration = solver.calibrationSnapshot()
+					assertTrue(calibration.isNotEmpty())
+					val before = computed.position
+					for (sequence in 1L..5L) {
+						val (resolved, visiblePose) = send(sequence, true, baseline.x + .02f * sequence)
+						assertEquals(resolved.position, visiblePose.position)
+						assertEquals(resolved.rotation, visiblePose.rotation)
+						assertEquals(OutputPositionSource.RESOLVED_MAIN, visiblePose.positionSource)
+						assertEquals(ConstraintIkWriteback.ComponentMask(true, true), writeback.masks()[TrackerPosition.HIP])
+					}
+					assertTrue(computed.position.x - before.x > .005f, "Enabled IK must follow Main while output remains Direct")
+					val lastVisiblePosition = visible.monakaOutputPose!!.position!!.value
+					val (lost, transition) = send(6, false)
+					assertNull(lost.position)
+					assertEquals(lastVisiblePosition, transition.position!!.value)
+					assertEquals(ContinuityState.FALLBACK_ACTIVE, controller.state)
+					assertEquals(calibration, solver.calibrationSnapshot())
+					val rebuilds = writeback.topologyRebuilds
+					head.position = Vector3(.05f, 1.7f, 0f)
+					val atLoss = computed.position
+					send(7, false)
+					assertNotEquals(atLoss, computed.position)
+					assertEquals(rebuilds, writeback.topologyRebuilds)
+					assertEquals(calibration, solver.calibrationSnapshot())
+				}
+			}
+		}
+	}
+
 	@Test fun directVisibleOutputKeepsExistingIkCorrectedAndLiveAcrossLossAndRecovery() {
 		for (mode in listOf(OutputMode.DIRECT, OutputMode.HYBRID)) {
 			val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
