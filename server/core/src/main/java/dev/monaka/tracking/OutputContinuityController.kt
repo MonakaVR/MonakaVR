@@ -122,9 +122,17 @@ class OutputContinuityController(
 				latestFullSampleAt = maxOf(latestFullSampleAt, sampleAt)
 				val previous = lastOutput?.takeIf { it.positionValid && it.rotationValid && it.space == main.space } ?: fallback
 				if (previous == null) {
-					next = ContinuityState.UNAVAILABLE; reason = "reacquisition_background_unavailable:${background.reason}"
-					output = OutputPose(target, main.space)
-					reacquireStart = null; fullSince = null; firstFullSampleAt = -1L; latestFullSampleAt = -1L
+					// With no valid output or aligned IK pose there is nothing to blend from.
+					// Keep observing FULL while unavailable; never turn server ticks into dwell time.
+					if (latestFullSampleAt - firstFullSampleAt < tuning.stableFullDwellNs) {
+						next = ContinuityState.UNAVAILABLE; reason = "reacquisition_background_unavailable:${background.reason}"
+						output = OutputPose(target, main.space)
+					} else {
+						next = ContinuityState.MAIN_DIRECT; reason = "main_full_stable_without_anchor"
+						output = main.directOutput()
+						lossSeen = false; fullSince = null; firstFullSampleAt = -1L; latestFullSampleAt = -1L
+					}
+					reacquireStart = null
 				} else if (reacquireStart == null && latestFullSampleAt - firstFullSampleAt < tuning.stableFullDwellNs) {
 					next = ContinuityState.FALLBACK_ACTIVE
 					reason = if (fallback == null) "main_full_dwell_background_missing" else "main_full_dwell"
