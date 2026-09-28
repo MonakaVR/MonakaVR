@@ -22,15 +22,16 @@ For a Hybrid HIP assignment:
 |---|---|
 | `MAIN_DIRECT` | Exact current Main position and rotation. Background IK still receives the Main constraint. |
 | `FALLBACK_ACTIVE` | When Main position disappears, interpolate from the last emitted pose toward current aligned IK position and resolver-selected rotation. Then follow those current values. If either is unavailable, emit only genuinely available components. |
-| FULL dwell | A single FULL packet cannot enter reacquisition: both the elapsed dwell and a newer Main sample are required. Gradually approach current aligned background position while retaining the last emitted rotation; the first FULL frame retains the previous output. |
+| FULL dwell | Accepted FULL samples must span the configured dwell interval. Server ticks and the 500 ms freshness window alone cannot complete it. Keep a valid last output during a temporary background gap; otherwise approach current aligned IK position. Rotation follows the currently resolved component through continuity interpolation. |
 | `REACQUIRING` | Start at the last emitted output; linearly interpolate position and use the existing shortest-path quaternion interpolation toward the current Main pose. The latest Main target can move during convergence. |
 | `MAIN_DIRECT` after convergence | At the configured duration, use exact current Main components again. |
 | `UNAVAILABLE` | Pause or no selected rotation. No valid position is manufactured from zero or old numeric tracker storage. |
 
 Loss during convergence starts a new fallback transition at the **last emitted**
-pose. Subsequent FULL must again satisfy the dwell. If current background pose
-or confirmed alignment disappears, the controller removes position validity;
-it does not keep a stale IK pose. The resolver alone chooses raw rotation owner.
+pose. Subsequent FULL must again satisfy the dwell. During valid Main FULL,
+temporary background loss does not invalidate a valid last output or interrupt
+convergence already in progress. When Main is lost as well, missing background
+cannot supply fallback position. The resolver alone chooses raw rotation owner.
 While a transition is interpolating, the component owner denotes the selected
 destination; its numeric value is the controller's intermediate output.
 
@@ -74,17 +75,21 @@ its normal SteamVR universe transform. The code does not infer shared space
 from similar numbers or insert VIVE/PICO-specific transforms.
 
 The production hook logs discrete state, Main modality/validity, selected
-owners, output source, background availability and transition reason. Numeric
-pose movement and elapsed progress do not create per-frame logs.
+owners, output source, background availability and transition reason, including
+background loss during dwell or convergence. Numeric pose movement and elapsed
+progress do not create per-frame logs.
 
 ## Software checks and HIL boundary
 
 The deterministic Core tests exercise first FULL, FULL to ROTATION_ONLY/NONE,
 current-tick IK fallback, invalid/unverified background, one-packet FULL,
-dwell, position and shortest-path rotation convergence, re-loss during
-convergence, completion and clock ordering. The real HumanPoseManager test
+two FULL samples one millisecond apart followed by silence, a later accepted
+sample spanning dwell, moving rotation during dwell, background gaps during
+dwell and convergence, position and shortest-path rotation convergence, re-loss,
+completion and clock ordering. A separate solver-enabled HumanPoseManager test
 verifies Main-driven computed HIP changes during Direct output, a live IMU
-input, calibration retention, 500 ms freshness and feedback exclusion. The
+input, calibration and computed-tracker identity retention. The existing tests
+also cover 500 ms freshness and feedback exclusion. The
 Desktop production-hook test exercises the same stable output object through
 FULL / ROTATION_ONLY / FULL / convergence using the actual tick integration.
 Existing Main/Fallback, legacy Slime, Direct and protocol tests remain active.
