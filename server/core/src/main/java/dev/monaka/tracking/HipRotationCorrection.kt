@@ -68,8 +68,10 @@ class HipRotationCorrection(
 		private set
 	var lastImuSequence: Long? = null
 		private set
-	private var lastMainAtNanos: Long? = null
-	private var lastImuAtNanos: Long? = null
+	private var lastObservedMainSequence: Long? = null
+	private var lastObservedMainAtNanos: Long? = null
+	private var lastObservedImuSequence: Long? = null
+	private var lastObservedImuAtNanos: Long? = null
 	val rejections = linkedMapOf<String, Long>()
 	private var epoch: String? = null
 	private var imuEpochKey: String? = null
@@ -87,7 +89,9 @@ class HipRotationCorrection(
 		lastLearnedAtNanos = null
 		firstFullAt = null; latestFullAt = null; lastPairAtNanos = null
 		lastMainSequence = null; lastImuSequence = null
-		lastMainAtNanos = null; lastImuAtNanos = null; goodRecoveryPairs = 0
+		goodRecoveryPairs = 0
+		lastObservedMainSequence = null; lastObservedMainAtNanos = null
+		lastObservedImuSequence = null; lastObservedImuAtNanos = null
 	}
 
 	fun update(main: PoseObservation?, imu: PoseObservation?, owner: String?, now: Long,
@@ -120,85 +124,99 @@ class HipRotationCorrection(
 				RotationCorrectionState.TRACKING else RotationCorrectionState.REACQUIRING
 		}
 		if (modality != TrackingModality.FULL) { firstFullAt = null; latestFullAt = null; goodRecoveryPairs = 0 }
-		if (expectedSpace != frames.assertedSpace ||
-			(mp?.space != null && mp.space != expectedSpace) ||
-			(ip?.space != null && ip.space != expectedSpace)) { reject("space_mismatch"); return null }
-		if (ip == null || ip.sampleAtNanos > now || now - ip.sampleAtNanos > tuning.maxImuSampleAgeNanos ||
-			imu?.rotationQuality?.usable != true) { reject("imu_sample_stale"); return null }
-		if (newEpoch == null) {
-			if (currentImuKey == null || imu == null || ip == null) { reject("provenance_missing"); return null }
-			return correctedFallback(imu, ip, owner, currentImuKey)
+		// Application integrity is checked independently of teacher synchronization.
+		if (expectedSpace != frames.assertedSpace || (ip?.space != null && ip.space != expectedSpace)) {
+			reject("space_mismatch"); return null
 		}
-		val mainSample = requireNotNull(main)
-		val imuSample = requireNotNull(imu)
-		if (FeedbackExclusion.isOutput(mainSample.sourceId) || FeedbackExclusion.isOutput(imuSample.sourceId)) {
-			reject("feedback_excluded"); return null
+		if (imu == null || ip == null || currentImuKey == null) { reject("provenance_missing"); return null }
+		if (FeedbackExclusion.isOutput(imu.sourceId)) { reject("feedback_excluded"); return null }
+		if (ip.sampleAtNanos > now || now - ip.sampleAtNanos > tuning.maxImuSampleAgeNanos ||
+			!imu.rotationQuality.usable) { reject("imu_sample_stale"); return null }
+		val imuRotation = imu.correctionRotation
+		if (imuRotation == null || !validUnit(imuRotation)) { reject("imu_rotation_invalid"); return null }
+		if (lastObservedImuSequence != null && (ip.sequence < lastObservedImuSequence!! ||
+			(ip.sequence == lastObservedImuSequence && ip.sampleAtNanos != lastObservedImuAtNanos))) {
+			reject("imu_sequence_rollback"); return null
 		}
-		val mainProvenance = requireNotNull(mp)
-		val imuProvenance = requireNotNull(ip)
-		if (modality == TrackingModality.NONE) return correctedFallback(imuSample, imuProvenance, owner, currentImuKey)
-		val mq = mainSample.correctionRotation
-		val iq = imuSample.correctionRotation
-		if (!mainSample.rotationQuality.usable || !imuSample.rotationQuality.usable || mq == null || iq == null ||
-			!validUnit(mq) || !validUnit(iq)) { reject("rotation_invalid"); return null }
-		if (mainProvenance.sampleAtNanos > now || imuProvenance.sampleAtNanos > now ||
-			abs(mainProvenance.sampleAtNanos - imuProvenance.sampleAtNanos) > tuning.pairWindowNanos) {
-			reject("pair_time_invalid"); return null
+		if (lastObservedImuAtNanos != null && ip.sequence > lastObservedImuSequence!! &&
+			ip.sampleAtNanos <= lastObservedImuAtNanos!!) { reject("imu_timestamp_rollback"); return null }
+		lastObservedImuSequence = ip.sequence
+		lastObservedImuAtNanos = ip.sampleAtNanos
+
+		// Teacher failures must not discard a ready correction for this healthy IMU.
+		if (modality != TrackingModality.NONE && main != null && FeedbackExclusion.isOutput(main.sourceId)) {
+			reject("feedback_excluded")
+		} else if (modality != TrackingModality.NONE && main != null && mp != null &&
+			(mp.space == null || mp.space == expectedSpace) && !FeedbackExclusion.isOutput(main.sourceId)) {
+			tryLearn(main, mp, imuRotation, ip, now, modality)
+		} else if (modality != TrackingModality.NONE) reject("main_teacher_unavailable")
+		return correctedFallback(imu, ip, owner, currentImuKey)
+	}
+
+	private fun tryLearn(main: PoseObservation, mp: ObservationSampleProvenance, imuRotation: Quaternion,
+		ip: ObservationSampleProvenance, now: Long, modality: TrackingModality) {
+		val mainRotation = main.correctionRotation
+		if (!main.rotationQuality.usable || mainRotation == null || !validUnit(mainRotation)) {
+			reject("main_rotation_invalid"); return
 		}
-		val pairAt = maxOf(mainProvenance.sampleAtNanos, imuProvenance.sampleAtNanos)
-		val newPair = mainProvenance.sequence != lastMainSequence && imuProvenance.sequence != lastImuSequence
-		if (newPair) {
-			if ((lastMainSequence != null && mainProvenance.sequence <= lastMainSequence!!) ||
-				(lastImuSequence != null && imuProvenance.sequence <= lastImuSequence!!)) { reject("sequence_rollback"); return null }
-			if ((lastMainAtNanos != null && mainProvenance.sampleAtNanos <= lastMainAtNanos!!) ||
-				(lastImuAtNanos != null && imuProvenance.sampleAtNanos <= lastImuAtNanos!!)) {
-				reject("timestamp_rollback"); return null
-			}
-			lastMainSequence = mainProvenance.sequence; lastImuSequence = imuProvenance.sequence
-			lastMainAtNanos = mainProvenance.sampleAtNanos; lastImuAtNanos = imuProvenance.sampleAtNanos
-			val prior = lastPairAtNanos
-			if (prior == null) {
-				lastPairAtNanos = pairAt
-				if (modality == TrackingModality.FULL) { firstFullAt = mainProvenance.sampleAtNanos; latestFullAt = firstFullAt }
-			} else {
-				val dtNanos = pairAt - prior
-				if (dtNanos <= 0) reject("timestamp_rollback")
-				else if (dtNanos > tuning.maxDtNanos) {
-					reject("large_dt"); lastPairAtNanos = pairAt
-					firstFullAt = null; latestFullAt = null; goodRecoveryPairs = 0
-				}
-				else {
-					val qMain = (mq * frames.mainTrackerToBody).unit()
-					val qImu = (iq * frames.fallbackToBody).unit()
-					val corrected = (correction * qImu).unit()
-					val error = angle(qMain, corrected)
-					residualRadians = error
-					lastPairAtNanos = pairAt
-					if (error > tuning.maxResidualRadians) { reject("residual_outlier"); goodRecoveryPairs = 0 }
-					else {
-						if (modality == TrackingModality.FULL) {
-							if (firstFullAt == null) firstFullAt = mainProvenance.sampleAtNanos
-							latestFullAt = mainProvenance.sampleAtNanos
-						}
-						val target = (qMain * qImu.inv()).unit()
-						val dt = dtNanos / 1_000_000_000.0
-						val tau = if (state == RotationCorrectionState.TRACKING) tuning.trackingTauSeconds else tuning.recoveryTauSeconds
-						val alpha = 1 - exp(-dt / tau)
-						val step = angle(correction, target)
-						val beta = min(alpha, tuning.maxRadiansPerSecond * dt / maxOf(step, 1e-9))
-						correction = correction.interpR(if (correction.dot(target) < 0f) -target else target, beta.toFloat()).unit()
-						lastLearnedAtNanos = pairAt
-						if (state == RotationCorrectionState.REACQUIRING && firstFullAt != null && latestFullAt!! - firstFullAt!! >= tuning.fullStableNanos) {
-							val remaining = angle(qMain, (correction * qImu).unit())
-							goodRecoveryPairs = if (remaining <= tuning.recoveryResidualRadians) goodRecoveryPairs + 1 else 0
-							if (goodRecoveryPairs >= tuning.recoveryPairs) { ready = true; state = RotationCorrectionState.TRACKING }
-						}
-					}
-				}
-			}
-		} else reject("same_sample")
-		if (epoch != newEpoch) return null
-		return correctedFallback(imuSample, imuProvenance, owner, currentImuKey)
+		if (mp.sampleAtNanos > now) { reject("pair_time_invalid"); return }
+		if (lastObservedMainSequence != null && mp.sequence < lastObservedMainSequence!!) {
+			reject("main_sequence_rollback"); return
+		}
+		if (lastObservedMainSequence != null && mp.sequence == lastObservedMainSequence &&
+			mp.sampleAtNanos != lastObservedMainAtNanos) {
+			reject("main_timestamp_rollback"); return
+		}
+		if (lastObservedMainAtNanos != null && mp.sequence > lastObservedMainSequence!! &&
+			mp.sampleAtNanos <= lastObservedMainAtNanos!!) {
+			reject("main_timestamp_rollback"); return
+		}
+		lastObservedMainSequence = mp.sequence
+		lastObservedMainAtNanos = mp.sampleAtNanos
+		if (abs(mp.sampleAtNanos - ip.sampleAtNanos) > tuning.pairWindowNanos) {
+			reject("pair_time_invalid"); return
+		}
+		if (mp.sequence == lastMainSequence || ip.sequence == lastImuSequence) { reject("same_sample"); return }
+		// Application-stage watermark already rejected a rollback of the IMU itself.
+		lastMainSequence = mp.sequence; lastImuSequence = ip.sequence
+		val pairAt = maxOf(mp.sampleAtNanos, ip.sampleAtNanos)
+		val prior = lastPairAtNanos
+		if (prior == null) {
+			lastPairAtNanos = pairAt
+			if (modality == TrackingModality.FULL) { firstFullAt = mp.sampleAtNanos; latestFullAt = firstFullAt }
+			return
+		}
+		val dtNanos = pairAt - prior
+		if (dtNanos <= 0) { reject("pair_timestamp_rollback"); return }
+		if (dtNanos > tuning.maxDtNanos) {
+			reject("large_dt"); lastPairAtNanos = pairAt
+			firstFullAt = null; latestFullAt = null; goodRecoveryPairs = 0
+			return
+		}
+		val qMain = (mainRotation * frames.mainTrackerToBody).unit()
+		val qImu = (imuRotation * frames.fallbackToBody).unit()
+		val corrected = (correction * qImu).unit()
+		val error = angle(qMain, corrected)
+		residualRadians = error
+		lastPairAtNanos = pairAt
+		if (error > tuning.maxResidualRadians) { reject("residual_outlier"); goodRecoveryPairs = 0; return }
+		if (modality == TrackingModality.FULL) {
+			if (firstFullAt == null) firstFullAt = mp.sampleAtNanos
+			latestFullAt = mp.sampleAtNanos
+		}
+		val target = (qMain * qImu.inv()).unit()
+		val dt = dtNanos / 1_000_000_000.0
+		val tau = if (state == RotationCorrectionState.TRACKING) tuning.trackingTauSeconds else tuning.recoveryTauSeconds
+		val alpha = 1 - exp(-dt / tau)
+		val step = angle(correction, target)
+		val beta = min(alpha, tuning.maxRadiansPerSecond * dt / maxOf(step, 1e-9))
+		correction = correction.interpR(if (correction.dot(target) < 0f) -target else target, beta.toFloat()).unit()
+		lastLearnedAtNanos = pairAt
+		if (state == RotationCorrectionState.REACQUIRING && firstFullAt != null && latestFullAt!! - firstFullAt!! >= tuning.fullStableNanos) {
+			val remaining = angle(qMain, (correction * qImu).unit())
+			goodRecoveryPairs = if (remaining <= tuning.recoveryResidualRadians) goodRecoveryPairs + 1 else 0
+			if (goodRecoveryPairs >= tuning.recoveryPairs) { ready = true; state = RotationCorrectionState.TRACKING }
+		}
 	}
 
 	private fun correctedFallback(imu: PoseObservation, provenance: ObservationSampleProvenance,

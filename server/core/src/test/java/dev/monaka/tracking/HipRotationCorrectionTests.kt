@@ -67,11 +67,12 @@ class HipRotationCorrectionTests {
 		c.update(sample(mainId, 2, 2_000_000, halfYaw, true), sample(imuId, 1, 1_000_000, identity),
 			mainId, 2_000_000, 1, space)
 		assertFalse(c.ready)
-		step(c, 2, 4_000_000)
+		c.update(sample(mainId, 3, 4_000_000, halfYaw, true), sample(imuId, 2, 4_000_000, identity),
+			mainId, 4_000_000, 1, space)
 		assertTrue(c.ready)
 		c.update(sample(mainId, 1, 5_000_000, halfYaw, true), sample(imuId, 1, 5_000_000, identity),
 			mainId, 5_000_000, 1, space)
-		assertEquals(1, c.rejections["sequence_rollback"])
+		assertEquals(1, c.rejections["imu_sequence_rollback"])
 		assertEquals(4_000_000, c.lastLearnedAtNanos)
 	}
 
@@ -141,7 +142,7 @@ class HipRotationCorrectionTests {
 			c.update(sample(mainId, 1, 1_000_000, bad, true), sample(imuId, 1, 1_000_000, identity),
 				mainId, 1_000_000, 1, space)
 			assertFalse(c.ready)
-			assertEquals(1, c.rejections["rotation_invalid"])
+			assertEquals(1, c.rejections["main_rotation_invalid"])
 		}
 		val outlier = controller(tuning(maxResidual = .1))
 		step(outlier, 1, 1_000_000)
@@ -159,7 +160,7 @@ class HipRotationCorrectionTests {
 		val c = controller(tuning(maxDt = 5_000_000))
 		step(c, 1, 1_000_000)
 		step(c, 2, 1_000_000)
-		assertEquals(1, c.rejections["timestamp_rollback"])
+		assertEquals(1, c.rejections["imu_timestamp_rollback"])
 		assertFalse(c.ready)
 		step(c, 3, 20_000_000)
 		assertEquals(1, c.rejections["large_dt"])
@@ -187,7 +188,7 @@ class HipRotationCorrectionTests {
 		val main = sample(mainId, 2, 900_000, halfYaw, true)
 		val imu = sample(imuId, 2, 1_800_000, identity)
 		assertNull(c.update(main, imu, imuId, 1_800_000, 1, space))
-		assertEquals(1, c.rejections["timestamp_rollback"])
+		assertEquals(1, c.rejections["main_timestamp_rollback"])
 		assertNull(c.lastLearnedAtNanos)
 		assertNull(c.update(sample("monaka-direct:hip", 2, 2_000_000, halfYaw, true), imu,
 			imuId, 2_000_000, 1, space))
@@ -231,5 +232,103 @@ class HipRotationCorrectionTests {
 		val resumed = c.update(null, sample(imuId, 3, 201_000_000, identity), imuId, 201_000_000, 1, space)
 		assertNotNull(resumed?.rotation)
 		sameRotation(learned, resumed.rotation!!.value)
+	}
+
+	@Test fun pairWindowFailureDoesNotBlockHeldCorrectionApplication() {
+		val c = controller()
+		ready(c)
+		val held = c.correction; val learnedAt = c.lastLearnedAtNanos
+		val applied = c.update(sample(mainId, 3, 10_000_000, halfYaw, full = false),
+			sample(imuId, 3, 12_000_000, identity), imuId, 12_000_000, 1, space)
+		sameRotation(held, applied!!.rotation!!.value)
+		assertEquals(1, c.rejections["pair_time_invalid"])
+		assertEquals(learnedAt, c.lastLearnedAtNanos)
+		assertEquals(held, c.correction)
+	}
+
+	@Test fun repeatedAcceptedPairDoesNotLearnButCanStillApplyWhileFresh() {
+		val c = controller()
+		ready(c)
+		val held = c.correction; val learnedAt = c.lastLearnedAtNanos
+		val applied = c.update(sample(mainId, 2, 4_000_000, halfYaw, full = false),
+			sample(imuId, 2, 4_000_000, identity), imuId, 5_000_000, 1, space)
+		sameRotation(held, applied!!.rotation!!.value)
+		assertEquals(1, c.rejections["same_sample"])
+		assertEquals(learnedAt, c.lastLearnedAtNanos)
+		assertEquals(held, c.correction)
+	}
+
+	@Test fun mainOnlySequenceAndTimestampRollbackDoNotPoisonHealthyImuApplication() {
+		for (rollback in listOf("sequence", "timestamp")) {
+			val c = controller()
+			ready(c)
+			val held = c.correction; val learnedAt = c.lastLearnedAtNanos
+			val main = if (rollback == "sequence") sample(mainId, 1, 5_000_000, halfYaw, full = false)
+				else sample(mainId, 3, 3_000_000, halfYaw, full = false)
+			val imu = sample(imuId, 3, 5_000_000, identity)
+			val applied = c.update(main, imu, imuId, 5_000_000, 1, space)
+			sameRotation(held, applied!!.rotation!!.value)
+			assertEquals(1, c.rejections["main_${rollback}_rollback"])
+			assertEquals(learnedAt, c.lastLearnedAtNanos)
+			assertEquals(held, c.correction)
+		}
+	}
+
+	@Test fun mainRollbackIsDetectedEvenAfterAnUnpairedTeacherObservation() {
+		val c = controller()
+		ready(c)
+		val held = c.correction
+		val unpaired = c.update(sample(mainId, 5, 10_000_000, halfYaw, full = false),
+			sample(imuId, 3, 12_000_000, identity), imuId, 12_000_000, 1, space)
+		sameRotation(held, unpaired!!.rotation!!.value)
+		assertEquals(1, c.rejections["pair_time_invalid"])
+		val rollback = c.update(sample(mainId, 4, 13_000_000, halfYaw, full = false),
+			sample(imuId, 4, 13_000_000, identity), imuId, 13_000_000, 1, space)
+		sameRotation(held, rollback!!.rotation!!.value)
+		assertEquals(1, c.rejections["main_sequence_rollback"])
+		assertEquals(4_000_000, c.lastLearnedAtNanos)
+	}
+
+	@Test fun imuSequenceAndTimestampRollbackBlockApplication() {
+		for (rollback in listOf("sequence", "timestamp")) {
+			val c = controller()
+			ready(c)
+			val imu = if (rollback == "sequence") sample(imuId, 1, 5_000_000, identity)
+				else sample(imuId, 3, 3_000_000, identity)
+			assertNull(c.update(sample(mainId, 3, 5_000_000, halfYaw, full = false), imu,
+				imuId, 5_000_000, 1, space))
+			assertEquals(1, c.rejections["imu_${rollback}_rollback"])
+			assertTrue(c.ready)
+		}
+	}
+
+	@Test fun outlierAndLargeDtRejectLearningButRetainReadyFallbackApplication() {
+		val outlier = controller(tuning(maxResidual = .6))
+		ready(outlier)
+		val held = outlier.correction; val learnedAt = outlier.lastLearnedAtNanos
+		val applied = step(outlier, 3, 5_000_000, qMain = Quaternion.rotationAroundYAxis(2f),
+			full = false, owner = imuId)
+		sameRotation(held, applied!!.rotation!!.value)
+		assertEquals(1, outlier.rejections["residual_outlier"])
+		assertEquals(learnedAt, outlier.lastLearnedAtNanos)
+		assertEquals(held, outlier.correction)
+
+		val gap = controller(tuning(maxDt = 5_000_000))
+		ready(gap)
+		val gapHeld = gap.correction; val gapLearnedAt = gap.lastLearnedAtNanos
+		val gapApplied = step(gap, 3, 20_000_000, full = false, owner = imuId)
+		sameRotation(gapHeld, gapApplied!!.rotation!!.value)
+		assertEquals(1, gap.rejections["large_dt"])
+		assertEquals(gapLearnedAt, gap.lastLearnedAtNanos)
+		assertEquals(gapHeld, gap.correction)
+	}
+
+	@Test fun invalidImuAndWrongOwnerRemainApplicationBlockers() {
+		val c = controller()
+		ready(c)
+		assertNull(step(c, 3, 5_000_000, owner = mainId))
+		assertNull(c.update(null, sample(imuId, 3, 5_000_000,
+			Quaternion(Float.NaN, 0f, 0f, 0f)), imuId, 5_000_000, 1, space))
+		assertEquals(1, c.rejections["imu_rotation_invalid"])
 	}
 }

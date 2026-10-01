@@ -21,7 +21,8 @@ class AssignedImuSampleFreshnessTests {
 		modality = modality)
 	private fun imu(polledAt: Long, sampleAt: Long?, sequence: Long = 1) = PoseObservation(
 		imuId, TrackerPosition.HIP, polledAt, rotation = Quaternion.IDENTITY,
-		provenance = sampleAt?.let { ObservationSampleProvenance(sequence, it, "session", "mount") })
+		provenance = sampleAt?.let { ObservationSampleProvenance(sequence, it, "session", "mount") },
+		correctionRotation = Quaternion.IDENTITY)
 
 	@Test fun physicalAgeChangesEligibilityBeforePolicyWithoutChangingOtherSources() {
 		val p = pipeline()
@@ -43,7 +44,24 @@ class AssignedImuSampleFreshnessTests {
 	@Test fun futureOrUnknownPhysicalSampleFailsClosedButLegacyUnassignedIsUnchanged() {
 		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, 21), 20).rotationQuality)
 		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, null), 20).rotationQuality)
+		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, 20).copy(
+			correctionRotation = Quaternion(Float.NaN, 0f, 0f, 0f)), 20).rotationQuality)
 		val unrelated = imu(20, null).copy(target = TrackerPosition.LEFT_FOOT)
 		assertEquals(ObservationQuality.TRACKED, filter.apply(unrelated, 100).rotationQuality)
+	}
+
+	@Test fun physicalImuRollbackCannotLeakAsRawFallbackBeforePolicy() {
+		val p = pipeline()
+		p.ingest(main(TrackingModality.ROTATION_ONLY, 10))
+		p.ingest(imu(10, 10, 1))
+		assertEquals(imuId, p.resolve(TrackerPosition.HIP, 10).rotation?.sourceId)
+		p.ingest(imu(20, 20, 2))
+		assertEquals(imuId, p.resolve(TrackerPosition.HIP, 20).rotation?.sourceId)
+		p.ingest(imu(21, 21, 1))
+		assertEquals(mainId, p.resolve(TrackerPosition.HIP, 21).rotation?.sourceId)
+		p.ingest(main(TrackingModality.NONE, 22))
+		assertNull(p.resolve(TrackerPosition.HIP, 22).rotation)
+		p.ingest(imu(23, 23, 3))
+		assertEquals(imuId, p.resolve(TrackerPosition.HIP, 23).rotation?.sourceId)
 	}
 }

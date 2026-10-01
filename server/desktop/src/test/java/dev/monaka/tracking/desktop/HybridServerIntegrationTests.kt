@@ -48,11 +48,12 @@ class HybridServerIntegrationTests {
 		integration.use {
 			val output = outputs.single(); val identity = Triple(output.id, output.name, output.trackerPosition)
 			fun send(sequence: Long, mode: String, imuRotation: Quaternion? = Quaternion.IDENTITY,
-				advanceNanos: Long = 10_000_000) {
+				advanceNanos: Long = 10_000_000, mainAgeOffsetNanos: Long = 0) {
 				now += advanceNanos
 				if (imuRotation != null) imu.setRotation(imuRotation) // null means heartbeat/poll only.
 				val angle = .5
 				val pose = p.copy(sequence = sequence, modality = mode,
+					timestamp_ns = p.timestamp_ns - mainAgeOffsetNanos,
 					orientation = if (mode == "none") null else listOf(0.0, sin(angle / 2), 0.0, cos(angle / 2)),
 					position = if (mode == "full") listOf(.1, 1.0, .1) else null,
 					validity = Validity(mode == "full", mode != "none"),
@@ -124,6 +125,35 @@ class HybridServerIntegrationTests {
 			send(13, "full")
 			send(14, "full")
 			assertTrue(same(main, output.monakaOutputPose!!.rotation!!.value))
+			assertEquals(identity, Triple(output.id, output.name, output.trackerPosition))
+			val heldCorrection = integration.rotationCorrection!!.correction
+			val heldLearnedAt = integration.rotationCorrection!!.lastLearnedAtNanos
+			val pairRejects = integration.rotationCorrection!!.rejections["pair_time_invalid"] ?: 0
+			send(15, "rotation_only", roll, 210_000_000, 200_000_000)
+			assertTrue((integration.rotationCorrection!!.rejections["pair_time_invalid"] ?: 0) > pairRejects)
+			assertEquals(heldLearnedAt, integration.rotationCorrection!!.lastLearnedAtNanos)
+			assertEquals(heldCorrection, integration.rotationCorrection!!.correction)
+			val freshImu = integration.runtime.pipeline.observations(now)
+				.single { it.sourceId == "slime:${imu.name}" }
+			val expectedHeld = (heldCorrection * (freshImu.correctionRotation!! * mountToBody).unit()).unit()
+			assertTrue(same(expectedHeld, hpm.skeleton.hipTracker!!.getRotation()))
+			val physicalSequence = freshImu.provenance!!.sequence
+			now += 10_000_000 // Re-poll the same accepted physical IMU and MTP samples.
+			before!!.run(); hpm.update(); after!!.run()
+			assertTrue(failures.isEmpty(), failures.joinToString())
+			assertEquals(physicalSequence, integration.runtime.pipeline.observations(now)
+				.single { it.sourceId == "slime:${imu.name}" }.provenance!!.sequence)
+			assertEquals(heldLearnedAt, integration.rotationCorrection!!.lastLearnedAtNanos)
+			assertTrue(same(expectedHeld, output.monakaOutputPose!!.rotation!!.value))
+			send(16, "rotation_only", null, 150_000_000)
+			assertEquals(key.observationId, integration.runtime.resolvedTrackingPoses(
+				integration.runtime.pipeline.resolveAll(now))[TrackerPosition.HIP]!!.rotationOwner)
+			assertTrue(same(main, output.monakaOutputPose!!.rotation!!.value))
+			send(17, "rotation_only", roll)
+			assertTrue(integration.rotationCorrection!!.ready)
+			assertEquals(heldLearnedAt, integration.rotationCorrection!!.lastLearnedAtNanos)
+			assertTrue(same(expectedHeld, hpm.skeleton.hipTracker!!.getRotation()))
+			assertTrue(same(expectedHeld, output.monakaOutputPose!!.rotation!!.value))
 			assertEquals(identity, Triple(output.id, output.name, output.trackerPosition))
 		}
 	}
