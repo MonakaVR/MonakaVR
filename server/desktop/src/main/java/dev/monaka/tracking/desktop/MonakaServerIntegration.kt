@@ -38,24 +38,25 @@ class MonakaServerIntegration private constructor(
 				transportReported = true; onFailure(receiver.failure!!)
 			}
 			val constraints = runtime.tick(skeleton.getPauseTracking())
-			val resolved = runtime.resolvedTrackingPoses(constraints)
+			val resolvedRaw = runtime.resolvedTrackingPoses(constraints)
 			val assignment = runtime.assignments.snapshot()
 			val hip = assignment.targets[TrackerPosition.HIP]
 			val observations = if (rotationCorrection == null) emptyMap() else
 				runtime.pipeline.observations(runtime.lastTickNanos).associateBy { it.sourceId }
 			val main = hip?.mainTracker?.observationId?.let(observations::get)
 			val imu = hip?.rotationFallbackTracker?.observationId?.let(observations::get)
-			// Raw teacher observations remain separate from Resolver ownership. Only this
-			// solver-only copy may receive the corrected fallback; visible Direct stays raw.
+			// Raw teacher observations remain separate from Resolver ownership.
 			val corrected = if (skeleton.getPauseTracking()) null else rotationCorrection?.update(main, imu,
-				resolved[TrackerPosition.HIP]?.rotationOwner, runtime.lastTickNanos, assignment.generation, runtime.expectedSpace)
-			val ik = resolved.mapValues { it.value.ikConstraint() }.toMutableMap()
+				resolvedRaw[TrackerPosition.HIP]?.rotationOwner, runtime.lastTickNanos, assignment.generation, runtime.expectedSpace)
 			val correctedRotation = corrected?.rotation
-			if (correctedRotation != null && hip?.rotationFallbackTracker?.observationId == correctedRotation.sourceId) {
-				val current = ik[TrackerPosition.HIP]
-				if (current?.rotation?.sourceId == correctedRotation.sourceId)
-					ik[TrackerPosition.HIP] = current.copy(rotation = correctedRotation)
-			}
+			val resolvedHip = resolvedRaw[TrackerPosition.HIP]
+			// One derived component fans out to IK and visible continuity. Never alter Main.
+			val resolved = if (correctedRotation != null &&
+				hip?.rotationFallbackTracker?.observationId == correctedRotation.sourceId &&
+				resolvedHip?.rotationOwner == correctedRotation.sourceId)
+				resolvedRaw + (TrackerPosition.HIP to resolvedHip.copy(rotation = correctedRotation))
+			else resolvedRaw
+			val ik = resolved.mapValues { it.value.ikConstraint() }
 			writeback.apply(ik, assignment, runtime.mtp.historyGeneration)
 			pendingPoses = resolved
 			if (registerAfterPose == null) finishPoseUpdate() else directOutput.applyPoses(emptyMap())
@@ -102,7 +103,8 @@ class MonakaServerIntegration private constructor(
 			require(config.assignments.snapshot().targets.values.none { it.outputMode == OutputMode.HYBRID } || registerAfterPose != null) {
 				"Hybrid output requires the post-IK server hook"
 			}
-			val runtime = MonakaRuntime(trackers, config.space, config.assignments, clock = clock, timeoutNanos = config.timeoutNanos)
+			val runtime = MonakaRuntime(trackers, config.space, config.assignments, clock = clock, timeoutNanos = config.timeoutNanos,
+				maxImuSampleAgeNanos = config.rotationCorrection?.tuning?.maxImuSampleAgeNanos)
 			val receiver = try { MtpUdpReceiver(runtime.inbox, clock, config.port) } catch (e: Exception) { runtime.close(); throw e }
 			val writeback = try { ConstraintIkWriteback(skeleton) } catch (e: Exception) { receiver.close(); runtime.close(); throw e }
 			val direct = DirectConstraintOutput(config.assignments.snapshot(), config.space, nextTrackerId)

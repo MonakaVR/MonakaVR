@@ -27,6 +27,12 @@ class RotationSampleProvenanceTests {
 		val second = adapter.adapt(tracker, 4_000_000)!!.provenance!!
 		assertEquals(first, second)
 		assertEquals(2_000_000, first.sampleAtNanos)
+		val assignment = TrackerBodyAssignments().also {
+			it.configure(TrackerPosition.HIP, TrackerReference("mtp:main"), TrackerReference.slime(tracker.name))
+		}
+		val freshness = AssignedImuSampleFreshness(assignment, 1_000_000)
+		assertEquals(ObservationQuality.TRACKED, freshness.apply(adapter.adapt(tracker, 3_000_000)!!, 3_000_000).rotationQuality)
+		assertEquals(ObservationQuality.STALE, freshness.apply(adapter.adapt(tracker, 4_000_000)!!, 4_000_000).rotationQuality)
 		tracker.setRotation(Quaternion.rotationAroundYAxis(.2f))
 		val next = tracker.correctionOrientationSample()!!
 		val nextAdapter = SlimeTrackerPoseObservationAdapter(receiptClock = { next.receivedAtSystemNanos + 1_000_000 })

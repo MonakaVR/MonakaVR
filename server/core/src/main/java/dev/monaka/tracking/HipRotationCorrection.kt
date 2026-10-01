@@ -19,9 +19,11 @@ data class RotationCorrectionTuning(
 	val maxRadiansPerSecond: Double,
 	val recoveryPairs: Int,
 	val maxDtNanos: Long,
+	val maxImuSampleAgeNanos: Long,
 ) {
 	init {
-		require(fullStableNanos > 0 && pairWindowNanos > 0 && maxDtNanos > 0 && recoveryPairs > 0)
+		require(fullStableNanos > 0 && pairWindowNanos > 0 && maxDtNanos > 0 &&
+			maxImuSampleAgeNanos > 0 && recoveryPairs > 0)
 		require(listOf(trackingTauSeconds, recoveryTauSeconds, maxResidualRadians,
 			recoveryResidualRadians, maxRadiansPerSecond).all { it.isFinite() && it > 0 })
 	}
@@ -121,6 +123,8 @@ class HipRotationCorrection(
 		if (expectedSpace != frames.assertedSpace ||
 			(mp?.space != null && mp.space != expectedSpace) ||
 			(ip?.space != null && ip.space != expectedSpace)) { reject("space_mismatch"); return null }
+		if (ip == null || ip.sampleAtNanos > now || now - ip.sampleAtNanos > tuning.maxImuSampleAgeNanos ||
+			imu?.rotationQuality?.usable != true) { reject("imu_sample_stale"); return null }
 		if (newEpoch == null) {
 			if (currentImuKey == null || imu == null || ip == null) { reject("provenance_missing"); return null }
 			return correctedFallback(imu, ip, owner, currentImuKey)

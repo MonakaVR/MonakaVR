@@ -33,7 +33,7 @@ class HybridServerIntegrationTests {
 		val assignments = TrackerBodyAssignments().also {
 			it.configure(TrackerPosition.HIP, TrackerReference.mtp(key), TrackerReference.slime(imu.name), OutputMode.HYBRID)
 		}
-		val tuning = RotationCorrectionTuning(5_000_000, 100_000_000, .0001, .0001, 3.2, .1, 1000.0, 1, 100_000_000)
+		val tuning = RotationCorrectionTuning(5_000_000, 100_000_000, .0001, .0001, 3.2, .1, 1000.0, 1, 100_000_000, 100_000_000)
 		val correction = RotationCorrectionConfig(RotationCorrectionFrames(Quaternion.IDENTITY, mountToBody, p.coordinate_space, true), tuning)
 		val hpm = HumanPoseManager(listOf(head, imu)); hpm.setLegTweaksEnabled(false)
 		hpm.skeleton.ikSolver.enabled = true; hpm.update()
@@ -41,14 +41,16 @@ class HybridServerIntegrationTests {
 		val outputs = mutableListOf<Tracker>(); val failures = mutableListOf<Exception>()
 		val integration = MonakaServerIntegration.startIfEnabled(true,
 			{ MonakaConfiguration(p.coordinate_space, assignments, port = 0, backgroundIkSharedSpace = p.coordinate_space,
+				continuityTuning = ContinuityTuning(5, 10, 1),
 				rotationCorrection = correction) }, { listOf(head, imu) }, hpm.skeleton,
 			{ before = it }, { failures += it }, { now }, configureDirectOutputs = { outputs += it },
 			nextTrackerId = { 400 }, registerAfterPose = { after = it })!!
 		integration.use {
 			val output = outputs.single(); val identity = Triple(output.id, output.name, output.trackerPosition)
-			fun send(sequence: Long, mode: String) {
-				now += 10_000_000
-				imu.setRotation(Quaternion.IDENTITY) // A real orientation acceptance, not a server poll.
+			fun send(sequence: Long, mode: String, imuRotation: Quaternion? = Quaternion.IDENTITY,
+				advanceNanos: Long = 10_000_000) {
+				now += advanceNanos
+				if (imuRotation != null) imu.setRotation(imuRotation) // null means heartbeat/poll only.
 				val angle = .5
 				val pose = p.copy(sequence = sequence, modality = mode,
 					orientation = if (mode == "none") null else listOf(0.0, sin(angle / 2), 0.0, cos(angle / 2)),
@@ -74,12 +76,55 @@ class HybridServerIntegrationTests {
 			assertSame(computed, hpm.skeleton.computedHipTracker)
 			assertTrue(kotlin.math.abs(hpm.skeleton.hipTracker!!.getRotation().dot(main)) > .999f)
 			assertEquals(RotationCorrectionState.DEGRADED, integration.rotationCorrection!!.state)
-			send(4, "none")
+			val roll = Quaternion.rotationAroundXAxis(.3f)
+			send(4, "rotation_only", roll)
+			val degradedRawImu = integration.runtime.pipeline.observations(now)
+				.single { it.sourceId == "slime:${imu.name}" }.correctionRotation!!
+			val degradedExpected = (integration.rotationCorrection!!.correction * (degradedRawImu * mountToBody).unit()).unit()
+			assertEquals("slime:${imu.name}", output.monakaOutputPose!!.rotation!!.sourceId)
+			assertTrue(kotlin.math.abs(output.monakaOutputPose!!.rotation!!.value.unit().dot(degradedExpected)) > .999f)
+			assertTrue(kotlin.math.abs(hpm.skeleton.hipTracker!!.getRotation().unit().dot(degradedExpected)) > .999f)
+			send(5, "none")
 			assertEquals(RotationCorrectionState.IMU_ONLY, integration.rotationCorrection!!.state)
-			assertTrue(kotlin.math.abs(hpm.skeleton.hipTracker!!.getRotation().dot(main)) > .999f)
-			send(5, "full")
+			assertTrue(kotlin.math.abs(hpm.skeleton.hipTracker!!.getRotation().unit().dot(
+				output.monakaOutputPose!!.rotation!!.value.unit())) > .999f)
+			send(6, "full")
 			assertSame(computed, hpm.skeleton.computedHipTracker)
 			assertTrue(kotlin.math.abs(hpm.skeleton.hipTracker!!.getRotation().dot(main)) > .999f)
+			send(7, "none", roll)
+			send(8, "none", roll) // fallback transition has completed.
+			val rawFallback = integration.runtime.pipeline.observations(now)
+				.single { it.sourceId == "slime:${imu.name}" }.correctionRotation!!
+			val expected = (integration.rotationCorrection!!.correction * (rawFallback * mountToBody).unit()).unit()
+			val doubled = (integration.rotationCorrection!!.correction * expected).unit()
+			fun same(a: Quaternion, b: Quaternion) = kotlin.math.abs(a.unit().dot(b.unit())) > .999f
+			assertTrue(same(expected, hpm.skeleton.hipTracker!!.getRotation()))
+			assertTrue(same(expected, output.monakaOutputPose!!.rotation!!.value))
+			assertFalse(same(doubled, output.monakaOutputPose!!.rotation!!.value))
+			val learned = integration.rotationCorrection!!.correction
+			val lastLearned = integration.rotationCorrection!!.lastLearnedAtNanos
+			send(9, "rotation_only", null, 150_000_000)
+			assertEquals(key.observationId, integration.runtime.resolvedTrackingPoses(
+				integration.runtime.pipeline.resolveAll(now))[TrackerPosition.HIP]!!.rotationOwner)
+			assertTrue(same(main, hpm.skeleton.hipTracker!!.getRotation()))
+			assertTrue(same(main, output.monakaOutputPose!!.rotation!!.value))
+			assertEquals(lastLearned, integration.rotationCorrection!!.lastLearnedAtNanos)
+			assertTrue(same(learned, integration.rotationCorrection!!.correction))
+			send(10, "none", null)
+			assertNull(integration.runtime.resolvedTrackingPoses(
+				integration.runtime.pipeline.resolveAll(now))[TrackerPosition.HIP]!!.rotation)
+			assertNull(hpm.skeleton.hipTracker)
+			assertNull(output.monakaOutputPose!!.rotation)
+			send(11, "none", roll)
+			assertTrue(integration.rotationCorrection!!.ready)
+			assertTrue(same(expected, hpm.skeleton.hipTracker!!.getRotation()))
+			assertTrue(same(expected, output.monakaOutputPose!!.rotation!!.value))
+			send(12, "full")
+			assertTrue(same(main, hpm.skeleton.hipTracker!!.getRotation()))
+			send(13, "full")
+			send(14, "full")
+			assertTrue(same(main, output.monakaOutputPose!!.rotation!!.value))
+			assertEquals(identity, Triple(output.id, output.name, output.trackerPosition))
 		}
 	}
 
