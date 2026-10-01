@@ -76,17 +76,44 @@ ownership. During FULL, Main remains authoritative for IK and Direct output;
 the learner runs in parallel and its correction is **not** added to Main.
 ROTATION_ONLY Main can be a teacher, although the resolver may choose fallback
 as solver owner. NONE or stale Main stops learning and retains the correction.
-Fresh fallback with a ready correction can supply corrected solver rotation.
+Fresh fallback with a ready correction can supply corrected solver and visible
+fallback rotation.
 No sample or epoch yields no correction.
 
-Only `MonakaServerIntegration` may substitute a solver-only HIP rotation in
-the `EffectiveConstraint` copy sent to `ConstraintIkWriteback`, and only when
-the resolver already selected the assigned fallback as rotation owner. It
-does not mutate `PoseObservation`, the resolver's result, background IK pose,
-Direct tracker, output continuity, or SteamVR output. `monaka-direct:`,
+Only `MonakaServerIntegration` substitutes the selected HIP rotation, and only
+when the resolver already chose the assigned fallback as rotation owner. It
+constructs one derived `ResolvedTrackingPose` component and fans that exact
+component out to both `ConstraintIkWriteback` and `OutputContinuityController`.
+`q_corr` is multiplied once; the continuity controller uses the selected
+rotation without multiplying it again. During an existing fallback blend, the
+visible pose can interpolate from the last emitted pose before it reaches that
+selected rotation. Direct Main remains raw/authoritative.
+No correction is applied in the Background IK reader, Direct output tracker,
+or SteamVR serializer. The raw `PoseObservation` and resolver result remain
+unchanged. `monaka-direct:`,
 `monaka-solver:`, `monaka-private:`, `human://`, computed trackers, post-IK
 poses and visible output cannot teach the correction. There is no correction
 of position, pelvis/root translation, or computed HIP.
+
+## Physical IMU sample freshness
+
+Enabled Phase 1 config requires `maxImuSampleAgeNanos > 0` (**PROVISIONAL**, not
+derived from output-continuity timing). The assigned HIP fallback's eligibility
+is checked before the existing resolver: `age = now -
+provenance.sampleAtNanos`, with `0 <= age <= maxImuSampleAgeNanos`. Missing,
+future, or stale physical samples become rotation-unusable. The same check
+prevents stale samples from teaching or receiving correction. Server polls,
+heartbeats, and `dataTick` do not alter the physical sample timestamp or
+extend freshness. Other targets and correction-OFF legacy Slime behavior keep
+their existing profiles.
+
+`ready` describes a learned correction for the current epoch; `fresh` describes
+whether this particular IMU sample may be used. Temporary staleness retains
+`q_corr` and readiness but produces no fallback rotation. A fresh sample in
+the same epoch can resume use. When Main is ROTATION_ONLY and fallback is stale,
+the existing `MainFallbackPolicy` chooses Main rotation; when Main is NONE and
+fallback is stale, rotation is unavailable. No identity quaternion stands in
+for missing rotation.
 
 Correction states (`UNINITIALIZED`, `REACQUIRING`, `TRACKING`, `DEGRADED`,
 `IMU_ONLY`) and their sample/residual clock are independent of the visible
