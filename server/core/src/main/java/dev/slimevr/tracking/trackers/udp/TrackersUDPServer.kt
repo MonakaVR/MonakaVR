@@ -88,6 +88,7 @@ class TrackersUDPServer(private val port: Int, name: String, private val tracker
 				protocolVersion = handshake.protocolVersion
 				firmwareVersion = handshake.firmware
 				connectionsByAddress[address] = this
+				trackers.values.forEach { it.markObservationReconnect() }
 
 				val i = connections.indexOf(this)
 				LogManager
@@ -111,6 +112,7 @@ class TrackersUDPServer(private val port: Int, name: String, private val tracker
 				descriptiveName = "udp:/$addr"
 				protocolVersion = handshake.protocolVersion
 				firmwareVersion = handshake.firmware
+				trackers.values.forEach { it.markObservationReconnect() }
 				val i = connections.indexOf(this)
 				LogManager
 					.info(

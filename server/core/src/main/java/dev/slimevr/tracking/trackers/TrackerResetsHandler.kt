@@ -12,11 +12,13 @@ import io.github.axisangles.ktmath.EulerOrder
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import kotlin.math.*
+import java.util.concurrent.atomic.AtomicLong
 
 private const val DRIFT_COOLDOWN_MS = 50000L
 
 /** Class taking care of full reset, yaw reset, mounting reset, and drift compensation logic. */
 class TrackerResetsHandler(val tracker: Tracker) {
+	private val correctionResetGeneration = AtomicLong()
 
 	private val HalfHorizontal = EulerAngles(
 		EulerOrder.YZX,
@@ -45,6 +47,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	// Manual mounting orientation
 	var mountingOrientation = HalfHorizontal
 		set(value) {
+			correctionResetGeneration.incrementAndGet()
 			field = value
 			// Clear the mounting reset now that it's been set manually
 			clearMounting()
@@ -169,6 +172,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 
 	fun trySetMountingReset(quat: Quaternion) {
 		if (saveMountingReset) {
+			correctionResetGeneration.incrementAndGet()
 			mountRotFix = quat
 		}
 	}
@@ -178,6 +182,16 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	 * and drift compensation, with the HMD as the reference.
 	 */
 	fun getReferenceAdjustedDriftRotationFrom(rotation: Quaternion): Quaternion = adjustToDrift(adjustToReference(rotation))
+
+	/** Body-frame orientation before solver constraint feedback, Stay Aligned and drift compensation. */
+	fun getCorrectionReferenceRotationFrom(rotation: Quaternion): Quaternion = adjustToReference(rotation, false)
+
+	/** Exact inputs to the correction-only fixed mounting/reset transform. */
+	fun correctionCalibrationEpoch(): String = listOf(
+		mountingOrientation, gyroFix, attachmentFix, mountRotFix, tposeDownFix, yawFix,
+	).joinToString(":", prefix = "${correctionResetGeneration.get()}:") { q ->
+		listOf(q.w, q.x, q.y, q.z).joinToString(",") { it.toRawBits().toString() }
+	}
 
 	/**
 	 * Takes a rotation and adjusts it to resets and mounting,
@@ -200,7 +214,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	 * mounting-reset-adjusted by applying quaternions produced after
 	 * full reset, yaw rest and mounting reset
 	 */
-	private fun adjustToReference(rotation: Quaternion): Quaternion {
+	private fun adjustToReference(rotation: Quaternion, includeConstraintFix: Boolean = true): Quaternion {
 		var rot = rotation
 		// Align heading axis with bone space
 		if (!tracker.isHmd || tracker.trackerPosition != TrackerPosition.HEAD) {
@@ -219,7 +233,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 		rot *= tposeDownFix
 		// More heading correction
 		rot = yawFix * rot
-		rot = constraintFix * rot
+		if (includeConstraintFix) rot = constraintFix * rot
 		return rot
 	}
 
@@ -258,6 +272,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	 * 0). This allows the tracker to be strapped to body at any pitch and roll.
 	 */
 	fun resetFull(reference: Quaternion) {
+		correctionResetGeneration.incrementAndGet()
 		constraintFix = Quaternion.IDENTITY
 
 		if (tracker.trackerDataType == TrackerDataType.FLEX_RESISTANCE) {
@@ -354,6 +369,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	 * position should be corrected in the source.
 	 */
 	fun resetYaw(reference: Quaternion) {
+		correctionResetGeneration.incrementAndGet()
 		// TODO HMD doesn't get yaw reset, which makes it so tracker.resetFilteringQuats() doesn't get called
 
 		constraintFix = Quaternion.IDENTITY
@@ -398,6 +414,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	 * and stores it in mountRotFix, and adjusts yawFix
 	 */
 	fun resetMounting(reference: Quaternion) {
+		correctionResetGeneration.incrementAndGet()
 		if (tracker.trackerDataType == TrackerDataType.FLEX_RESISTANCE) {
 			tracker.trackerFlexHandler.resetMax()
 			tracker.resetFilteringQuats(reference)
@@ -464,6 +481,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	}
 
 	fun clearMounting() {
+		correctionResetGeneration.incrementAndGet()
 		mountRotFix = Quaternion.IDENTITY
 	}
 

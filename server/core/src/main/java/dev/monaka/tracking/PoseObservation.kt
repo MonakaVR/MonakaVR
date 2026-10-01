@@ -18,6 +18,9 @@ data class PoseObservation(
 		rotation != null -> TrackingModality.ROTATION_ONLY
 		else -> TrackingModality.NONE
 	},
+	val provenance: ObservationSampleProvenance? = null,
+	/** Optional independent body orientation for correction learning, never used by the resolver. */
+	val correctionRotation: Quaternion? = null,
 ) {
 	init {
 		require(sourceId.isNotBlank()) { "sourceId must not be blank" }
