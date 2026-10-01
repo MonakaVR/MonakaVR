@@ -66,6 +66,28 @@ quaternions, rollback/nonpositive or oversized `dt`, unpaired timestamps, and
 residual outliers are rejected. Outliers are not clamped into training data.
 The speed limit only bounds updates from accepted measurements.
 
+Learning and application have separate eligibility. `ready` means that the
+correction belongs to the active epoch. `pairWindowNanos` synchronizes a new
+Main/IMU teacher pair **for learning only**; `maxDtNanos` guards a learning
+update interval **only**. Rejected pairing, repeated accepted samples, a Main
+teacher sequence/timestamp rollback, a residual outlier, or a large `dt` does
+not by itself reset `q_corr` or prevent application to a healthy fallback.
+Repeated samples advance neither learning nor recovery dwell. Rejection
+counters distinguish Main teacher anomalies from IMU application-integrity
+anomalies.
+
+Application requires a ready correction, the resolver's assigned fallback
+owner, a fresh physical IMU sample with valid quaternion/provenance, the
+learned IMU epoch, compatible assignment and space. It does **not** require a
+new or synchronized Main teacher on that tick. `maxImuSampleAgeNanos` is the
+physical freshness limit for both learning and application. An IMU sequence
+rollback, a newer sequence with non-increasing sample timestamp, or a changed
+timestamp for the same sequence blocks application; Main-side teacher rollback
+only blocks learning. Epoch changes still revoke readiness. The existing
+pre-policy filter also makes stale, missing-provenance, invalid, or
+sequence/timestamp-rolled-back physical fallback observations unusable to the
+resolver, so they cannot leak through as raw fallback rotation.
+
 ## Ownership and exactly-once application
 
 The learner receives the raw normalized assigned Main observation and the raw
