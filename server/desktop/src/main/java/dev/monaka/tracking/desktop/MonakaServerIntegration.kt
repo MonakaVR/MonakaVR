@@ -3,6 +3,7 @@ package dev.monaka.tracking.desktop
 import dev.monaka.tracking.*
 import dev.slimevr.tracking.processor.skeleton.HumanSkeleton
 import dev.slimevr.tracking.trackers.Tracker
+import dev.slimevr.tracking.trackers.TrackerPosition
 
 /** Lifecycle methods run on the server thread, or before start / after join. */
 class MonakaServerIntegration private constructor(
@@ -17,6 +18,7 @@ class MonakaServerIntegration private constructor(
 	private val backgroundIk: BackgroundIkPoseReader,
 	private val tuning: ContinuityTuning,
 	private val onTransition: (OutputTransition) -> Unit,
+	val rotationCorrection: HipRotationCorrection?,
 ) : AutoCloseable {
 	private var closed = false
 	private var transportReported = false
@@ -37,8 +39,24 @@ class MonakaServerIntegration private constructor(
 			}
 			val constraints = runtime.tick(skeleton.getPauseTracking())
 			val resolved = runtime.resolvedTrackingPoses(constraints)
-			// The same selected values feed both consumers; this remains the 6DoF correction seam.
-			writeback.apply(resolved.mapValues { it.value.ikConstraint() }, runtime.assignments.snapshot(), runtime.mtp.historyGeneration)
+			val assignment = runtime.assignments.snapshot()
+			val hip = assignment.targets[TrackerPosition.HIP]
+			val observations = if (rotationCorrection == null) emptyMap() else
+				runtime.pipeline.observations(runtime.lastTickNanos).associateBy { it.sourceId }
+			val main = hip?.mainTracker?.observationId?.let(observations::get)
+			val imu = hip?.rotationFallbackTracker?.observationId?.let(observations::get)
+			// Raw teacher observations remain separate from Resolver ownership. Only this
+			// solver-only copy may receive the corrected fallback; visible Direct stays raw.
+			val corrected = if (skeleton.getPauseTracking()) null else rotationCorrection?.update(main, imu,
+				resolved[TrackerPosition.HIP]?.rotationOwner, runtime.lastTickNanos, assignment.generation, runtime.expectedSpace)
+			val ik = resolved.mapValues { it.value.ikConstraint() }.toMutableMap()
+			val correctedRotation = corrected?.rotation
+			if (correctedRotation != null && hip?.rotationFallbackTracker?.observationId == correctedRotation.sourceId) {
+				val current = ik[TrackerPosition.HIP]
+				if (current?.rotation?.sourceId == correctedRotation.sourceId)
+					ik[TrackerPosition.HIP] = current.copy(rotation = correctedRotation)
+			}
+			writeback.apply(ik, assignment, runtime.mtp.historyGeneration)
 			pendingPoses = resolved
 			if (registerAfterPose == null) finishPoseUpdate() else directOutput.applyPoses(emptyMap())
 		} catch (e: Exception) { close(); onFailure(e) }
@@ -92,7 +110,8 @@ class MonakaServerIntegration private constructor(
 			try { configureDirectOutputs(direct.trackers.values.toList()) } catch (e: Exception) {
 				direct.close(); writeback.close(); receiver.close(); runtime.close(); throw e
 			}
-			return MonakaServerIntegration(runtime, receiver, writeback, direct, skeleton, registerBeforePose, onFailure, registerAfterPose, background, config.continuityTuning, onTransition).also {
+			return MonakaServerIntegration(runtime, receiver, writeback, direct, skeleton, registerBeforePose, onFailure, registerAfterPose, background,
+				config.continuityTuning, onTransition, config.rotationCorrection?.let { HipRotationCorrection(it.frames, it.tuning) }).also {
 				registerBeforePose(Runnable(it::tick))
 				registerAfterPose?.invoke(Runnable(it::finishPoseUpdate))
 			}
