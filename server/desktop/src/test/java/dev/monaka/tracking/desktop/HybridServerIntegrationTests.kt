@@ -5,6 +5,13 @@ import dev.monaka.tracking.*
 import dev.slimevr.tracking.processor.HumanPoseManager
 import dev.slimevr.tracking.trackers.*
 import io.github.axisangles.ktmath.Vector3
+import io.github.axisangles.ktmath.Quaternion
+import dev.slimevr.tracking.trackers.udp.IMUType
+import dev.slimevr.tracking.trackers.udp.UDPDevice
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import kotlin.math.cos
+import kotlin.math.sin
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.*
@@ -14,6 +21,67 @@ class HybridServerIntegrationTests {
 	private fun tracker(id: Int, body: TrackerPosition, position: Boolean) = Tracker(null, id, "test-input:$id",
 		trackerPosition = body, hasPosition = position, hasRotation = true, isHmd = body == TrackerPosition.HEAD,
 		allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false).also { it.status = TrackerStatus.OK }
+
+	@Test fun optedInCorrectionLearnsDuringDirectAndAppliesOnceToFallbackIkInput() {
+		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
+		val head = tracker(301, TrackerPosition.HEAD, true).also { it.position = Vector3(0f, 1.7f, 0f) }
+		val device = UDPDevice(InetSocketAddress("127.0.0.1", 20001), InetAddress.getLoopbackAddress(), "correction-test")
+		val imu = Tracker(device, 302, "correction-imu", trackerPosition = TrackerPosition.HIP,
+			hasRotation = true, imuType = IMUType.UNKNOWN, allowReset = true, allowMounting = true,
+			trackRotDirection = false).also { it.status = TrackerStatus.OK; it.setRotation(Quaternion.IDENTITY) }
+		val mountToBody = imu.resetsHandler.getCorrectionReferenceRotationFrom(Quaternion.IDENTITY).inv()
+		val assignments = TrackerBodyAssignments().also {
+			it.configure(TrackerPosition.HIP, TrackerReference.mtp(key), TrackerReference.slime(imu.name), OutputMode.HYBRID)
+		}
+		val tuning = RotationCorrectionTuning(5_000_000, 100_000_000, .0001, .0001, 3.2, .1, 1000.0, 1, 100_000_000)
+		val correction = RotationCorrectionConfig(RotationCorrectionFrames(Quaternion.IDENTITY, mountToBody, p.coordinate_space, true), tuning)
+		val hpm = HumanPoseManager(listOf(head, imu)); hpm.setLegTweaksEnabled(false)
+		hpm.skeleton.ikSolver.enabled = true; hpm.update()
+		var before: Runnable? = null; var after: Runnable? = null; var now = 1_000_000_000L
+		val outputs = mutableListOf<Tracker>(); val failures = mutableListOf<Exception>()
+		val integration = MonakaServerIntegration.startIfEnabled(true,
+			{ MonakaConfiguration(p.coordinate_space, assignments, port = 0, backgroundIkSharedSpace = p.coordinate_space,
+				rotationCorrection = correction) }, { listOf(head, imu) }, hpm.skeleton,
+			{ before = it }, { failures += it }, { now }, configureDirectOutputs = { outputs += it },
+			nextTrackerId = { 400 }, registerAfterPose = { after = it })!!
+		integration.use {
+			val output = outputs.single(); val identity = Triple(output.id, output.name, output.trackerPosition)
+			fun send(sequence: Long, mode: String) {
+				now += 10_000_000
+				imu.setRotation(Quaternion.IDENTITY) // A real orientation acceptance, not a server poll.
+				val angle = .5
+				val pose = p.copy(sequence = sequence, modality = mode,
+					orientation = if (mode == "none") null else listOf(0.0, sin(angle / 2), 0.0, cos(angle / 2)),
+					position = if (mode == "full") listOf(.1, 1.0, .1) else null,
+					validity = Validity(mode == "full", mode != "none"),
+					confidence = Confidence(if (mode == "full") 1.0 else 0.0, if (mode == "none") 0.0 else 1.0),
+					tracking_state = when (mode) { "full" -> "tracked"; "none" -> "lost"; else -> "degraded" })
+				assertTrue(integration.runtime.inbox.receive((MonakaCodec.encodeEnvelope(pose) as EncodeResult.Success).value, now))
+				before!!.run(); hpm.update(); after!!.run()
+				assertTrue(failures.isEmpty(), failures.joinToString())
+				assertEquals(identity, Triple(output.id, output.name, output.trackerPosition))
+			}
+			send(1, "full")
+			val main = Quaternion.rotationAroundYAxis(.5f)
+			assertTrue(kotlin.math.abs(output.monakaOutputPose!!.rotation!!.value.dot(main)) > .9999f)
+			assertFalse(integration.rotationCorrection!!.ready)
+			send(2, "full")
+			assertTrue(integration.rotationCorrection!!.ready)
+			assertTrue(kotlin.math.abs(output.monakaOutputPose!!.rotation!!.value.dot(main)) > .9999f)
+			assertTrue(kotlin.math.abs(hpm.skeleton.hipTracker!!.getRotation().dot(main)) > .999f)
+			val computed = hpm.skeleton.computedHipTracker
+			send(3, "rotation_only")
+			assertSame(computed, hpm.skeleton.computedHipTracker)
+			assertTrue(kotlin.math.abs(hpm.skeleton.hipTracker!!.getRotation().dot(main)) > .999f)
+			assertEquals(RotationCorrectionState.DEGRADED, integration.rotationCorrection!!.state)
+			send(4, "none")
+			assertEquals(RotationCorrectionState.IMU_ONLY, integration.rotationCorrection!!.state)
+			assertTrue(kotlin.math.abs(hpm.skeleton.hipTracker!!.getRotation().dot(main)) > .999f)
+			send(5, "full")
+			assertSame(computed, hpm.skeleton.computedHipTracker)
+			assertTrue(kotlin.math.abs(hpm.skeleton.hipTracker!!.getRotation().dot(main)) > .999f)
+		}
+	}
 
 	@Test fun productionHooksComposeSameTickBackgroundOnlyAfterExistingIkAndClearOnClose() {
 		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
