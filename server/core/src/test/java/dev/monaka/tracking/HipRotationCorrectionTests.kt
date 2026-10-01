@@ -15,7 +15,7 @@ class HipRotationCorrectionTests {
 	private val identity = Quaternion.IDENTITY
 	private val halfYaw = Quaternion.rotationAroundYAxis(.5f)
 	private fun tuning(maxResidual: Double = 3.2, maxRate: Double = 1000.0, maxDt: Long = 100_000_000) =
-		RotationCorrectionTuning(2_000_000, 1_000_000, .0001, .0001, maxResidual, .1, maxRate, 1, maxDt)
+		RotationCorrectionTuning(2_000_000, 1_000_000, .0001, .0001, maxResidual, .1, maxRate, 1, maxDt, 100_000_000)
 	private fun controller(t: RotationCorrectionTuning = tuning(), mainMount: Quaternion = identity,
 		imuMount: Quaternion = identity) = HipRotationCorrection(RotationCorrectionFrames(mainMount, imuMount, space, true), t)
 	private fun sample(id: String, seq: Long, at: Long, q: Quaternion?, full: Boolean = false,
@@ -213,5 +213,23 @@ class HipRotationCorrectionTests {
 		assertTrue(c.ready)
 		sameRotation(main, (c.correction * imu).unit())
 		assertTrue(abs((imu * c.correction).unit().dot(main.unit())) < .999f)
+	}
+
+	@Test fun readyCorrectionDoesNotTeachOrApplyStaleOrFutureImuButResumesOnFreshSample() {
+		val c = controller()
+		ready(c)
+		val learned = c.correction
+		val learnedAt = c.lastLearnedAtNanos
+		assertNull(c.update(sample(mainId, 3, 200_000_000, halfYaw, true),
+			sample(imuId, 2, 4_000_000, identity), imuId, 200_000_000, 1, space))
+		assertEquals(learnedAt, c.lastLearnedAtNanos)
+		assertEquals(learned, c.correction)
+		assertTrue(c.ready)
+		assertEquals(1, c.rejections["imu_sample_stale"])
+		assertNull(c.update(null, sample(imuId, 3, 202_000_000, identity), imuId, 201_000_000, 1, space))
+		assertEquals(2, c.rejections["imu_sample_stale"])
+		val resumed = c.update(null, sample(imuId, 3, 201_000_000, identity), imuId, 201_000_000, 1, space)
+		assertNotNull(resumed?.rotation)
+		sameRotation(learned, resumed.rotation!!.value)
 	}
 }

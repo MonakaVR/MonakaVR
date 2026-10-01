@@ -74,6 +74,7 @@ data class MonakaConfiguration(
    "maxRadiansPerSecond" to correction.tuning.maxRadiansPerSecond,
    "recoveryPairs" to correction.tuning.recoveryPairs,
    "maxDtNanos" to correction.tuning.maxDtNanos,
+   "maxImuSampleAgeNanos" to correction.tuning.maxImuSampleAgeNanos,
   )) } ?: emptyMap())
   val absolute = path.toAbsolutePath()
   Files.createDirectories(absolute.parent)
@@ -155,7 +156,7 @@ data class MonakaConfiguration(
     if (!node["enabled"].booleanValue()) null else {
      val fields = setOf("enabled", "framesConfirmed", "mainTrackerToBodyWxyz", "fallbackToBodyWxyz", "fullStableNanos", "pairWindowNanos",
       "trackingTauSeconds", "recoveryTauSeconds", "maxResidualRadians", "recoveryResidualRadians",
-      "maxRadiansPerSecond", "recoveryPairs", "maxDtNanos")
+      "maxRadiansPerSecond", "recoveryPairs", "maxDtNanos", "maxImuSampleAgeNanos")
      require(node.fieldNames().asSequence().all { it in fields }) { "Unknown rotationCorrection field" }
      fun quat(name: String): Quaternion {
       val values = node[name]
@@ -176,7 +177,7 @@ data class MonakaConfiguration(
      RotationCorrectionConfig(RotationCorrectionFrames(quat("mainTrackerToBodyWxyz"), quat("fallbackToBodyWxyz"), expectedSpace, true),
       RotationCorrectionTuning(long("fullStableNanos"), long("pairWindowNanos"), double("trackingTauSeconds"),
        double("recoveryTauSeconds"), double("maxResidualRadians"), double("recoveryResidualRadians"),
-       double("maxRadiansPerSecond"), recoveryPairs.intValue(), long("maxDtNanos")))
+       double("maxRadiansPerSecond"), recoveryPairs.intValue(), long("maxDtNanos"), long("maxImuSampleAgeNanos")))
     }
    }
    return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction)

@@ -12,6 +12,7 @@ class ConstraintPipeline(
 	private val resolver: ConstraintResolver = ConstraintResolver(),
 	private val freshnessPolicy: ObservationFreshnessPolicy = ObservationFreshnessPolicy(),
 	private val profileRegistry: ObservationSourceProfileRegistry = ObservationSourceProfileRegistry(),
+	private val eligibility: (PoseObservation, Long) -> PoseObservation = { observation, _ -> observation },
 ) {
 	private val sourceProfiles = mutableMapOf<String, ObservationSourceProfile>()
 
@@ -101,6 +102,8 @@ class ConstraintPipeline(
 	private fun applyFreshness(
 		observation: PoseObservation,
 		nowNanos: Long,
-	): PoseObservation = (sourceProfiles[observation.sourceId]?.freshnessPolicy ?: freshnessPolicy)
-		.apply(observation, nowNanos)
+	): PoseObservation = eligibility(
+		(sourceProfiles[observation.sourceId]?.freshnessPolicy ?: freshnessPolicy).apply(observation, nowNanos),
+		nowNanos,
+	)
 }

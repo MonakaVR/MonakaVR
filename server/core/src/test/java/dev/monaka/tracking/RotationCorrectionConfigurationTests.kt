@@ -14,7 +14,7 @@ class RotationCorrectionConfigurationTests {
 		it.configure(TrackerPosition.HIP, TrackerReference.mtp(LogicalTracker("source", "tracker", "publisher")),
 			TrackerReference.slime("imu"), OutputMode.HYBRID)
 	}
-	private fun tuning() = RotationCorrectionTuning(2_000_000, 1_000_000, .1, .2, 1.0, .1, 2.0, 2, 50_000_000)
+	private fun tuning() = RotationCorrectionTuning(2_000_000, 1_000_000, .1, .2, 1.0, .1, 2.0, 2, 50_000_000, 100_000_000)
 
 	@Test fun omittedOrDisabledConfigKeepsCorrectionOff() {
 		val path = Files.createTempFile("monaka-correction-off", ".json")
@@ -37,6 +37,12 @@ class RotationCorrectionConfigurationTests {
 			config.save(path)
 			assertEquals(config.rotationCorrection, MonakaConfiguration.load(path).rotationCorrection)
 			val root = ObjectMapper().readTree(path.toFile()) as com.fasterxml.jackson.databind.node.ObjectNode
+			val correctionNode = root["rotationCorrection"] as com.fasterxml.jackson.databind.node.ObjectNode
+			assertEquals(tuning().maxImuSampleAgeNanos, correctionNode["maxImuSampleAgeNanos"].asLong())
+			correctionNode.remove("maxImuSampleAgeNanos")
+			ObjectMapper().writeValue(path.toFile(), root)
+			assertFails { MonakaConfiguration.load(path) }
+			correctionNode.put("maxImuSampleAgeNanos", tuning().maxImuSampleAgeNanos)
 			(root["rotationCorrection"] as com.fasterxml.jackson.databind.node.ObjectNode).remove("framesConfirmed")
 			ObjectMapper().writeValue(path.toFile(), root)
 			assertFails { MonakaConfiguration.load(path) }

@@ -12,12 +12,15 @@ class MonakaRuntime(
 	val inbox: MtpInbox = MtpInbox(),
 	val clock: () -> Long = monotonicClock(),
 	timeoutNanos: Long = 500_000_000,
+	maxImuSampleAgeNanos: Long? = null,
 ) : AutoCloseable {
+	private val assignedImuFreshness = maxImuSampleAgeNanos?.let { AssignedImuSampleFreshness(assignments, it) }
 	val profiles = ObservationSourceProfileRegistry(listOf(
 		ObservationSourceProfile.sixDof("slime", 0, Long.MAX_VALUE, Long.MAX_VALUE),
 		ObservationSourceProfile.sixDof("mtp", 100, timeoutNanos, timeoutNanos),
 	))
-	val pipeline = ConstraintPipeline(profileRegistry = profiles, resolver = ConstraintResolver { assignments.snapshot().targets })
+	val pipeline = ConstraintPipeline(profileRegistry = profiles, resolver = ConstraintResolver { assignments.snapshot().targets },
+		eligibility = { observation, now -> assignedImuFreshness?.apply(observation, now) ?: observation })
 	val mtp = MtpObservationBackend(inbox, assignments, expectedSpace)
 	val runner = ObservationBackendRunner(pipeline, listOf(
 		SlimeTrackerObservationBackend("slime", "slime", { trackers().filter(FeedbackExclusion::accepts) }, assignments = { assignments.snapshot().targets }), mtp,
