@@ -26,6 +26,10 @@ class MtpPoseAdapter {
 			position = p, rotation = q, modality = TrackingModality.valueOf(pose.modality.uppercase()),
 			positionQuality = if (p == null) ObservationQuality.LOST else quality,
 			rotationQuality = if (q == null) ObservationQuality.LOST else quality,
+			provenance = ObservationSampleProvenance(pose.sequence, sampleTime,
+				"${pose.session_id}:${pose.clock_id}", pose.input.session_id,
+				pose.mapping_revision, pose.coordinate_space),
+			correctionRotation = q,
 		)
 	}
 }
