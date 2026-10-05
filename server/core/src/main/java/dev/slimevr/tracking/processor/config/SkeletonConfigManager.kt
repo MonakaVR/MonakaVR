@@ -14,6 +14,11 @@ class SkeletonConfigManager(
 	private val autoUpdateOffsets: Boolean,
 	private val humanPoseManager: HumanPoseManager? = null,
 ) {
+	// Offline snapshot reads require exclusive ownership on the construction thread.
+	// Attached/live configurations have no atomic multi-offset read boundary.
+	internal val offlineSnapshotOwnerThread: Thread? =
+		if (humanPoseManager == null) Thread.currentThread() else null
+
 	private val configOffsets: EnumMap<SkeletonConfigOffsets, Float> = EnumMap(
 		SkeletonConfigOffsets::class.java,
 	)
