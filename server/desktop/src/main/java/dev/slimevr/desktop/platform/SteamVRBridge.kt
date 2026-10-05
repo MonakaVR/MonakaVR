@@ -251,6 +251,7 @@ abstract class SteamVRBridge(
 		)
 
 		device.trackers[0] = tracker
+		registerTrustedSteamVrHmd(tracker)
 		instance.deviceManager.addDevice(device)
 		return tracker
 	}
