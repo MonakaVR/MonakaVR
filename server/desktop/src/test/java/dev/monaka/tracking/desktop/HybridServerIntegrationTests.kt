@@ -12,6 +12,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.random.Random
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.*
@@ -233,5 +234,103 @@ class HybridServerIntegrationTests {
 		}
 		val reader = BackgroundIkPoseReader(hpm.skeleton, BackgroundIkAlignment.UNVERIFIED)
 		assertNull(reader.read(TrackerPosition.HIP, p.coordinate_space, 0).pose)
+	}
+
+	@Test fun deterministicRealIkHybridDiagnosticStress() {
+		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
+		val generatedEvents = mutableSetOf<Int>()
+		val continuityStates = mutableSetOf<ContinuityState>()
+		for (seed in 0 until 5) {
+			val random = Random(seed)
+			val head = tracker(600 + seed * 2, TrackerPosition.HEAD, true).also { it.position = Vector3(0f, 1.7f, 0f) }
+			val device = UDPDevice(InetSocketAddress("127.0.0.1", 21000 + seed), InetAddress.getLoopbackAddress(), "stress-$seed")
+			val imu = Tracker(device, 601 + seed * 2, "stress-imu-$seed", trackerPosition = TrackerPosition.HIP,
+				hasRotation = true, imuType = IMUType.UNKNOWN, allowReset = true, allowMounting = true,
+				trackRotDirection = false).also { it.status = TrackerStatus.OK; it.setRotation(Quaternion.IDENTITY) }
+			val mount = imu.resetsHandler.getCorrectionReferenceRotationFrom(Quaternion.IDENTITY).inv()
+			val assignments = TrackerBodyAssignments().also {
+				it.configure(TrackerPosition.HIP, TrackerReference.mtp(key), TrackerReference.slime(imu.name), OutputMode.HYBRID)
+			}
+			val tuning = RotationCorrectionTuning(5_000_000, 100_000_000, .001, .001,
+				3.2, .2, 1000.0, 1, 100_000_000, 100_000_000)
+			val correction = RotationCorrectionConfig(RotationCorrectionFrames(Quaternion.IDENTITY, mount,
+				p.coordinate_space, true), tuning)
+			val hpm = HumanPoseManager(listOf(head, imu)); hpm.setLegTweaksEnabled(false)
+			hpm.skeleton.ikSolver.enabled = true; hpm.update()
+			var before: Runnable? = null; var after: Runnable? = null; var now = 1_000_000_000L
+			var sequence = 0L; var session = 0; val failures = mutableListOf<Exception>()
+			val outputs = mutableListOf<Tracker>(); val events = mutableListOf<HybridTrackingDiagnosticEvent>()
+			val integration = MonakaServerIntegration.startIfEnabled(true,
+				{ MonakaConfiguration(p.coordinate_space, assignments, port = 0, backgroundIkSharedSpace = p.coordinate_space,
+					continuityTuning = ContinuityTuning(5, 10, 1), rotationCorrection = correction) },
+				{ listOf(head, imu) }, hpm.skeleton, { before = it }, { failures += it }, { now },
+				configureDirectOutputs = { outputs += it }, nextTrackerId = { 700 + seed },
+				registerAfterPose = { after = it }, onDiagnostic = events::add)!!
+			integration.use {
+				val output = outputs.single(); val identity = Triple(output.id, output.name, output.trackerPosition)
+				for (step in 0 until 80) {
+					val eventCount = events.size
+					val generated = random.nextInt(12)
+					generatedEvents += generated
+					val mode = when (generated % 4) { 0, 1 -> "full"; 2 -> "rotation_only"; else -> "none" }
+					now += if (generated == 0) 110_000_000 else 10_000_000
+					if (generated == 1) session++
+					if (generated !in setOf(2, 3)) {
+						sequence++
+						val timestamp = p.timestamp_ns + sequence * 1_000_000
+						val sessionId = java.util.UUID.nameUUIDFromBytes("$seed/$session".toByteArray()).toString()
+						val pose = p.copy(sequence = sequence, session_id = sessionId,
+							timestamp_ns = timestamp, sent_at_ns = timestamp,
+							input = p.input.copy(session_id = sessionId, sequence = sequence), modality = mode,
+							position = if (mode == "full") listOf(.1, 1.0, .1) else null,
+							orientation = if (mode == "none") null else listOf(0.0, sin(.25), 0.0, cos(.25)),
+							validity = Validity(mode == "full", mode != "none"),
+							confidence = Confidence(if (mode == "full") 1.0 else 0.0, if (mode == "none") 0.0 else 1.0),
+							tracking_state = when (mode) { "full" -> "tracked"; "none" -> "lost"; else -> "degraded" })
+						assertTrue(integration.runtime.inbox.receive((MonakaCodec.encodeEnvelope(pose) as EncodeResult.Success).value, now),
+							"seed=$seed step=$step generated=$generated")
+					}
+					if (generated !in setOf(4, 5)) imu.setRotation((Quaternion.rotationAroundXAxis(.1f * (step % 4)) *
+						Quaternion.rotationAroundYAxis(.2f)).unit())
+					hpm.skeleton.ikSolver.enabled = generated != 6
+					hpm.skeleton.setPauseTracking(generated == 7, "hybrid stress")
+					before!!.run(); hpm.update(); after!!.run()
+					val snapshot = integration.lastDiagnosticSnapshot!!
+					snapshot.continuityState?.let(continuityStates::add)
+					val visible = output.monakaOutputPose!!
+					val context = "seed=$seed step=$step event=$generated main=$mode/$sequence/$now " +
+						"imu=${snapshot.imuSequence}/${snapshot.imuAgeNanos} corr=${snapshot.correctionState}/${snapshot.correctionReady} " +
+						"resolver=${snapshot.resolverRotationOwner} continuity=${snapshot.continuityState} visible=${snapshot.visibleRotationOwner}"
+					assertTrue(failures.isEmpty(), "$context failures=$failures")
+					assertEquals(identity, Triple(output.id, output.name, output.trackerPosition), context)
+					assertEquals(visible.rotationOwner, snapshot.visibleRotationOwner, context)
+					assertEquals(visible.positionSource, snapshot.visiblePositionSource, context)
+					assertEquals(integration.rotationCorrection!!.state, snapshot.correctionState, context)
+					assertEquals(integration.runtime.resolvedTrackingPoses(
+						integration.runtime.pipeline.resolveAll(now))[TrackerPosition.HIP]?.rotationOwner,
+						snapshot.resolverRotationOwner, context)
+					if (events.size > eventCount) {
+						assertEquals(snapshot.continuityState, events.last().snapshot.continuityState, context)
+						assertEquals(visible.rotationOwner, events.last().snapshot.visibleRotationOwner, context)
+					}
+					val position = visible.position
+					if (position != null) assertTrue(listOf(position.value.x, position.value.y,
+						position.value.z).all { it.isFinite() }, context)
+					val rotation = visible.rotation
+					if (rotation != null) {
+						val q = rotation.value
+						assertTrue(listOf(q.w, q.x, q.y, q.z).all { it.isFinite() } && q.lenSq() > 1e-10f, context)
+					}
+					if (hpm.skeleton.getPauseTracking()) assertFalse(visible.rotationValid, context)
+					if (snapshot.applicationDecision == ApplicationDecision.APPLIED)
+						assertEquals("slime:${imu.name}", snapshot.resolverRotationOwner, context)
+				}
+				assertTrue(events.isNotEmpty(), "seed=$seed")
+				assertTrue(events.size < 80, "seed=$seed diagnostic emitted every tick")
+			}
+		}
+		assertEquals((0..11).toSet(), generatedEvents)
+		assertTrue(ContinuityState.MAIN_DIRECT in continuityStates)
+		assertTrue(ContinuityState.FALLBACK_ACTIVE in continuityStates)
 	}
 }
