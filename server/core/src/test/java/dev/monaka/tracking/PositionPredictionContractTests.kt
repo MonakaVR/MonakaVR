@@ -123,6 +123,80 @@ class PositionPredictionContractTests {
 			teacher(main = teacher().rawMainPositionObservation.copy(position = Vector3(Float.NaN, 0f, 0f)))).reason)
 	}
 
+	@Test fun onlyHipCenterPairsAreDirectlyComparableWhileTrackerMountRemainsRepresentable() {
+		val mount = prediction(body = PositionBodyReference.TRACKER_MOUNT)
+		assertEquals(PositionBodyReference.TRACKER_MOUNT, mount.bodyReference)
+		// Prediction-only preflight validates representation, not a Main/prediction comparison.
+		assertTrue(PositionCorrectionTeacherEligibility.check(mount).eligibleForPairing)
+		assertTrue(PositionCorrectionTeacherEligibility.check(teacher()).eligibleForPairing)
+		val sameMountTags = PositionCorrectionTeacherEligibility.check(
+			teacher(mount, body = PositionBodyReference.TRACKER_MOUNT))
+		assertFalse(sameMountTags.eligibleForPairing)
+		assertEquals("body_reference_not_comparable", sameMountTags.reason)
+		for (mismatched in listOf(teacher(mount), teacher(body = PositionBodyReference.TRACKER_MOUNT))) {
+			val result = PositionCorrectionTeacherEligibility.check(mismatched)
+			assertFalse(result.eligibleForPairing)
+			assertEquals("body_reference_mismatch", result.reason)
+		}
+	}
+
+	@Test fun hmdCalibrationChangeInvalidatesPreviousPredictionEvenWhenPoseIsIdentical() {
+		val source = input()
+		val changed = source.copy(rawHmd = source.rawHmd.copy(
+			provenance = source.rawHmd.provenance.copy(calibrationEpoch = "hmd-recenter:2")))
+		assertEquals(source.rawHmd.position, changed.rawHmd.position)
+		assertNotEquals(source.epoch(), changed.epoch())
+		assertEquals("hmd-recenter:2", changed.epoch().hmdCalibrationEpoch)
+		val result = PositionCorrectionTeacherEligibility.check(
+			teacher(prediction(source)).copy(expectedPredictionEpoch = changed.epoch()))
+		assertFalse(result.eligibleForPairing)
+		assertEquals("prediction_epoch_mismatch", result.reason)
+		assertTrue(PositionCorrectionTeacherEligibility.check(
+			teacher(prediction(changed)).copy(expectedPredictionEpoch = changed.epoch())).eligibleForPairing)
+	}
+
+	@Test fun bothRawMappingRevisionsAreNullableEpochIdentityAndRequireExactMatch() {
+		val source = input()
+		for ((before, after) in listOf(null to 1L, 1L to 2L, 1L to null)) {
+			for (hmd in listOf(true, false)) {
+				fun withRevision(revision: Long?) = if (hmd) source.copy(rawHmd = source.rawHmd.copy(
+					provenance = source.rawHmd.provenance.copy(mappingRevision = revision)))
+				else source.copy(rawImu = source.rawImu.copy(
+					provenance = source.rawImu.provenance.copy(mappingRevision = revision)))
+				val previous = withRevision(before)
+				val current = withRevision(after)
+				val context = "hmd=$hmd mapping=$before->$after"
+				assertEquals(before, if (hmd) previous.epoch().hmdMappingRevision else previous.epoch().imuMappingRevision)
+				assertEquals(after, if (hmd) current.epoch().hmdMappingRevision else current.epoch().imuMappingRevision)
+				assertNotEquals(previous.epoch(), current.epoch(), context)
+				val result = PositionCorrectionTeacherEligibility.check(
+					teacher(prediction(previous)).copy(expectedPredictionEpoch = current.epoch()))
+				assertFalse(result.eligibleForPairing, context)
+				assertEquals("prediction_epoch_mismatch", result.reason, context)
+			}
+		}
+	}
+
+	@Test fun sampleProgressionGenerationWindowAndNumericPoseDoNotChangeEpochIdentity() {
+		val source = input()
+		val original = prediction(source).provenance!!
+		for (progressed in listOf(
+			original.copy(predictionSequence = 8),
+			original.copy(generatedAtNanos = 101),
+			original.copy(inputEarliestAtNanos = 81, inputLatestAtNanos = 91),
+		)) assertEquals(original.epoch, progressed.epoch)
+		for (changed in listOf(
+			source.copy(rawHmd = source.rawHmd.copy(position = Vector3(.5f, 1.8f, -.3f))),
+			source.copy(rawImu = source.rawImu.copy(orientation = Quaternion(0f, 1f, 0f, 0f))),
+			source.copy(rawHmd = source.rawHmd.copy(provenance = source.rawHmd.provenance.copy(sequence = 5, sampleAtNanos = 81))),
+			source.copy(rawImu = source.rawImu.copy(provenance = source.rawImu.provenance.copy(sequence = 5, sampleAtNanos = 91))),
+			source.copy(nowNanos = 101),
+		)) assertEquals(source.epoch(), changed.epoch())
+		val numericChange = PositionPrediction.available(TrackerPosition.HIP, Vector3(.3f, 1.1f, -.2f),
+			space, PositionBodyReference.HIP_CENTER, original, safe)
+		assertEquals(original.epoch, numericChange.provenance!!.epoch)
+	}
+
 	@Test fun reconnectCalibrationBodyModelSpaceAndAssignmentChangesCreateDistinctEpochs() {
 		val source = input(); val original = source.epoch()
 		val changes = listOf(
@@ -133,6 +207,8 @@ class PositionPredictionContractTests {
 			source.copy(fixedCalibration = source.fixedCalibration.copy(epoch = "fixed:2")),
 			source.copy(assignmentGeneration = 4),
 			input(space.copy(revision = 3)),
+			input(space.copy(convention = "other")),
+			input(space.copy(id = "other")),
 		)
 		for (changed in changes) {
 			assertNotEquals(original, changed.epoch())

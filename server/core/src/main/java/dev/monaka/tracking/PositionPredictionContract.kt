@@ -65,16 +65,19 @@ data class FixedCalibrationIdentity(val calibrationId: String, val epoch: String
 data class PositionPredictionEpoch(
 	val hmdSourceId: String,
 	val hmdSourceEpoch: String,
+	val hmdCalibrationEpoch: String,
+	val hmdMappingRevision: Long?,
 	val imuSourceId: String,
 	val imuSourceEpoch: String,
 	val imuCalibrationEpoch: String,
+	val imuMappingRevision: Long?,
 	val bodyModelEpoch: String,
 	val fixedCalibrationEpoch: String,
 	val coordinateSpace: CoordinateSpace,
 	val assignmentGeneration: Long,
 ) {
 	init {
-		require(listOf(hmdSourceId, hmdSourceEpoch, imuSourceId, imuSourceEpoch,
+		require(listOf(hmdSourceId, hmdSourceEpoch, hmdCalibrationEpoch, imuSourceId, imuSourceEpoch,
 			imuCalibrationEpoch, bodyModelEpoch, fixedCalibrationEpoch).all(String::isNotBlank))
 		require(assignmentGeneration >= 0)
 	}
@@ -116,9 +119,20 @@ data class MainDecoupledHipInput(
 		require(rawHmd.space == space && rawImu.space == space)
 		require(rawHmd.provenance.sampleAtNanos <= nowNanos && rawImu.provenance.sampleAtNanos <= nowNanos)
 	}
-	fun epoch() = PositionPredictionEpoch(rawHmd.source.sourceId, rawHmd.provenance.sourceEpoch,
-		rawImu.source.sourceId, rawImu.provenance.sourceEpoch, rawImu.provenance.calibrationEpoch,
-		bodyModel.epoch, fixedCalibration.epoch, space, assignmentGeneration)
+	fun epoch() = PositionPredictionEpoch(
+		hmdSourceId = rawHmd.source.sourceId,
+		hmdSourceEpoch = rawHmd.provenance.sourceEpoch,
+		hmdCalibrationEpoch = rawHmd.provenance.calibrationEpoch,
+		hmdMappingRevision = rawHmd.provenance.mappingRevision,
+		imuSourceId = rawImu.source.sourceId,
+		imuSourceEpoch = rawImu.provenance.sourceEpoch,
+		imuCalibrationEpoch = rawImu.provenance.calibrationEpoch,
+		imuMappingRevision = rawImu.provenance.mappingRevision,
+		bodyModelEpoch = bodyModel.epoch,
+		fixedCalibrationEpoch = fixedCalibration.epoch,
+		coordinateSpace = space,
+		assignmentGeneration = assignmentGeneration,
+	)
 }
 
 fun interface MainDecoupledHipPredictor {
@@ -174,6 +188,9 @@ object PositionCorrectionTeacherEligibility {
 		PositionPredictionDependency.RAW_IMU, PositionPredictionDependency.BODY_MODEL,
 		PositionPredictionDependency.FIXED_CALIBRATION)
 	private fun reject(reason: String) = PositionTeacherEligibility(false, reason)
+	// Equal TRACKER_MOUNT tags do not identify the same physical mounting point.
+	private fun directlyComparable(main: PositionBodyReference?, prediction: PositionBodyReference?) =
+		main == PositionBodyReference.HIP_CENTER && prediction == PositionBodyReference.HIP_CENTER
 
 	fun check(prediction: PositionPrediction): PositionTeacherEligibility {
 		if (prediction.validity != PredictionValidity.AVAILABLE || prediction.position == null) return reject("prediction_unavailable")
@@ -203,6 +220,8 @@ object PositionCorrectionTeacherEligibility {
 		if (input.mainBodyReference == null || input.mainBodyReference == PositionBodyReference.UNKNOWN)
 			return reject("main_body_reference_unknown")
 		if (input.mainBodyReference != prediction.bodyReference) return reject("body_reference_mismatch")
+		if (!directlyComparable(input.mainBodyReference, prediction.bodyReference))
+			return reject("body_reference_not_comparable")
 		if (input.assignmentGeneration < 0 || input.expectedPredictionEpoch.coordinateSpace != input.expectedSpace ||
 			input.assignmentGeneration != input.expectedPredictionEpoch.assignmentGeneration ||
 			prediction.provenance!!.epoch != input.expectedPredictionEpoch) return reject("prediction_epoch_mismatch")
