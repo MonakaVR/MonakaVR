@@ -34,6 +34,16 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	fun acceptedHmdPositionSample() = rawHmdPositions.snapshot()
 	/** Historical same-decoded-message copy; structural completeness does not establish tracking usability. */
 	fun acceptedHmdPoseMessageSample() = rawHmdPositions.poseMessageSnapshot()
+	/** Active-session acceptance candidate only; does not establish structural usability or freshness. */
+	fun acceptedCurrentSessionHmdPositionSample() = currentSessionHmdSample(rawHmdPositions::currentPositionSnapshot)
+	fun acceptedCurrentSessionHmdPoseMessageSample() = currentSessionHmdSample(rawHmdPositions::currentPoseMessageSnapshot)
+
+	private fun <T> currentSessionHmdSample(read: (String) -> T?): T? {
+		val before = currentInboundTransportSession() ?: return null
+		val sample = read(before.epoch)
+		// A transition during this read fails closed. A later disconnect can still follow any read.
+		return if (currentInboundTransportSession() === before) sample else null
+	}
 	@JvmField
 	@VRServerThread
 	protected val sharedTrackers: MutableList<Tracker> = FastList()
@@ -230,7 +240,6 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@VRServerThread
 	@JvmOverloads
 	protected open fun positionReceived(positionMessage: ProtobufMessages.Position, transportSession: TransportSessionHandle? = null) {
-		// Phase 2B-4a carries envelope lineage to this boundary only. HMD DTO integration is Phase 2B-4b.
 		val tracker = getInternalRemoteTrackerById(positionMessage.trackerId)
 		if (tracker != null) {
 			val modality = when (positionMessage.dataSource) {
@@ -246,7 +255,10 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 					positionMessage.z,
 				)
 				tracker.position = acceptedPosition
-				rawHmdPositions.positionMessageAccepted(tracker, acceptedPosition, positionMessage, modality)
+				val isCurrentSession = transportSession != null && transportSession == currentInboundTransportSession()
+				rawHmdPositions.positionMessageAccepted(
+					tracker, acceptedPosition, positionMessage, modality, transportSession?.epoch, isCurrentSession,
+				)
 			}
 
 			tracker
