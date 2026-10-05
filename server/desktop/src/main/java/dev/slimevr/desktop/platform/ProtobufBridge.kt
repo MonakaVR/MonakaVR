@@ -31,6 +31,8 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 
 	/** Read-only historical ingress record; no coordinate-space or frame proof is implied. */
 	fun acceptedHmdPositionSample() = rawHmdPositions.snapshot()
+	/** Historical same-decoded-message copy; structural completeness does not establish tracking usability. */
+	fun acceptedHmdPoseMessageSample() = rawHmdPositions.poseMessageSnapshot()
 	@JvmField
 	@VRServerThread
 	protected val sharedTrackers: MutableList<Tracker> = FastList()
@@ -211,11 +213,12 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	protected fun positionReceived(positionMessage: ProtobufMessages.Position) {
 		val tracker = getInternalRemoteTrackerById(positionMessage.trackerId)
 		if (tracker != null) {
-			tracker.sampleModality = when (positionMessage.dataSource) {
+			val modality = when (positionMessage.dataSource) {
 				Position.DataSource.FULL -> dev.monaka.tracking.TrackingModality.FULL
 				Position.DataSource.IMU -> dev.monaka.tracking.TrackingModality.ROTATION_ONLY
 				else -> dev.monaka.tracking.TrackingModality.NONE
 			}
+			tracker.sampleModality = modality
 			if (positionMessage.hasX()) {
 				val acceptedPosition = Vector3(
 					positionMessage.x,
@@ -223,7 +226,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 					positionMessage.z,
 				)
 				tracker.position = acceptedPosition
-				rawHmdPositions.positionAccepted(tracker, acceptedPosition)
+				rawHmdPositions.positionMessageAccepted(tracker, acceptedPosition, positionMessage, modality)
 			}
 
 			tracker
