@@ -244,6 +244,10 @@ class HipRotationCorrectionTests {
 		assertEquals(1, c.rejections["pair_time_invalid"])
 		assertEquals(learnedAt, c.lastLearnedAtNanos)
 		assertEquals(held, c.correction)
+		assertEquals(LearningDecision.REJECTED, c.learningDecision)
+		assertEquals("pair_time_invalid", c.learningReason)
+		assertEquals(ApplicationDecision.APPLIED, c.applicationDecision)
+		assertEquals("applied", c.applicationReason)
 	}
 
 	@Test fun repeatedAcceptedPairDoesNotLearnButCanStillApplyWhileFresh() {
@@ -256,6 +260,9 @@ class HipRotationCorrectionTests {
 		assertEquals(1, c.rejections["same_sample"])
 		assertEquals(learnedAt, c.lastLearnedAtNanos)
 		assertEquals(held, c.correction)
+		assertEquals(LearningDecision.REJECTED, c.learningDecision)
+		assertEquals("same_sample", c.learningReason)
+		assertEquals(ApplicationDecision.APPLIED, c.applicationDecision)
 	}
 
 	@Test fun mainOnlySequenceAndTimestampRollbackDoNotPoisonHealthyImuApplication() {
@@ -299,6 +306,8 @@ class HipRotationCorrectionTests {
 				imuId, 5_000_000, 1, space))
 			assertEquals(1, c.rejections["imu_${rollback}_rollback"])
 			assertTrue(c.ready)
+			assertEquals(ApplicationDecision.BLOCKED, c.applicationDecision)
+			assertEquals("imu_${rollback}_rollback", c.applicationReason)
 		}
 	}
 
@@ -330,5 +339,14 @@ class HipRotationCorrectionTests {
 		assertNull(c.update(null, sample(imuId, 3, 5_000_000,
 			Quaternion(Float.NaN, 0f, 0f, 0f)), imuId, 5_000_000, 1, space))
 		assertEquals(1, c.rejections["imu_rotation_invalid"])
+	}
+
+	@Test fun fullMainOwnerDoesNotReportFallbackApplicationAsRequested() {
+		val c = controller()
+		ready(c)
+		assertNull(c.update(sample(mainId, 3, 200_000_000, halfYaw, true),
+			sample(imuId, 2, 4_000_000, identity), mainId, 200_000_000, 1, space))
+		assertEquals(ApplicationDecision.NOT_REQUESTED, c.applicationDecision)
+		assertEquals("owner_not_fallback", c.applicationReason)
 	}
 }
