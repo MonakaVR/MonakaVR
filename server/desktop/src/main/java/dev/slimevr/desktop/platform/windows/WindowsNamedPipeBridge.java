@@ -6,6 +6,7 @@ import dev.slimevr.VRServer;
 import dev.slimevr.bridge.BridgeThread;
 import dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage;
 import dev.slimevr.desktop.platform.SteamVRBridge;
+import dev.slimevr.desktop.platform.TransportSessionHandle;
 import dev.slimevr.tracking.trackers.Tracker;
 import io.eiren.util.ann.ThreadSafe;
 import io.eiren.util.logging.LogManager;
@@ -22,6 +23,8 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 	protected final String bridgeSettingsKey;
 	protected WindowsNamedPipe pipe = null;
 	protected WindowsNamedPipe.PipeConnection connection = null;
+	// Bridge-thread owned: changes on each successful accept, even when connection is reused.
+	private TransportSessionHandle transportSession = null;
 	private final byte[] buf = new byte[2048];
 
 	public WindowsNamedPipeBridge(
@@ -52,8 +55,11 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 				if (connection == null) {
 					// Report that our pipe is disconnected right now
 					reportDisconnected();
-					if ((connection = pipe.tryAccept()) != null)
+					if ((connection = pipe.tryAccept()) != null) {
+						// tryAccept's CREATED -> OPEN transition does not dispatch messages.
+						transportSession = openInboundTransportSession();
 						VRServer.Companion.getInstance().queueTask(this::reconnected);
+					}
 				}
 				if (connection != null) {
 					if (connection.getState() == PipeState.OPEN) {
@@ -64,6 +70,7 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 						updateMessageQueue();
 					}
 					if (connection.getState() == PipeState.ERROR) {
+						closeTransportSession();
 						connection.disconnect();
 						connection = null;
 						disconnected();
@@ -82,12 +89,21 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 		} catch (InterruptedException e) {
 			// Exit the thread gracefully.
 		} finally {
+			closeTransportSession();
 			LogManager.info("[" + bridgeName + "] Bridge thread exiting");
 			if (pipe != null) {
 				pipe.close();
 				pipe = null;
 			}
 		}
+	}
+
+	@BridgeThread
+	private void closeTransportSession() {
+		TransportSessionHandle closing = transportSession;
+		transportSession = null;
+		if (closing != null)
+			closeInboundTransportSession(closing);
 	}
 
 	@Override
@@ -104,12 +120,17 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 				.severe("[" + bridgeName + "] Got message from connection we don't know about");
 			return;
 		}
+		TransportSessionHandle receivedSession = transportSession;
+		if (receivedSession == null) {
+			LogManager.severe("[" + bridgeName + "] Message without an accepted transport session");
+			return;
+		}
 
 		try {
 			ProtobufMessage message = ProtobufMessage
 				.parser()
 				.parseFrom(buf);
-			messageReceived(message);
+			messageReceived(message, receivedSession);
 		} catch (InvalidProtocolBufferException parseEx) {
 			LogManager.severe("[" + bridgeName + "] Failed to parse message", parseEx);
 			connection.setError("Failed to parse message");
