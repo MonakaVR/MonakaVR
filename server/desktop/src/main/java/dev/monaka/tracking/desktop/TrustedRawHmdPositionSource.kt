@@ -20,7 +20,9 @@ data class HmdAcceptedPositionSample internal constructor(
 	val receivedAtSystemNanos: Long,
 	val sourceEpoch: String,
 	val ingressIdentity: RawSourceIdentity,
+	val transportSessionEpoch: String? = null,
 ) {
+	init { require(transportSessionEpoch == null || transportSessionEpoch.isNotBlank()) }
 	// Receipt provenance alone cannot prove the HMD world frame or a paired orientation sample.
 	val rawPoseInputEligible: Boolean get() = false
 	val rawPoseInputRejectionReasons: Set<String> get() = setOf(
@@ -34,7 +36,7 @@ data class PositionComponentPresence(val x: Boolean, val y: Boolean, val z: Bool
 
 enum class HmdPoseMessagePairingStatus { COMPLETE, INCOMPLETE_POSITION, INVALID_POSITION, INVALID_ORIENTATION }
 
-/** Same decoded-message values, not acquisition-time, transport-session or coordinate-frame proof. */
+/** Same decoded-message values; optional transport lineage does not prove time, frame or freshness. */
 @ConsistentCopyVisibility
 data class HmdAcceptedPoseMessageSample internal constructor(
 	val position: Vector3,
@@ -47,7 +49,9 @@ data class HmdAcceptedPoseMessageSample internal constructor(
 	val dataSourceValue: Int,
 	val dataSourcePresent: Boolean,
 	val modality: TrackingModality,
+	val transportSessionEpoch: String? = null,
 ) {
+	init { require(transportSessionEpoch == null || transportSessionEpoch.isNotBlank()) }
 	// Match Phase 2A's numeric validity contract; retain decoded values without normalization.
 	val structuralRejectionReasons: Set<String> get() = buildSet {
 		if (!positionPresence.complete) add("hmd_position_components_incomplete")
@@ -63,15 +67,18 @@ data class HmdAcceptedPoseMessageSample internal constructor(
 		else -> HmdPoseMessagePairingStatus.COMPLETE
 	}
 	val rawPoseInputEligible: Boolean get() = false
-	val rawPoseInputRejectionReasons: Set<String> get() = structuralRejectionReasons + setOf(
-		"hmd_space_unverified", "hmd_frame_epoch_unavailable", "hmd_session_epoch_unavailable",
-	)
+	val rawPoseInputRejectionReasons: Set<String> get() = structuralRejectionReasons + buildSet {
+		add("hmd_space_unverified")
+		add("hmd_frame_epoch_unavailable")
+		if (transportSessionEpoch == null) add("hmd_session_epoch_unavailable")
+	}
 }
 
 /**
  * Registered only by SteamVRBridge's remote-tracker creation boundary. Mutations are server-thread
  * confined; readers get one volatile immutable value+metadata snapshot, never mutable Tracker.position.
- * Source lifetime is object lifetime only: transport queues do not carry a connection/session ID.
+ * Object source lifetime and optional enqueue-time transport lifetime remain separate identities.
+ * Historical acceptance and current-session candidates use separate immutable holders.
  */
 internal class TrustedRawHmdPositionSource(
 	private val bridgeIdentity: String,
@@ -82,7 +89,8 @@ internal class TrustedRawHmdPositionSource(
 	private var identity: RawSourceIdentity? = null
 	private var sequence = 0L
 	private data class AcceptedMessage(val position: HmdAcceptedPositionSample, val pose: HmdAcceptedPoseMessageSample)
-	@Volatile private var latest: AcceptedMessage? = null
+	@Volatile private var historicalLatest: AcceptedMessage? = null
+	@Volatile private var currentSessionLatest: AcceptedMessage? = null
 
 	@VRServerThread
 	fun registerFromSteamVrIngress(tracker: Tracker) {
@@ -95,25 +103,40 @@ internal class TrustedRawHmdPositionSource(
 		identity = RawSourceIdentity("steamvr:$bridgeIdentity:${tracker.name}", RawSourceKind.RAW_HMD,
 			isComputed = tracker.isComputed, isHmd = true)
 		sequence = 0
-		latest = null
+		historicalLatest = null
+		currentSessionLatest = null
 	}
 
 	/** Invoke only immediately after the existing hasX position write accepts a payload. */
 	@VRServerThread
-	fun positionMessageAccepted(tracker: Tracker, position: Vector3, message: Position, modality: TrackingModality) {
+	fun positionMessageAccepted(
+		tracker: Tracker, position: Vector3, message: Position, modality: TrackingModality,
+		transportSessionEpoch: String?, isCurrentTransportSession: Boolean,
+	) {
 		if (registeredTracker !== tracker) return
+		// Handles guarantee nonblank epochs. Unexpected invalid metadata must not throw into tracking.
+		if (transportSessionEpoch != null && transportSessionEpoch.isBlank()) {
+			currentSessionLatest = null
+			return
+		}
 		val accepted = HmdAcceptedPositionSample(Vector3(position.x, position.y, position.z), ++sequence,
-			receiptClock(), requireNotNull(epoch), requireNotNull(identity))
+			receiptClock(), requireNotNull(epoch), requireNotNull(identity), transportSessionEpoch)
 		// Copy Q directly from this message, never Tracker rotation or its independent sequence.
 		val pose = HmdAcceptedPoseMessageSample(
 			accepted.position, PositionComponentPresence(message.hasX(), message.hasY(), message.hasZ()),
 			Quaternion(message.qw, message.qx, message.qy, message.qz),
 			accepted.sequence, accepted.receivedAtSystemNanos, accepted.sourceEpoch, accepted.ingressIdentity,
-			message.dataSourceValue, message.hasDataSource(), modality,
+			message.dataSourceValue, message.hasDataSource(), modality, transportSessionEpoch,
 		)
-		latest = AcceptedMessage(accepted, pose)
+		val acceptedMessage = AcceptedMessage(accepted, pose)
+		historicalLatest = acceptedMessage
+		if (isCurrentTransportSession && transportSessionEpoch != null) currentSessionLatest = acceptedMessage
 	}
 
-	fun snapshot(): HmdAcceptedPositionSample? = latest?.position
-	fun poseMessageSnapshot(): HmdAcceptedPoseMessageSample? = latest?.pose
+	fun snapshot(): HmdAcceptedPositionSample? = historicalLatest?.position
+	fun poseMessageSnapshot(): HmdAcceptedPoseMessageSample? = historicalLatest?.pose
+	fun currentPositionSnapshot(activeEpoch: String): HmdAcceptedPositionSample? =
+		currentSessionLatest?.takeIf { it.position.transportSessionEpoch == activeEpoch }?.position
+	fun currentPoseMessageSnapshot(activeEpoch: String): HmdAcceptedPoseMessageSample? =
+		currentSessionLatest?.takeIf { it.pose.transportSessionEpoch == activeEpoch }?.pose
 }
