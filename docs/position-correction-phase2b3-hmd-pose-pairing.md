@@ -35,7 +35,7 @@ FULL, IMU, NONE, absent and unknown data_source can all carry a structurally com
 
 The Phase 2B-1 explicit SteamVR creation-boundary registration is unchanged: SteamVR origin, remote ID 0, HMD and position/rotation capabilities, not internal, not Monaka output, and FeedbackExclusion. HEAD role alone and unregistered lookalikes are rejected. External SteamVR HMDs with `isComputed=true` remain accepted because this legacy flag does not prove internal solver origin.
 
-Normal messages share one Tracker-object-lifetime source epoch. Object recreation clears both records and starts a new epoch/sequence. Same-object disconnect/reconnect retains the epoch; queued messages have no connection identity. **Same-message pairing is not trusted transport-session lifetime.** No reconnect generation, Slime reset calibration epoch, HMD universe/recenter identity or CoordinateSpace is inferred.
+Normal messages share one Tracker-object-lifetime source epoch. Object recreation clears both records and starts a new epoch/sequence. Same-object disconnect/reconnect retains the epoch. At the Phase 2B-3 checkpoint, queued messages had no connection identity. [Phase 2B-4a](position-correction-phase2b4a-transport-session-foundation.md) adds separate Windows logical-session handles and queue envelopes, but the HMD DTOs do not consume them yet. **Same-message pairing is not trusted transport-session lifetime.** No Slime reset calibration epoch, HMD universe/recenter identity or CoordinateSpace is inferred.
 
 ## RawHmdPoseInput remains blocked
 
@@ -48,7 +48,8 @@ Status at this checkpoint:
 | Trusted accepted position receipt provenance | Established |
 | Same-message position/orientation envelope | Established for structurally COMPLETE samples |
 | Trusted source object lifetime | Established |
-| Trusted connection/session lifetime | BLOCKED |
+| Windows logical transport-session infrastructure | ESTABLISHED by Phase 2B-4a |
+| HMD sample transport-session integration/current filtering | NOT IMPLEMENTED |
 | Exact HMD CoordinateSpace / frame-calibration epoch | BLOCKED |
 | Runtime-clock mapping / freshness consumer | NOT IMPLEMENTED |
 | RawHmdPoseInput runtime-ready | NO |
