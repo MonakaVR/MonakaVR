@@ -2,6 +2,7 @@ package dev.monaka.tracking
 
 import dev.slimevr.tracking.processor.config.SkeletonConfigManager
 import dev.slimevr.tracking.processor.config.SkeletonConfigOffsets
+import java.util.EnumMap
 
 /** Configuration geometry only: HEAD shifts +Z; the other center-chain offsets extend -Y.
  * No tracker attachment, solved transform, source pose, or mutable runtime object is retained.
@@ -57,7 +58,7 @@ sealed interface HipBodyModelSnapshotResult {
 /** Dormant, offline-only adapter. The caller must exclusively own the detached configuration,
  * including all mutation, on its construction thread; it must not share it with RPC/AutoBone.
  * Thread checks enforce capture ownership, not global synchronization of existing setters.
- * Live/attached configurations fail closed until a coherent runtime capture boundary exists.
+ * Live readers use SkeletonConfigManager.currentHipBodyModelSnapshot() instead.
  */
 object SlimeHipBodyModelSnapshotSource {
 	fun captureOffline(config: SkeletonConfigManager): HipBodyModelSnapshotResult {
@@ -74,5 +75,88 @@ object SlimeHipBodyModelSnapshotSource {
 			config.getOffset(SkeletonConfigOffsets.WAIST),
 			config.getOffset(SkeletonConfigOffsets.HIP),
 		)
+	}
+}
+
+/** Committed configuration mirror, not a lock for legacy storage or skeleton callbacks.
+ * Each outer logical operation records its requested effective offsets on its own thread.
+ * Completed journals linearize under the commit lock; no mutable config is read at commit.
+ */
+internal class HipBodyModelPublication {
+	private class Journal {
+		val offsets = EnumMap<SkeletonConfigOffsets, Float>(SkeletonConfigOffsets::class.java)
+		var failed = false
+	}
+	private data class Published(val sequence: Long, val result: HipBodyModelSnapshotResult)
+	private val commitLock = Any()
+	private val journal = ThreadLocal<Journal>()
+	private val committed = EnumMap<SkeletonConfigOffsets, Float>(SkeletonConfigOffsets::class.java).also {
+		for (offset in CENTER_CHAIN) it[offset] = offset.defaultValue
+	}
+	private var requiresCompleteRevalidation = false
+	@Volatile private var published = Published(0, snapshot())
+
+	fun current(): HipBodyModelSnapshotResult = published.result
+	val sequence: Long get() = published.sequence
+
+	fun mutate(action: () -> Unit) {
+		val existing = journal.get()
+		if (existing != null) {
+			try {
+				action()
+			} catch (failure: Throwable) {
+				existing.failed = true
+				throw failure
+			}
+			return
+		}
+		val pending = Journal()
+		journal.set(pending)
+		var completed = false
+		try {
+			action()
+			completed = true
+		} finally {
+			journal.remove()
+			commit(pending, completed && !pending.failed)
+		}
+	}
+
+	fun record(offset: SkeletonConfigOffsets, requested: Float?) {
+		if (offset in CENTER_CHAIN) {
+			checkNotNull(journal.get()).offsets[offset] = requested ?: offset.defaultValue
+		}
+	}
+
+	fun recordDefaults() {
+		for (offset in CENTER_CHAIN) record(offset, null)
+	}
+
+	private fun commit(pending: Journal, completed: Boolean) {
+		if (pending.offsets.isEmpty()) return
+		synchronized(commitLock) {
+			committed.putAll(pending.offsets)
+			if (!completed) requiresCompleteRevalidation = true
+			else if (pending.offsets.keys.containsAll(CENTER_CHAIN)) requiresCompleteRevalidation = false
+			val result = if (requiresCompleteRevalidation) {
+				HipBodyModelSnapshotResult.Unavailable("offset_mutation_incomplete")
+			} else snapshot()
+			published = Published(published.sequence + 1, result)
+		}
+	}
+
+	private fun snapshot(): HipBodyModelSnapshotResult = HipBodyModelSnapshot.create(
+		committed.getValue(SkeletonConfigOffsets.HEAD),
+		committed.getValue(SkeletonConfigOffsets.NECK),
+		committed.getValue(SkeletonConfigOffsets.UPPER_CHEST),
+		committed.getValue(SkeletonConfigOffsets.CHEST),
+		committed.getValue(SkeletonConfigOffsets.WAIST),
+		committed.getValue(SkeletonConfigOffsets.HIP),
+	)
+
+	companion object {
+		private val CENTER_CHAIN = setOf(SkeletonConfigOffsets.HEAD, SkeletonConfigOffsets.NECK,
+			SkeletonConfigOffsets.UPPER_CHEST, SkeletonConfigOffsets.CHEST,
+			SkeletonConfigOffsets.WAIST, SkeletonConfigOffsets.HIP)
 	}
 }
