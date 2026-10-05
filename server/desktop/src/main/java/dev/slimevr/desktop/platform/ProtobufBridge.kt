@@ -17,6 +17,7 @@ import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import java.util.Queue
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.HashMap
 
 abstract class ProtobufBridge @JvmOverloads constructor(
@@ -38,7 +39,21 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	protected val sharedTrackers: MutableList<Tracker> = FastList()
 
 	@ThreadSafe
-	private val inputQueue: Queue<ProtobufMessage> = LinkedBlockingQueue()
+	private val inputQueue: Queue<InboundProtobufEnvelope> = LinkedBlockingQueue()
+	private val inboundTransportSession = AtomicReference<TransportSessionHandle?>(null)
+
+	/** Transport accept boundary only; independent of VRServer-side output reconnected callbacks. */
+	@ThreadSafe
+	protected fun openInboundTransportSession(): TransportSessionHandle =
+		TransportSessionHandle(java.util.UUID.randomUUID().toString()).also(inboundTransportSession::set)
+
+	/** A delayed close for an older logical accept cannot clear a newer active session. */
+	@ThreadSafe
+	protected fun closeInboundTransportSession(handle: TransportSessionHandle): Boolean =
+		inboundTransportSession.compareAndSet(handle, null)
+
+	@ThreadSafe
+	protected fun currentInboundTransportSession(): TransportSessionHandle? = inboundTransportSession.get()
 
 	@ThreadSafe
 	private val outputQueue: Queue<ProtobufMessage> = LinkedBlockingQueue()
@@ -74,8 +89,9 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	protected var remoteProtocolVersion: Int = 0
 
 	@BridgeThread
-	protected fun messageReceived(message: ProtobufMessage) {
-		inputQueue.add(message)
+	@JvmOverloads
+	protected fun messageReceived(message: ProtobufMessage, transportSession: TransportSessionHandle? = null) {
+		inputQueue.add(InboundProtobufEnvelope(message, transportSession))
 	}
 
 	@ThreadSafe
@@ -100,9 +116,10 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@VRServerThread
 	override fun dataRead() {
 		hadNewData = false
-		var message: ProtobufMessage?
-		while ((inputQueue.poll().also { message = it }) != null) {
-			processMessageReceived(message)
+		var envelope: InboundProtobufEnvelope?
+		while ((inputQueue.poll().also { envelope = it }) != null) {
+			val accepted = envelope!!
+			processMessageReceived(accepted.message, accepted.transportSession)
 			hadNewData = true
 		}
 	}
@@ -191,11 +208,12 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	}
 
 	@VRServerThread
-	protected fun processMessageReceived(message: ProtobufMessage?) {
+	@JvmOverloads
+	protected open fun processMessageReceived(message: ProtobufMessage?, transportSession: TransportSessionHandle? = null) {
 		// if(!message.hasPosition())
 		// LogManager.log.info("[" + bridgeName + "] MSG: " + message);
 		if (message!!.hasPosition()) {
-			positionReceived(message.position)
+			positionReceived(message.position, transportSession)
 		} else if (message.hasUserAction()) {
 			userActionReceived(message.userAction)
 		} else if (message.hasTrackerStatus()) {
@@ -210,7 +228,9 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	}
 
 	@VRServerThread
-	protected fun positionReceived(positionMessage: ProtobufMessages.Position) {
+	@JvmOverloads
+	protected open fun positionReceived(positionMessage: ProtobufMessages.Position, transportSession: TransportSessionHandle? = null) {
+		// Phase 2B-4a carries envelope lineage to this boundary only. HMD DTO integration is Phase 2B-4b.
 		val tracker = getInternalRemoteTrackerById(positionMessage.trackerId)
 		if (tracker != null) {
 			val modality = when (positionMessage.dataSource) {
