@@ -19,7 +19,18 @@ import java.util.Queue
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.collections.HashMap
 
-abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISteamVRBridge {
+abstract class ProtobufBridge @JvmOverloads constructor(
+	@JvmField protected val bridgeName: String,
+	hmdPositionReceiptClock: () -> Long = System::nanoTime,
+) : ISteamVRBridge {
+	private val rawHmdPositions = dev.monaka.tracking.desktop.TrustedRawHmdPositionSource(bridgeName, hmdPositionReceiptClock)
+
+	/** Creation-boundary registration, not classification by HEAD role or isComputed alone. */
+	@VRServerThread
+	protected fun registerTrustedSteamVrHmd(tracker: Tracker) = rawHmdPositions.registerFromSteamVrIngress(tracker)
+
+	/** Read-only historical ingress record; no coordinate-space or frame proof is implied. */
+	fun acceptedHmdPositionSample() = rawHmdPositions.snapshot()
 	@JvmField
 	@VRServerThread
 	protected val sharedTrackers: MutableList<Tracker> = FastList()
@@ -206,12 +217,13 @@ abstract class ProtobufBridge(@JvmField protected val bridgeName: String) : ISte
 				else -> dev.monaka.tracking.TrackingModality.NONE
 			}
 			if (positionMessage.hasX()) {
-				tracker
-					.position = Vector3(
+				val acceptedPosition = Vector3(
 					positionMessage.x,
 					positionMessage.y,
 					positionMessage.z,
 				)
+				tracker.position = acceptedPosition
+				rawHmdPositions.positionAccepted(tracker, acceptedPosition)
 			}
 
 			tracker
