@@ -1,5 +1,7 @@
 package dev.slimevr.tracking.processor.config
 
+import dev.monaka.tracking.HipBodyModelPublication
+import dev.monaka.tracking.HipBodyModelSnapshotResult
 import dev.slimevr.VRServer.Companion.instance
 import dev.slimevr.VRServer.Companion.instanceInitialized
 import dev.slimevr.autobone.AutoBone
@@ -15,9 +17,14 @@ class SkeletonConfigManager(
 	private val humanPoseManager: HumanPoseManager? = null,
 ) {
 	// Offline snapshot reads require exclusive ownership on the construction thread.
-	// Attached/live configurations have no atomic multi-offset read boundary.
+	// Live consumers read the committed publication instead of capturing legacy storage.
 	internal val offlineSnapshotOwnerThread: Thread? =
 		if (humanPoseManager == null) Thread.currentThread() else null
+	private val hipBodyModelPublication = HipBodyModelPublication()
+
+	/** One atomic read of committed configuration geometry; no on-demand offset reads. */
+	fun currentHipBodyModelSnapshot(): HipBodyModelSnapshotResult = hipBodyModelPublication.current()
+	internal val hipBodyModelPublicationSequence: Long get() = hipBodyModelPublication.sequence
 
 	private val configOffsets: EnumMap<SkeletonConfigOffsets, Float> = EnumMap(
 		SkeletonConfigOffsets::class.java,
@@ -79,12 +86,13 @@ class SkeletonConfigManager(
 		config: SkeletonConfigOffsets,
 		newValue: Float?,
 		computeOffsets: Boolean,
-	) {
+	): Unit = hipBodyModelPublication.mutate {
 		if (newValue != null) {
 			configOffsets[config] = newValue
 		} else {
 			configOffsets.remove(config)
 		}
+		hipBodyModelPublication.record(config, newValue)
 
 		// Re-compute the affected offsets
 		if (computeOffsets && autoUpdateOffsets && config.affectedOffsets != null) {
@@ -406,7 +414,7 @@ class SkeletonConfigManager(
 	fun setOffsets(
 		configOffsets: Map<SkeletonConfigOffsets, Float>?,
 		computeOffsets: Boolean,
-	) {
+	): Unit = hipBodyModelPublication.mutate {
 		configOffsets?.forEach { (key: SkeletonConfigOffsets, value: Float?) ->
 			// Do not recalculate the offsets, these are done in bulk at the
 			// end
@@ -424,7 +432,7 @@ class SkeletonConfigManager(
 		setOffsets(configOffsets, true)
 	}
 
-	fun setOffsets(skeletonConfigManager: SkeletonConfigManager) {
+	fun setOffsets(skeletonConfigManager: SkeletonConfigManager): Unit = hipBodyModelPublication.mutate {
 		// Don't recalculate node offsets, just re-use them from skeletonConfig
 		setOffsets(
 			skeletonConfigManager.configOffsets,
@@ -437,13 +445,14 @@ class SkeletonConfigManager(
 		}
 	}
 
-	fun resetOffsets() {
+	fun resetOffsets(): Unit = hipBodyModelPublication.mutate {
 		if (humanPoseManager != null) {
 			for (config in SkeletonConfigOffsets.values) {
 				resetOffset(config)
 			}
 		} else {
 			configOffsets.clear()
+			hipBodyModelPublication.recordDefaults()
 			if (autoUpdateOffsets) {
 				computeAllNodeOffsets()
 			}
@@ -496,13 +505,13 @@ class SkeletonConfigManager(
 		}
 	}
 
-	fun resetAllConfigs() {
+	fun resetAllConfigs(): Unit = hipBodyModelPublication.mutate {
 		resetOffsets()
 		resetToggles()
 		resetValues()
 	}
 
-	fun resetOffset(config: SkeletonConfigOffsets) {
+	fun resetOffset(config: SkeletonConfigOffsets): Unit = hipBodyModelPublication.mutate {
 		val height = humanPoseManager?.server?.configManager?.vrConfig?.skeleton?.userHeight ?: -1f
 		// Only scale if the height is within range
 		if (height > AutoBone.MIN_HEIGHT) {
@@ -520,7 +529,7 @@ class SkeletonConfigManager(
 		}
 	}
 
-	fun loadFromConfig(configManager: ConfigManager) {
+	fun loadFromConfig(configManager: ConfigManager): Unit = hipBodyModelPublication.mutate {
 		val skeletonConfig = configManager.vrConfig.skeleton
 
 		// Load offsets
