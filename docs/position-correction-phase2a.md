@@ -2,6 +2,8 @@
 
 Phase 2A defines a **boundary only**. It adds no HIP predictor algorithm, position learner, offset, pelvis/root constraint, IK writeback, or visible-output path. `PositionPrediction` is derived model data, not a `PoseObservation` and not an independent absolute measurement. No Phase 2A object is registered with `ConstraintPipeline` or passed to `ConstraintIkWriteback`, `OutputContinuityController`, or SteamVR output.
 
+[Phase 2B-1](position-correction-phase2b1-hmd-provenance.md) adds trusted HMD accepted-position ingress receipt provenance only. It does not establish acquisition time, coordinate-space/frame proof or a runtime-ready `RawHmdPoseInput`.
+
 ## Why the boundary is separate
 
 The current computed HIP is downstream of `ConstraintIkWriteback`: Main FULL position can enter `HumanSkeleton` and then the same computed HIP. Learning `p_main - p_computedHip` and feeding that error back into the solver would create a circular, potentially double-applied correction. `BackgroundIkPoseReader` reads that post-IK tracker; `OutputPose` is still farther downstream. None is a position-correction teacher. `HipRotationCorrection` uses raw assigned observations, but its corrected IMU orientation contains Main-derived information and is not automatically a Main-decoupled position input.
