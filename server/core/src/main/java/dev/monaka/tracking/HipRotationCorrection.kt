@@ -45,6 +45,8 @@ data class RotationCorrectionFrames(
 data class RotationCorrectionConfig(val frames: RotationCorrectionFrames, val tuning: RotationCorrectionTuning)
 
 enum class RotationCorrectionState { UNINITIALIZED, REACQUIRING, TRACKING, DEGRADED, IMU_ONLY }
+enum class LearningDecision { NOT_ATTEMPTED, ACCEPTED, REJECTED }
+enum class ApplicationDecision { NOT_REQUESTED, APPLIED, BLOCKED }
 
 /** Server-thread-only learner. Resolver ownership is passed in; it is never inferred here. */
 class HipRotationCorrection(
@@ -73,6 +75,17 @@ class HipRotationCorrection(
 	private var lastObservedImuSequence: Long? = null
 	private var lastObservedImuAtNanos: Long? = null
 	val rejections = linkedMapOf<String, Long>()
+	var learningDecision = LearningDecision.NOT_ATTEMPTED
+		private set
+	var learningReason = "not_attempted"
+		private set
+	var applicationDecision = ApplicationDecision.NOT_REQUESTED
+		private set
+	var applicationReason = "not_requested"
+		private set
+	var imuEpochCompatible: Boolean? = null
+		private set
+	private var applicationRequested = false
 	private var epoch: String? = null
 	private var imuEpochKey: String? = null
 	private var activeAssignmentGeneration: Long? = null
@@ -81,6 +94,15 @@ class HipRotationCorrection(
 	private var goodRecoveryPairs = 0
 
 	private fun reject(reason: String) { rejections[reason] = (rejections[reason] ?: 0) + 1 }
+	private fun rejectLearning(reason: String) {
+		reject(reason); learningDecision = LearningDecision.REJECTED; learningReason = reason
+	}
+	private fun blockApplication(reason: String): EffectiveConstraint? {
+		reject(reason)
+		applicationDecision = if (applicationRequested) ApplicationDecision.BLOCKED else ApplicationDecision.NOT_REQUESTED
+		applicationReason = if (applicationRequested) reason else "owner_not_fallback"
+		return null
+	}
 	private fun key(source: String, p: ObservationSampleProvenance) =
 		"$source|${p.sourceEpoch}|${p.calibrationEpoch}|${p.mappingRevision}|${p.space}"
 	private fun invalidate() {
@@ -97,6 +119,9 @@ class HipRotationCorrection(
 	fun update(main: PoseObservation?, imu: PoseObservation?, owner: String?, now: Long,
 		assignmentGeneration: Long, expectedSpace: CoordinateSpace): EffectiveConstraint? {
 		require(now >= 0)
+		learningDecision = LearningDecision.NOT_ATTEMPTED; learningReason = "not_attempted"
+		applicationDecision = ApplicationDecision.NOT_REQUESTED; applicationReason = "not_requested"
+		applicationRequested = imu != null && owner == imu.sourceId
 		val mp = main?.provenance
 		val ip = imu?.provenance
 		val newEpoch = if (main != null && imu != null && mp != null && ip != null)
@@ -111,6 +136,7 @@ class HipRotationCorrection(
 			invalidate(); epoch = newEpoch; imuEpochKey = currentImuKey
 			activeAssignmentGeneration = assignmentGeneration
 		}
+		imuEpochCompatible = currentImuKey?.let { it == imuEpochKey && activeAssignmentGeneration == assignmentGeneration }
 		val mainRotationUsable = main?.rotation != null && main.rotationQuality.usable
 		val modality = when {
 			main?.modality == TrackingModality.FULL && mainRotationUsable && main.position != null && main.positionQuality.usable -> TrackingModality.FULL
@@ -126,30 +152,29 @@ class HipRotationCorrection(
 		if (modality != TrackingModality.FULL) { firstFullAt = null; latestFullAt = null; goodRecoveryPairs = 0 }
 		// Application integrity is checked independently of teacher synchronization.
 		if (expectedSpace != frames.assertedSpace || (ip?.space != null && ip.space != expectedSpace)) {
-			reject("space_mismatch"); return null
+			return blockApplication("space_mismatch")
 		}
-		if (imu == null || ip == null || currentImuKey == null) { reject("provenance_missing"); return null }
-		if (FeedbackExclusion.isOutput(imu.sourceId)) { reject("feedback_excluded"); return null }
+		if (imu == null || ip == null || currentImuKey == null) return blockApplication("provenance_missing")
+		if (FeedbackExclusion.isOutput(imu.sourceId)) return blockApplication("feedback_excluded")
 		if (ip.sampleAtNanos > now || now - ip.sampleAtNanos > tuning.maxImuSampleAgeNanos ||
-			!imu.rotationQuality.usable) { reject("imu_sample_stale"); return null }
+			!imu.rotationQuality.usable) return blockApplication("imu_sample_stale")
 		val imuRotation = imu.correctionRotation
-		if (imuRotation == null || !validUnit(imuRotation)) { reject("imu_rotation_invalid"); return null }
+		if (imuRotation == null || !validUnit(imuRotation)) return blockApplication("imu_rotation_invalid")
 		if (lastObservedImuSequence != null && (ip.sequence < lastObservedImuSequence!! ||
-			(ip.sequence == lastObservedImuSequence && ip.sampleAtNanos != lastObservedImuAtNanos))) {
-			reject("imu_sequence_rollback"); return null
-		}
+			(ip.sequence == lastObservedImuSequence && ip.sampleAtNanos != lastObservedImuAtNanos)))
+			return blockApplication("imu_sequence_rollback")
 		if (lastObservedImuAtNanos != null && ip.sequence > lastObservedImuSequence!! &&
-			ip.sampleAtNanos <= lastObservedImuAtNanos!!) { reject("imu_timestamp_rollback"); return null }
+			ip.sampleAtNanos <= lastObservedImuAtNanos!!) return blockApplication("imu_timestamp_rollback")
 		lastObservedImuSequence = ip.sequence
 		lastObservedImuAtNanos = ip.sampleAtNanos
 
 		// Teacher failures must not discard a ready correction for this healthy IMU.
 		if (modality != TrackingModality.NONE && main != null && FeedbackExclusion.isOutput(main.sourceId)) {
-			reject("feedback_excluded")
+			rejectLearning("feedback_excluded")
 		} else if (modality != TrackingModality.NONE && main != null && mp != null &&
 			(mp.space == null || mp.space == expectedSpace) && !FeedbackExclusion.isOutput(main.sourceId)) {
 			tryLearn(main, mp, imuRotation, ip, now, modality)
-		} else if (modality != TrackingModality.NONE) reject("main_teacher_unavailable")
+		} else if (modality != TrackingModality.NONE) rejectLearning("main_teacher_unavailable")
 		return correctedFallback(imu, ip, owner, currentImuKey)
 	}
 
@@ -157,39 +182,40 @@ class HipRotationCorrection(
 		ip: ObservationSampleProvenance, now: Long, modality: TrackingModality) {
 		val mainRotation = main.correctionRotation
 		if (!main.rotationQuality.usable || mainRotation == null || !validUnit(mainRotation)) {
-			reject("main_rotation_invalid"); return
+			rejectLearning("main_rotation_invalid"); return
 		}
-		if (mp.sampleAtNanos > now) { reject("pair_time_invalid"); return }
+		if (mp.sampleAtNanos > now) { rejectLearning("pair_time_invalid"); return }
 		if (lastObservedMainSequence != null && mp.sequence < lastObservedMainSequence!!) {
-			reject("main_sequence_rollback"); return
+			rejectLearning("main_sequence_rollback"); return
 		}
 		if (lastObservedMainSequence != null && mp.sequence == lastObservedMainSequence &&
 			mp.sampleAtNanos != lastObservedMainAtNanos) {
-			reject("main_timestamp_rollback"); return
+			rejectLearning("main_timestamp_rollback"); return
 		}
 		if (lastObservedMainAtNanos != null && mp.sequence > lastObservedMainSequence!! &&
 			mp.sampleAtNanos <= lastObservedMainAtNanos!!) {
-			reject("main_timestamp_rollback"); return
+			rejectLearning("main_timestamp_rollback"); return
 		}
 		lastObservedMainSequence = mp.sequence
 		lastObservedMainAtNanos = mp.sampleAtNanos
 		if (abs(mp.sampleAtNanos - ip.sampleAtNanos) > tuning.pairWindowNanos) {
-			reject("pair_time_invalid"); return
+			rejectLearning("pair_time_invalid"); return
 		}
-		if (mp.sequence == lastMainSequence || ip.sequence == lastImuSequence) { reject("same_sample"); return }
+		if (mp.sequence == lastMainSequence || ip.sequence == lastImuSequence) { rejectLearning("same_sample"); return }
 		// Application-stage watermark already rejected a rollback of the IMU itself.
 		lastMainSequence = mp.sequence; lastImuSequence = ip.sequence
 		val pairAt = maxOf(mp.sampleAtNanos, ip.sampleAtNanos)
 		val prior = lastPairAtNanos
 		if (prior == null) {
 			lastPairAtNanos = pairAt
+			learningReason = "first_pair"
 			if (modality == TrackingModality.FULL) { firstFullAt = mp.sampleAtNanos; latestFullAt = firstFullAt }
 			return
 		}
 		val dtNanos = pairAt - prior
-		if (dtNanos <= 0) { reject("pair_timestamp_rollback"); return }
+		if (dtNanos <= 0) { rejectLearning("pair_timestamp_rollback"); return }
 		if (dtNanos > tuning.maxDtNanos) {
-			reject("large_dt"); lastPairAtNanos = pairAt
+			rejectLearning("large_dt"); lastPairAtNanos = pairAt
 			firstFullAt = null; latestFullAt = null; goodRecoveryPairs = 0
 			return
 		}
@@ -199,7 +225,7 @@ class HipRotationCorrection(
 		val error = angle(qMain, corrected)
 		residualRadians = error
 		lastPairAtNanos = pairAt
-		if (error > tuning.maxResidualRadians) { reject("residual_outlier"); goodRecoveryPairs = 0; return }
+		if (error > tuning.maxResidualRadians) { rejectLearning("residual_outlier"); goodRecoveryPairs = 0; return }
 		if (modality == TrackingModality.FULL) {
 			if (firstFullAt == null) firstFullAt = mp.sampleAtNanos
 			latestFullAt = mp.sampleAtNanos
@@ -212,6 +238,7 @@ class HipRotationCorrection(
 		val beta = min(alpha, tuning.maxRadiansPerSecond * dt / maxOf(step, 1e-9))
 		correction = correction.interpR(if (correction.dot(target) < 0f) -target else target, beta.toFloat()).unit()
 		lastLearnedAtNanos = pairAt
+		learningDecision = LearningDecision.ACCEPTED; learningReason = "accepted"
 		if (state == RotationCorrectionState.REACQUIRING && firstFullAt != null && latestFullAt!! - firstFullAt!! >= tuning.fullStableNanos) {
 			val remaining = angle(qMain, (correction * qImu).unit())
 			goodRecoveryPairs = if (remaining <= tuning.recoveryResidualRadians) goodRecoveryPairs + 1 else 0
@@ -222,9 +249,12 @@ class HipRotationCorrection(
 	private fun correctedFallback(imu: PoseObservation, provenance: ObservationSampleProvenance,
 		owner: String?, currentImuKey: String?): EffectiveConstraint? {
 		val q = imu.correctionRotation
-		if (!ready || currentImuKey != imuEpochKey || owner != imu.sourceId ||
-			!imu.rotationQuality.usable || q == null || !validUnit(q)) return null
+		if (owner != imu.sourceId) { applicationReason = "owner_not_fallback"; return null }
+		if (!ready) return blockApplication("correction_not_ready")
+		if (currentImuKey != imuEpochKey) return blockApplication("imu_epoch_mismatch")
+		if (!imu.rotationQuality.usable || q == null || !validUnit(q)) return blockApplication("imu_rotation_invalid")
 		val result = (correction * (q * frames.fallbackToBody).unit()).unit()
+		applicationDecision = ApplicationDecision.APPLIED; applicationReason = "applied"
 		return EffectiveConstraint(TrackerPosition.HIP, rotation = ResolvedComponent(result, owner,
 			imu.rotationQuality, provenance.sampleAtNanos))
 	}

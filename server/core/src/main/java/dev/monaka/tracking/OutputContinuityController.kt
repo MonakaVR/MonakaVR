@@ -56,6 +56,7 @@ class OutputContinuityController(
 	var rotationResidual: Float? = null
 		private set
 	private var previousEvent: OutputTransition? = null
+	val lastTransition: OutputTransition? get() = previousEvent
 	private var lossSeen = false
 	private var lastTime = -1L
 	private var fullSince: Long? = null

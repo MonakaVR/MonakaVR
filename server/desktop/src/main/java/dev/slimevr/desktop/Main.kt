@@ -202,6 +202,7 @@ fun main(args: Array<String>) {
 				registerBeforePose = { vrServer.beforePoseUpdate = it },
 				registerAfterPose = { vrServer.afterPoseUpdate = it },
 				onTransition = { LogManager.info("[Monaka][${it.target}] $it") },
+				onDiagnostic = { LogManager.info(it.compactLine()) },
 				configureDirectOutputs = { trackers ->
 					if (trackers.isNotEmpty()) {
 						val bridge = vrServer.getVRBridge { it is SteamVRBridge && it.getBridgeConfigKey() == "steamvr" } as? SteamVRBridge

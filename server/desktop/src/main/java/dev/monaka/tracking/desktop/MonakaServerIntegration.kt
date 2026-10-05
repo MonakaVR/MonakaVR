@@ -19,6 +19,7 @@ class MonakaServerIntegration private constructor(
 	private val tuning: ContinuityTuning,
 	private val onTransition: (OutputTransition) -> Unit,
 	val rotationCorrection: HipRotationCorrection?,
+	private val diagnostics: HybridTrackingDiagnosticRecorder?,
 ) : AutoCloseable {
 	private var closed = false
 	private var transportReported = false
@@ -27,6 +28,12 @@ class MonakaServerIntegration private constructor(
 		OutputContinuityController(target, relation.continuity, tuning, onTransition)
 	}
 	private var pendingPoses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>? = null
+	private var pendingMain: PoseObservation? = null
+	private var pendingImu: PoseObservation? = null
+	private var pendingRawHip: ResolvedTrackingPose? = null
+	private var pendingMainSource: String? = null
+	private var pendingImuSource: String? = null
+	val lastDiagnosticSnapshot: HybridTrackingDiagnosticSnapshot? get() = diagnostics?.latest
 	fun tick() {
 		if (closed) return
 		try {
@@ -41,10 +48,13 @@ class MonakaServerIntegration private constructor(
 			val resolvedRaw = runtime.resolvedTrackingPoses(constraints)
 			val assignment = runtime.assignments.snapshot()
 			val hip = assignment.targets[TrackerPosition.HIP]
-			val observations = if (rotationCorrection == null) emptyMap() else
+			val observations = if (rotationCorrection == null && diagnostics == null) emptyMap() else
 				runtime.pipeline.observations(runtime.lastTickNanos).associateBy { it.sourceId }
 			val main = hip?.mainTracker?.observationId?.let(observations::get)
 			val imu = hip?.rotationFallbackTracker?.observationId?.let(observations::get)
+			pendingMain = main; pendingImu = imu; pendingRawHip = resolvedRaw[TrackerPosition.HIP]
+			pendingMainSource = hip?.mainTracker?.observationId
+			pendingImuSource = hip?.rotationFallbackTracker?.observationId
 			// Raw teacher observations remain separate from Resolver ownership.
 			val corrected = if (skeleton.getPauseTracking()) null else rotationCorrection?.update(main, imu,
 				resolvedRaw[TrackerPosition.HIP]?.rotationOwner, runtime.lastTickNanos, assignment.generation, runtime.expectedSpace)
@@ -77,11 +87,42 @@ class MonakaServerIntegration private constructor(
 				controller.update(poses.getValue(target), background, now, skeleton.getPauseTracking())
 			}
 			directOutput.applyPoses(output, skeleton.getPauseTracking())
+			if (diagnostics != null) {
+				val main = pendingMain; val imu = pendingImu; val raw = pendingRawHip
+				val correction = rotationCorrection; val now = runtime.lastTickNanos
+				val transition = controllers[TrackerPosition.HIP]?.lastTransition
+				val visible = output[TrackerPosition.HIP]
+				val paused = skeleton.getPauseTracking()
+				fun age(sample: PoseObservation?) = sample?.provenance?.sampleAtNanos?.let { now - it }
+				diagnostics.record(HybridTrackingDiagnosticSnapshot(
+					main = raw?.main ?: MainSampleState.from(main), mainSource = pendingMainSource,
+					mainSequence = main?.provenance?.sequence, mainAgeNanos = age(main),
+					imuSource = pendingImuSource, imuProvenanceAvailable = imu?.provenance != null,
+					imuSequence = imu?.provenance?.sequence, imuAgeNanos = age(imu),
+					imuFresh = correction != null && !paused && imu?.rotationQuality?.usable == true,
+					imuRotationUsable = imu?.rotationQuality?.usable == true,
+					imuEpochCompatible = correction?.imuEpochCompatible,
+					resolverPositionOwner = raw?.positionOwner, resolverRotationOwner = raw?.rotationOwner,
+					correctionEnabled = correction != null, correctionState = correction?.state,
+					correctionReady = correction?.ready == true, correctionAgeNanos = correction?.correctionAgeNanos(now),
+					correctionResidualRadians = correction?.residualRadians,
+					learningDecision = if (paused) null else correction?.learningDecision,
+					learningReason = if (paused) "paused" else correction?.learningReason,
+					applicationDecision = if (paused) null else correction?.applicationDecision,
+					applicationReason = if (paused) "paused" else correction?.applicationReason,
+					continuityState = controllers[TrackerPosition.HIP]?.state,
+					backgroundAvailable = transition?.backgroundAvailable,
+					visiblePositionSource = visible?.positionSource, visibleRotationOwner = visible?.rotationOwner,
+					transitionReason = transition?.reason,
+				))
+			}
 		} catch (e: Exception) { close(); onFailure(e) }
 	}
 	override fun close() {
 		if (closed) return
-		closed = true; pendingPoses = null; registerBeforePose(null); registerAfterPose?.invoke(null)
+		closed = true; pendingPoses = null; pendingMain = null; pendingImu = null; pendingRawHip = null
+		pendingMainSource = null; pendingImuSource = null
+		registerBeforePose(null); registerAfterPose?.invoke(null)
 		try { receiver.close() } finally { directOutput.close(); runtime.close(); writeback.close() }
 	}
 	companion object {
@@ -97,6 +138,7 @@ class MonakaServerIntegration private constructor(
 			nextTrackerId: () -> Int = dev.slimevr.VRServer::getNextLocalTrackerId,
 			registerAfterPose: ((Runnable?) -> Unit)? = null,
 			onTransition: (OutputTransition) -> Unit = {},
+			onDiagnostic: (HybridTrackingDiagnosticEvent) -> Unit = {},
 		): MonakaServerIntegration? {
 			if (!enabled) return null
 			val config = configuration()
@@ -112,8 +154,11 @@ class MonakaServerIntegration private constructor(
 			try { configureDirectOutputs(direct.trackers.values.toList()) } catch (e: Exception) {
 				direct.close(); writeback.close(); receiver.close(); runtime.close(); throw e
 			}
+			val diagnosticEnabled = config.rotationCorrection != null ||
+				config.assignments.snapshot().targets.values.any { it.outputMode == OutputMode.HYBRID }
 			return MonakaServerIntegration(runtime, receiver, writeback, direct, skeleton, registerBeforePose, onFailure, registerAfterPose, background,
-				config.continuityTuning, onTransition, config.rotationCorrection?.let { HipRotationCorrection(it.frames, it.tuning) }).also {
+				config.continuityTuning, onTransition, config.rotationCorrection?.let { HipRotationCorrection(it.frames, it.tuning) },
+				if (diagnosticEnabled) HybridTrackingDiagnosticRecorder(onDiagnostic) else null).also {
 				registerBeforePose(Runnable(it::tick))
 				registerAfterPose?.invoke(Runnable(it::finishPoseUpdate))
 			}
