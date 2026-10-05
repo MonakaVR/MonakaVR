@@ -35,11 +35,11 @@ FULL, IMU, NONE, absent and unknown data_source can all carry a structurally com
 
 The Phase 2B-1 explicit SteamVR creation-boundary registration is unchanged: SteamVR origin, remote ID 0, HMD and position/rotation capabilities, not internal, not Monaka output, and FeedbackExclusion. HEAD role alone and unregistered lookalikes are rejected. External SteamVR HMDs with `isComputed=true` remain accepted because this legacy flag does not prove internal solver origin.
 
-Normal messages share one Tracker-object-lifetime source epoch. Object recreation clears both records and starts a new epoch/sequence. Same-object disconnect/reconnect retains the epoch. At the Phase 2B-3 checkpoint, queued messages had no connection identity. [Phase 2B-4a](position-correction-phase2b4a-transport-session-foundation.md) adds separate Windows logical-session handles and queue envelopes, but the HMD DTOs do not consume them yet. **Same-message pairing is not trusted transport-session lifetime.** No Slime reset calibration epoch, HMD universe/recenter identity or CoordinateSpace is inferred.
+Normal messages share one Tracker-object-lifetime source epoch. Object recreation clears both records and starts a new epoch/sequence. Same-object disconnect/reconnect retains the epoch. At the Phase 2B-3 checkpoint, queued messages had no connection identity. [Phase 2B-4a](position-correction-phase2b4a-transport-session-foundation.md) adds separate Windows logical-session handles and queue envelopes. [Phase 2B-4b](position-correction-phase2b4b-hmd-session-integration.md) copies that lineage into both HMD DTOs and adds separate current-session getters. **Same-message pairing is not trusted transport-session lifetime.** No Slime reset calibration epoch, HMD universe/recenter identity or CoordinateSpace is inferred.
 
 ## RawHmdPoseInput remains blocked
 
-The new COMPLETE DTO has `rawPoseInputEligible=false`, with `hmd_space_unverified`, `hmd_frame_epoch_unavailable`, and `hmd_session_epoch_unavailable`. Its pairing gap is resolved, so it does not report `hmd_pose_pairing_unavailable`. Structural defects add their specific reasons. The old position-only DTO retains its existing reasons, including `hmd_pose_pairing_unavailable`: it remains insufficient by itself, while the new API supplies the separate same-message evidence. Phase 2A requirements are not weakened.
+The new COMPLETE DTO has `rawPoseInputEligible=false`, with `hmd_space_unverified` and `hmd_frame_epoch_unavailable`. Following Phase 2B-4b, `hmd_session_epoch_unavailable` is included only for sessionless samples; tagged historical records retain known lineage even when inactive. Its pairing gap is resolved, so it does not report `hmd_pose_pairing_unavailable`. Structural defects add their specific reasons. The old position-only DTO retains its existing reasons, including `hmd_pose_pairing_unavailable`: it remains insufficient by itself, while the new API supplies the separate same-message evidence. Phase 2A requirements are not weakened.
 
 Status at this checkpoint:
 
@@ -49,7 +49,7 @@ Status at this checkpoint:
 | Same-message position/orientation envelope | Established for structurally COMPLETE samples |
 | Trusted source object lifetime | Established |
 | Windows logical transport-session infrastructure | ESTABLISHED by Phase 2B-4a |
-| HMD sample transport-session integration/current filtering | NOT IMPLEMENTED |
+| HMD sample transport-session integration/current filtering | Established by Phase 2B-4b when the envelope carries a Windows logical session; Unix remains sessionless |
 | Exact HMD CoordinateSpace / frame-calibration epoch | BLOCKED |
 | Runtime-clock mapping / freshness consumer | NOT IMPLEMENTED |
 | RawHmdPoseInput runtime-ready | NO |

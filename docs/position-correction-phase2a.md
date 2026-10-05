@@ -6,6 +6,8 @@ Phase 2A defines a **boundary only**. It adds no HIP predictor algorithm, positi
 
 [Phase 2B-3](position-correction-phase2b3-hmd-pose-pairing.md) adds a trusted same-decoded-message position/orientation envelope. RawHmdPoseInput remains runtime-blocked by exact space/frame/session provenance and runtime time mapping; no predictor seam is added.
 
+[Phase 2B-4b](position-correction-phase2b4b-hmd-session-integration.md) retains separate Tracker-object and Windows transport-session epochs in trusted HMD samples and filters current candidates by active session. Unix remains sessionless. RawHmdPoseInput remains blocked by exact coordinate-space/frame provenance and runtime time requirements; its contract is unchanged.
+
 ## Why the boundary is separate
 
 The current computed HIP is downstream of `ConstraintIkWriteback`: Main FULL position can enter `HumanSkeleton` and then the same computed HIP. Learning `p_main - p_computedHip` and feeding that error back into the solver would create a circular, potentially double-applied correction. `BackgroundIkPoseReader` reads that post-IK tracker; `OutputPose` is still farther downstream. None is a position-correction teacher. `HipRotationCorrection` uses raw assigned observations, but its corrected IMU orientation contains Main-derived information and is not automatically a Main-decoupled position input.

@@ -1,6 +1,6 @@
 # Phase 2B-4a: logical inbound transport sessions
 
-This phase establishes transport-session infrastructure and enqueue-time message lineage only. HMD accepted-position and pose-message DTOs do not consume the handle yet; `hmd_session_epoch_unavailable` remains. No HMD filtering, runtime factory, space/frame proof, time mapping/freshness, predictor or Position Correction runtime is added. Hardware/HIL: **NOT RUN**.
+This phase establishes transport-session infrastructure and enqueue-time message lineage only. At the Phase 2B-4a checkpoint, HMD accepted-position and pose-message DTOs did not consume the handle; `hmd_session_epoch_unavailable` remained. [Phase 2B-4b](position-correction-phase2b4b-hmd-session-integration.md) subsequently integrates historical HMD session lineage and current filtering for session-aware Windows ingress. Unix remains sessionless. No runtime factory, space/frame proof, time mapping/freshness, predictor or Position Correction runtime is added. Hardware/HIL: **NOT RUN**.
 
 ## Previous STOP and reusable connections
 
@@ -67,7 +67,7 @@ Status:
 | Windows logical transport-session infrastructure | ESTABLISHED |
 | Windows enqueue-time session lineage to position processing | ESTABLISHED |
 | Unix transport-session infrastructure | NOT IMPLEMENTED; null context preserved |
-| HMD accepted sample session integration/current filtering | NOT IMPLEMENTED (Phase 2B-4b) |
+| HMD accepted sample session integration/current filtering | ESTABLISHED for session-aware Windows ingress by Phase 2B-4b; Unix remains sessionless |
 | Exact HMD CoordinateSpace/frame/recenter/calibration identity | BLOCKED |
 | Runtime clock mapping/freshness | NOT IMPLEMENTED |
 | RawHmdPoseInput runtime-ready | NO |
