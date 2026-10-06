@@ -28,13 +28,13 @@ class TrustedHmdPositionProvenanceTests {
 			velocity?.let { setVx(it.x); setVy(it.y); setVz(it.z) }
 		}.build()
 
-	@Test fun acceptedPayloadsUseLocalReceiptTimeAndIdenticalXyzStillAdvanceSequence() {
+	@Test fun acceptedPayloadsPreserveLocalIngressTimeAndIdenticalXyzStillAdvanceSequence() {
 		var now = 100L
 		val bridge = Capture { now }; val hmd = tracker(); bridge.install(hmd)
 		assertNull(bridge.acceptedHmdPositionSample())
 		bridge.enqueue(position()); now = 110; bridge.dataRead()
 		val first = assertNotNull(bridge.acceptedHmdPositionSample())
-		assertEquals(1, first.sequence); assertEquals(110, first.receivedAtSystemNanos)
+		assertEquals(1, first.sequence); assertEquals(100, first.receivedAtSystemNanos)
 		assertEquals(hmd.position, first.position)
 		for ((index, receipt) in listOf(120L, 120L, 150L).withIndex()) {
 			now = receipt; bridge.accept(position())
@@ -258,14 +258,14 @@ class TrustedHmdPositionProvenanceTests {
 		assertEquals(HmdPoseMessagePairingStatus.COMPLETE, pose.pairingStatus)
 	}
 
-	@Test fun acceptanceCapturesOneReceiptClockAndKeepsOrientationCounterIndependent() {
+	@Test fun ingressCapturesOneClockPerMessageAndKeepsPoseAndOrientationCountersIndependent() {
 		var calls = 0; val bridge = Capture { (++calls).toLong() }; val hmd = tracker(); bridge.install(hmd)
 		val before = hmd.correctionOrientationSample()?.sequence ?: 0L
-		bridge.accept(position(xyz = null)) // Existing setRotation still runs, position clock does not.
-		assertEquals(0, calls); assertNull(bridge.acceptedHmdPoseMessageSample())
+		bridge.accept(position(xyz = null)) // Ingress clock runs once; no accepted position sample.
+		assertEquals(1, calls); assertNull(bridge.acceptedHmdPoseMessageSample())
 		repeat(3) { index ->
 			bridge.accept(position()); val pose = bridge.acceptedHmdPoseMessageSample()!!
-			assertEquals(index + 1, calls); assertEquals(index + 1L, pose.sequence)
+			assertEquals(index + 2, calls); assertEquals(index + 1L, pose.sequence)
 			assertEquals(calls.toLong(), pose.receivedAtSystemNanos)
 			assertEquals(pose.receivedAtSystemNanos, bridge.acceptedHmdPositionSample()!!.receivedAtSystemNanos)
 			assertEquals(before + index + 2L, hmd.correctionOrientationSample()!!.sequence)

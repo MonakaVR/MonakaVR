@@ -17,6 +17,7 @@ import java.util.UUID
 data class HmdAcceptedPositionSample internal constructor(
 	val position: Vector3,
 	val sequence: Long,
+	/** Preserved host monotonic decoded-message ingress time, not device acquisition time. */
 	val receivedAtSystemNanos: Long,
 	val sourceEpoch: String,
 	val ingressIdentity: RawSourceIdentity,
@@ -42,6 +43,7 @@ data class HmdAcceptedPoseMessageSample internal constructor(
 	val positionPresence: PositionComponentPresence,
 	val orientation: Quaternion,
 	val sequence: Long,
+	/** Preserved host monotonic decoded-message ingress time, not device acquisition time. */
 	val receivedAtSystemNanos: Long,
 	val sourceEpoch: String,
 	val ingressIdentity: RawSourceIdentity,
@@ -81,7 +83,6 @@ data class HmdAcceptedPoseMessageSample internal constructor(
  */
 internal class TrustedRawHmdPositionSource(
 	private val bridgeIdentity: String,
-	private val receiptClock: () -> Long = System::nanoTime,
 ) {
 	// Generic ingress proves receipt/pairing/session, never an authoritative pose-level HMD frame.
 	val rawHmdPoseInputCapability: RawHmdPoseInputCapability = RawHmdPoseInputCapability.Unavailable(
@@ -115,15 +116,21 @@ internal class TrustedRawHmdPositionSource(
 	fun positionMessageAccepted(
 		tracker: Tracker, position: Vector3, message: Position, modality: TrackingModality,
 		transportSessionEpoch: String?, isCurrentTransportSession: Boolean,
+		receivedAtSystemNanos: Long?,
 	) {
 		if (registeredTracker !== tracker) return
+		// Missing ingress metadata cannot be repaired with processing time or an older candidate.
+		if (receivedAtSystemNanos == null) {
+			if (isCurrentTransportSession) currentSessionLatest = null
+			return
+		}
 		// Handles guarantee nonblank epochs. Unexpected invalid metadata must not throw into tracking.
 		if (transportSessionEpoch != null && transportSessionEpoch.isBlank()) {
 			currentSessionLatest = null
 			return
 		}
 		val accepted = HmdAcceptedPositionSample(Vector3(position.x, position.y, position.z), ++sequence,
-			receiptClock(), requireNotNull(epoch), requireNotNull(identity), transportSessionEpoch)
+			receivedAtSystemNanos, requireNotNull(epoch), requireNotNull(identity), transportSessionEpoch)
 		// Copy Q directly from this message, never Tracker rotation or its independent sequence.
 		val pose = HmdAcceptedPoseMessageSample(
 			accepted.position, PositionComponentPresence(message.hasX(), message.hasY(), message.hasZ()),

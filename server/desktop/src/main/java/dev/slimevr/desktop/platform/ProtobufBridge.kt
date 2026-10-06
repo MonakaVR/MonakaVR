@@ -26,7 +26,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@JvmField protected val bridgeName: String,
 	private val hmdPositionReceiptClock: () -> Long = System::nanoTime,
 ) : ISteamVRBridge {
-	private val rawHmdPositions = dev.monaka.tracking.desktop.TrustedRawHmdPositionSource(bridgeName, hmdPositionReceiptClock)
+	private val rawHmdPositions = dev.monaka.tracking.desktop.TrustedRawHmdPositionSource(bridgeName)
 
 	/** Creation-boundary registration, not classification by HEAD role or isComputed alone. */
 	@VRServerThread
@@ -117,7 +117,9 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@BridgeThread
 	@JvmOverloads
 	protected fun messageReceived(message: ProtobufMessage, transportSession: TransportSessionHandle? = null) {
-		inputQueue.add(InboundProtobufEnvelope(message, transportSession))
+		// First decoded-message ingress, before any queue wait or VRServer-side processing.
+		val receivedAtSystemNanos = hmdPositionReceiptClock()
+		inputQueue.add(InboundProtobufEnvelope(message, transportSession, receivedAtSystemNanos))
 	}
 
 	@ThreadSafe
@@ -145,7 +147,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 		var envelope: InboundProtobufEnvelope?
 		while ((inputQueue.poll().also { envelope = it }) != null) {
 			val accepted = envelope!!
-			processMessageReceived(accepted.message, accepted.transportSession)
+			processMessageReceived(accepted.message, accepted.transportSession, accepted.receivedAtSystemNanos)
 			hadNewData = true
 		}
 	}
@@ -235,11 +237,14 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 
 	@VRServerThread
 	@JvmOverloads
-	protected open fun processMessageReceived(message: ProtobufMessage?, transportSession: TransportSessionHandle? = null) {
+	protected open fun processMessageReceived(
+		message: ProtobufMessage?, transportSession: TransportSessionHandle? = null,
+		receivedAtSystemNanos: Long? = null,
+	) {
 		// if(!message.hasPosition())
 		// LogManager.log.info("[" + bridgeName + "] MSG: " + message);
 		if (message!!.hasPosition()) {
-			positionReceived(message.position, transportSession)
+			positionReceived(message.position, transportSession, receivedAtSystemNanos)
 		} else if (message.hasUserAction()) {
 			userActionReceived(message.userAction)
 		} else if (message.hasTrackerStatus()) {
@@ -255,7 +260,10 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 
 	@VRServerThread
 	@JvmOverloads
-	protected open fun positionReceived(positionMessage: ProtobufMessages.Position, transportSession: TransportSessionHandle? = null) {
+	protected open fun positionReceived(
+		positionMessage: ProtobufMessages.Position, transportSession: TransportSessionHandle? = null,
+		receivedAtSystemNanos: Long? = null,
+	) {
 		val tracker = getInternalRemoteTrackerById(positionMessage.trackerId)
 		if (tracker != null) {
 			val modality = when (positionMessage.dataSource) {
@@ -274,6 +282,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 				val isCurrentSession = transportSession != null && transportSession == currentInboundTransportSession()
 				rawHmdPositions.positionMessageAccepted(
 					tracker, acceptedPosition, positionMessage, modality, transportSession?.epoch, isCurrentSession,
+					receivedAtSystemNanos,
 				)
 			}
 
