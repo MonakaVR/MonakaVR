@@ -63,6 +63,7 @@ def main():
     for name in ("MonakaHmdFrameProbe.hpp", "MonakaHmdFrameProbeDriver.hpp"):
         shutil.copy2(ROOT / "native/direct-driver" / name, output / "src" / name)
     shutil.copy2(ROOT / "native/direct-driver/frame_probe_test.cpp", output / "frame_probe_test.cpp")
+    shutil.copy2(ROOT / "native/direct-driver/pose_frame_binding_test.cpp", output / "pose_frame_binding_test.cpp")
     tracker = output / "src/TrackerDevice.cpp"
     replace(tracker, '#include "TrackerDevice.hpp"', '#include "TrackerDevice.hpp"\n#include "MonakaDirectPose.hpp"')
     replace(tracker, ', last_pose_atomic_(MakeDefaultPose()) { }',
@@ -88,11 +89,17 @@ def main():
             '    if (monaka::ProbeEnvironmentEnabled("MONAKA_HMD_FRAME_PROBE")) {\n'
             '        try {\n'
             '            hmd_frame_probe_ = std::make_unique<monaka::HmdFrameProbeDiagnostics>(\n'
-            '                monaka::NewProbeOwner(), monaka::ProbeEnvironmentEnabled("MONAKA_HMD_FRAME_PROBE_POSES"));\n'
+            '                monaka::NewProbeOwner(), monaka::ProbeEnvironmentEnabled("MONAKA_HMD_FRAME_PROBE_POSES"),\n'
+            '                monaka::ProbeEnvironmentEnabled("MONAKA_HMD_FRAME_PROBE_BINDINGS"));\n'
             '        } catch (const std::exception& e) {\n'
             '            logger_->Log("MONAKA_FRAME_PROBE_V1 disabled: initialization failed: {}", e.what());\n'
             '        }\n'
             '    }')
+    replace(driver, '        vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.0f, poses, std::size(poses));',
+            '        vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.0f, poses, std::size(poses));\n'
+            '        // Iteration-local software marker, not an acquisition timestamp or frame epoch.\n'
+            '        std::optional<monaka::HmdRawPoseCaptureMarker> hmd_capture;\n'
+            '        if (hmd_frame_probe_) hmd_capture.emplace(hmd_frame_probe_->CaptureRawPose());')
     replace(driver, '        vr::ETrackedPropertyError universe_error;',
             '        monaka::FrameProbeObservation hmd_probe_input;\n'
             '        bool hmd_probe_position_observed = false;\n'
@@ -119,6 +126,13 @@ def main():
             '                    trans.translation.v[0], trans.translation.v[1], trans.translation.v[2], trans.yaw};\n'
             '            }\n'
             '        }')
+    replace(driver, '                vr::HmdVector3_t pos = GetPosition(pose.mDeviceToAbsoluteTracking);',
+            '                vr::HmdVector3_t pos = GetPosition(pose.mDeviceToAbsoluteTracking);\n'
+            '                std::optional<monaka::HmdDiagnosticPose> hmd_raw_diagnostic;\n'
+            '                if (hmd_frame_probe_ && index == vr::k_unTrackedDeviceIndex_Hmd) {\n'
+            '                    hmd_raw_diagnostic.emplace(monaka::HmdDiagnosticPose{\n'
+            '                        pos.v[0], pos.v[1], pos.v[2], (float)q.x, (float)q.y, (float)q.z, (float)q.w});\n'
+            '                }')
     replace(driver, '                    auto trans = current_universe_.value().second;',
             '                    auto trans = current_universe_.value().second;\n'
             '                    if (hmd_frame_probe_ && index == vr::k_unTrackedDeviceIndex_Hmd) {\n'
@@ -127,13 +141,23 @@ def main():
             '                        hmd_probe_input.appliedTransform = monaka::AppliedUniverseTransform{\n'
             '                            trans.translation.v[0], trans.translation.v[1], trans.translation.v[2], trans.yaw};\n'
             '                    }')
-    replace(driver, '                position->set_qw((float)q.w);\n                bridge_->SendBridgeMessage(*message);',
-            '                position->set_qw((float)q.w);\n'
+    # Keep every expression/cast in the same order; diagnostics and setters share these exact floats.
+    for field, expression in (("x", "pos.v[0]"), ("y", "pos.v[1]"), ("z", "pos.v[2]"),
+                              ("qx", "(float)q.x"), ("qy", "(float)q.y"), ("qz", "(float)q.z"), ("qw", "(float)q.w")):
+        replace(driver, f'                position->set_{field}({expression});',
+                f'                const float wire_{field} = {expression};\n'
+                f'                position->set_{field}(wire_{field});')
+    replace(driver, '                position->set_qw(wire_qw);\n                bridge_->SendBridgeMessage(*message);',
+            '                position->set_qw(wire_qw);\n'
             '                if (hmd_frame_probe_ && index == vr::k_unTrackedDeviceIndex_Hmd) {\n'
-            '                    hmd_frame_probe_->ObservePose(hmd_probe_input, true, *logger_);\n'
+            '                    hmd_frame_probe_->BindAndSend(*hmd_capture, hmd_probe_input, *hmd_raw_diagnostic,\n'
+            '                        monaka::HmdDiagnosticPose{wire_x, wire_y, wire_z, wire_qx, wire_qy, wire_qz, wire_qw},\n'
+            '                        static_cast<int32_t>(position->data_source()), *logger_,\n'
+            '                        [&] { bridge_->SendBridgeMessage(*message); });\n'
             '                    hmd_probe_position_observed = true;\n'
-            '                }\n'
-            '                bridge_->SendBridgeMessage(*message);')
+            '                } else {\n'
+            '                    bridge_->SendBridgeMessage(*message);\n'
+            '                }')
     replace(driver, '        arena_.Reset();\n\n        std::this_thread::sleep_for(std::chrono::milliseconds(2));',
             '        if (hmd_frame_probe_ && !hmd_probe_position_observed) {\n'
             '            // Availability is observed even when the existing path sends no HMD Position.\n'
@@ -161,6 +185,11 @@ def main():
                 'target_include_directories(monaka_hmd_frame_probe_test PRIVATE ${DEPS_INCLUDES})\n'
                 'set_target_properties(monaka_hmd_frame_probe_test PROPERTIES CXX_STANDARD 20)\n'
                 'add_test(NAME monaka_hmd_frame_probe COMMAND monaka_hmd_frame_probe_test)\n')
+        f.write('\nadd_executable(monaka_hmd_pose_binding_test pose_frame_binding_test.cpp)\n'
+                'target_link_libraries(monaka_hmd_pose_binding_test PRIVATE SlimeVR-OpenVR-Driver_static)\n'
+                'set_target_properties(monaka_hmd_pose_binding_test PROPERTIES CXX_STANDARD 20)\n'
+                'add_test(NAME monaka_hmd_pose_binding COMMAND monaka_hmd_pose_binding_test)\n'
+                'set_tests_properties(monaka_hmd_pose_binding PROPERTIES TIMEOUT 30)\n')
     (output / "monaka-overlay.json").write_text(json.dumps({"upstream_commit": PIN, "submodules": modules}, indent=2), encoding="utf-8")
     print(f"PASS prepared Direct driver overlay: {output}")
 

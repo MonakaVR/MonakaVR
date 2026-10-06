@@ -104,12 +104,73 @@ inline std::string FormatProbeDiagnostic(const HmdFrameObservation& s, bool pose
         poseAssociation ? std::to_string(s.observationSequence) : "unavailable");
 }
 
+inline const char* BindingAssessmentName(PoseBindingAssessment value) {
+    switch (value) {
+    case PoseBindingAssessment::NO_OBSERVED_BOUNDARY_SINCE_CAPTURE: return "NO_OBSERVED_BOUNDARY_SINCE_CAPTURE";
+    case PoseBindingAssessment::OBSERVED_BOUNDARY_SINCE_CAPTURE: return "OBSERVED_BOUNDARY_SINCE_CAPTURE";
+    case PoseBindingAssessment::CAPTURE_OWNER_MISMATCH: return "CAPTURE_OWNER_MISMATCH";
+    case PoseBindingAssessment::FRAME_OBSERVATION_UNAVAILABLE: return "FRAME_OBSERVATION_UNAVAILABLE";
+    case PoseBindingAssessment::CAPTURE_MARKER_REUSED_OR_STALE: return "CAPTURE_MARKER_REUSED_OR_STALE";
+    }
+    return "FRAME_OBSERVATION_UNAVAILABLE";
+}
+inline std::string PosePositionBits(const HmdDiagnosticPose& p) {
+    return std::format("{:08x},{:08x},{:08x}", std::bit_cast<uint32_t>(p.px),
+        std::bit_cast<uint32_t>(p.py), std::bit_cast<uint32_t>(p.pz));
+}
+inline std::string PoseQuaternionBits(const HmdDiagnosticPose& p) {
+    return std::format("{:08x},{:08x},{:08x},{:08x}", std::bit_cast<uint32_t>(p.qx),
+        std::bit_cast<uint32_t>(p.qy), std::bit_cast<uint32_t>(p.qz), std::bit_cast<uint32_t>(p.qw));
+}
+inline std::string FormatBindingDiagnostic(const HmdObservedPoseFrameBinding& b) {
+    const auto& s = b.bound;
+    return std::format("MONAKA_FRAME_PROBE_V1 kind=pose_binding owner={} capture_owner={} capture_ordinal={} "
+        "capture_observation_seq={} capture_boundary={} bind_observation_seq={} bind_boundary={} "
+        "owner_match={} capture_usable={} observed_boundary_since_capture={} boundary_during_bind={} "
+        "binding_assessment={} signal={} proof={} universe={} applied_cache_universe={} applied_f32_bits={} "
+        "lookup={} tracking_valid={} connected={} tracking_result={} universe_changed={} transform_changed={} "
+        "boundary_signal={} raw_pos_f32_bits={} raw_q_f32_bits={} wire_pos_f32_bits={} wire_q_f32_bits={} "
+        "data_source={} interval_last_boundary_seq={} interval_last_boundary_signal={} "
+        "interval_last_universe_changed={} interval_last_transform_changed={} interval_last_boundary_signal_observed={} coverage_incomplete=1",
+        s.observerOwner, b.capture.observerOwner, b.capture.captureOrdinal, b.capture.observationSequence,
+        b.capture.detectedBoundaryGeneration, s.observationSequence, s.detectedBoundaryGeneration,
+        b.ownerMatches, b.captureUsable,
+        b.observedBoundarySinceCapture ? (*b.observedBoundarySinceCapture ? "true" : "false") : "unavailable",
+        b.boundaryDuringBind, BindingAssessmentName(b.assessment), SignalName(s.lastSignal), ProofName(s.proofState),
+        ProbeId(s.values.universeId), ProbeId(s.values.appliedCacheUniverseId), ProbeTransform(s.values.appliedTransform),
+        LookupName(s.values.lookup), s.values.trackingPoseValid, s.values.deviceConnected, s.values.trackingResult,
+        s.universeChanged, s.transformChanged, s.boundarySignalObserved, PosePositionBits(b.rawPose),
+        PoseQuaternionBits(b.rawPose), PosePositionBits(b.wirePose), PoseQuaternionBits(b.wirePose), b.dataSource,
+        b.lastObservedBoundarySinceCapture ? std::to_string(b.lastObservedBoundarySinceCapture->observationSequence) : "unavailable",
+        b.lastObservedBoundarySinceCapture ? SignalName(b.lastObservedBoundarySinceCapture->lastSignal) : "unavailable",
+        b.lastObservedBoundarySinceCapture ? (b.lastObservedBoundarySinceCapture->universeChanged ? "true" : "false") : "unavailable",
+        b.lastObservedBoundarySinceCapture ? (b.lastObservedBoundarySinceCapture->transformChanged ? "true" : "false") : "unavailable",
+        b.lastObservedBoundarySinceCapture ? (b.lastObservedBoundarySinceCapture->boundarySignalObserved ? "true" : "false") : "unavailable");
+}
+
 // The observer and state logger are serialized across RunFrame and the pose thread.
 // No queue, second event pump, runtime query, file I/O or transport callback is added.
 class HmdFrameProbeDiagnostics {
 public:
-    explicit HmdFrameProbeDiagnostics(std::string owner, bool poseLogs)
-        : probe_(std::move(owner)), poseLogs_(poseLogs) {}
+    explicit HmdFrameProbeDiagnostics(std::string owner, bool poseLogs, bool bindingLogs = false)
+        : probe_(std::move(owner)), poseLogs_(poseLogs), bindingLogs_(bindingLogs) {}
+    HmdRawPoseCaptureMarker CaptureRawPose() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return probe_.CaptureRawPose();
+    }
+    // Callback is the original send invocation. It must not re-enter this adapter.
+    // The pinned bridge queues bytes/signals its worker; it never waits for RunFrame.
+    template<class Send>
+    HmdObservedPoseFrameBinding BindAndSend(const HmdRawPoseCaptureMarker& capture,
+        const FrameProbeObservation& input, const HmdDiagnosticPose& raw,
+        const HmdDiagnosticPose& wire, int32_t dataSource, Logger& logger, Send&& send) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        const auto binding = probe_.BindPose(capture, input, raw, wire, dataSource);
+        LogPose(binding.bound, true, logger);
+        if (bindingLogs_) logger.Log("{}", FormatBindingDiagnostic(binding));
+        std::forward<Send>(send)(); // Exactly once even if diagnostic assessment is unavailable/mismatched.
+        return binding;
+    }
     void ObserveEvent(uint32_t event, Logger& logger) {
         const auto signal = FrameSignalForOpenVrEvent(event);
         if (!signal) return;
@@ -119,6 +180,12 @@ public:
     void ObservePose(const FrameProbeObservation& input, bool sendingPosition, Logger& logger) {
         std::lock_guard<std::mutex> lock(mutex_);
         const auto snapshot = probe_.Observe(input);
+        LogPose(snapshot, sendingPosition, logger);
+    }
+private:
+    // Allows a standalone test to prove failed lock acquisition without timing/sleeps.
+    friend struct HmdFrameProbeDiagnosticsTestAccess;
+    void LogPose(const HmdFrameObservation& snapshot, bool sendingPosition, Logger& logger) {
         LogState(snapshot, logger, false);
         if (poseLogs_ && sendingPosition) {
             const auto now = std::chrono::steady_clock::now();
@@ -128,7 +195,6 @@ public:
             }
         }
     }
-private:
     void LogState(const HmdFrameObservation& s, Logger& logger, bool event) {
         if (event || !lastLogged_ || s.detectedBoundaryGeneration != lastLogged_->detectedBoundaryGeneration ||
             s.proofState != lastLogged_->proofState || s.values.lookup != lastLogged_->values.lookup ||
@@ -145,6 +211,7 @@ private:
     std::mutex mutex_;
     MonakaHmdFrameProbe probe_;
     const bool poseLogs_;
+    const bool bindingLogs_;
     std::optional<HmdFrameObservation> lastLogged_;
     std::optional<std::chrono::steady_clock::time_point> lastPoseLog_;
 };
