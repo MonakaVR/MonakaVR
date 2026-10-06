@@ -1,6 +1,8 @@
 package dev.slimevr.desktop.platform
 
 import dev.slimevr.VRServer.Companion.instance
+import dev.monaka.tracking.desktop.RawHmdPoseInputCapability
+import dev.monaka.tracking.desktop.admitRawHmdPoseInput
 import dev.slimevr.bridge.BridgeThread
 import dev.slimevr.bridge.ISteamVRBridge
 import dev.slimevr.desktop.platform.ProtobufMessages.*
@@ -22,7 +24,7 @@ import kotlin.collections.HashMap
 
 abstract class ProtobufBridge @JvmOverloads constructor(
 	@JvmField protected val bridgeName: String,
-	hmdPositionReceiptClock: () -> Long = System::nanoTime,
+	private val hmdPositionReceiptClock: () -> Long = System::nanoTime,
 ) : ISteamVRBridge {
 	private val rawHmdPositions = dev.monaka.tracking.desktop.TrustedRawHmdPositionSource(bridgeName, hmdPositionReceiptClock)
 
@@ -37,6 +39,20 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	/** Active-session acceptance candidate only; does not establish structural usability or freshness. */
 	fun acceptedCurrentSessionHmdPositionSample() = currentSessionHmdSample(rawHmdPositions::currentPositionSnapshot)
 	fun acceptedCurrentSessionHmdPoseMessageSample() = currentSessionHmdSample(rawHmdPositions::currentPoseMessageSnapshot)
+
+	/** Generic production ingress has no authoritative frame reference. No operator override. */
+	fun rawHmdPoseInputCapability(): RawHmdPoseInputCapability = rawHmdPositions.rawHmdPoseInputCapability
+
+	/** Complete read-side trust gate. Admission is not a lease against a later disconnect. */
+	@VRServerThread
+	fun currentRawHmdPoseAdmission() = admitCurrentRawHmdPoseInput(rawHmdPoseInputCapability())
+
+	/** Future internal evidence producer seam; Ready must be scoped to one exact accepted pose. */
+	@VRServerThread
+	internal fun admitCurrentRawHmdPoseInput(capability: RawHmdPoseInputCapability) = admitRawHmdPoseInput(
+		capability, ::currentInboundTransportSession, rawHmdPositions::currentPoseMessageSnapshot,
+		hmdPositionReceiptClock,
+	)
 
 	private fun <T> currentSessionHmdSample(read: (String) -> T?): T? {
 		val before = currentInboundTransportSession() ?: return null

@@ -27,7 +27,12 @@ data class RawSourceIdentity(
 	fun isRawBackend() = !excluded && kind == RawSourceKind.RAW_BACKEND && !isComputed && !isHmd
 }
 
-/** These are copied values, never a mutable Tracker, HumanSkeleton or computed pose reference. */
+/**
+ * Structural value contract, not proof of trusted desktop ingress admission.
+ * Production desktop generation must use ProtobufBridge.currentRawHmdPoseAdmission(); direct
+ * construction in core fixtures cannot establish frame/session/receipt-freshness evidence.
+ * Values never reference a mutable Tracker, HumanSkeleton or computed pose.
+ */
 data class RawHmdPoseInput(
 	val source: RawSourceIdentity,
 	val position: Vector3,

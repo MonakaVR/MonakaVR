@@ -122,11 +122,11 @@ class InboundTransportSessionTests {
 		assertNotEquals(a.epoch, b.epoch); assertEquals(first.sourceEpoch, next.sourceEpoch)
 		assertEquals(first.ingressIdentity, next.ingressIdentity)
 		assertEquals(100, next.receivedAtSystemNanos); assertEquals(first.sequence + 1, next.sequence)
-		assertFalse(next.rawPoseInputEligible)
+		assertIs<RawHmdPoseInputCapability.Unavailable>(bridge.rawHmdPoseInputCapability())
 		assertEquals(b.epoch, next.transportSessionEpoch)
 		assertSame(next, bridge.acceptedCurrentSessionHmdPoseMessageSample())
-		assertFalse("hmd_session_epoch_unavailable" in next.rawPoseInputRejectionReasons)
-		assertEquals(setOf("hmd_space_unverified", "hmd_frame_epoch_unavailable"), next.rawPoseInputRejectionReasons)
+		assertFalse("hmd_session_epoch_unavailable" in next.rawPoseMetadataLimitations)
+		assertEquals(setOf("hmd_space_unverified", "hmd_frame_epoch_unavailable"), next.rawPoseMetadataLimitations)
 	}
 
 	@Test fun oneAcceptanceSharesAllMetadataAcrossHistoricalAndCurrentPositionAndPose() {
@@ -145,7 +145,7 @@ class InboundTransportSessionTests {
 		assertSame(position, bridge.acceptedCurrentSessionHmdPositionSample())
 		assertSame(paired, bridge.acceptedCurrentSessionHmdPoseMessageSample())
 		assertEquals(HmdPoseMessagePairingStatus.COMPLETE, paired.pairingStatus)
-		assertTrue("hmd_pose_pairing_unavailable" in position.rawPoseInputRejectionReasons)
+		assertTrue("hmd_pose_pairing_unavailable" in position.rawPoseMetadataLimitations)
 	}
 
 	@Test fun disconnectAndReconnectBeforeFirstPosePreserveHistoryButExposeNoCurrentCandidate() {
@@ -181,7 +181,7 @@ class InboundTransportSessionTests {
 		assertEquals(Vector3(3f, 2f, 3f), bridge.hmd.position)
 		val sessionless = bridge.acceptedHmdPoseMessageSample()!!
 		assertNull(sessionless.transportSessionEpoch)
-		assertTrue("hmd_session_epoch_unavailable" in sessionless.rawPoseInputRejectionReasons)
+		assertTrue("hmd_session_epoch_unavailable" in sessionless.rawPoseMetadataLimitations)
 		assertEquals(bPose.sequence + 2, sessionless.sequence)
 		assertEquals(rotationSequence + 2, bridge.hmd.correctionOrientationSample()!!.sequence)
 		bridge.enqueue(ProtobufMessage.newBuilder().setBattery(Battery.newBuilder().setTrackerId(0).setBatteryLevel(50f)).build(), b)
@@ -204,7 +204,7 @@ class InboundTransportSessionTests {
 		bridge.enqueue(pose(1f), a); bridge.close(a); val b = bridge.open(); bridge.dataRead()
 		assertEquals(a.epoch, bridge.acceptedHmdPoseMessageSample()!!.transportSessionEpoch)
 		assertNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
-		assertFalse("hmd_session_epoch_unavailable" in bridge.acceptedHmdPoseMessageSample()!!.rawPoseInputRejectionReasons)
+		assertFalse("hmd_session_epoch_unavailable" in bridge.acceptedHmdPoseMessageSample()!!.rawPoseMetadataLimitations)
 		bridge.enqueueWithoutSession(pose(2f)); bridge.dataRead()
 		assertNull(bridge.acceptedHmdPositionSample()!!.transportSessionEpoch)
 		assertNull(bridge.acceptedCurrentSessionHmdPositionSample())
@@ -238,8 +238,8 @@ class InboundTransportSessionTests {
 			assertEquals(a.epoch, sample.transportSessionEpoch)
 			assertTrue(reason in sample.structuralRejectionReasons)
 			assertNotEquals(HmdPoseMessagePairingStatus.COMPLETE, sample.pairingStatus)
-			assertFalse("hmd_session_epoch_unavailable" in sample.rawPoseInputRejectionReasons)
-			assertFalse(sample.rawPoseInputEligible)
+			assertFalse("hmd_session_epoch_unavailable" in sample.rawPoseMetadataLimitations)
+			assertIs<RawHmdPoseInputCapability.Unavailable>(bridge.rawHmdPoseInputCapability())
 			assertEquals(message.x.toRawBits(), bridge.hmd.position.x.toRawBits())
 		}
 	}
