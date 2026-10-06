@@ -23,9 +23,8 @@ data class HmdAcceptedPositionSample internal constructor(
 	val transportSessionEpoch: String? = null,
 ) {
 	init { require(transportSessionEpoch == null || transportSessionEpoch.isNotBlank()) }
-	// Receipt provenance alone cannot prove the HMD world frame or a paired orientation sample.
-	val rawPoseInputEligible: Boolean get() = false
-	val rawPoseInputRejectionReasons: Set<String> get() = setOf(
+	// Context-free metadata gaps only. Eligibility belongs to currentRawHmdPoseAdmission().
+	val rawPoseMetadataLimitations: Set<String> get() = setOf(
 		"hmd_space_unverified", "hmd_frame_epoch_unavailable", "hmd_pose_pairing_unavailable",
 	)
 }
@@ -66,8 +65,8 @@ data class HmdAcceptedPoseMessageSample internal constructor(
 		"hmd_orientation_invalid" in structuralRejectionReasons -> HmdPoseMessagePairingStatus.INVALID_ORIENTATION
 		else -> HmdPoseMessagePairingStatus.COMPLETE
 	}
-	val rawPoseInputEligible: Boolean get() = false
-	val rawPoseInputRejectionReasons: Set<String> get() = structuralRejectionReasons + buildSet {
+	// This record carries no frame evidence; external pose-bound admission evidence is separate.
+	val rawPoseMetadataLimitations: Set<String> get() = structuralRejectionReasons + buildSet {
 		add("hmd_space_unverified")
 		add("hmd_frame_epoch_unavailable")
 		if (transportSessionEpoch == null) add("hmd_session_epoch_unavailable")
@@ -84,6 +83,10 @@ internal class TrustedRawHmdPositionSource(
 	private val bridgeIdentity: String,
 	private val receiptClock: () -> Long = System::nanoTime,
 ) {
+	// Generic ingress proves receipt/pairing/session, never an authoritative pose-level HMD frame.
+	val rawHmdPoseInputCapability: RawHmdPoseInputCapability = RawHmdPoseInputCapability.Unavailable(
+		setOf(RawHmdPoseInputRejectionReason.FRAME_REFERENCE_UNAVAILABLE),
+	)
 	private var registeredTracker: Tracker? = null
 	private var epoch: String? = null
 	private var identity: RawSourceIdentity? = null

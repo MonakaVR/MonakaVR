@@ -144,9 +144,9 @@ class TrustedHmdPositionProvenanceTests {
 	@Test fun acceptedReceiptProvenanceDoesNotCompletePhase2aSpaceFrameOrPosePairing() {
 		val bridge = Capture { 100 }; bridge.install(tracker()); bridge.accept(position())
 		val accepted = assertNotNull(bridge.acceptedHmdPositionSample())
-		assertFalse(accepted.rawPoseInputEligible)
+		assertIs<RawHmdPoseInputCapability.Unavailable>(bridge.rawHmdPoseInputCapability())
 		assertEquals(setOf("hmd_space_unverified", "hmd_frame_epoch_unavailable", "hmd_pose_pairing_unavailable"),
-			accepted.rawPoseInputRejectionReasons)
+			accepted.rawPoseMetadataLimitations)
 	}
 
 	@Test fun wireHasNoAcquisitionTimestampSequenceOrFrameIdentitySoReceiptClockIsSeparate() {
@@ -165,9 +165,9 @@ class TrustedHmdPositionProvenanceTests {
 		assertEquals(p.sourceEpoch, pose.sourceEpoch); assertEquals(p.ingressIdentity, pose.ingressIdentity)
 		assertEquals(PositionComponentPresence(true, true, true), pose.positionPresence)
 		assertEquals(HmdPoseMessagePairingStatus.COMPLETE, pose.pairingStatus)
-		assertTrue(pose.structuralRejectionReasons.isEmpty()); assertFalse(pose.rawPoseInputEligible)
+		assertTrue(pose.structuralRejectionReasons.isEmpty()); assertIs<RawHmdPoseInputCapability.Unavailable>(bridge.rawHmdPoseInputCapability())
 		assertEquals(setOf("hmd_space_unverified", "hmd_frame_epoch_unavailable", "hmd_session_epoch_unavailable"),
-			pose.rawPoseInputRejectionReasons)
+			pose.rawPoseMetadataLimitations)
 	}
 
 	@Test fun messageCopyDoesNotFollowTrackerOrientationResetStorageOrNextMessage() {
@@ -217,7 +217,7 @@ class TrustedHmdPositionProvenanceTests {
 			assertEquals(q.x.toRawBits(), pose.orientation.x.toRawBits())
 			assertEquals(q.w.toRawBits(), hmd.getRawRotation().w.toRawBits())
 			assertEquals(pose.sequence, bridge.acceptedHmdPositionSample()!!.sequence)
-			assertTrue("hmd_orientation_invalid" in pose.rawPoseInputRejectionReasons)
+			assertTrue("hmd_orientation_invalid" in pose.rawPoseMetadataLimitations)
 		}
 		// No Q fields produces decoded zero Q, never an inferred identity rotation.
 		bridge.accept(Position.newBuilder().setX(1f).setY(2f).setZ(3f).build())
