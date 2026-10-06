@@ -63,9 +63,69 @@ struct HmdFrameObservation {
     const bool coverageIncomplete = true;
 };
 
+// Software observation point after the raw query returns; NOT acquisition time or frame identity.
+struct HmdRawPoseCaptureMarker {
+    const std::string observerOwner;
+    const uint64_t captureOrdinal;
+    const uint64_t observationSequence;
+    const uint64_t detectedBoundaryGeneration;
+};
+struct HmdDiagnosticPose {
+    const float px, py, pz, qx, qy, qz, qw;
+};
+enum class PoseBindingAssessment {
+    NO_OBSERVED_BOUNDARY_SINCE_CAPTURE, OBSERVED_BOUNDARY_SINCE_CAPTURE,
+    CAPTURE_OWNER_MISMATCH, FRAME_OBSERVATION_UNAVAILABLE, CAPTURE_MARKER_REUSED_OR_STALE
+};
+struct HmdObservedPoseFrameBinding {
+    const HmdRawPoseCaptureMarker capture;
+    const HmdFrameObservation bound;
+    const bool ownerMatches;
+    const bool captureUsable;
+    // Unavailable on owner mismatch or stale/reused marker: no cross-owner comparison claim.
+    const std::optional<bool> observedBoundarySinceCapture;
+    const bool boundaryDuringBind;
+    // Most recent observed boundary in this interval, not an exhaustive event history.
+    const std::optional<HmdFrameObservation> lastObservedBoundarySinceCapture;
+    const HmdDiagnosticPose rawPose;
+    const HmdDiagnosticPose wirePose;
+    const int32_t dataSource;
+    const PoseBindingAssessment assessment;
+};
+
 class MonakaHmdFrameProbe {
 public:
     explicit MonakaHmdFrameProbe(std::string owner) : owner_(std::move(owner)) {}
+    HmdRawPoseCaptureMarker CaptureRawPose() {
+        captureConsumed_ = false;
+        captureSequence_ = sequence_;
+        captureGeneration_ = generation_;
+        return {owner_, ++captureOrdinal_, sequence_, generation_};
+    }
+    HmdObservedPoseFrameBinding BindPose(const HmdRawPoseCaptureMarker& capture,
+        const FrameProbeObservation& input, const HmdDiagnosticPose& raw,
+        const HmdDiagnosticPose& wire, int32_t dataSource) {
+        const bool ownerMatches = capture.observerOwner == owner_;
+        const bool usable = ownerMatches && !captureConsumed_ && capture.captureOrdinal == captureOrdinal_ &&
+            capture.captureOrdinal != 0 && capture.observationSequence == captureSequence_ &&
+            capture.detectedBoundaryGeneration == captureGeneration_;
+        const auto before = generation_;
+        const auto bound = Observe(input);
+        const std::optional<bool> changed = usable
+            ? std::optional<bool>(bound.detectedBoundaryGeneration != capture.detectedBoundaryGeneration)
+            : std::nullopt;
+        auto assessment = PoseBindingAssessment::NO_OBSERVED_BOUNDARY_SINCE_CAPTURE;
+        if (!ownerMatches) assessment = PoseBindingAssessment::CAPTURE_OWNER_MISMATCH;
+        else if (!usable) assessment = PoseBindingAssessment::CAPTURE_MARKER_REUSED_OR_STALE;
+        else if (*changed) assessment = PoseBindingAssessment::OBSERVED_BOUNDARY_SINCE_CAPTURE;
+        else if (bound.proofState == FrameProofState::Unknown ||
+                 bound.proofState == FrameProofState::TransformLookupFailed ||
+                 bound.proofState == FrameProofState::InvalidTransform)
+            assessment = PoseBindingAssessment::FRAME_OBSERVATION_UNAVAILABLE;
+        if (usable) captureConsumed_ = true;
+        return {capture, bound, ownerMatches, usable, changed, before != generation_,
+            usable && *changed ? lastBoundary_ : std::nullopt, raw, wire, dataSource, assessment};
+    }
     HmdFrameObservation Snapshot() const {
         return {owner_, sequence_, generation_, previous_.value_or(FrameProbeObservation{}),
                 lastSignal_, proof_, universeChanged_, transformChanged_, boundarySignal_};
@@ -105,7 +165,9 @@ public:
         if (input.appliedTransform) lastAppliedTransform_ = input.appliedTransform;
         previous_ = input;
         lastSignal_ = signal;
-        return Snapshot();
+        const auto snapshot = Snapshot();
+        if (universeChanged_ || transformChanged_ || boundarySignal_) lastBoundary_.emplace(snapshot);
+        return snapshot;
     }
     HmdFrameObservation ObserveSignal(FrameSignal signal) {
         // Events carry no new applied-transform sample. Retain the last sampled values explicitly.
@@ -114,7 +176,10 @@ public:
 private:
     const std::string owner_; // Observer instance namespace, never a frame identity.
     uint64_t sequence_ = 0, generation_ = 0;
+    uint64_t captureOrdinal_ = 0, captureSequence_ = 0, captureGeneration_ = 0;
+    bool captureConsumed_ = true;
     std::optional<FrameProbeObservation> previous_;
+    std::optional<HmdFrameObservation> lastBoundary_;
     std::optional<uint64_t> lastKnownUniverse_;
     std::optional<AppliedUniverseTransform> lastAppliedTransform_;
     FrameSignal lastSignal_ = FrameSignal::PoseSample;
