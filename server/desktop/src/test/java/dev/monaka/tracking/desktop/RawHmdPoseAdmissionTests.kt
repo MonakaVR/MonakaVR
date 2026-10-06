@@ -351,7 +351,135 @@ class RawHmdPoseAdmissionTests {
 		assertEquals(listOf("hmd_position_components_incomplete", "hmd_orientation_invalid"), rejected.reasons.map { it.code })
 	}
 
+	@Test fun queued501NanosecondsRejectsAgainst500NanosecondLimitFromIngress() {
+		var now = 1_000_000L
+		val bridge = Capture { now }; bridge.enqueueFull(bridge.active())
+		now += 501; bridge.dataRead()
+		val pose = assertNotNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
+		assertEquals(1_000_000, pose.receivedAtSystemNanos)
+		assertEquals(pose.receivedAtSystemNanos, bridge.acceptedCurrentSessionHmdPositionSample()!!.receivedAtSystemNanos)
+		rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(ready(pose)))
+		rejects(FRAME_REFERENCE_UNAVAILABLE, bridge.currentRawHmdPoseAdmission())
+	}
+
+	@Test fun immediatelyProcessedSampleIsFreshWithoutPromotingProductionFrameEvidence() {
+		val bridge = Capture(); bridge.acceptFull()
+		val pose = assertNotNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
+		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(pose))).input
+		assertEquals(1_000_000, input.provenance.sampleAtNanos)
+		rejects(FRAME_REFERENCE_UNAVAILABLE, bridge.currentRawHmdPoseAdmission())
+	}
+
+	@Test fun queued499NanosecondsRemainsFreshAndCopiesIngressTimeIntoProvenance() {
+		var now = 1_000_000L
+		val bridge = Capture { now }; bridge.enqueueFull(bridge.active())
+		now += 499; bridge.dataRead()
+		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
+		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(pose))).input
+		assertEquals(1_000_000, input.provenance.sampleAtNanos)
+	}
+
+	@Test fun exactQueueAgeBoundaryAcceptsButNextNanosecondRejectsWithoutRestamping() {
+		var now = 1_000_000L
+		val bridge = Capture { now }; bridge.enqueueFull(bridge.active())
+		now += 500; bridge.dataRead()
+		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
+		val proof = ready(pose)
+		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(proof))
+		now++; rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(proof))
+		assertSame(pose, bridge.acceptedCurrentSessionHmdPoseMessageSample())
+		assertEquals(1_000_000, pose.receivedAtSystemNanos)
+	}
+
+	@Test fun downstreamProcessingDelayUsesPreservedIngressWithoutReadingClockAtDequeue() {
+		var now = 1_000_000L; var clockCalls = 0
+		val bridge = Capture { clockCalls++; now }
+		bridge.beforePositionProcessing = { now += 501 }
+		bridge.enqueueFull(bridge.active())
+		assertEquals(1, clockCalls)
+		bridge.dataRead()
+		assertEquals(1, clockCalls)
+		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
+		assertEquals(1_000_000, pose.receivedAtSystemNanos)
+		rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(ready(pose)))
+	}
+
+	@Test fun backlogPreservesEverySamplesIngressTimeAndOldestRejectsWhileNewerAreFresh() {
+		var now = 1_000_000L; var clockCalls = 0
+		val bridge = Capture { clockCalls++; now }; val active = bridge.active()!!
+		bridge.enqueueFull(active)
+		now += 300; bridge.enqueueFull(active)
+		now += 150; bridge.enqueueFull(active)
+		assertEquals(3, clockCalls)
+		now = 1_000_800; bridge.dataRead()
+		assertEquals(3, clockCalls)
+		val poses = bridge.processedPoses
+		assertEquals(listOf(1_000_000L, 1_000_300L, 1_000_450L), poses.map { it.receivedAtSystemNanos })
+		assertEquals(listOf(1L, 2L, 3L), poses.map { it.sequence })
+		rejects(SAMPLE_STALE, admit(poses[0], ready(poses[0]), now, active))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(admit(poses[1], ready(poses[1]), now, active))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(admit(poses[2], ready(poses[2]), now, active))
+		rejects(SAMPLE_SEQUENCE_MISMATCH, bridge.admitCurrentRawHmdPoseInput(ready(poses[1])))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(poses[2])))
+	}
+
+	@Test fun rolloverDiscardsOldQueuedCandidateAndNewSessionUsesItsOwnIngressAge() {
+		var now = 1_000_000L
+		val bridge = Capture { now }; val a = bridge.active()!!; bridge.acceptFull(a)
+		val old = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
+		now += 10; bridge.enqueueFull(a)
+		bridge.close(a); val b = bridge.open()
+		now += 90; bridge.dataRead()
+		assertNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
+		assertEquals(1_000_010, bridge.acceptedHmdPoseMessageSample()!!.receivedAtSystemNanos)
+		rejects(POSITION_UNAVAILABLE, bridge.admitCurrentRawHmdPoseInput(ready(old)))
+		bridge.enqueueFull(b); now += 501; bridge.dataRead()
+		val delayed = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
+		assertEquals(b.epoch, delayed.transportSessionEpoch)
+		assertEquals(1_000_100, delayed.receivedAtSystemNanos)
+		rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(ready(delayed)))
+		rejects(SESSION_EPOCH_MISMATCH, bridge.admitCurrentRawHmdPoseInput(ready(old)))
+		bridge.acceptFull(b)
+		val fresh = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
+		assertEquals(now, fresh.receivedAtSystemNanos)
+		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(fresh)))
+		rejects(SAMPLE_SEQUENCE_MISMATCH, bridge.admitCurrentRawHmdPoseInput(ready(delayed)))
+	}
+
+	@Test fun missingIngressTimeFailsClosedWithoutClockFallbackOrReusingPreviousCandidate() {
+		for (atPositionBoundary in listOf(false, true)) {
+			var clockCalls = 0
+			val bridge = Capture { clockCalls++; 1_000_000 }; bridge.acceptFull()
+			val previous = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
+			assertEquals(1, clockCalls)
+			bridge.acceptWithoutReceipt(atPositionBoundary)
+			assertEquals(1, clockCalls)
+			assertNull(bridge.acceptedCurrentSessionHmdPositionSample())
+			assertNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
+			assertSame(previous, bridge.acceptedHmdPoseMessageSample()) // History cannot substitute for current.
+			rejects(POSITION_UNAVAILABLE, bridge.admitCurrentRawHmdPoseInput(ready(previous)))
+			rejects(FRAME_REFERENCE_UNAVAILABLE, bridge.currentRawHmdPoseAdmission())
+			assertEquals(Vector3(9f, 8f, 7f), bridge.hmd.position) // Legacy processing still runs.
+			assertEquals(Quaternion.IDENTITY, bridge.hmd.getRawRotation())
+			bridge.acceptFull()
+			val next = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
+			assertEquals(previous.sequence + 1, next.sequence)
+			assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(next)))
+		}
+	}
+
+	@Test fun oneSecondQueueDelayCannotBeHiddenByImmediateAdmissionAfterDequeue() {
+		var now = 1_000_000L
+		val bridge = Capture { now }; bridge.enqueueFull(bridge.active())
+		now += 1_000_000_000; bridge.dataRead()
+		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
+		assertEquals(1_000_000, pose.receivedAtSystemNanos)
+		rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(ready(pose)))
+	}
+
 	private class Capture(clock: () -> Long = { 1_000_000 }) : ProtobufBridge("admission-test", clock) {
+		val processedPoses = mutableListOf<HmdAcceptedPoseMessageSample>()
+		var beforePositionProcessing: (() -> Unit)? = null
 		private fun tracker() = Tracker(Device(DeviceOrigin.STEAMVR), 900, "external-hmd",
 			trackerPosition = TrackerPosition.HEAD, trackerNum = 0, hasPosition = true, hasRotation = true,
 			isHmd = true, isComputed = true, allowVelocity = true, trackRotDirection = false)
@@ -374,6 +502,17 @@ class RawHmdPoseAdmissionTests {
 			.setX(1f).setY(2f).setZ(3f).setQw(.5f).setQx(.5f).setQy(-.5f).setQz(.5f)
 			.setVx(.1f).setVy(.2f).setVz(.3f).setDataSource(Position.DataSource.FULL).build(), handle)
 		fun acceptFull(handle: TransportSessionHandle? = active()) { enqueueFull(handle); dataRead() }
+		fun acceptWithoutReceipt(atPositionBoundary: Boolean) {
+			val message = Position.newBuilder().setTrackerId(0).setX(9f).setY(8f).setZ(7f)
+				.setQw(1f).setDataSource(Position.DataSource.FULL).build()
+			if (atPositionBoundary) positionReceived(message, active())
+			else processMessageReceived(ProtobufMessage.newBuilder().setPosition(message).build(), active())
+		}
+		override fun positionReceived(positionMessage: Position, transportSession: TransportSessionHandle?, receivedAtSystemNanos: Long?) {
+			beforePositionProcessing?.invoke()
+			super.positionReceived(positionMessage, transportSession, receivedAtSystemNanos)
+			acceptedHmdPoseMessageSample()?.let(processedPoses::add)
+		}
 		override fun signalSend() = Unit
 		override fun sendMessageReal(message: ProtobufMessage?) = true
 		override fun createNewTracker(trackerAdded: TrackerAdded): Tracker = error("Existing registry fixture")

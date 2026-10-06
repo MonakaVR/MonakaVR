@@ -281,9 +281,9 @@ class InboundTransportSessionTests {
 	@Test fun transportLineageCannotBypassRegistrationOrAcceptAnObsoleteTrackerObject() {
 		val oldTracker = Capture().hmd
 		val newTracker = Capture().hmd
-		val source = TrustedRawHmdPositionSource("test") { 100L }
+		val source = TrustedRawHmdPositionSource("test")
 		fun accept(tracker: Tracker) = source.positionMessageAccepted(
-			tracker, Vector3(1f, 2f, 3f), pose(1f).position, TrackingModality.FULL, "session", true,
+			tracker, Vector3(1f, 2f, 3f), pose(1f).position, TrackingModality.FULL, "session", true, 100L,
 		)
 		accept(oldTracker) // Unregistered lookalike, despite transport proof.
 		assertNull(source.snapshot()); assertNull(source.currentPositionSnapshot("session"))
@@ -308,13 +308,11 @@ class InboundTransportSessionTests {
 
 	@Test fun blankSessionMetadataIsRejectedWithoutThrowingIntoLegacyIngress() {
 		val tracker = Capture().hmd
-		var clockCalls = 0
-		val source = TrustedRawHmdPositionSource("test") { clockCalls++; 100L }
+		val source = TrustedRawHmdPositionSource("test")
 		source.registerFromSteamVrIngress(tracker)
-		source.positionMessageAccepted(tracker, Vector3(0f, 0f, 0f), pose(0f).position, TrackingModality.FULL, " ", true)
+		source.positionMessageAccepted(tracker, Vector3(0f, 0f, 0f), pose(0f).position, TrackingModality.FULL, " ", true, 100L)
 		assertNull(source.snapshot()); assertNull(source.currentPoseMessageSnapshot(" "))
-		assertEquals(0, clockCalls)
-		source.positionMessageAccepted(tracker, Vector3(0f, 0f, 0f), pose(0f).position, TrackingModality.FULL, "valid", true)
+		source.positionMessageAccepted(tracker, Vector3(0f, 0f, 0f), pose(0f).position, TrackingModality.FULL, "valid", true, 100L)
 		val position = source.snapshot()!!; val paired = source.poseMessageSnapshot()!!
 		assertFailsWith<IllegalArgumentException> { position.copy(transportSessionEpoch = "") }
 		assertFailsWith<IllegalArgumentException> { paired.copy(transportSessionEpoch = "\t") }
@@ -332,9 +330,9 @@ class InboundTransportSessionTests {
 			candidate(isHmd = false), candidate(name = "monaka-direct:head"), candidate(name = "monaka-solver:head"),
 			candidate(name = "monaka-private:head"), candidate(name = "human://head"),
 		)) {
-			val source = TrustedRawHmdPositionSource("test") { 100L }
+			val source = TrustedRawHmdPositionSource("test")
 			source.registerFromSteamVrIngress(tracker)
-			source.positionMessageAccepted(tracker, Vector3(1f, 2f, 3f), pose(1f).position, TrackingModality.FULL, "session", true)
+			source.positionMessageAccepted(tracker, Vector3(1f, 2f, 3f), pose(1f).position, TrackingModality.FULL, "session", true, 100L)
 			assertNull(source.snapshot(), tracker.name)
 			assertNull(source.poseMessageSnapshot(), tracker.name)
 			assertNull(source.currentPositionSnapshot("session"), tracker.name)
@@ -353,7 +351,7 @@ class InboundTransportSessionTests {
 		var hmd = newHmd()
 		fun replaceHmd() { hmd = newHmd(); installHmd() }
 		fun registerAgain(tracker: Tracker) = registerTrustedSteamVrHmd(tracker)
-		fun acceptAtPositionBoundary(message: Position, handle: TransportSessionHandle?) = positionReceived(message, handle)
+		fun acceptAtPositionBoundary(message: Position, handle: TransportSessionHandle?) = positionReceived(message, handle, 100L)
 		@Suppress("UNCHECKED_CAST")
 		fun installHmd() {
 			val field = ProtobufBridge::class.java.getDeclaredField("remoteTrackersByTrackerId").apply { isAccessible = true }
@@ -368,13 +366,13 @@ class InboundTransportSessionTests {
 		fun reconnectCallback() = reconnected()
 		fun disconnectCallback() = disconnected()
 		fun flush() = updateMessageQueue()
-		override fun processMessageReceived(message: ProtobufMessage?, transportSession: TransportSessionHandle?) {
+		override fun processMessageReceived(message: ProtobufMessage?, transportSession: TransportSessionHandle?, receivedAtSystemNanos: Long?) {
 			processed += requireNotNull(message) to transportSession
-			super.processMessageReceived(message, transportSession)
+			super.processMessageReceived(message, transportSession, receivedAtSystemNanos)
 		}
-		override fun positionReceived(positionMessage: Position, transportSession: TransportSessionHandle?) {
+		override fun positionReceived(positionMessage: Position, transportSession: TransportSessionHandle?, receivedAtSystemNanos: Long?) {
 			positionContexts += transportSession
-			super.positionReceived(positionMessage, transportSession)
+			super.positionReceived(positionMessage, transportSession, receivedAtSystemNanos)
 			positionsAfterProcessing += hmd.position
 		}
 		override fun signalSend() = Unit

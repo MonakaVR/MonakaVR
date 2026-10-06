@@ -80,7 +80,7 @@ private fun immutableReasons(reasons: Set<RawHmdPoseInputRejectionReason>): Set<
 
 /**
  * One read-side boundary. Readers are supplied by ProtobufBridge, not by public callers.
- * The clock is the recorder's local monotonic receipt clock; acquisition time remains unknown.
+ * The clock is the bridge's local monotonic ingress clock; acquisition time remains unknown.
  * No accepted input is allocated before the final active-handle identity check.
  */
 internal fun admitRawHmdPoseInput(
