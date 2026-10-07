@@ -155,8 +155,11 @@ Pure predictor algorithm: **IMPLEMENTED**. Position Error Measurement:
 **IMPLEMENTED / DORMANT**. Bounded learning law: **IMPLEMENTED / DORMANT**.
 Runtime input assembly, predictor runtime, temporal pairing runtime, runtime
 learner, Position Correction runtime and IK writeback: **NOT CONNECTED**.
-Actual IK/output correction application: **NOT IMPLEMENTED**. No ConstraintPipeline,
-solver, Direct or SteamVR authority is added.
+The [6D application contract](position-correction-phase2b6d-application-contract.md)
+now defines a separately validated pure/dormant solver-facing candidate. The 6C
+state alone still grants no application authority. Production IK/output correction
+application remains **NOT CONNECTED**. No ConstraintPipeline, Direct or SteamVR
+authority is added.
 
 OpenVR HMD: **POSE_ONLY**. Strong Trusted: **UNSUPPORTED**. Production Raw HMD:
 **BLOCKED BY BACKEND**. 2B-5P: **NOT READY**. 5S physical HIL: pending.
@@ -164,6 +167,7 @@ OpenVR HMD: **POSE_ONLY**. Strong Trusted: **UNSUPPORTED**. Production Raw HMD:
 policy and no runtime application).
 
 Receipts: `build/reports/phase2b6c-bounded-position-correction-learning-20261007/report.md`.
-Next: **Phase 2B-6D — Position Correction Application Contract**, defining the
-pure/dormant exactly-once pre-IK/IK boundary before runtime connection to prevent
-double application and teacher contamination.
+6D supplies the pure/dormant exactly-once pre-IK/IK boundary, including rotation
+preservation and structural double-application rejection. Next: **Phase 2B-6E —
+Position Correction Runtime Orchestration Foundation**, with injected software
+inputs and the production Raw HMD blocker retained.
