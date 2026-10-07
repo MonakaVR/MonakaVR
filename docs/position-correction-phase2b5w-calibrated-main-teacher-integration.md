@@ -87,3 +87,11 @@ Software gates: CalibratedMainTeacherTemporalPairingTests, 5V mount tests, the m
 45-case 5U temporal suite, 13-case prediction suite, full Core/Desktop, shadowJar and
 all 11 MTP process E2E stages. Detailed fresh results and preserved source evidence are
 in build/reports/phase2b5w-calibrated-main-teacher-integration-20261007/report.md.
+
+[Phase 2B-6B](position-correction-phase2b6b-position-error-measurement.md) extends the
+dormant chain through internal real pairing to an immutable HIP_CENTER world-space
+teacher-minus-prediction error sample. It retains raw Main sequence/physical time
+and complete teacher mount epoch separately from prediction sequence/support/
+generation/full epoch. Measured confers no learning/correction/IK authority.
+Earlier error/algorithm prerequisites above describe 5W's historical state;
+6A/6B supply those pure boundaries, with runtime and learners still deferred.
