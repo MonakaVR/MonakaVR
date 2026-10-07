@@ -7,6 +7,7 @@ import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.*
 
 /** Actual 5V -> structural preflight -> 5U boundaries; prediction is deliberately synthetic. */
@@ -14,8 +15,17 @@ class CalibratedMainTeacherTemporalPairingTests {
 	private val space = CoordinateSpace("canonical", "rh_y_up_neg_z_forward", 2)
 	private val origin = RawSourceIdentity("mtp:main", RawSourceKind.RAW_BACKEND)
 	private val zero = Vector3(0f, 0f, 0f)
-	private val predictionEpoch = PositionPredictionEpoch("hmd", "hmd:1", "hmd-cal:1", null,
-		"imu", "imu:1", "imu-cal:1", 1, "body:1", "fixed:1", space, 3)
+	private val body = assertIs<HipBodyModelSnapshotResult.Available>(
+		HipBodyModelSnapshot.create(.1f, .2f, .25f, .3f, .35f, .15f)).snapshot
+	private val predictionEpoch = predictorInput(body).epoch()
+	private fun predictorInput(snapshot: HipBodyModelSnapshot) = MainDecoupledHipInput(
+		RawHmdPoseInput(RawSourceIdentity("hmd", RawSourceKind.RAW_HMD, isHmd = true),
+			Vector3(0f, 1.7f, 0f), Quaternion.IDENTITY, space,
+			ObservationSampleProvenance(4, 80, "hmd:1", "hmd-cal:1", null, space)),
+		RawImuOrientationInput(RawSourceIdentity("imu", RawSourceKind.RAW_IMU),
+			Quaternion.IDENTITY, space,
+			ObservationSampleProvenance(4, 90, "imu:1", "imu-cal:1", 1, space)),
+		snapshot, FixedCalibrationIdentity("fixed", "fixed:1"), space, 3, 100)
 	private val safe = setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
 		PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION)
 	private val policy = PositionTemporalPairingPolicy(10, 100, 100, 100)
@@ -236,5 +246,42 @@ class CalibratedMainTeacherTemporalPairingTests {
 	@Test fun equalCalibrationSelectionCanBeRecreatedWithoutChangingIdentity() {
 		assertEquals(calibration().identity, calibration().identity)
 		assertIs<PositionTemporalPairingResult.Pairable>(pair(input(teacher(mount = calibration())), expected(calibration())))
+	}
+
+	@ParameterizedTest
+	@ValueSource(ints = [0, 1, 2, 3, 4, 5])
+	fun bodyContentChangeRejectsOldPredictionWithSameNumbersAndSameTeacher(index: Int) {
+		val values = mutableListOf(body.headShift, body.neckLength, body.upperChestLength,
+			body.chestLength, body.waistLength, body.hipLength)
+		values[index] += .125f
+		val changed = assertIs<HipBodyModelSnapshotResult.Available>(HipBodyModelSnapshot.create(
+			values[0], values[1], values[2], values[3], values[4], values[5])).snapshot
+		val oldInput = predictorInput(body)
+		val newInput = oldInput.copy(bodyModel = changed)
+		val old = input()
+		val current = old.copy(expectedPredictionEpoch = newInput.epoch(), prediction = prediction(newInput.epoch()))
+		assertEquals(oldInput.rawHmd, newInput.rawHmd)
+		assertEquals(oldInput.rawImu, newInput.rawImu)
+		assertEquals(old.prediction.position, current.prediction.position)
+		assertSame(old.mainTeacher, current.mainTeacher)
+		assertEquals(PositionTeacherEpoch.from(old), PositionTeacherEpoch.from(current))
+		assertEquals(oldInput.fixedCalibration, newInput.fixedCalibration)
+		assertNotEquals(old.expectedPredictionEpoch, current.expectedPredictionEpoch)
+		assertIs<PositionTemporalPairingResult.Pairable>(pair(old))
+		structural(old.copy(expectedPredictionEpoch = newInput.epoch()), "prediction_epoch_mismatch")
+		assertIs<PositionTemporalPairingResult.Pairable>(pair(current))
+	}
+
+	@Test fun modelIdChangeWithSameContentEpochRejectsOldPredictionAndKeepsTeacherLineage() {
+		// Factory fixes the v1 model ID; exercise future schema identity at the epoch DTO.
+		val old = input()
+		val changed = predictionEpoch.copy(bodyModelId = "synthetic:other-body-model")
+		assertEquals(predictionEpoch.bodyModelEpoch, changed.bodyModelEpoch)
+		val current = old.copy(expectedPredictionEpoch = changed, prediction = prediction(changed))
+		assertEquals(old.prediction.position, current.prediction.position)
+		assertEquals(PositionTeacherEpoch.from(old), PositionTeacherEpoch.from(current))
+		assertNotEquals(predictionEpoch, changed)
+		structural(old.copy(expectedPredictionEpoch = changed), "prediction_epoch_mismatch")
+		assertIs<PositionTemporalPairingResult.Pairable>(pair(current))
 	}
 }

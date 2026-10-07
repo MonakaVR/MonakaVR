@@ -58,7 +58,7 @@ data class RawImuOrientationInput(
 	}
 }
 
-/** Opaque until an immutable body-dimension snapshot is proven safe to extract. */
+/** Complete content identity owned by the immutable body-model snapshot factory. */
 data class BodyModelIdentity(val modelId: String, val epoch: String) {
 	init { require(modelId.isNotBlank() && epoch.isNotBlank()) }
 }
@@ -76,6 +76,7 @@ data class PositionPredictionEpoch(
 	val imuSourceEpoch: String,
 	val imuCalibrationEpoch: String,
 	val imuMappingRevision: Long?,
+	val bodyModelId: String,
 	val bodyModelEpoch: String,
 	val fixedCalibrationEpoch: String,
 	val coordinateSpace: CoordinateSpace,
@@ -83,7 +84,7 @@ data class PositionPredictionEpoch(
 ) {
 	init {
 		require(listOf(hmdSourceId, hmdSourceEpoch, hmdCalibrationEpoch, imuSourceId, imuSourceEpoch,
-			imuCalibrationEpoch, bodyModelEpoch, fixedCalibrationEpoch).all(String::isNotBlank))
+			imuCalibrationEpoch, bodyModelId, bodyModelEpoch, fixedCalibrationEpoch).all(String::isNotBlank))
 		require(assignmentGeneration >= 0)
 	}
 }
@@ -109,10 +110,14 @@ enum class PositionPredictionDependency {
 	BACKGROUND_IK, VISIBLE_OUTPUT, DIRECT_OUTPUT,
 }
 
+/** Dormant value boundary. Future assembly reads one available live body snapshot once;
+ * the predictor uses this immutable geometry for the input lifetime, without rereading config.
+ * Unavailable body publication must prevent input assembly, never supply default geometry.
+ */
 data class MainDecoupledHipInput(
 	val rawHmd: RawHmdPoseInput,
 	val rawImu: RawImuOrientationInput,
-	val bodyModel: BodyModelIdentity,
+	val bodyModel: HipBodyModelSnapshot,
 	val fixedCalibration: FixedCalibrationIdentity,
 	val space: CoordinateSpace,
 	val assignmentGeneration: Long,
@@ -133,7 +138,8 @@ data class MainDecoupledHipInput(
 		imuSourceEpoch = rawImu.provenance.sourceEpoch,
 		imuCalibrationEpoch = rawImu.provenance.calibrationEpoch,
 		imuMappingRevision = rawImu.provenance.mappingRevision,
-		bodyModelEpoch = bodyModel.epoch,
+		bodyModelId = bodyModel.identity.modelId,
+		bodyModelEpoch = bodyModel.identity.epoch,
 		fixedCalibrationEpoch = fixedCalibration.epoch,
 		coordinateSpace = space,
 		assignmentGeneration = assignmentGeneration,

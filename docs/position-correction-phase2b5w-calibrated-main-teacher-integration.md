@@ -81,13 +81,7 @@ software-ready under explicit supplied context. Future runtime must derive indep
 expected teacher epoch from **current assignment, current trusted raw source context and
 current mount calibration selection**; cached sample identity cannot establish currency.
 
-One recommended next phase is **Body model predictor handoff**: pass the established
-immutable HipBodyModelSnapshot geometry and matching identity explicitly into the
-Main-decoupled predictor contract, with unavailable/coherence behavior. It can advance
-the ready body-model foundation without inventing Raw IMU exact-space/atomic publication
-or Fixed Calibration semantics. Keep that boundary dormant. Raw IMU production boundary,
-Fixed Calibration implementation, predictor algorithm and trusted HMD runtime gates
-remain prerequisites; none is started here.
+[Phase 2B-5X](position-correction-phase2b5x-body-model-predictor-handoff.md) now passes immutable HipBodyModelSnapshot geometry and complete model ID/content epoch into the dormant predictor contract. Body changes reject old predictions through existing structural precedence at equal numeric positions; teacher lineage and mount calibration remain independent. The recommended next phase is Raw IMU Production Boundary: a production adapter with exact space and raw evidence is still absent. Fixed Calibration numerical semantics, predictor algorithm and trusted HMD runtime gates remain deferred.
 
 Software gates: CalibratedMainTeacherTemporalPairingTests, 5V mount tests, the migrated
 45-case 5U temporal suite, 13-case prediction suite, full Core/Desktop, shadowJar and
