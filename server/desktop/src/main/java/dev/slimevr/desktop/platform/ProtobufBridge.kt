@@ -50,8 +50,8 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	/** Future internal evidence producer seam; Ready must be scoped to one exact accepted pose. */
 	@VRServerThread
 	internal fun admitCurrentRawHmdPoseInput(capability: RawHmdPoseInputCapability) = admitRawHmdPoseInput(
-		capability, ::currentInboundTransportSession, rawHmdPositions::currentPoseMessageSnapshot,
-		hmdPositionReceiptClock,
+		capability, ::currentInboundTransportSession, rawHmdPositions::currentTrustedPoseSnapshot,
+		hmdPositionReceiptClock, rawHmdPositions::currentProviderSession,
 	)
 
 	private fun <T> currentSessionHmdSample(read: (String) -> T?): T? {
@@ -70,13 +70,20 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 
 	/** Transport accept boundary only; independent of VRServer-side output reconnected callbacks. */
 	@ThreadSafe
-	protected fun openInboundTransportSession(): TransportSessionHandle =
-		TransportSessionHandle(java.util.UUID.randomUUID().toString()).also(inboundTransportSession::set)
+	protected fun openInboundTransportSession(): TransportSessionHandle = synchronized(inboundTransportSession) {
+		TransportSessionHandle(java.util.UUID.randomUUID().toString()).also {
+			inboundTransportSession.set(it)
+			rawHmdPositions.onTransportSessionChanged(it.epoch)
+		}
+	}
 
 	/** A delayed close for an older logical accept cannot clear a newer active session. */
 	@ThreadSafe
-	protected fun closeInboundTransportSession(handle: TransportSessionHandle): Boolean =
-		inboundTransportSession.compareAndSet(handle, null)
+	protected fun closeInboundTransportSession(handle: TransportSessionHandle): Boolean = synchronized(inboundTransportSession) {
+		inboundTransportSession.compareAndSet(handle, null).also {
+			if (it) rawHmdPositions.onTransportSessionChanged(null)
+		}
+	}
 
 	@ThreadSafe
 	protected fun currentInboundTransportSession(): TransportSessionHandle? = inboundTransportSession.get()
@@ -248,7 +255,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 		} else if (message.hasUserAction()) {
 			userActionReceived(message.userAction)
 		} else if (message.hasTrackerStatus()) {
-			trackerStatusReceived(message.trackerStatus)
+			trackerStatusReceived(message.trackerStatus, transportSession)
 		} else if (message.hasTrackerAdded()) {
 			trackerAddedReceived(message.trackerAdded)
 		} else if (message.hasBattery()) {
@@ -272,6 +279,8 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 				else -> dev.monaka.tracking.TrackingModality.NONE
 			}
 			tracker.sampleModality = modality
+			val isCurrentSession = transportSession != null && transportSession === currentInboundTransportSession()
+			if (isCurrentSession && !positionMessage.hasX()) rawHmdPositions.invalidateCurrentCandidate(tracker)
 			if (positionMessage.hasX()) {
 				val acceptedPosition = Vector3(
 					positionMessage.x,
@@ -279,7 +288,6 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 					positionMessage.z,
 				)
 				tracker.position = acceptedPosition
-				val isCurrentSession = transportSession != null && transportSession == currentInboundTransportSession()
 				rawHmdPositions.positionMessageAccepted(
 					tracker, acceptedPosition, positionMessage, modality, transportSession?.epoch, isCurrentSession,
 					receivedAtSystemNanos,
@@ -383,10 +391,13 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	}
 
 	@VRServerThread
-	protected fun trackerStatusReceived(trackerStatus: ProtobufMessages.TrackerStatus) {
+	@JvmOverloads
+	protected fun trackerStatusReceived(trackerStatus: ProtobufMessages.TrackerStatus, transportSession: TransportSessionHandle? = null) {
 		val tracker = getInternalRemoteTrackerById(trackerStatus.trackerId)
 		if (tracker != null) {
 			tracker.status = getById(trackerStatus.statusValue)!!
+			if (transportSession != null && transportSession === currentInboundTransportSession())
+				rawHmdPositions.trackingStatusChanged(tracker)
 		}
 	}
 
@@ -399,6 +410,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 
 	@VRServerThread
 	protected fun reconnected() {
+		rawHmdPositions.retireProviderSession()
 		val token = java.util.UUID.randomUUID().toString()
 		synchronized(directCapabilityLock) {
 			directOutputSupported = false
@@ -417,6 +429,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 
 	@VRServerThread
 	protected fun disconnected() {
+		rawHmdPositions.disconnected()
 		synchronized(directCapabilityLock) {
 			directOutputSupported = false
 			directCapabilityToken = null
