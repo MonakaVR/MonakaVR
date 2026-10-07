@@ -15,8 +15,10 @@ class PositionTemporalPairingTests {
 	private val safe = setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
 		PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION)
 	// Synthetic HIP_CENTER and input lineage only; no MTP mount relabeling or production predictor.
+	private val body = assertIs<HipBodyModelSnapshotResult.Available>(
+		HipBodyModelSnapshot.create(.1f, .2f, .25f, .3f, .35f, .15f)).snapshot
 	private val epoch = PositionPredictionEpoch("synthetic:hmd", "hmd:1", "hmd-cal:1", null,
-		"synthetic:imu", "imu:1", "imu-cal:1", 1, "body:1", "fixed:1", space, 3)
+		"synthetic:imu", "imu:1", "imu-cal:1", 1, body.identity.modelId, body.identity.epoch, "fixed:1", space, 3)
 	private val policy = PositionTemporalPairingPolicy(10, 100, 100, 100)
 	private val unlimited = PositionTemporalPairingPolicy(Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE)
 

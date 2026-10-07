@@ -17,12 +17,15 @@ class PositionPredictionContractTests {
 	private val mainIdentity = RawSourceIdentity("mtp:main", RawSourceKind.RAW_BACKEND)
 	private fun provenance(at: Long, sourceEpoch: String = "source:1", calibration: String = "cal:1",
 		spaceValue: CoordinateSpace = space) = ObservationSampleProvenance(4, at, sourceEpoch, calibration, 1, spaceValue)
+	private fun bodyModel(hipLength: Float = .15f) =
+		assertIs<HipBodyModelSnapshotResult.Available>(
+			HipBodyModelSnapshot.create(.1f, .2f, .25f, .3f, .35f, hipLength)).snapshot
 	private fun input(spaceValue: CoordinateSpace = space) = MainDecoupledHipInput(
 		RawHmdPoseInput(hmdIdentity, Vector3(0f, 1.7f, 0f), Quaternion.IDENTITY, spaceValue,
 			provenance(80, spaceValue = spaceValue)),
 		RawImuOrientationInput(imuIdentity, Quaternion.IDENTITY, spaceValue,
 			provenance(90, spaceValue = spaceValue)),
-		BodyModelIdentity("body", "body:1"), FixedCalibrationIdentity("fixed", "fixed:1"),
+		bodyModel(), FixedCalibrationIdentity("fixed", "fixed:1"),
 		spaceValue, 3, 100)
 	private fun prediction(source: MainDecoupledHipInput = input(),
 		dependencies: Set<PositionPredictionDependency> = safe,
@@ -50,7 +53,8 @@ class PositionPredictionContractTests {
 	}
 
 	@Test fun predictorBoundaryHasNoSolverMainOrMutableTrackerReference() {
-		val forbidden = setOf(dev.slimevr.tracking.processor.skeleton.HumanSkeleton::class.java,
+		val forbidden = setOf(dev.slimevr.tracking.processor.config.SkeletonConfigManager::class.java,
+			dev.slimevr.tracking.processor.skeleton.HumanSkeleton::class.java,
 			dev.slimevr.tracking.processor.HumanPoseManager::class.java,
 			dev.slimevr.tracking.trackers.Tracker::class.java, PoseObservation::class.java,
 			EffectiveConstraint::class.java, ResolvedTrackingPose::class.java, OutputPose::class.java,
@@ -194,7 +198,7 @@ class PositionPredictionContractTests {
 			source.copy(rawHmd = source.rawHmd.copy(provenance = source.rawHmd.provenance.copy(sourceEpoch = "hmd:2"))),
 			source.copy(rawImu = source.rawImu.copy(provenance = source.rawImu.provenance.copy(sourceEpoch = "imu:2"))),
 			source.copy(rawImu = source.rawImu.copy(provenance = source.rawImu.provenance.copy(calibrationEpoch = "mount:2"))),
-			source.copy(bodyModel = source.bodyModel.copy(epoch = "body:2")),
+			source.copy(bodyModel = bodyModel(hipLength = .2f)),
 			source.copy(fixedCalibration = source.fixedCalibration.copy(epoch = "fixed:2")),
 			source.copy(assignmentGeneration = 4),
 			input(space.copy(revision = 3)),

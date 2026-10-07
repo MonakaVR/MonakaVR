@@ -1,6 +1,6 @@
 # Phase 2B-2: immutable HIP configuration geometry and content epoch
 
-This phase adds a dormant **configuration boundary**, not a HIP predictor or position-correction runtime. `HipBodyModelSnapshot` copies six finite Float values and a `BodyModelIdentity`. It retains no manager, skeleton, bone, node, tracker, mutable map, current transform or pose. Existing `MainDecoupledHipInput` remains unchanged: a future caller can use `snapshot.identity`; a future predictor must explicitly receive the snapshot geometry as well. Identity alone is not a predictor implementation. Hardware/HIL: **NOT RUN**.
+This phase adds a dormant **configuration boundary**, not a HIP predictor or position-correction runtime. `HipBodyModelSnapshot` copies six finite Float values and a `BodyModelIdentity`. It retains no manager, skeleton, bone, node, tracker, mutable map, current transform or pose. [Phase 2B-5X](position-correction-phase2b5x-body-model-predictor-handoff.md) now passes this snapshot directly through `MainDecoupledHipInput`, with both model ID and content epoch in prediction lineage. Identity alone is not a predictor implementation. Hardware/HIL: **NOT RUN**.
 
 ## Geometry audit
 
