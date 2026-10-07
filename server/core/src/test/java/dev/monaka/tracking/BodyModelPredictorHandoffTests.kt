@@ -45,7 +45,7 @@ class BodyModelPredictorHandoffTests {
 	private fun prediction(source: MainDecoupledHipInput, position: Vector3) = PositionPrediction.available(
 		TrackerPosition.HIP, position, space, PositionBodyReference.HIP_CENTER,
 		PositionPredictionProvenance(7, source.nowNanos, source.rawHmd.provenance.sampleAtNanos,
-			source.rawImu.provenance.sampleAtNanos, source.epoch()), safe)
+			source.rawImu.provenance.sampleAtNanos, source.epoch(), source.rawHmd.provenance.sequence, source.rawHmd.provenance.sampleAtNanos, source.rawImu.provenance.sequence, source.rawImu.provenance.sampleAtNanos), safe)
 
 	@Test fun inputCarriesAllGeometryAndExactlyTheFactoryIdentity() {
 		val body = snapshot()

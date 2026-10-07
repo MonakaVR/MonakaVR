@@ -29,7 +29,7 @@ class PositionTemporalPairingTests {
 		predictionSpace: CoordinateSpace = space,
 		dependencies: Set<PositionPredictionDependency> = safe) = PositionPrediction.available(
 		TrackerPosition.HIP, Vector3(.1f, 1f, .2f), predictionSpace, body,
-		PositionPredictionProvenance(sequence, generated, earliest, latest, predictionEpoch), dependencies)
+		PositionPredictionProvenance(sequence, generated, earliest, latest, predictionEpoch, 4, earliest, 4, latest), dependencies)
 
 	private fun input(teacherAt: Long = 85, earliest: Long = 80, latest: Long = 90,
 		generated: Long = 100, now: Long = 100): PositionCorrectionInput = PositionCorrectionInput(

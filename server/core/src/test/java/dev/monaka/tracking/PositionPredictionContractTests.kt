@@ -32,7 +32,7 @@ class PositionPredictionContractTests {
 		body: PositionBodyReference = PositionBodyReference.HIP_CENTER,
 		spaceValue: CoordinateSpace = source.space) = PositionPrediction.available(
 		TrackerPosition.HIP, Vector3(.1f, 1f, .2f), spaceValue, body,
-		PositionPredictionProvenance(7, 100, 80, 90, source.epoch()), dependencies)
+		PositionPredictionProvenance(7, 100, 80, 90, source.epoch(), 4, 80, 4, 90), dependencies)
 	private fun mainTeacher() = MainHipCenterPositionTeacher(mainIdentity.sourceId, Vector3(.1f, 1f, .2f),
 		ObservationQuality.TRACKED, provenance(90), mainIdentity, MainTrackerMountCalibrationIdentity("mount", "mount:1"))
 	private fun teacher(p: PositionPrediction = prediction(), expectedSpace: CoordinateSpace = space,
@@ -77,7 +77,7 @@ class PositionPredictionContractTests {
 	}
 
 	@Test fun availablePredictionRequiresFiniteValueSpaceReferenceProvenanceAndLineage() {
-		val source = input(); val goodProvenance = PositionPredictionProvenance(7, 100, 80, 90, source.epoch())
+		val source = input(); val goodProvenance = PositionPredictionProvenance(7, 100, 80, 90, source.epoch(), 4, 80, 4, 90)
 		for (bad in listOf(Vector3(Float.NaN, 0f, 0f), Vector3(0f, Float.POSITIVE_INFINITY, 0f)))
 			assertFailsWith<IllegalArgumentException> { PositionPrediction.available(TrackerPosition.HIP, bad,
 				space, PositionBodyReference.HIP_CENTER, goodProvenance, safe) }
@@ -106,9 +106,9 @@ class PositionPredictionContractTests {
 		assertEquals(90, p.inputLatestAtNanos)
 		assertEquals(100, p.generatedAtNanos)
 		assertNotEquals(p.generatedAtNanos, p.inputLatestAtNanos)
-		assertFailsWith<IllegalArgumentException> { PositionPredictionProvenance(1, 100, 91, 90, source.epoch()) }
-		assertFailsWith<IllegalArgumentException> { PositionPredictionProvenance(1, 89, 80, 90, source.epoch()) }
-		assertFailsWith<IllegalArgumentException> { PositionPredictionProvenance(1, 100, -1, 90, source.epoch()) }
+		assertFailsWith<IllegalArgumentException> { PositionPredictionProvenance(1, 100, 91, 90, source.epoch(), 4, 91, 4, 90) }
+		assertFailsWith<IllegalArgumentException> { PositionPredictionProvenance(1, 89, 80, 90, source.epoch(), 4, 80, 4, 90) }
+		assertFailsWith<IllegalArgumentException> { PositionPredictionProvenance(1, 100, -1, 90, source.epoch(), 4, -1, 4, 90) }
 	}
 
 	@Test fun exactSpaceBodyReferenceAndRawMainAreRequiredForFutureComparison() {
@@ -178,7 +178,7 @@ class PositionPredictionContractTests {
 		for (progressed in listOf(
 			original.copy(predictionSequence = 8),
 			original.copy(generatedAtNanos = 101),
-			original.copy(inputEarliestAtNanos = 81, inputLatestAtNanos = 91),
+			original.copy(inputEarliestAtNanos = 81, inputLatestAtNanos = 91, inputHmdSampleAtNanos = 81, inputImuSampleAtNanos = 91),
 		)) assertEquals(original.epoch, progressed.epoch)
 		for (changed in listOf(
 			source.copy(rawHmd = source.rawHmd.copy(position = Vector3(.5f, 1.8f, -.3f))),
@@ -239,4 +239,17 @@ class PositionPredictionContractTests {
 		assertEquals("future_sample", PositionCorrectionTeacherEligibility.check(teacher(
 			main = teacher().mainTeacher.copy(provenance = provenance(101)))).reason)
 	}
+	@Test fun physicalIdentityAndSupportRelationAreRequiredAtConstruction() {
+		val p = prediction().provenance!!
+		for (change in listOf<(PositionPredictionProvenance) -> PositionPredictionProvenance>(
+			{ it.copy(inputHmdSequence = -1) }, { it.copy(inputImuSequence = -1) },
+			{ it.copy(inputHmdSampleAtNanos = -1) }, { it.copy(inputImuSampleAtNanos = -1) },
+			{ it.copy(inputEarliestAtNanos = 79) }, { it.copy(inputLatestAtNanos = 91) },
+			{ it.copy(inputHmdSampleAtNanos = 81) }, { it.copy(inputImuSampleAtNanos = 89) },
+		)) assertFailsWith<IllegalArgumentException> { change(p) }
+		val reversed = p.copy(inputHmdSampleAtNanos = 90, inputImuSampleAtNanos = 80)
+		assertEquals(p.epoch, reversed.epoch)
+		assertEquals(p.epoch, p.copy(inputHmdSequence = Long.MAX_VALUE, inputImuSequence = 0).epoch)
+	}
+
 }

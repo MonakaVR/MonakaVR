@@ -91,15 +91,26 @@ data class PositionPredictionEpoch(
 	}
 }
 
-/** Input support window is in the Monaka local monotonic domain; generatedAt is not a sample time. */
+/** Exact raw physical identities in the local monotonic domain; support is their min/max.
+ * predictionSequence is caller-owned invocation progression, NEVER physical sample identity.
+ * generatedAt is generation time, not a physical sample time. None of these facts is an epoch.
+ */
 data class PositionPredictionProvenance(
 	val predictionSequence: Long,
 	val generatedAtNanos: Long,
 	val inputEarliestAtNanos: Long,
 	val inputLatestAtNanos: Long,
 	val epoch: PositionPredictionEpoch,
+	val inputHmdSequence: Long,
+	val inputHmdSampleAtNanos: Long,
+	val inputImuSequence: Long,
+	val inputImuSampleAtNanos: Long,
 ) {
 	init {
+		require(inputHmdSequence >= 0 && inputImuSequence >= 0)
+		require(inputHmdSampleAtNanos >= 0 && inputImuSampleAtNanos >= 0)
+		require(inputEarliestAtNanos == minOf(inputHmdSampleAtNanos, inputImuSampleAtNanos))
+		require(inputLatestAtNanos == maxOf(inputHmdSampleAtNanos, inputImuSampleAtNanos))
 		require(predictionSequence >= 0 && inputEarliestAtNanos >= 0)
 		require(inputEarliestAtNanos <= inputLatestAtNanos && inputLatestAtNanos <= generatedAtNanos)
 	}

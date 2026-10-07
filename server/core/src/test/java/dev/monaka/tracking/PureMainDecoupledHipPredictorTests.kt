@@ -166,7 +166,13 @@ class PureMainDecoupledHipPredictorTests {
 		val source = input()
 		val changed = source.copy(rawHmd = source.rawHmd.copy(provenance = source.rawHmd.provenance.copy(sequence = 99999)),
 			rawImu = source.rawImu.copy(provenance = source.rawImu.provenance.copy(sequence = 1)))
-		assertEquals(available(source).provenance, available(changed).provenance)
+		val first = available(source).provenance!!
+		val next = available(changed).provenance!!
+		assertEquals(first.predictionSequence, next.predictionSequence)
+		assertEquals(first.epoch, next.epoch)
+		assertEquals(99999L, next.inputHmdSequence)
+		assertEquals(1L, next.inputImuSequence)
+		assertNotEquals(first, next)
 	}
 
 	@ParameterizedTest @ValueSource(ints = [0, 1, 2])
@@ -176,6 +182,10 @@ class PureMainDecoupledHipPredictorTests {
 		assertEquals(minOf(source.rawHmd.provenance.sampleAtNanos, source.rawImu.provenance.sampleAtNanos), provenance.inputEarliestAtNanos)
 		assertEquals(maxOf(source.rawHmd.provenance.sampleAtNanos, source.rawImu.provenance.sampleAtNanos), provenance.inputLatestAtNanos)
 		assertEquals(source.nowNanos, provenance.generatedAtNanos)
+		assertEquals(source.rawHmd.provenance.sequence, provenance.inputHmdSequence)
+		assertEquals(source.rawHmd.provenance.sampleAtNanos, provenance.inputHmdSampleAtNanos)
+		assertEquals(source.rawImu.provenance.sequence, provenance.inputImuSequence)
+		assertEquals(source.rawImu.provenance.sampleAtNanos, provenance.inputImuSampleAtNanos)
 		assertEquals(source.epoch(), provenance.epoch)
 	}
 
