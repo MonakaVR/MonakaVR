@@ -33,7 +33,7 @@ class PredictorFixedCalibrationTests {
 			ObservationSampleProvenance(4, 80, "hmd:1", "provider:1", null, space)),
 		RawImuOrientationInput(RawSourceIdentity("synthetic:imu", RawSourceKind.RAW_IMU),
 			Quaternion.IDENTITY, space, ObservationSampleProvenance(4, 90, "imu:1", "reset:1", null, space)),
-		body(), fixed, space, 3, 100)
+		body(), fixed, space, 3, 100, predictionSequence = 7)
 	private fun components(q: Quaternion) = listOf(q.w, q.x, q.y, q.z)
 	private fun bits(q: Quaternion) = components(q).map(Float::toRawBits)
 	private fun vector(values: List<Float>) = Vector3(values[0], values[1], values[2])

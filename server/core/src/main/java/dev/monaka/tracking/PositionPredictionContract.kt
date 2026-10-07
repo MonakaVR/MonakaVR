@@ -6,7 +6,7 @@ import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import java.util.Collections
 
-/** Contract only. No Phase 2A implementation produces or consumes a prediction in the runtime. */
+/** Derived prediction contracts. Pure 6A implementation exists; runtime remains disconnected. */
 enum class PositionBodyReference { HIP_CENTER, TRACKER_MOUNT, UNKNOWN }
 enum class PredictionValidity { AVAILABLE, UNAVAILABLE }
 enum class RawSourceKind { RAW_HMD, RAW_IMU, RAW_BACKEND, COMPUTED_TRACKER, DERIVED_OUTPUT }
@@ -124,10 +124,13 @@ data class MainDecoupledHipInput(
 	val space: CoordinateSpace,
 	val assignmentGeneration: Long,
 	val nowNanos: Long,
+	/** Caller-owned invocation progression, independent of raw source sequences and epoch identity. */
+	val predictionSequence: Long,
 	val target: TrackerPosition = TrackerPosition.HIP,
 ) {
 	init {
 		require(target == TrackerPosition.HIP && assignmentGeneration >= 0 && nowNanos >= 0)
+		require(predictionSequence >= 0)
 		require(rawHmd.space == space && rawImu.space == space)
 		require(fixedCalibration.hmdSourceId == rawHmd.source.sourceId) { "Fixed calibration HMD source mismatch" }
 		require(fixedCalibration.bodyModelId == bodyModel.identity.modelId) { "Fixed calibration body model mismatch" }

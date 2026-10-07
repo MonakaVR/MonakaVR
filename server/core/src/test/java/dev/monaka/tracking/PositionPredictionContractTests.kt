@@ -26,7 +26,7 @@ class PositionPredictionContractTests {
 		RawImuOrientationInput(imuIdentity, Quaternion.IDENTITY, spaceValue,
 			provenance(90, spaceValue = spaceValue)),
 		bodyModel(), syntheticHeadAnchorCalibration(hmdIdentity.sourceId, HipBodyModelSnapshot.MODEL_ID),
-		spaceValue, 3, 100)
+		spaceValue, 3, 100, predictionSequence = 7)
 	private fun prediction(source: MainDecoupledHipInput = input(),
 		dependencies: Set<PositionPredictionDependency> = safe,
 		body: PositionBodyReference = PositionBodyReference.HIP_CENTER,

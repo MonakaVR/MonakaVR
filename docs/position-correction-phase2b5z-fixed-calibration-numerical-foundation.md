@@ -153,3 +153,5 @@ Next phase recommendation: **Pure MainDecoupledHipPredictor Algorithm**. All fou
 predictor input numerical contracts now exist for synthetic testing; a pure
 algorithm/contract can proceed without claiming trusted production HMD readiness.
 Runtime Input Assembly remains constrained by the independent HMD backend blocker.
+
+Phase 2B-6A implements the [pure Main-decoupled HIP predictor](position-correction-phase2b6a-pure-main-decoupled-hip-predictor.md) from these four numerical inputs. HEAD/NECK use calibrated HMD orientation; UPPER_CHEST through HIP use independent Raw IMU body orientation. HIP_CENTER is the central hipBone tail. MainDecoupledHipInput now requires caller-owned predictionSequence, excluded from epoch, and the predictor requires explicit per-source age/skew limits with no defaults. Earlier algorithm-deferred status in this phase is superseded by 6A; runtime assembly, learner, correction law and IK remain disconnected/unimplemented, and the production HMD backend blocker remains.
