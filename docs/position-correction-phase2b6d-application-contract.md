@@ -135,10 +135,16 @@ OpenVR HMD: **POSE_ONLY**. Strong Trusted: **UNSUPPORTED**. Production Raw HMD:
 6D HIL: **NOT REQUIRED / NOT RUN**, because this contract is pure/dormant and
 writeback compatibility uses manual software input without production Raw HMD.
 
-Next: **Phase 2B-6E — Position Correction Runtime Orchestration Foundation**.
-Build a dormant/injected one-direction current-tick orchestrator for prediction,
-observe/gap advance, selected fallback ownership, preparation and writeback.
-Validate software orchestration with injected/synthetic trusted input while
-retaining the production Raw HMD blocker.
+The [6E solver position reacquisition contract](position-correction-phase2b6e-solver-position-reacquisition.md)
+now consumes an already prepared Ready, retaining the last selected fallback
+position as the Main-return anchor. Immediate fallback-to-Main position switching
+would otherwise violate hysteresis convergence. 6D prepare is unchanged; its
+position-present rejection remains mandatory. Reacquisition is separate from
+visible OutputContinuity and has no production caller.
+
+Next: **Phase 2B-6F — Position Correction Runtime Orchestration Foundation**.
+Orchestration was deferred from 6E to close solver position continuity first.
+Build a dormant/injected same-tick chain through prediction, observe/gap advance,
+6D preparation, 6E selection and manual writeback, retaining the Raw HMD blocker.
 
 Receipts: `build/reports/phase2b6d-position-correction-application-20261008/report.md`.

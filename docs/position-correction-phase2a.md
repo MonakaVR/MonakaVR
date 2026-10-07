@@ -65,5 +65,8 @@ IMPLEMENTED / DORMANT; runtime learner: NOT CONNECTED. The
 [6D application contract](position-correction-phase2b6d-application-contract.md)
 is IMPLEMENTED / DORMANT; application runtime remains NOT CONNECTED.
 Production Raw HMD remains BLOCKED BY BACKEND, OpenVR POSE_ONLY, Strong Trusted
-UNSUPPORTED, 2B-5P NOT READY and 5S HIL pending. Next is 6E, the dormant/injected
-runtime orchestration foundation, retaining the production Raw HMD blocker.
+UNSUPPORTED, 2B-5P NOT READY and 5S HIL pending. The
+[6E solver position reacquisition contract](position-correction-phase2b6e-solver-position-reacquisition.md)
+is IMPLEMENTED / DORMANT and closes fallback-to-Main position continuity before
+orchestration. Next is 6F, the dormant/injected runtime orchestration foundation,
+retaining the production Raw HMD blocker.

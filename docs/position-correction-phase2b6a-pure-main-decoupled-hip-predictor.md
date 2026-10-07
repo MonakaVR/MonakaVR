@@ -134,5 +134,7 @@ world correction with teacher physical learning dt, physical dedupe and full epo
 invalidation, explicit policy without defaults, bounded update/hold/decay/recovery.
 No state or TRACKING result alone is IK authority. 6D separately validates the
 current prediction/state/assignment/fallback and creates an absolute solver-facing
-candidate. Next is 6E, the dormant/injected runtime orchestration foundation;
-runtime and HMD production blockers remain unchanged.
+candidate. The [6E solver reacquisition contract](position-correction-phase2b6e-solver-position-reacquisition.md)
+now closes fallback-to-Main pre-IK position convergence without predictor changes.
+Next is 6F, the dormant/injected runtime orchestration foundation; runtime and HMD
+production blockers remain unchanged.
