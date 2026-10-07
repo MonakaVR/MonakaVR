@@ -11,6 +11,7 @@ import kotlin.test.*
 class PositionTemporalPairingTests {
 	private val space = CoordinateSpace("canonical", "rh_y_up_neg_z_forward", 2)
 	private val origin = RawSourceIdentity("synthetic:main", RawSourceKind.RAW_BACKEND)
+	private val mount = MainTrackerMountCalibrationIdentity("synthetic-mount", "synthetic-mount:1")
 	private val safe = setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
 		PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION)
 	// Synthetic HIP_CENTER and input lineage only; no MTP mount relabeling or production predictor.
@@ -29,9 +30,9 @@ class PositionTemporalPairingTests {
 
 	private fun input(teacherAt: Long = 85, earliest: Long = 80, latest: Long = 90,
 		generated: Long = 100, now: Long = 100): PositionCorrectionInput = PositionCorrectionInput(
-		PoseObservation(origin.sourceId, TrackerPosition.HIP, now, position = Vector3(.1f, 1f, .2f),
-			provenance = ObservationSampleProvenance(4, teacherAt, "main:1", "main-cal:1", 1, space)),
-		origin, PositionBodyReference.HIP_CENTER, prediction(earliest, latest, generated), space, epoch, 3, now)
+		MainHipCenterPositionTeacher(origin.sourceId, Vector3(.1f, 1f, .2f), ObservationQuality.TRACKED,
+			ObservationSampleProvenance(4, teacherAt, "main:1", "main-cal:1", 1, space), origin, mount),
+		prediction(earliest, latest, generated), space, epoch, 3, now)
 
 	private fun teacherEpoch(input: PositionCorrectionInput = input()) = assertNotNull(PositionTeacherEpoch.from(input))
 	private fun pair(input: PositionCorrectionInput = input(), expected: PositionTeacherEpoch = teacherEpoch(),
@@ -123,14 +124,12 @@ class PositionTemporalPairingTests {
 			PositionTemporalPairingRejectionReason.PAIRING_SKEW_EXCEEDED, pairingPolicy = exactSkew)
 	}
 
-	@Test fun observedPublicationTimeNeverRefreshesPhysicalTeacherAgeOrChangesDistance() {
-		val value = input(teacherAt = 70)
-		for (observedAt in listOf(0L, 100L, Long.MAX_VALUE)) {
-			val changed = value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(observedAtNanos = observedAt))
-			assertEquals(pair(value), pair(changed))
-			rejected(changed, PositionTemporalPairingRejectionReason.TEACHER_STALE,
-				pairingPolicy = unlimited.copy(maxTeacherAgeNanos = 20))
-		}
+	@Test fun comparisonContractHasNoPublicationTimeOrRawObservationField() {
+		assertTrue(PositionCorrectionInput::class.java.declaredFields.none {
+			it.type == PoseObservation::class.java || it.name.contains("observedAt")
+		})
+		rejected(input(teacherAt = 70), PositionTemporalPairingRejectionReason.TEACHER_STALE,
+			pairingPolicy = unlimited.copy(maxTeacherAgeNanos = 20))
 	}
 
 	@Test fun freshGenerationCannotRefreshStalePredictionPhysicalSupport() {
@@ -167,22 +166,19 @@ class PositionTemporalPairingTests {
 	@Test fun teacherFactoryMapsOnlyExistingContinuityFields() {
 		val value = input()
 		assertEquals(PositionTeacherEpoch(origin.sourceId, "main:1", "main-cal:1", 1, space, 3,
-			PositionBodyReference.HIP_CENTER), teacherEpoch(value))
-		val changed = value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(
-			provenance = value.rawMainPositionObservation.provenance!!.copy(mappingRevision = null)))
+			PositionBodyReference.HIP_CENTER, mount), teacherEpoch(value))
+		val changed = value.copy(mainTeacher = value.mainTeacher.copy(
+			provenance = value.mainTeacher.provenance.copy(mappingRevision = null)))
 		assertNull(teacherEpoch(changed).mappingRevision)
 	}
 
 	@Test fun teacherFactoryFailsClosedOnUnavailableOrInconsistentIdentity() {
 		val value = input()
 		for (invalid in listOf(
-			value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(provenance = null)),
-			value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(
-				provenance = value.rawMainPositionObservation.provenance!!.copy(space = null))),
-			value.copy(mainBodyReference = null),
-			value.copy(mainBodyReference = PositionBodyReference.UNKNOWN),
+			value.copy(mainTeacher = value.mainTeacher.copy(provenance = value.mainTeacher.provenance.copy(space = null))),
 			value.copy(assignmentGeneration = -1),
-			value.copy(rawMainOrigin = origin.copy(sourceId = "other")),
+			value.copy(mainTeacher = value.mainTeacher.copy(rawOrigin = origin.copy(sourceId = "other"))),
+			value.copy(mainTeacher = value.mainTeacher.copy(sourceId = " ")),
 		)) assertNull(PositionTeacherEpoch.from(invalid))
 	}
 
@@ -207,14 +203,15 @@ class PositionTemporalPairingTests {
 			current.copy(coordinateSpace = space.copy(revision = 3)),
 			current.copy(assignmentGeneration = 4),
 			current.copy(bodyReference = PositionBodyReference.TRACKER_MOUNT),
+			current.copy(mountCalibration = mount.copy(epoch = "synthetic-mount:2")),
 		)) rejected(input(), PositionTemporalPairingRejectionReason.TEACHER_EPOCH_MISMATCH, expected)
 	}
 
 	@Test fun nullableTeacherMappingTransitionsCannotPairOldSamples() {
 		val value = input()
 		for ((before, after) in listOf(null to 1L, 1L to 2L, 1L to null)) {
-			val old = value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(
-				provenance = value.rawMainPositionObservation.provenance!!.copy(mappingRevision = before)))
+			val old = value.copy(mainTeacher = value.mainTeacher.copy(
+				provenance = value.mainTeacher.provenance.copy(mappingRevision = before)))
 			val expected = teacherEpoch(old).copy(mappingRevision = after)
 			rejected(old, PositionTemporalPairingRejectionReason.TEACHER_EPOCH_MISMATCH, expected)
 		}
@@ -247,8 +244,8 @@ class PositionTemporalPairingTests {
 	@Test fun exactMainPredictionAndExpectedSpacesCannotBeRepairedByTimeProximity() {
 		val value = input()
 		for (changed in listOf(space.copy(id = "other"), space.copy(convention = "other"), space.copy(revision = 3))) {
-			structural(value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(
-				provenance = value.rawMainPositionObservation.provenance!!.copy(space = changed))), "space_mismatch")
+			structural(value.copy(mainTeacher = value.mainTeacher.copy(
+				provenance = value.mainTeacher.provenance.copy(space = changed))), "space_mismatch")
 			structural(value.copy(expectedSpace = changed), "space_mismatch")
 			structural(value.copy(prediction = prediction(predictionSpace = changed)), "prediction_space_epoch_mismatch")
 			structural(value.copy(prediction = prediction(predictionSpace = changed,
@@ -269,14 +266,13 @@ class PositionTemporalPairingTests {
 		val value = input(teacherAt = 0)
 		val badExpected = teacherEpoch().copy(sourceEpoch = "other")
 		val failures = listOf(
-			value.copy(rawMainOrigin = origin.copy(kind = RawSourceKind.DERIVED_OUTPUT)) to "main_not_raw_backend",
-			value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(position = null,
-				positionQuality = ObservationQuality.UNAVAILABLE)) to "main_position_invalid",
-			value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(position = Vector3(Float.NaN, 0f, 0f))) to "main_position_invalid",
-			value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(positionQuality = ObservationQuality.STALE)) to "main_position_invalid",
+			value.copy(mainTeacher = value.mainTeacher.copy(rawOrigin = origin.copy(kind = RawSourceKind.DERIVED_OUTPUT))) to "main_not_raw_backend",
+			value.copy(mainTeacher = value.mainTeacher.copy(positionQuality = ObservationQuality.UNAVAILABLE)) to "main_position_invalid",
+			value.copy(mainTeacher = value.mainTeacher.copy(position = Vector3(Float.NaN, 0f, 0f))) to "main_position_invalid",
+			value.copy(mainTeacher = value.mainTeacher.copy(positionQuality = ObservationQuality.STALE)) to "main_position_invalid",
 			value.copy(prediction = PositionPrediction.unavailable(TrackerPosition.HIP)) to "prediction_unavailable",
-			value.copy(mainBodyReference = PositionBodyReference.TRACKER_MOUNT) to "body_reference_mismatch",
-			value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(provenance = null)) to "main_provenance_missing",
+			value.copy(prediction = prediction(body = PositionBodyReference.TRACKER_MOUNT)) to "body_reference_mismatch",
+			value.copy(mainTeacher = value.mainTeacher.copy(provenance = value.mainTeacher.provenance.copy(space = null))) to "main_space_unknown",
 		)
 		for ((invalid, diagnostic) in failures) rejected(invalid, PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
 			expected = badExpected, pairingPolicy = PositionTemporalPairingPolicy(0, 0, 0, 0), structuralReason = diagnostic)
@@ -285,24 +281,25 @@ class PositionTemporalPairingTests {
 		structural(value.copy(prediction = prediction(dependencies = safe - PositionPredictionDependency.RAW_HMD)), "input_lineage_incomplete")
 	}
 
-	@Test fun matchingMountReferencesRemainStructurallyIneligible() {
-		structural(input().copy(mainBodyReference = PositionBodyReference.TRACKER_MOUNT,
-			prediction = prediction(body = PositionBodyReference.TRACKER_MOUNT)), "body_reference_not_comparable")
+	@Test fun trackerMountPredictionCannotCompareToFixedHipCenterTeacher() {
+		structural(input().copy(prediction = prediction(body = PositionBodyReference.TRACKER_MOUNT)),
+			"body_reference_mismatch")
+		assertEquals(PositionBodyReference.HIP_CENTER, input().mainTeacher.bodyReference)
 	}
 
 	@Test fun numericEqualityNeverBypassesEitherEpochMismatch() {
 		val value = input()
-		assertEquals(value.rawMainPositionObservation.position, value.prediction.position)
+		assertEquals(value.mainTeacher.position, value.prediction.position)
 		rejected(value, PositionTemporalPairingRejectionReason.TEACHER_EPOCH_MISMATCH,
-			expected = teacherEpoch().copy(calibrationEpoch = "new-mount"))
+			expected = teacherEpoch().copy(calibrationEpoch = "new-upstream"))
 		structural(value.copy(expectedPredictionEpoch = epoch.copy(bodyModelEpoch = "new-body")), "prediction_epoch_mismatch")
 	}
 
-	@Test fun sequencePhysicalTimePublicationTimeAndNumericProgressionDoNotChangeTeacherEpoch() {
+	@Test fun sequencePhysicalTimeAndNumericProgressionDoNotChangeTeacherEpoch() {
 		val value = input()
-		val progressed = value.copy(rawMainPositionObservation = value.rawMainPositionObservation.copy(
-			observedAtNanos = 99, position = Vector3(.2f, 1.1f, .3f),
-			provenance = value.rawMainPositionObservation.provenance!!.copy(sequence = Long.MAX_VALUE, sampleAtNanos = 86)),
+		val progressed = value.copy(mainTeacher = value.mainTeacher.copy(
+			position = Vector3(.2f, 1.1f, .3f),
+			provenance = value.mainTeacher.provenance.copy(sequence = Long.MAX_VALUE, sampleAtNanos = 86)),
 			prediction = prediction(sequence = Long.MAX_VALUE))
 		assertEquals(teacherEpoch(value), teacherEpoch(progressed))
 		assertEquals(epoch, pairable(progressed).predictionEpoch)

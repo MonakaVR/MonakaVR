@@ -30,11 +30,11 @@ class PositionPredictionContractTests {
 		spaceValue: CoordinateSpace = source.space) = PositionPrediction.available(
 		TrackerPosition.HIP, Vector3(.1f, 1f, .2f), spaceValue, body,
 		PositionPredictionProvenance(7, 100, 80, 90, source.epoch()), dependencies)
-	private fun teacher(p: PositionPrediction = prediction(), body: PositionBodyReference? = PositionBodyReference.HIP_CENTER,
-		expectedSpace: CoordinateSpace = space, origin: RawSourceIdentity = mainIdentity,
-		main: PoseObservation = PoseObservation("mtp:main", TrackerPosition.HIP, 90,
-			position = Vector3(.1f, 1f, .2f), provenance = provenance(90))) = PositionCorrectionInput(
-		main, origin, body, p, expectedSpace, input().epoch(), 3, 100)
+	private fun mainTeacher() = MainHipCenterPositionTeacher(mainIdentity.sourceId, Vector3(.1f, 1f, .2f),
+		ObservationQuality.TRACKED, provenance(90), mainIdentity, MainTrackerMountCalibrationIdentity("mount", "mount:1"))
+	private fun teacher(p: PositionPrediction = prediction(), expectedSpace: CoordinateSpace = space,
+		origin: RawSourceIdentity = mainIdentity, main: MainHipCenterPositionTeacher = mainTeacher()) = PositionCorrectionInput(
+		main.copy(rawOrigin = origin), p, expectedSpace, input().epoch(), 3, 100)
 
 	@Test fun rawInputsAndModelLineageAreStructurallyEligibleButNotYetPaired() {
 		val source = input()
@@ -113,31 +113,22 @@ class PositionPredictionContractTests {
 			assertEquals("space_mismatch", PositionCorrectionTeacherEligibility.check(teacher(expectedSpace = changed)).reason)
 		}
 		assertEquals("body_reference_mismatch", PositionCorrectionTeacherEligibility.check(
-			teacher(body = PositionBodyReference.TRACKER_MOUNT)).reason)
-		assertEquals("main_body_reference_unknown", PositionCorrectionTeacherEligibility.check(teacher(body = null)).reason)
-		assertEquals("main_body_reference_unknown", PositionCorrectionTeacherEligibility.check(
-			teacher(body = PositionBodyReference.UNKNOWN)).reason)
-		assertEquals("main_provenance_missing", PositionCorrectionTeacherEligibility.check(
-			teacher(main = teacher().rawMainPositionObservation.copy(provenance = null))).reason)
+			teacher(prediction(body = PositionBodyReference.TRACKER_MOUNT))).reason)
+		assertEquals("main_space_unknown", PositionCorrectionTeacherEligibility.check(
+			teacher(main = mainTeacher().copy(provenance = provenance(90).copy(space = null)))).reason)
 		assertEquals("main_position_invalid", PositionCorrectionTeacherEligibility.check(
-			teacher(main = teacher().rawMainPositionObservation.copy(position = Vector3(Float.NaN, 0f, 0f)))).reason)
+			teacher(main = mainTeacher().copy(position = Vector3(Float.NaN, 0f, 0f)))).reason)
 	}
 
 	@Test fun onlyHipCenterPairsAreDirectlyComparableWhileTrackerMountRemainsRepresentable() {
 		val mount = prediction(body = PositionBodyReference.TRACKER_MOUNT)
 		assertEquals(PositionBodyReference.TRACKER_MOUNT, mount.bodyReference)
-		// Prediction-only preflight validates representation, not a Main/prediction comparison.
 		assertTrue(PositionCorrectionTeacherEligibility.check(mount).eligibleForPairing)
 		assertTrue(PositionCorrectionTeacherEligibility.check(teacher()).eligibleForPairing)
-		val sameMountTags = PositionCorrectionTeacherEligibility.check(
-			teacher(mount, body = PositionBodyReference.TRACKER_MOUNT))
-		assertFalse(sameMountTags.eligibleForPairing)
-		assertEquals("body_reference_not_comparable", sameMountTags.reason)
-		for (mismatched in listOf(teacher(mount), teacher(body = PositionBodyReference.TRACKER_MOUNT))) {
-			val result = PositionCorrectionTeacherEligibility.check(mismatched)
-			assertFalse(result.eligibleForPairing)
-			assertEquals("body_reference_mismatch", result.reason)
-		}
+		assertEquals(PositionBodyReference.HIP_CENTER, teacher().mainTeacher.bodyReference)
+		val result = PositionCorrectionTeacherEligibility.check(teacher(mount))
+		assertFalse(result.eligibleForPairing)
+		assertEquals("body_reference_mismatch", result.reason)
 	}
 
 	@Test fun hmdCalibrationChangeInvalidatesPreviousPredictionEvenWhenPoseIsIdentical() {
@@ -225,7 +216,7 @@ class PositionPredictionContractTests {
 				source = imuIdentity.copy(sourceId = "${prefix}imu"))) }
 			assertEquals("main_not_raw_backend", PositionCorrectionTeacherEligibility.check(teacher(
 				origin = mainIdentity.copy(sourceId = "${prefix}main"),
-				main = teacher().rawMainPositionObservation.copy(sourceId = "${prefix}main"))).reason)
+				main = teacher().mainTeacher.copy(sourceId = "${prefix}main"))).reason)
 		}
 		assertFailsWith<IllegalArgumentException> { input().copy(rawHmd = input().rawHmd.copy(
 			source = hmdIdentity.copy(kind = RawSourceKind.COMPUTED_TRACKER))) }
@@ -242,6 +233,6 @@ class PositionPredictionContractTests {
 		assertFailsWith<IllegalArgumentException> { source.copy(rawImu = source.rawImu.copy(
 			space = space.copy(revision = 3), provenance = source.rawImu.provenance.copy(space = space.copy(revision = 3)))) }
 		assertEquals("future_sample", PositionCorrectionTeacherEligibility.check(teacher(
-			main = teacher().rawMainPositionObservation.copy(provenance = provenance(101)))).reason)
+			main = teacher().mainTeacher.copy(provenance = provenance(101)))).reason)
 	}
 }

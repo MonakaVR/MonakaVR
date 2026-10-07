@@ -168,10 +168,9 @@ class PositionPrediction private constructor(
 	}
 }
 
-data class PositionCorrectionInput(
-	val rawMainPositionObservation: PoseObservation,
-	val rawMainOrigin: RawSourceIdentity,
-	val mainBodyReference: PositionBodyReference?,
+/** Dormant comparison contract. Only a calibrated position-only Main teacher can enter. */
+internal data class PositionCorrectionInput(
+	val mainTeacher: MainHipCenterPositionTeacher,
 	val prediction: PositionPrediction,
 	val expectedSpace: CoordinateSpace,
 	val expectedPredictionEpoch: PositionPredictionEpoch,
@@ -210,22 +209,24 @@ object PositionCorrectionTeacherEligibility {
 		return PositionTeacherEligibility(true, "eligible_for_pairing")
 	}
 
-	fun check(input: PositionCorrectionInput): PositionTeacherEligibility {
+	internal fun check(input: PositionCorrectionInput): PositionTeacherEligibility {
 		val prediction = input.prediction
 		val base = check(prediction)
 		if (!base.eligibleForPairing) return base
-		val main = input.rawMainPositionObservation
-		if (!input.rawMainOrigin.isRawBackend() || input.rawMainOrigin.sourceId != main.sourceId)
+		val main = input.mainTeacher
+		if (!main.rawOrigin.isRawBackend() || main.rawOrigin.sourceId != main.sourceId)
 			return reject("main_not_raw_backend")
-		if (main.target != prediction.target || main.position == null || !main.positionQuality.usable || !finite(main.position))
+		if (main.target != TrackerPosition.HIP || main.target != prediction.target ||
+			!main.positionQuality.usable || !finite(main.position))
 			return reject("main_position_invalid")
-		val mainProvenance = main.provenance ?: return reject("main_provenance_missing")
-		if (mainProvenance.space != input.expectedSpace || prediction.space != input.expectedSpace)
+		val mainProvenance = main.provenance
+		// Check nullable raw space before reading teacher.space, including malformed internal fixtures.
+		if (mainProvenance.space == null) return reject("main_space_unknown")
+		if (main.space != input.expectedSpace || mainProvenance.space != input.expectedSpace ||
+			prediction.space != input.expectedSpace)
 			return reject("space_mismatch")
-		if (input.mainBodyReference == null || input.mainBodyReference == PositionBodyReference.UNKNOWN)
-			return reject("main_body_reference_unknown")
-		if (input.mainBodyReference != prediction.bodyReference) return reject("body_reference_mismatch")
-		if (!directlyComparable(input.mainBodyReference, prediction.bodyReference))
+		if (main.bodyReference != prediction.bodyReference) return reject("body_reference_mismatch")
+		if (!directlyComparable(main.bodyReference, prediction.bodyReference))
 			return reject("body_reference_not_comparable")
 		if (input.assignmentGeneration < 0 || input.expectedPredictionEpoch.coordinateSpace != input.expectedSpace ||
 			input.assignmentGeneration != input.expectedPredictionEpoch.assignmentGeneration ||

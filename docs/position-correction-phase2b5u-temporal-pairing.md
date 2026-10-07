@@ -1,7 +1,7 @@
 # Phase 2B-5U: Position temporal pairing boundary
 
 `PositionTemporalPairing.check(input, expectedTeacherEpoch, policy)` adds an internal,
-stateless production boundary after the unchanged `PositionCorrectionTeacherEligibility`.
+stateless production boundary after `PositionCorrectionTeacherEligibility`.
 `eligible_for_pairing` remains structural preflight. `Pairable` means the sample and
 prediction are comparison candidates in time and current context. **Pairable does not
 mean learning is allowed.** The only callers are dedicated core tests.
@@ -13,13 +13,14 @@ does not read a clock, map a remote timestamp, cache a sample or mutate state.
 
 | Meaning | Field |
 | --- | --- |
-| Teacher physical sample T | `input.rawMainPositionObservation.provenance.sampleAtNanos` |
+| Teacher physical sample T | `input.mainTeacher.provenance.sampleAtNanos` |
 | Prediction physical support [E,L] | `prediction.provenance.inputEarliestAtNanos`, `inputLatestAtNanos` |
 | Prediction generation G | `prediction.provenance.generatedAtNanos` |
 | Now N | `input.nowNanos` |
 
-`PoseObservation.observedAtNanos` can be publication/read time and never substitutes for
-teacher physical time. Generation is not input freshness. Neither sequence is a time.
+The position-only comparison input has no `observedAtNanos` or raw PoseObservation field.
+Publication/read time never substitutes for teacher physical time. Generation is not
+input freshness. Neither sequence is a time.
 
 `PositionTemporalPairingPolicy` requires four explicit nonnegative nanosecond limits,
 with no production defaults. Inclusive conditions are:
@@ -42,14 +43,16 @@ representable even across the full range, without overflow or saturation.
 ## Teacher and prediction continuity
 
 `PositionTeacherEpoch` holds Main source ID, source/reconnect epoch, calibration/input
-session epoch, nullable mapping revision, exact space, assignment generation and body
-reference. `PositionTeacherEpoch.from(input)` extracts existing fields, returning null
-for missing provenance/space/body reference, UNKNOWN body reference, invalid assignment
-generation or origin/source ID disagreement. Extraction alone proves neither eligibility
-nor current context.
+session epoch, nullable mapping revision, exact space, assignment generation, fixed
+HIP_CENTER body reference and complete Main mount calibration identity (calibrationId
+and effective session/content epoch, added by 5W). Upstream calibration and physical
+mount calibration remain independent. `PositionTeacherEpoch.from(input)` extracts the
+position-only teacher fields, returning null for missing space, blank source ID, invalid
+assignment generation or origin/source ID disagreement. Extraction alone proves neither
+eligibility nor current context. Provenance and body reference are now guaranteed by type.
 
 The caller must supply a separately established **current expected teacher epoch** from
-current assignment/backend context. Extracting an old sample's epoch and reusing it as
+current assignment/backend context and current mount calibration selection. Extracting an old sample's epoch and reusing it as
 expected does not establish continuity. Complete equality is required; null-to-value,
 value-to-value and value-to-null mapping changes all alter identity. Sequence, sample
 time, observed time and numeric pose are progression, excluded from epoch identity.
@@ -64,11 +67,12 @@ Exact space equality includes ID, convention and revision. Main provenance, expe
 space, prediction space, prediction epoch space and expected teacher space must agree.
 Input, expected prediction epoch, actual prediction epoch and expected teacher epoch
 assignment generations must agree. Structural preflight still requires HIP_CENTER /
-HIP_CENTER; matching TRACKER_MOUNT references cannot pair. No transform is performed.
+HIP_CENTER; the Main comparison type has no TRACKER_MOUNT path. A TRACKER_MOUNT
+prediction fails with body_reference_mismatch. No transform is performed in pairing.
 
 ## Deterministic rejection precedence
 
-The unchanged structural preflight runs first. Every failure returns typed
+The structural preflight runs first. Every failure returns typed
 `STRUCTURAL_INELIGIBLE` with the original diagnostic in `Rejected.structuralReason`.
 Temporal checks never overwrite that failure. Existing prediction epoch mismatch yields
 `STRUCTURAL_INELIGIBLE / prediction_epoch_mismatch`; future teacher or generation yields
@@ -80,7 +84,8 @@ After preflight, checks run in order: teacher epoch extraction/equality, predict
 epoch equality, exact space, assignment, future timestamps, teacher age, latest input
 age, generation age, interval distance. Defensive typed context/future reasons remain
 in the implementation, although current preflight already rejects those conditions.
-The preflight is not changed to make these defensive branches observable.
+The preflight is not changed to make these defensive branches observable. Valid teachers
+from an old mount identity return TEACHER_EPOCH_MISMATCH, even with equal numeric positions.
 
 `Pairable` retains immutable teacher/support timestamps, interval distance and distinct
 teacher/prediction epochs. It carries no error vector, learning weight, correction
@@ -97,9 +102,11 @@ OpenVR HMD remains **POSE_ONLY**, Strong Trusted **UNSUPPORTED**, correction aut
 **NO**, and 2B-5P **NOT READY**. HMD remains blocked by its backend. Main MTP provenance
 is available. [Phase 2B-5V](position-correction-phase2b5v-main-mount-calibration.md) adds
 the dormant mount-to-HIP-center calibration foundation; production MTP is never
-relabeled HIP_CENTER. Before integration, PositionTeacherEpoch must additionally bind
-the Main mount calibration identity and reject old-calibration teachers against current
-context. Position-only teacher projection and runtime wiring remain deferred.
+relabeled HIP_CENTER. [Phase 2B-5W](position-correction-phase2b5w-calibrated-main-teacher-integration.md)
+integrates its position-only teacher directly and binds Main mount calibration identity
+to PositionTeacherEpoch, rejecting old-calibration teachers against independent current
+context. Production MTP normalization, assignment/calibration selection and runtime
+wiring remain deferred.
 Raw IMU production adapter/exact space, body-model predictor
 handoff and Fixed Calibration implementation remain deferred. Test HIP_CENTER and
 prediction lineage, including fixed calibration identity, are explicitly synthetic.

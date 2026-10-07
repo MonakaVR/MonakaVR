@@ -24,6 +24,7 @@ internal data class PositionTeacherEpoch(
 	val coordinateSpace: CoordinateSpace,
 	val assignmentGeneration: Long,
 	val bodyReference: PositionBodyReference,
+	val mountCalibration: MainTrackerMountCalibrationIdentity,
 ) {
 	init {
 		require(sourceId.isNotBlank() && sourceEpoch.isNotBlank() && calibrationEpoch.isNotBlank())
@@ -33,12 +34,12 @@ internal data class PositionTeacherEpoch(
 	companion object {
 		/** Extraction only; does not confer structural eligibility, current-context proof or authority. */
 		fun from(input: PositionCorrectionInput): PositionTeacherEpoch? {
-			val main = input.rawMainPositionObservation
-			val provenance = main.provenance ?: return null
+			val main = input.mainTeacher
+			val provenance = main.provenance
 			val space = provenance.space ?: return null
-			val bodyReference = input.mainBodyReference ?: return null
-			if (bodyReference == PositionBodyReference.UNKNOWN || input.assignmentGeneration < 0 ||
-				input.rawMainOrigin.sourceId != main.sourceId) return null
+			val bodyReference = main.bodyReference
+			if (input.assignmentGeneration < 0 || main.sourceId.isBlank() ||
+				main.rawOrigin.sourceId != main.sourceId) return null
 			return PositionTeacherEpoch(
 				sourceId = main.sourceId,
 				sourceEpoch = provenance.sourceEpoch,
@@ -47,6 +48,7 @@ internal data class PositionTeacherEpoch(
 				coordinateSpace = space,
 				assignmentGeneration = input.assignmentGeneration,
 				bodyReference = bodyReference,
+				mountCalibration = main.mountCalibration,
 			)
 		}
 	}
@@ -115,7 +117,7 @@ internal object PositionTemporalPairing {
 			predictionEpoch.assignmentGeneration != input.assignmentGeneration)
 			return reject(PositionTemporalPairingRejectionReason.ASSIGNMENT_GENERATION_MISMATCH)
 
-		val teacherAt = input.rawMainPositionObservation.provenance!!.sampleAtNanos
+		val teacherAt = input.mainTeacher.provenance.sampleAtNanos
 		val earliest = provenance.inputEarliestAtNanos
 		val latest = provenance.inputLatestAtNanos
 		val generated = provenance.generatedAtNanos

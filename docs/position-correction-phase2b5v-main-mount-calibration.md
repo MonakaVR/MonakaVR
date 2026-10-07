@@ -110,19 +110,21 @@ The derived position is in the raw observation's exact CoordinateSpace.
 
 Main teacher mount calibration is distinct from predictor FixedCalibrationIdentity.
 No references are introduced into MainDecoupledHipInput, MainDecoupledHipPredictor,
-PositionPredictionEpoch, RawHmdPoseInput or RawImuOrientationInput. Those contracts,
-PositionCorrectionInput, temporal pairing and production MTP adapters are unchanged.
+PositionPredictionEpoch, RawHmdPoseInput or RawImuOrientationInput. Those predictor
+contracts and production MTP adapters remain unchanged. Phase 2B-5W now integrates
+the position-only value into PositionCorrectionInput and temporal pairing.
 There is no learner, correction calculation, IK writeback, Direct integration or
 runtime config/protocol change. Predictor, Position Correction and temporal pairing
 runtime remain **NOT CONNECTED**. OpenVR HMD stays POSE_ONLY, Strong Trusted UNSUPPORTED,
 and 2B-5P NOT READY. Calibration acquisition/UI/persistence are deferred.
 
-Before any Phase 2B-5W calibrated-teacher integration, **PositionTeacherEpoch must bind
-Main mount calibration identity** and compare against independently established current
-calibration context. Old-calibration teachers must fail pairing after a mount change,
-even when positions are numerically identical. The position-only value needs an explicit
-safe projection into PositionCorrectionInput; do not invent a FULL or NONE position-only
-modality. Runtime source assignment, calibration selection and MTP normalization wiring
+[Phase 2B-5W](position-correction-phase2b5w-calibrated-main-teacher-integration.md)
+binds **complete Main mount calibration identity** into PositionTeacherEpoch and compares
+against independently established current calibration context. Old-calibration teachers
+fail pairing after session, offset or calibration ID changes, even when positions are
+numerically identical. PositionCorrectionInput directly accepts MainHipCenterPositionTeacher,
+with no PoseObservation projection or invented FULL/NONE modality. Runtime source
+assignment, calibration selection and MTP normalization wiring
 remain deferred along with learner/correction law.
 
 Software gates: dedicated mount tests, existing temporal/prediction contract tests,
