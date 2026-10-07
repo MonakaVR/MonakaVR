@@ -61,7 +61,9 @@ observed/accepted watermarks and teacher physical time for bounded learning;
 explicit policy has no defaults. It holds compatible short loss, then decays to
 zero and reacquires stably. Epoch/space/assignment changes immediately invalidate.
 TRACKING and correction snapshots confer no IK/output authority. Numerical learner:
-IMPLEMENTED / DORMANT; runtime learner: NOT CONNECTED; application: NOT IMPLEMENTED.
+IMPLEMENTED / DORMANT; runtime learner: NOT CONNECTED. The
+[6D application contract](position-correction-phase2b6d-application-contract.md)
+is IMPLEMENTED / DORMANT; application runtime remains NOT CONNECTED.
 Production Raw HMD remains BLOCKED BY BACKEND, OpenVR POSE_ONLY, Strong Trusted
-UNSUPPORTED, 2B-5P NOT READY and 5S HIL pending. Next is the dormant 6D application
-contract before runtime connection.
+UNSUPPORTED, 2B-5P NOT READY and 5S HIL pending. Next is 6E, the dormant/injected
+runtime orchestration foundation, retaining the production Raw HMD blocker.

@@ -110,7 +110,9 @@ pipeline, resolver, IK or output.
 
 Pure predictor algorithm: **IMPLEMENTED**. Predictor runtime, Raw IMU runtime
 assembly, temporal pairing runtime, Position Correction runtime and correction
-IK: **NOT CONNECTED**. Bounded numerical learning law: **IMPLEMENTED / DORMANT** in 6C; runtime learner: **NOT CONNECTED**; actual correction application: **NOT IMPLEMENTED**.
+IK: **NOT CONNECTED**. Bounded numerical learning law: **IMPLEMENTED / DORMANT** in 6C;
+runtime learner: **NOT CONNECTED**. The [6D application contract](position-correction-phase2b6d-application-contract.md)
+is **IMPLEMENTED / DORMANT**; actual correction application runtime: **NOT CONNECTED**.
 OpenVR HMD: **POSE_ONLY**; Strong Trusted: **UNSUPPORTED**; production Raw HMD:
 **BLOCKED BY BACKEND**; 2B-5P: **NOT READY**. 5S physical HIL remains pending.
 6A HIL: **NOT REQUIRED / NOT RUN**, because this is a pure disconnected algorithm
@@ -130,5 +132,7 @@ and algorithm are unchanged; runtime remains constrained by the HMD blocker.
 [Phase 2B-6C](position-correction-phase2b6c-bounded-learning-law.md) implements
 world correction with teacher physical learning dt, physical dedupe and full epoch
 invalidation, explicit policy without defaults, bounded update/hold/decay/recovery.
-No state or TRACKING result is IK authority. Next is the dormant 6D application
-contract; runtime and HMD production blockers remain unchanged.
+No state or TRACKING result alone is IK authority. 6D separately validates the
+current prediction/state/assignment/fallback and creates an absolute solver-facing
+candidate. Next is 6E, the dormant/injected runtime orchestration foundation;
+runtime and HMD production blockers remain unchanged.

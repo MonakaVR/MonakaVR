@@ -109,7 +109,9 @@ Position Error Measurement: **IMPLEMENTED / DORMANT**. Pure predictor algorithm:
 **IMPLEMENTED**. Predictor runtime, temporal pairing runtime, Position Correction
 runtime and correction IK/writeback: **NOT CONNECTED**. Bounded numerical learner:
 **IMPLEMENTED / DORMANT** in 6C; runtime learner: **NOT CONNECTED**; actual
-IK/output correction application: **NOT IMPLEMENTED**. No ConstraintPipeline, Direct or SteamVR
+IK/output correction application runtime: **NOT CONNECTED**. The
+[6D application contract](position-correction-phase2b6d-application-contract.md) is
+**IMPLEMENTED / DORMANT**. No ConstraintPipeline, Direct or SteamVR
 output connection is added. OpenVR HMD: **POSE_ONLY**; Strong Trusted:
 **UNSUPPORTED**; production Raw HMD: **BLOCKED BY BACKEND**; 2B-5P: **NOT READY**.
 5S physical HIL remains pending. 6B HIL: **NOT REQUIRED / NOT RUN**.
@@ -121,5 +123,7 @@ Fresh regression and Git receipts:
 bounded world-space correction state from this sole comparison sample, with physical
 identity dedupe, teacher-time dt, explicit no-default policy, hold/decay and stable
 reacquisition. Full epoch/space/assignment changes hard invalidate; no snapshot is
-application authority. Next is 6D, the dormant application contract. Runtime stays
+application authority by itself. 6D separately validates a current solver-facing
+candidate with exactly-once construction and exact fallback rotation preservation.
+Next is 6E, the dormant/injected runtime orchestration foundation. Runtime stays
 disconnected and the HMD backend gate remains unresolved.
