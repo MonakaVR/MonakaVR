@@ -62,6 +62,7 @@ data class RawImuOrientationInput(
 data class BodyModelIdentity(val modelId: String, val epoch: String) {
 	init { require(modelId.isNotBlank() && epoch.isNotBlank()) }
 }
+/** Complete identity; effective content/session epoch is owned by the numerical snapshot factory. */
 data class FixedCalibrationIdentity(val calibrationId: String, val epoch: String) {
 	init { require(calibrationId.isNotBlank() && epoch.isNotBlank()) }
 }
@@ -78,13 +79,14 @@ data class PositionPredictionEpoch(
 	val imuMappingRevision: Long?,
 	val bodyModelId: String,
 	val bodyModelEpoch: String,
+	val fixedCalibrationId: String,
 	val fixedCalibrationEpoch: String,
 	val coordinateSpace: CoordinateSpace,
 	val assignmentGeneration: Long,
 ) {
 	init {
 		require(listOf(hmdSourceId, hmdSourceEpoch, hmdCalibrationEpoch, imuSourceId, imuSourceEpoch,
-			imuCalibrationEpoch, bodyModelId, bodyModelEpoch, fixedCalibrationEpoch).all(String::isNotBlank))
+			imuCalibrationEpoch, bodyModelId, bodyModelEpoch, fixedCalibrationId, fixedCalibrationEpoch).all(String::isNotBlank))
 		require(assignmentGeneration >= 0)
 	}
 }
@@ -118,7 +120,7 @@ data class MainDecoupledHipInput(
 	val rawHmd: RawHmdPoseInput,
 	val rawImu: RawImuOrientationInput,
 	val bodyModel: HipBodyModelSnapshot,
-	val fixedCalibration: FixedCalibrationIdentity,
+	val fixedCalibration: PredictorFixedCalibrationSnapshot,
 	val space: CoordinateSpace,
 	val assignmentGeneration: Long,
 	val nowNanos: Long,
@@ -127,6 +129,8 @@ data class MainDecoupledHipInput(
 	init {
 		require(target == TrackerPosition.HIP && assignmentGeneration >= 0 && nowNanos >= 0)
 		require(rawHmd.space == space && rawImu.space == space)
+		require(fixedCalibration.hmdSourceId == rawHmd.source.sourceId) { "Fixed calibration HMD source mismatch" }
+		require(fixedCalibration.bodyModelId == bodyModel.identity.modelId) { "Fixed calibration body model mismatch" }
 		require(rawHmd.provenance.sampleAtNanos <= nowNanos && rawImu.provenance.sampleAtNanos <= nowNanos)
 	}
 	fun epoch() = PositionPredictionEpoch(
@@ -140,7 +144,8 @@ data class MainDecoupledHipInput(
 		imuMappingRevision = rawImu.provenance.mappingRevision,
 		bodyModelId = bodyModel.identity.modelId,
 		bodyModelEpoch = bodyModel.identity.epoch,
-		fixedCalibrationEpoch = fixedCalibration.epoch,
+		fixedCalibrationId = fixedCalibration.identity.calibrationId,
+		fixedCalibrationEpoch = fixedCalibration.identity.epoch,
 		coordinateSpace = space,
 		assignmentGeneration = assignmentGeneration,
 	)

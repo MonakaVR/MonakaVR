@@ -17,8 +17,9 @@ class PositionTemporalPairingTests {
 	// Synthetic HIP_CENTER and input lineage only; no MTP mount relabeling or production predictor.
 	private val body = assertIs<HipBodyModelSnapshotResult.Available>(
 		HipBodyModelSnapshot.create(.1f, .2f, .25f, .3f, .35f, .15f)).snapshot
+	private val fixed = syntheticHeadAnchorCalibration("synthetic:hmd", body.identity.modelId)
 	private val epoch = PositionPredictionEpoch("synthetic:hmd", "hmd:1", "hmd-cal:1", null,
-		"synthetic:imu", "imu:1", "imu-cal:1", 1, body.identity.modelId, body.identity.epoch, "fixed:1", space, 3)
+		"synthetic:imu", "imu:1", "imu-cal:1", 1, body.identity.modelId, body.identity.epoch, fixed.identity.calibrationId, fixed.identity.epoch, space, 3)
 	private val policy = PositionTemporalPairingPolicy(10, 100, 100, 100)
 	private val unlimited = PositionTemporalPairingPolicy(Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE)
 
@@ -225,7 +226,8 @@ class PositionTemporalPairingTests {
 			epoch.copy(hmdCalibrationEpoch = "hmd-cal:2"), epoch.copy(hmdMappingRevision = 1),
 			epoch.copy(imuSourceId = "other:imu"), epoch.copy(imuSourceEpoch = "imu:2"),
 			epoch.copy(imuCalibrationEpoch = "imu-cal:2"), epoch.copy(imuMappingRevision = 2),
-			epoch.copy(bodyModelEpoch = "body:2"), epoch.copy(fixedCalibrationEpoch = "fixed:2"),
+			epoch.copy(bodyModelEpoch = "body:2"), epoch.copy(fixedCalibrationId = "other-head-anchor"),
+			epoch.copy(fixedCalibrationEpoch = "fixed:2"),
 			epoch.copy(coordinateSpace = space.copy(id = "other")),
 			epoch.copy(coordinateSpace = space.copy(convention = "other")),
 			epoch.copy(coordinateSpace = space.copy(revision = 3)), epoch.copy(assignmentGeneration = 4),

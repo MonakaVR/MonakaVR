@@ -77,16 +77,16 @@ mount/reset and space changes alter prediction lineage. Sequence, sample time
 and numeric orientation progression alone do not.
 
 Dedicated tests use actual Tracker/UDPDevice fixtures and the production boundary.
-Synthetic HMD, immutable body snapshot and Fixed Calibration identity fixtures
-verify epoch handoff without establishing production HMD capability or numerical
-calibration. Existing PoseObservation position, rotation, modality, quality,
+Synthetic HMD, immutable body snapshot and explicit bound Fixed Calibration
+numerical fixtures (5Z) verify epoch handoff without establishing production HMD
+capability or physical calibration acquisition. Existing PoseObservation position, rotation, modality, quality,
 correctionRotation and timing, Phase 1 tests and full software suite are regression
 gates. Public constraint feedback, Stay Aligned, filtering and learned q_corr
 changes are tested; drift exclusion is additionally established by source audit.
 
 Raw IMU assembly, predictor, temporal pairing and Position Correction runtimes
 and correction IK writeback are **NOT CONNECTED**. Predictor algorithm, learner
-and correction law are **NOT IMPLEMENTED**. Fixed Calibration is **IDENTITY ONLY**.
+and correction law are **NOT IMPLEMENTED**. Fixed Calibration is now a **DORMANT NUMERICAL SNAPSHOT** in [5Z](position-correction-phase2b5z-fixed-calibration-numerical-foundation.md). Its HMD-to-HEAD relation is independent of IMU mount/reset and does not change IMU provenance.
 OpenVR HMD is **POSE_ONLY**, Strong Trusted **UNSUPPORTED**, production RawHmdPoseInput
 **BLOCKED BY BACKEND**, 2B-5P **NOT READY**. IMU space confirmation does not relax
 HMD policy. 5S HIL remains pending. HIL here is **NOT REQUIRED / NOT RUN**, because
@@ -101,3 +101,5 @@ HIL remain deferred.
 
 Fresh tests, audit, protected-patch and Git evidence:
 `build/reports/phase2b5y-raw-imu-production-boundary-20261007/report.md`.
+
+Phase 2B-5Z completes that numerical foundation; the historical 5Y next-phase recommendation above is satisfied. The fixed snapshot contains no IMU transform or provider/world-frame calibration, and acquisition, persistence/UI and runtime assembly remain deferred.

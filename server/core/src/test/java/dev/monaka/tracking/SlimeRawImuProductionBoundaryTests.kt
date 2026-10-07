@@ -51,7 +51,7 @@ class SlimeRawImuProductionBoundaryTests {
 		val hmd = RawHmdPoseInput(RawSourceIdentity("synthetic:hmd", RawSourceKind.RAW_HMD, isHmd = true),
 			Vector3(0f, 1.7f, 0f), Quaternion.IDENTITY, imu.space,
 			ObservationSampleProvenance(1, 1, "hmd-session", "hmd-cal", null, imu.space))
-		return MainDecoupledHipInput(hmd, imu, body, FixedCalibrationIdentity("synthetic-fixed", "fixed:1"),
+		return MainDecoupledHipInput(hmd, imu, body, syntheticHeadAnchorCalibration(hmd.source.sourceId, body.identity.modelId),
 			imu.space, 3, 1000).epoch()
 	}
 
