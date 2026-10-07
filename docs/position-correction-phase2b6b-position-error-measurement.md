@@ -32,7 +32,7 @@ Pairing preflight already validates finite sources and sample identities through
 the existing value contracts. Two finite sources can still overflow subtraction
 (Float.MAX_VALUE - -Float.MAX_VALUE). Any nonfinite error component returns
 `ERROR_NONFINITE`, with no sample, clamp, saturation, zero substitution or partial
-numeric snapshot. Zero residual is a valid Measured result. Large finite residuals
+numeric snapshot. Zero error is a valid Measured result. Large finite residuals
 are valid, without a residual/outlier threshold. Signed zero retains ordinary
 Float subtraction bits, without canonicalization.
 
@@ -51,7 +51,9 @@ PositionErrorSample retains these separate facts:
 | target, bodyReference, coordinateSpace | HIP, HIP_CENTER, exact input.expectedSpace |
 | teacherPosition, predictionPosition, errorWorld | Copied numeric snapshots and world difference |
 | teacherSequence | Raw Main provenance.sequence |
-| predictionSequence | Prediction provenance.predictionSequence |
+| predictionSequence | Caller-owned predictor invocation progression, never physical identity |
+| predictionHmdSequence, predictionHmdSampleAtNanos | Exact Raw HMD physical identity copied from prediction provenance |
+| predictionImuSequence, predictionImuSampleAtNanos | Exact Raw IMU physical identity copied from prediction provenance |
 | teacherSampleAtNanos | Raw Main physical sample time |
 | predictionInputEarliestAtNanos, predictionInputLatestAtNanos | Prediction's physical support window |
 | predictionGeneratedAtNanos | Prediction generation, separate from physical support |
@@ -67,8 +69,9 @@ positions and error are progression facts, separate from epoch identity. No new
 dependency enum or error sequence allocator is added. Repeated evaluation of an
 identical pair returns an equal sample; there is no measurement-layer dedupe.
 
-Future learning/update clock must explicitly define which time fact it uses in a
-separate phase. Teacher physical time is not implicitly correction-state time.
+6C explicitly defines learning dt from consecutive accepted teacher physical times.
+Evaluation advances gap state only; generation/support never substitute for teacher dt.
+6B remains stateless measurement and applies no dedupe or learning policy.
 
 ## Authority, feedback and dormant integration
 
@@ -87,10 +90,10 @@ back or published.
 No persistent state, last error/time, counter, offset, EMA/low-pass/Kalman, running
 mean, confidence, gain, clamp, learner, correction-law interface, velocity or
 acceleration correction, loss/reacquisition machine or runtime integration exists
-in this boundary. Future correction-law decisions remain: measurement outlier
-threshold, state update time basis, gain/tau, world versus body-local persistent
-state, offset saturation, loss hold/decay, reacquisition, confidence, sample
-dedupe and rollback watermarks.
+in this measurement boundary. 6C separately implements world-space state,
+residual outlier policy, teacher-time dt, tau, magnitude/step/rate bounds,
+hold/decay, reacquisition and physical dedupe/rollback watermarks. Confidence
+fusion and correction application remain deferred.
 
 Dedicated tests cover sign/reconstruction, three axes, zero, large finite errors,
 overflow on all axes and signs, signed zero, exact lineage/time/sample facts,
@@ -104,8 +107,9 @@ lineage tests confer no production HMD capability.
 
 Position Error Measurement: **IMPLEMENTED / DORMANT**. Pure predictor algorithm:
 **IMPLEMENTED**. Predictor runtime, temporal pairing runtime, Position Correction
-runtime and correction IK/writeback: **NOT CONNECTED**. Persistent learner and
-correction law: **NOT IMPLEMENTED**. No ConstraintPipeline, Direct or SteamVR
+runtime and correction IK/writeback: **NOT CONNECTED**. Bounded numerical learner:
+**IMPLEMENTED / DORMANT** in 6C; runtime learner: **NOT CONNECTED**; actual
+IK/output correction application: **NOT IMPLEMENTED**. No ConstraintPipeline, Direct or SteamVR
 output connection is added. OpenVR HMD: **POSE_ONLY**; Strong Trusted:
 **UNSUPPORTED**; production Raw HMD: **BLOCKED BY BACKEND**; 2B-5P: **NOT READY**.
 5S physical HIL remains pending. 6B HIL: **NOT REQUIRED / NOT RUN**.
@@ -113,7 +117,9 @@ output connection is added. OpenVR HMD: **POSE_ONLY**; Strong Trusted:
 Fresh regression and Git receipts:
 `build/reports/phase2b6b-position-error-measurement-20261007/report.md`.
 
-Recommended next phase: **Phase 2B-6C — Position Correction State / Bounded Learning
-Law**. The immutable measurement contract now supports independent design of
-stateful clock/gain/hold/decay/reacquisition semantics while runtime remains
+[Phase 2B-6C](position-correction-phase2b6c-bounded-learning-law.md) implements
+bounded world-space correction state from this sole comparison sample, with physical
+identity dedupe, teacher-time dt, explicit no-default policy, hold/decay and stable
+reacquisition. Full epoch/space/assignment changes hard invalidate; no snapshot is
+application authority. Next is 6D, the dormant application contract. Runtime stays
 disconnected and the HMD backend gate remains unresolved.

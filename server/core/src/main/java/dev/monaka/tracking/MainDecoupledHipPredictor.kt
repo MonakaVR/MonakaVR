@@ -44,7 +44,8 @@ class PureMainDecoupledHipPredictor(
 		val position = hipPosition(input) ?: return unavailable()
 		return PositionPrediction.available(
 			TrackerPosition.HIP, position, input.space, PositionBodyReference.HIP_CENTER,
-			PositionPredictionProvenance(input.predictionSequence, now, earliest, latest, input.epoch()),
+			PositionPredictionProvenance(input.predictionSequence, now, earliest, latest, input.epoch(),
+				input.rawHmd.provenance.sequence, hmdAt, input.rawImu.provenance.sequence, imuAt),
 			setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
 				PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION),
 		)

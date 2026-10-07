@@ -42,7 +42,7 @@ class CalibratedMainTeacherTemporalPairingTests {
 		body: PositionBodyReference = PositionBodyReference.HIP_CENTER,
 		target: TrackerPosition = TrackerPosition.HIP, dependencies: Set<PositionPredictionDependency> = safe) =
 		PositionPrediction.available(target, Vector3(.1f, 1f, .2f), epoch.coordinateSpace, body,
-			PositionPredictionProvenance(7, 100, 80, 90, epoch), dependencies)
+			PositionPredictionProvenance(7, 100, 80, 90, epoch, 4, 80, 4, 90), dependencies)
 	private fun input(teacher: MainHipCenterPositionTeacher = teacher()) =
 		PositionCorrectionInput(teacher, prediction(), space, predictionEpoch, 3, 100)
 	// Explicit current source/assignment/calibration selection, never auto-adopt an input sample's epoch.

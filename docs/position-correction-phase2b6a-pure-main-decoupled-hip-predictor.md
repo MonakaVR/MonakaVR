@@ -80,10 +80,12 @@ predictionSequence = input.predictionSequence (mandatory caller-owned Long >= 0)
 generatedAtNanos = input.nowNanos
 inputEarliestAtNanos = min(hmd.sampleAtNanos, imu.sampleAtNanos)
 inputLatestAtNanos = max(hmd.sampleAtNanos, imu.sampleAtNanos)
+inputHmdSequence / inputHmdSampleAtNanos = exact rawHmd.provenance.sequence / sampleAtNanos
+inputImuSequence / inputImuSampleAtNanos = exact rawImu.provenance.sequence / sampleAtNanos
 epoch = input.epoch()
 ```
 
-Sequence is invocation progression, absent from epoch. No raw-sequence/timestamp
+predictionSequence is caller-owned invocation progression, absent from epoch and never physical dedupe authority. Since 6C each raw physical identity is copied separately and provenance requires support to equal the exact min/max of individual times. No raw-sequence/timestamp
 hash, mutable counter, clock reread, cache or recovery state is used.
 
 ## Software verification and remaining gates
@@ -108,7 +110,7 @@ pipeline, resolver, IK or output.
 
 Pure predictor algorithm: **IMPLEMENTED**. Predictor runtime, Raw IMU runtime
 assembly, temporal pairing runtime, Position Correction runtime and correction
-IK: **NOT CONNECTED**. Learner and correction law: **NOT IMPLEMENTED**.
+IK: **NOT CONNECTED**. Bounded numerical learning law: **IMPLEMENTED / DORMANT** in 6C; runtime learner: **NOT CONNECTED**; actual correction application: **NOT IMPLEMENTED**.
 OpenVR HMD: **POSE_ONLY**; Strong Trusted: **UNSUPPORTED**; production Raw HMD:
 **BLOCKED BY BACKEND**; 2B-5P: **NOT READY**. 5S physical HIL remains pending.
 6A HIL: **NOT REQUIRED / NOT RUN**, because this is a pure disconnected algorithm
@@ -125,4 +127,8 @@ positions and calculates teacher minus prediction in exact world space, rejectin
 nonfinite subtraction. This is Main-derived comparison measurement, never a
 predictor input or learning/correction/IK authority. Predictor API, dependencies
 and algorithm are unchanged; runtime remains constrained by the HMD blocker.
-Recommended next phase is 2B-6C, independent state/bounded learning-law design.
+[Phase 2B-6C](position-correction-phase2b6c-bounded-learning-law.md) implements
+world correction with teacher physical learning dt, physical dedupe and full epoch
+invalidation, explicit policy without defaults, bounded update/hold/decay/recovery.
+No state or TRACKING result is IK authority. Next is the dormant 6D application
+contract; runtime and HMD production blockers remain unchanged.

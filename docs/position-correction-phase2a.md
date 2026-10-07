@@ -2,7 +2,7 @@
 
 Phase 2A defines a **boundary only**. It adds no HIP predictor algorithm, position learner, offset, pelvis/root constraint, IK writeback, or visible-output path. `PositionPrediction` is derived model data, not a `PoseObservation` and not an independent absolute measurement. No Phase 2A object is registered with `ConstraintPipeline` or passed to `ConstraintIkWriteback`, `OutputContinuityController`, or SteamVR output.
 
-[Phase 2B-5U](position-correction-phase2b5u-temporal-pairing.md) now implements the stateless temporal pairing boundary after the unchanged structural `eligible_for_pairing` preflight. It compares Main physical sample time with prediction input support under explicit freshness/skew policies and separate current teacher/prediction epochs. Pairable is not learning authority; correction law remains unimplemented and Predictor/Position Correction runtime remain unconnected.
+[Phase 2B-5U](position-correction-phase2b5u-temporal-pairing.md) now implements the stateless temporal pairing boundary after the unchanged structural `eligible_for_pairing` preflight. It compares Main physical sample time with prediction input support under explicit freshness/skew policies and separate current teacher/prediction epochs. Pairable is not learning authority; the bounded law is implemented/dormant in 6C and Predictor/Position Correction runtime remain unconnected.
 
 [Phase 2B-1](position-correction-phase2b1-hmd-provenance.md) adds trusted HMD accepted-position ingress receipt provenance only. It does not establish acquisition time, coordinate-space/frame proof or a runtime-ready `RawHmdPoseInput`.
 
@@ -42,7 +42,7 @@ Phase 2B-5Y adds the [dormant Raw IMU production boundary](position-correction-p
 
 [Phase 2B-5Z](position-correction-phase2b5z-fixed-calibration-numerical-foundation.md) replaces fixed identity-only input with an explicit immutable HMD-local rigid relation to the model HEAD root reference frame, source/model binding and complete calibration ID/content/session lineage. Acquisition, persistence/UI, predictor algorithm and runtime remain deferred; no implicit identity calibration or CoordinateSpace proof is supplied.
 
-Phase 2B-6A implements the [pure Main-decoupled HIP predictor](position-correction-phase2b6a-pure-main-decoupled-hip-predictor.md) from these four numerical inputs. HEAD/NECK use calibrated HMD orientation; UPPER_CHEST through HIP use independent Raw IMU body orientation. HIP_CENTER is the central hipBone tail. MainDecoupledHipInput now requires caller-owned predictionSequence, excluded from epoch, and the predictor requires explicit per-source age/skew limits with no defaults. Earlier algorithm-deferred status in this phase is superseded by 6A; runtime assembly, learner, correction law and IK remain disconnected/unimplemented, and the production HMD backend blocker remains.
+Phase 2B-6A implements the [pure Main-decoupled HIP predictor](position-correction-phase2b6a-pure-main-decoupled-hip-predictor.md) from these four numerical inputs. HEAD/NECK use calibrated HMD orientation; UPPER_CHEST through HIP use independent Raw IMU body orientation. HIP_CENTER is the central hipBone tail. MainDecoupledHipInput now requires caller-owned predictionSequence, excluded from epoch, and the predictor requires explicit per-source age/skew limits with no defaults. Earlier algorithm-deferred status in this phase is superseded by 6A; runtime assembly and IK remain disconnected; the 6C bounded numerical law is implemented/dormant, and the production HMD backend blocker remains.
 
 [Phase 2B-6B](position-correction-phase2b6b-position-error-measurement.md) adds pure
 immutable error measurement after internally executed PositionTemporalPairing.
@@ -50,4 +50,18 @@ It retains exact sample/epoch/time/space facts and copies positions from the sam
 input; teacher minus prediction is the world-space sign convention. Finite-source
 subtraction overflow fails closed. Zero and huge finite residuals are valid,
 without thresholds. Measured remains measurement validity only; persistent
-learning, correction law, predictor feedback, runtime and IK remain deferred.
+learning is implemented/dormant in 6C; predictor feedback, runtime and IK remain deferred.
+
+[Phase 2B-6C](position-correction-phase2b6c-bounded-learning-law.md) now retains
+exact raw HMD/IMU sequences and individual physical times through prediction
+provenance into error samples. predictionSequence stays caller-owned invocation
+progression, never physical identity or epoch. Support min/max consistency is
+required at construction. The dormant state law uses full lineage, separate
+observed/accepted watermarks and teacher physical time for bounded learning;
+explicit policy has no defaults. It holds compatible short loss, then decays to
+zero and reacquires stably. Epoch/space/assignment changes immediately invalidate.
+TRACKING and correction snapshots confer no IK/output authority. Numerical learner:
+IMPLEMENTED / DORMANT; runtime learner: NOT CONNECTED; application: NOT IMPLEMENTED.
+Production Raw HMD remains BLOCKED BY BACKEND, OpenVR POSE_ONLY, Strong Trusted
+UNSUPPORTED, 2B-5P NOT READY and 5S HIL pending. Next is the dormant 6D application
+contract before runtime connection.

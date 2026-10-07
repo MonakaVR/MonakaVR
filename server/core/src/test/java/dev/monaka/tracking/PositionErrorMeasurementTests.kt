@@ -32,7 +32,7 @@ class PositionErrorMeasurementTests {
 		latest: Long = 90, generated: Long = 95, sequence: Long = 73,
 		predictionEpoch: PositionPredictionEpoch = epoch) = PositionPrediction.available(
 		TrackerPosition.HIP, position, space, PositionBodyReference.HIP_CENTER,
-		PositionPredictionProvenance(sequence, generated, earliest, latest, predictionEpoch), dependencies)
+		PositionPredictionProvenance(sequence, generated, earliest, latest, predictionEpoch, 4, earliest, 4, latest), dependencies)
 
 	private fun input(teacher: Vector3 = Vector3(2f, 0f, 0f), predicted: Vector3 = Vector3(1f, 0f, 0f),
 		teacherAt: Long = 85, earliest: Long = 80, latest: Long = 90, generated: Long = 95,
@@ -251,7 +251,7 @@ class PositionErrorMeasurementTests {
 		assertEquals(before, value)
 		assertEquals(Vector3(2f, 0f, 0f), value.mainTeacher.position)
 		assertEquals(Vector3(1f, 0f, 0f), predicted.position)
-		assertEquals(PositionPredictionProvenance(73, 95, 80, 90, epoch), predicted.provenance)
+		assertEquals(PositionPredictionProvenance(73, 95, 80, 90, epoch, 4, 80, 4, 90), predicted.provenance)
 		assertEquals(dependencies, predicted.dependencies)
 		assertEquals(value.mainTeacher.position, sample.teacherPosition)
 		assertEquals(predicted.position, sample.predictionPosition)
@@ -280,7 +280,8 @@ class PositionErrorMeasurementTests {
 		tracker.resetsHandler.mountingOrientation = Quaternion.rotationAroundZAxis(.2f)
 		tracker.setRotation(Quaternion.rotationAroundXAxis(.4f))
 		val capture = SlimeIndependentImuOrientationCapture { tracker.correctionOrientationSample()!!.receivedAtSystemNanos + 10 }
-		val imu = assertIs<SlimeRawImuInputResult.Available>(SlimeRawImuProductionBoundary(capture).adapt(tracker, 100,
+		val boundary = SlimeRawImuProductionBoundary(capture)
+		val imu = assertIs<SlimeRawImuInputResult.Available>(boundary.adapt(tracker, 100,
 			SlimeRawImuCoordinateSpaceBinding("slime:physical-hip", space, true))).input
 		val body = assertIs<HipBodyModelSnapshotResult.Available>(HipBodyModelSnapshot.create(.1f, .2f, .3f, .4f, .5f, .6f)).snapshot
 		val hmd = RawHmdPoseInput(RawSourceIdentity("synthetic:hmd", RawSourceKind.RAW_HMD, isHmd = true),
@@ -311,5 +312,40 @@ class PositionErrorMeasurementTests {
 		assertEquals(predicted.position, predictor.predict(source).position)
 		assertEquals(predicted.provenance, predictor.predict(source).provenance)
 		assertEquals(sample, measured(comparison, expected, PositionTemporalPairingPolicy(0, 20, 20, 0)))
+		// Continue the actual dormant chain with a SECOND accepted physical IMU sample.
+		val law = PositionCorrectionLearningLaw(PositionCorrectionTuning(1.0, 2.0, 100.0, 5.0, .1, .05,
+			2_000_000_000, 2_000_000_000, 1.0, .1, .1, 1_000_000_000, 2, .001))
+		assertEquals(PositionCorrectionLearningDecision.SEEDED, law.observe(sample).decision)
+		assertEquals(zero, law.snapshot().correctionWorld)
+		tracker.setRotation(Quaternion.rotationAroundXAxis(.4f))
+		val nextImu = assertIs<SlimeRawImuInputResult.Available>(boundary.adapt(tracker, 1_000_000_100,
+			SlimeRawImuCoordinateSpaceBinding("slime:physical-hip", space, true))).input
+		val nextHmd = hmd.copy(provenance = hmd.provenance.copy(sequence = 1002, sampleAtNanos = 1_000_000_080))
+		val nextSource = source.copy(rawHmd = nextHmd, rawImu = nextImu, nowNanos = 1_000_000_100, predictionSequence = 74)
+		val nextPrediction = predictor.predict(nextSource)
+		val nextMain = rawMain.copy(provenance = rawMain.provenance!!.copy(sequence = 43, sampleAtNanos = 1_000_000_085))
+		val nextTeacher = assertIs<MainHipCenterTeacherResult.Available>(MainTrackerMountToHipCenter.normalize(nextMain, origin, mountSnapshot)).teacher
+		val nextSample = measured(PositionCorrectionInput(nextTeacher, nextPrediction, space, nextSource.epoch(), 3, 1_000_000_100),
+			expected, PositionTemporalPairingPolicy(0, 20, 20, 0))
+		assertTrue(nextSample.predictionImuSequence > sample.predictionImuSequence)
+		val learned = law.observe(nextSample)
+		assertEquals(PositionCorrectionLearningDecision.UPDATED, learned.decision)
+		assertTrue(learned.state.correctionWorld.len() > 0f)
+		assertTrue(learned.state.correctionWorld.len() <= .05f)
+
 	}
+	@Test fun measurementExactlyRetainsIndependentRawPhysicalSequencesAndTimes() {
+		val value = input()
+		val provenance = value.prediction.provenance!!.copy(inputHmdSequence = 1001, inputImuSequence = 3009,
+			inputHmdSampleAtNanos = 90, inputImuSampleAtNanos = 80)
+		val predicted = PositionPrediction.available(TrackerPosition.HIP, value.prediction.position!!,
+			space, PositionBodyReference.HIP_CENTER, provenance, dependencies)
+		val sample = measured(value.copy(prediction = predicted))
+		assertEquals(1001L, sample.predictionHmdSequence)
+		assertEquals(90L, sample.predictionHmdSampleAtNanos)
+		assertEquals(3009L, sample.predictionImuSequence)
+		assertEquals(80L, sample.predictionImuSampleAtNanos)
+		assertEquals(provenance.predictionSequence, sample.predictionSequence)
+	}
+
 }

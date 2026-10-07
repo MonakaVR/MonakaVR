@@ -226,9 +226,9 @@ class PredictorFixedCalibrationTests {
 				provenance = old.rawImu.provenance.copy(sequence = 5, sampleAtNanos = 91)))
 		assertSame(old.fixedCalibration, changed.fixedCalibration)
 		assertEquals(old.epoch(), changed.epoch())
-		val p = PositionPredictionProvenance(7, 100, 80, 90, old.epoch())
+		val p = PositionPredictionProvenance(7, 100, 80, 90, old.epoch(), 4, 80, 4, 90)
 		assertEquals(p.epoch, p.copy(predictionSequence = 8, generatedAtNanos = 101,
-			inputEarliestAtNanos = 81, inputLatestAtNanos = 91, epoch = changed.epoch()).epoch)
+			inputEarliestAtNanos = 81, inputLatestAtNanos = 91, inputHmdSampleAtNanos = 81, inputImuSampleAtNanos = 91, epoch = changed.epoch()).epoch)
 	}
 
 	@ParameterizedTest @ValueSource(ints = [0, 1, 2, 3])
@@ -249,7 +249,7 @@ class PredictorFixedCalibrationTests {
 			origin, mount)).teacher
 		fun prediction(epoch: PositionPredictionEpoch) = PositionPrediction.available(TrackerPosition.HIP,
 			teacher.position, space, PositionBodyReference.HIP_CENTER,
-			PositionPredictionProvenance(7, 100, 80, 90, epoch), setOf(PositionPredictionDependency.RAW_HMD,
+			PositionPredictionProvenance(7, 100, 80, 90, epoch, 4, 80, 4, 90), setOf(PositionPredictionDependency.RAW_HMD,
 				PositionPredictionDependency.RAW_IMU, PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION))
 		val before = PositionCorrectionInput(teacher, prediction(old.epoch()), space, old.epoch(), 3, 100)
 		val current = before.copy(prediction = prediction(changed.epoch()), expectedPredictionEpoch = changed.epoch())
