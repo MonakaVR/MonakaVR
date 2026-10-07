@@ -143,3 +143,5 @@ Correction states (`UNINITIALIZED`, `REACQUIRING`, `TRACKING`, `DEGRADED`,
 residual, age, and rejection counters are available from the controller.
 Hardware/HIL, physical alignment, VIVE/PICO behavior, and SteamVR interactive
 validation: **NOT RUN**.
+
+Phase 2B-5Y adds the [dormant Raw IMU production boundary](position-correction-phase2b5y-raw-imu-production-boundary.md): shared physical acceptance capture, independent fixed mount/reset orientation and separate explicit exact-space binding. Phase 1 q_corr remains excluded; runtime assembly stays disconnected.

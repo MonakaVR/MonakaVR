@@ -486,6 +486,7 @@ class Tracker @JvmOverloads constructor(
 	/**
 	 * Sets the raw (unadjusted) rotation of the tracker.
 	 */
+	@Synchronized
 	fun setRotation(rotation: Quaternion) {
 		this._rotation = rotation
 		orientationSample = OrientationSample(orientationSequence.incrementAndGet(), System.nanoTime())

@@ -103,3 +103,5 @@ RawImuOrientationInput validates a synthetic value/provenance contract but has n
 production adapter supplying exact space and independent raw orientation evidence.
 The now-ready body handoff does not resolve that input prerequisite. Keep the
 next boundary dormant until the other predictor/runtime gates are satisfied.
+
+Phase 2B-5Y adds the [dormant Raw IMU production boundary](position-correction-phase2b5y-raw-imu-production-boundary.md): shared physical acceptance capture, independent fixed mount/reset orientation and separate explicit exact-space binding. Phase 1 q_corr remains excluded; runtime assembly stays disconnected.
