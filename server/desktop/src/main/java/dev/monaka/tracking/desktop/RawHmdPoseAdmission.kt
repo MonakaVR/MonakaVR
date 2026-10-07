@@ -40,6 +40,10 @@ enum class RawHmdPoseInputRejectionReason(val code: String) {
 	FRESHNESS_POLICY_INVALID("hmd_freshness_policy_invalid"),
 	MAPPING_REVISION_INVALID("hmd_mapping_revision_invalid"),
 	FEEDBACK_SOURCE_NOT_ALLOWED("hmd_feedback_source_not_allowed"),
+	PROVIDER_SESSION_UNAVAILABLE("hmd_provider_session_unavailable"),
+	OBSERVATION_ID_UNAVAILABLE("hmd_observation_id_unavailable"),
+	RAW_SPACE_GENERATION_UNAVAILABLE("hmd_raw_space_generation_unavailable"),
+	PROVIDER_EVIDENCE_INVALID("hmd_provider_evidence_invalid"),
 }
 
 /** Evidence for admission, never a feature toggle or an ambient session-wide trust declaration. */
@@ -62,6 +66,8 @@ sealed interface RawHmdPoseInputCapability {
 		val freshnessPolicy: RawHmdPoseFreshnessPolicy,
 		val proofKind: RawHmdFrameProofKind,
 		val proofSource: String?,
+		internal val expectedPose: HmdAcceptedPoseMessageSample,
+		internal val providerSession: RawHmdProviderSession,
 	) : RawHmdPoseInputCapability
 }
 
@@ -88,10 +94,12 @@ internal fun admitRawHmdPoseInput(
 	readActiveSession: () -> TransportSessionHandle?,
 	readCurrentPose: (String) -> HmdAcceptedPoseMessageSample?,
 	nowSystemNanos: () -> Long,
+	readProviderSession: () -> RawHmdProviderSession?,
 ): RawHmdPoseInputAdmission {
 	val reasons = linkedSetOf<RawHmdPoseInputRejectionReason>()
 	val before = readActiveSession()
 	val sample = before?.let { readCurrentPose(it.epoch) }
+	val providerBefore = readProviderSession()
 	val ready = when (capability) {
 		is RawHmdPoseInputCapability.Unavailable -> {
 			reasons += RawHmdPoseInputRejectionReason.CAPABILITY_UNAVAILABLE
@@ -103,6 +111,7 @@ internal fun admitRawHmdPoseInput(
 	if (before == null) reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_UNAVAILABLE
 	if (sample == null) reasons += RawHmdPoseInputRejectionReason.POSITION_UNAVAILABLE
 	if (ready != null) {
+		if (providerBefore != ready.providerSession) reasons += RawHmdPoseInputRejectionReason.PROVIDER_EVIDENCE_INVALID
 		if (ready.proofKind != RawHmdFrameProofKind.EXPLICIT_POSE_BOUND_FRAME_PROOF || ready.proofSource.isNullOrBlank())
 			reasons += RawHmdPoseInputRejectionReason.FRAME_REFERENCE_UNAVAILABLE
 		if (ready.space == null) reasons += RawHmdPoseInputRejectionReason.FRAME_SPACE_UNAVAILABLE
@@ -116,6 +125,15 @@ internal fun admitRawHmdPoseInput(
 			reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_MISMATCH
 	}
 	if (sample != null) {
+		if (ready != null) {
+			reasons += providerEvidenceRejections(sample, providerBefore)
+			// Full immutable P/Q + evidence snapshot binding, not just equal host sequence numbers.
+			if (sample != ready.expectedPose || ready.space != sample.providerEvidence?.appliedMapping?.outputSpace ||
+				ready.frameCalibrationEpoch != sample.providerEvidence?.appliedMapping?.calibrationEpoch ||
+				ready.mappingRevision != sample.providerEvidence?.appliedMapping?.revision ||
+				ready.proofSource != providerBefore?.backend?.proofSource)
+				reasons += RawHmdPoseInputRejectionReason.PROVIDER_EVIDENCE_INVALID
+		}
 		if (!sample.ingressIdentity.isRawHmd()) reasons += RawHmdPoseInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED
 		if (sample.sequence < 0 || sample.sourceEpoch.isBlank()) reasons += RawHmdPoseInputRejectionReason.SAMPLE_PROVENANCE_INVALID
 		if (sample.transportSessionEpoch == null) reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_UNAVAILABLE
@@ -149,6 +167,8 @@ internal fun admitRawHmdPoseInput(
 		}
 	}
 	if (readActiveSession() !== before) reasons += RawHmdPoseInputRejectionReason.CURRENT_SESSION_CHANGED
+	if (readProviderSession() !== providerBefore) reasons += RawHmdPoseInputRejectionReason.CURRENT_SESSION_CHANGED
+	if (before != null && readCurrentPose(before.epoch) !== sample) reasons += RawHmdPoseInputRejectionReason.CURRENT_SESSION_CHANGED
 	if (reasons.isNotEmpty()) return RawHmdPoseInputAdmission.Rejected(reasons)
 	checkNotNull(ready)
 	checkNotNull(sample)

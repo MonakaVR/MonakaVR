@@ -22,15 +22,43 @@ class RawHmdPoseAdmissionTests {
 		7, 1_000_000, "source-a", source, Position.DataSource.FULL.number, true,
 		TrackingModality.FULL, session.epoch)
 
-	/** Test-only evidence, never a runtime flag or an inference from session/source identity. */
-	private fun ready(pose: HmdAcceptedPoseMessageSample = sample()) = RawHmdPoseInputCapability.Ready(
-		pose.ingressIdentity.sourceId, pose.sourceEpoch, requireNotNull(pose.transportSessionEpoch),
-		pose.sequence, space, "synthetic-frame-a", 23, RawHmdPoseFreshnessPolicy(500),
-		RawHmdFrameProofKind.EXPLICIT_POSE_BOUND_FRAME_PROOF, "unit-test-pose-bound-proof",
-	)
+	/** SYNTHETIC TEST EVIDENCE: never supplied by the production OpenVR bridge. */
+	private fun syntheticPose(pose: HmdAcceptedPoseMessageSample): HmdAcceptedPoseMessageSample =
+		if (pose.providerEvidence != null) pose else pose.copy(providerEvidence = RawHmdProviderPoseEvidence(
+			pose.ingressIdentity.sourceId, "synthetic-provider-a", 41,
+			"synthetic-raw-owner", "synthetic-raw-incarnation", "synthetic-raw-generation",
+			RawHmdAppliedMapping(space, "synthetic-output-a", "synthetic-frame-a", 23, false), true))
+	private fun context(pose: HmdAcceptedPoseMessageSample): RawHmdProviderSession {
+		val evidence = requireNotNull(pose.providerEvidence)
+		return RawHmdProviderSession(ReviewedHmdBackendContract("SYNTHETIC TEST EVIDENCE",
+			pose.ingressIdentity.sourceId, "synthetic-raw-owner", requireNotNull(evidence.appliedMapping).outputSpace,
+			"unit-test-pose-bound-proof"), "synthetic-provider-a", "synthetic-raw-incarnation",
+			"synthetic-raw-generation", evidence.appliedMapping)
+	}
+	private fun ready(pose: HmdAcceptedPoseMessageSample = sample()): RawHmdPoseInputCapability.Ready {
+		val exact = syntheticPose(pose)
+		// Derive a complete fixture first; negative tests then corrupt the immutable sample/copy.
+		val base = syntheticPose(sample()).copy(ingressIdentity = exact.ingressIdentity,
+			sourceEpoch = exact.sourceEpoch.ifBlank { "source-a" }, sequence = exact.sequence.coerceAtLeast(0),
+			transportSessionEpoch = exact.transportSessionEpoch ?: session.epoch)
+		val valid = if (exact.structuralRejectionReasons.isEmpty() && exact.modality == TrackingModality.FULL &&
+			exact.dataSourcePresent && exact.dataSourceValue == Position.DataSource.FULL.number &&
+			exact.receivedAtSystemNanos >= 0 && exact.sequence >= 0 && exact.sourceEpoch.isNotBlank()) exact else base
+		val clean = valid.copy(ingressIdentity = source,
+			providerEvidence = valid.providerEvidence!!.copy(sourceIdentity = source.sourceId))
+		val raw = deriveRawHmdPoseInputCapability(clean, context(clean), RawHmdPoseFreshnessPolicy(500))
+		return assertIs<RawHmdPoseInputCapability.Ready>(raw).copy(expectedPose = exact,
+			expectedSourceId = exact.ingressIdentity.sourceId, expectedSourceEpoch = exact.sourceEpoch,
+			expectedSampleSequence = exact.sequence, expectedTransportSessionEpoch = exact.transportSessionEpoch ?: session.epoch,
+			providerSession = context(exact))
+	}
 	private fun admit(pose: HmdAcceptedPoseMessageSample? = sample(),
 		capability: RawHmdPoseInputCapability = ready(), now: Long = 1_000_100,
-		active: TransportSessionHandle? = session) = admitRawHmdPoseInput(capability, { active }, { pose }, { now })
+		active: TransportSessionHandle? = session): RawHmdPoseInputAdmission {
+		val exact = pose?.let(::syntheticPose)
+		val provider = (capability as? RawHmdPoseInputCapability.Ready)?.providerSession
+		return admitRawHmdPoseInput(capability, { active }, { exact }, { now }, { provider })
+	}
 	private fun rejects(reason: RawHmdPoseInputRejectionReason, result: RawHmdPoseInputAdmission) {
 		assertTrue(reason in assertIs<RawHmdPoseInputAdmission.Rejected>(result).reasons)
 	}
@@ -81,7 +109,9 @@ class RawHmdPoseAdmissionTests {
 
 	@Test fun coordinateSpaceIdConventionAndRevisionArePreservedExactly() {
 		val exact = space.copy(id = "another-explicit-frame", revision = 99)
-		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(admit(capability = ready().copy(space = exact))).input
+		val pose = syntheticPose(sample()).let { it.copy(providerEvidence = it.providerEvidence!!.copy(
+			appliedMapping = it.providerEvidence.appliedMapping!!.copy(outputSpace = exact))) }
+		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(admit(pose, ready(pose))).input
 		assertEquals(exact, input.space); assertEquals(exact, input.provenance.space)
 	}
 
@@ -116,8 +146,10 @@ class RawHmdPoseAdmissionTests {
 
 	@Test fun finalCheckUsesHandleObjectIdentityRatherThanEpochStringEquality() {
 		var reads = 0
-		val result = admitRawHmdPoseInput(ready(),
-			{ if (++reads == 1) session else TransportSessionHandle(session.epoch) }, { sample() }, { 1_000_100 })
+		val pose = syntheticPose(sample()); val evidence = ready(pose)
+		val result = admitRawHmdPoseInput(evidence,
+			{ if (++reads == 1) session else TransportSessionHandle(session.epoch) },
+			{ pose }, { 1_000_100 }, { evidence.providerSession })
 		rejects(CURRENT_SESSION_CHANGED, result)
 	}
 
@@ -171,7 +203,7 @@ class RawHmdPoseAdmissionTests {
 
 	@Test fun structurallyValidNonnormalizedQuaternionIsCopiedExactly() {
 		val pose = sample().copy(orientation = Quaternion(2f, 1f, 0f, 0f))
-		assertEquals(pose.orientation, assertIs<RawHmdPoseInputAdmission.Accepted>(admit(pose)).input.orientation)
+		assertEquals(pose.orientation, assertIs<RawHmdPoseInputAdmission.Accepted>(admit(pose, ready(pose))).input.orientation)
 	}
 
 	@Test fun outputInternalAndNonRawHmdIdentitiesCannotAdmit() {
@@ -216,26 +248,31 @@ class RawHmdPoseAdmissionTests {
 
 	@Test fun authoritativeMappingRevisionCopiesExactlyAndAbsentRemainsNull() {
 		assertEquals(23, assertIs<RawHmdPoseInputAdmission.Accepted>(admit()).input.provenance.mappingRevision)
-		assertNull(assertIs<RawHmdPoseInputAdmission.Accepted>(admit(capability = ready().copy(mappingRevision = null))).input.provenance.mappingRevision)
+		val pose = syntheticPose(sample()).let { it.copy(providerEvidence = it.providerEvidence!!.copy(
+			appliedMapping = it.providerEvidence.appliedMapping!!.copy(revision = null, identity = true))) }
+		assertNull(assertIs<RawHmdPoseInputAdmission.Accepted>(admit(pose, ready(pose))).input.provenance.mappingRevision)
 		rejects(MAPPING_REVISION_INVALID, admit(capability = ready().copy(mappingRevision = -1)))
 	}
 
 	@Test fun productionGenericSourceIsUnavailableEvenWithCurrentCompleteFullPose() {
 		val bridge = Capture(); bridge.acceptFull()
 		val capability = assertIs<RawHmdPoseInputCapability.Unavailable>(bridge.rawHmdPoseInputCapability())
-		assertEquals(setOf(FRAME_REFERENCE_UNAVAILABLE), capability.reasons)
+		assertEquals(setOf(FRAME_REFERENCE_UNAVAILABLE, PROVIDER_SESSION_UNAVAILABLE,
+			OBSERVATION_ID_UNAVAILABLE, RAW_SPACE_GENERATION_UNAVAILABLE), capability.reasons)
 		val pose = assertNotNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
 		assertEquals(HmdPoseMessagePairingStatus.COMPLETE, pose.pairingStatus)
 		assertEquals(TrackingModality.FULL, pose.modality)
-		assertEquals(setOf(CAPABILITY_UNAVAILABLE, FRAME_REFERENCE_UNAVAILABLE),
+		assertEquals(capability.reasons + setOf(CAPABILITY_UNAVAILABLE, POSITION_UNAVAILABLE),
 			assertIs<RawHmdPoseInputAdmission.Rejected>(bridge.currentRawHmdPoseAdmission()).reasons)
+		assertNull(pose.providerEvidence)
+		rejects(POSITION_UNAVAILABLE, bridge.admitCurrentRawHmdPoseInput(ready(pose)))
 	}
 
 	@Test fun bridgeSuccessReadsCopiedSameMessagePoseEvenAfterTrackerStorageChanges() {
 		val bridge = Capture(); bridge.acceptFull()
 		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		bridge.hmd.position = Vector3(90f, 80f, 70f); bridge.hmd.setRotation(Quaternion(0f, 1f, 0f, 0f))
-		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(pose))).input
+		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(ready(pose))).input
 		assertEquals(pose.position, input.position); assertEquals(pose.orientation, input.orientation)
 		assertEquals(Vector3(90f, 80f, 70f), bridge.hmd.position)
 	}
@@ -247,7 +284,7 @@ class RawHmdPoseAdmissionTests {
 		bridge.acceptFull()
 		val evidence = ready(bridge.acceptedCurrentSessionHmdPoseMessageSample()!!)
 		changeSession = true
-		rejects(CURRENT_SESSION_CHANGED, bridge.admitCurrentRawHmdPoseInput(evidence))
+		rejects(CURRENT_SESSION_CHANGED, bridge.admitSyntheticFixture(evidence))
 	}
 
 	@Test fun disconnectDuringBridgeAdmissionRejectsWithoutAReconnection() {
@@ -256,7 +293,7 @@ class RawHmdPoseAdmissionTests {
 		bridge = Capture { if (disconnect) { disconnect = false; bridge.close(bridge.active()!!) }; 1_000_000 }
 		bridge.acceptFull(); val evidence = ready(bridge.acceptedCurrentSessionHmdPoseMessageSample()!!)
 		disconnect = true
-		rejects(CURRENT_SESSION_CHANGED, bridge.admitCurrentRawHmdPoseInput(evidence))
+		rejects(CURRENT_SESSION_CHANGED, bridge.admitSyntheticFixture(evidence))
 	}
 
 	@Test fun trackerRecreationWithSameIdNameNumbersAndSessionInvalidatesOldEvidence() {
@@ -268,7 +305,7 @@ class RawHmdPoseAdmissionTests {
 		assertSame(active, bridge.active()); assertEquals(old.sequence, next.sequence)
 		assertEquals(old.ingressIdentity, next.ingressIdentity); assertEquals(old.position, next.position)
 		assertNotEquals(old.sourceEpoch, next.sourceEpoch)
-		rejects(SOURCE_EPOCH_MISMATCH, bridge.admitCurrentRawHmdPoseInput(evidence))
+		rejects(SOURCE_EPOCH_MISMATCH, bridge.admitSyntheticFixture(evidence))
 	}
 
 	@Test fun sameTrackerAcrossReconnectKeepsSourceButInvalidatesSessionEvidence() {
@@ -277,39 +314,39 @@ class RawHmdPoseAdmissionTests {
 		val b = bridge.open(); bridge.acceptFull(b)
 		val next = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		assertEquals(old.sourceEpoch, next.sourceEpoch); assertNotEquals(old.transportSessionEpoch, next.transportSessionEpoch)
-		rejects(SESSION_EPOCH_MISMATCH, bridge.admitCurrentRawHmdPoseInput(ready(old)))
-		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(next)))
+		rejects(SESSION_EPOCH_MISMATCH, bridge.admitSyntheticFixture(ready(old)))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(ready(next)))
 	}
 
 	@Test fun frameProofIsBoundToOneSampleEvenWithoutSourceOrSessionChange() {
 		val bridge = Capture(); bridge.acceptFull()
 		val first = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		val frameA = ready(first)
-		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(frameA))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(frameA))
 		bridge.acceptFull(); val next = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		assertEquals(first.sourceEpoch, next.sourceEpoch); assertEquals(first.transportSessionEpoch, next.transportSessionEpoch)
 		assertEquals(first.position, next.position); assertEquals(first.orientation, next.orientation)
-		rejects(SAMPLE_SEQUENCE_MISMATCH, bridge.admitCurrentRawHmdPoseInput(frameA))
-		val frameB = ready(next).copy(frameCalibrationEpoch = "synthetic-frame-b", mappingRevision = null)
-		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(frameB)).input
-		assertEquals("synthetic-frame-b", input.provenance.calibrationEpoch)
-		assertNull(input.provenance.mappingRevision)
+		rejects(SAMPLE_SEQUENCE_MISMATCH, bridge.admitSyntheticFixture(frameA))
+		val frameB = ready(next)
+		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(frameB)).input
+		assertEquals("synthetic-frame-a", input.provenance.calibrationEpoch)
+		assertEquals(23, input.provenance.mappingRevision)
 	}
 
 	@Test fun historicalAndSessionlessBacklogCannotSubstituteForCurrentCandidate() {
 		val bridge = Capture(); val a = bridge.active()!!; bridge.acceptFull(a)
 		val historical = bridge.acceptedHmdPoseMessageSample()!!
 		val b = bridge.open()
-		rejects(POSITION_UNAVAILABLE, bridge.admitCurrentRawHmdPoseInput(ready(historical)))
+		rejects(POSITION_UNAVAILABLE, bridge.admitSyntheticFixture(ready(historical)))
 		bridge.enqueueFull(a); bridge.dataRead()
 		assertEquals(a.epoch, bridge.acceptedHmdPoseMessageSample()!!.transportSessionEpoch)
 		assertNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
-		rejects(POSITION_UNAVAILABLE, bridge.admitCurrentRawHmdPoseInput(ready(historical)))
+		rejects(POSITION_UNAVAILABLE, bridge.admitSyntheticFixture(ready(historical)))
 		bridge.acceptFull(b); val current = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		bridge.enqueueFull(a); bridge.dataRead(); bridge.enqueueFull(null); bridge.dataRead()
 		assertNull(bridge.acceptedHmdPoseMessageSample()!!.transportSessionEpoch)
 		assertSame(current, bridge.acceptedCurrentSessionHmdPoseMessageSample())
-		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(current)))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(ready(current)))
 	}
 
 	@Test fun pollingAdmissionTicksAndHeartbeatNeverRefreshSequenceOrReceipt() {
@@ -318,11 +355,11 @@ class RawHmdPoseAdmissionTests {
 		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!; val evidence = ready(pose)
 		repeat(5) {
 			bridge.hmd.dataTick(); bridge.hmd.heartbeat(); bridge.dataRead()
-			assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(evidence))
+			assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(evidence))
 			assertSame(pose, bridge.acceptedCurrentSessionHmdPoseMessageSample())
 		}
 		now += 501
-		rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(evidence))
+		rejects(SAMPLE_STALE, bridge.admitSyntheticFixture(evidence))
 		assertEquals(1, pose.sequence); assertEquals(1_000_000, pose.receivedAtSystemNanos)
 	}
 
@@ -348,7 +385,7 @@ class RawHmdPoseAdmissionTests {
 		assertEquals(all.size, all.map { it.code }.toSet().size)
 		val rejected = assertIs<RawHmdPoseInputAdmission.Rejected>(admit(sample().copy(
 			positionPresence = PositionComponentPresence(true, false, true), orientation = Quaternion(0f, 0f, 0f, 0f))))
-		assertEquals(listOf("hmd_position_components_incomplete", "hmd_orientation_invalid"), rejected.reasons.map { it.code })
+		assertEquals(listOf("hmd_position_components_incomplete", "hmd_orientation_invalid", "hmd_provider_evidence_invalid"), rejected.reasons.map { it.code })
 	}
 
 	@Test fun queued501NanosecondsRejectsAgainst500NanosecondLimitFromIngress() {
@@ -358,14 +395,14 @@ class RawHmdPoseAdmissionTests {
 		val pose = assertNotNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
 		assertEquals(1_000_000, pose.receivedAtSystemNanos)
 		assertEquals(pose.receivedAtSystemNanos, bridge.acceptedCurrentSessionHmdPositionSample()!!.receivedAtSystemNanos)
-		rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(ready(pose)))
+		rejects(SAMPLE_STALE, bridge.admitSyntheticFixture(ready(pose)))
 		rejects(FRAME_REFERENCE_UNAVAILABLE, bridge.currentRawHmdPoseAdmission())
 	}
 
 	@Test fun immediatelyProcessedSampleIsFreshWithoutPromotingProductionFrameEvidence() {
 		val bridge = Capture(); bridge.acceptFull()
 		val pose = assertNotNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
-		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(pose))).input
+		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(ready(pose))).input
 		assertEquals(1_000_000, input.provenance.sampleAtNanos)
 		rejects(FRAME_REFERENCE_UNAVAILABLE, bridge.currentRawHmdPoseAdmission())
 	}
@@ -375,7 +412,7 @@ class RawHmdPoseAdmissionTests {
 		val bridge = Capture { now }; bridge.enqueueFull(bridge.active())
 		now += 499; bridge.dataRead()
 		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
-		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(pose))).input
+		val input = assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(ready(pose))).input
 		assertEquals(1_000_000, input.provenance.sampleAtNanos)
 	}
 
@@ -385,8 +422,8 @@ class RawHmdPoseAdmissionTests {
 		now += 500; bridge.dataRead()
 		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		val proof = ready(pose)
-		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(proof))
-		now++; rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(proof))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(proof))
+		now++; rejects(SAMPLE_STALE, bridge.admitSyntheticFixture(proof))
 		assertSame(pose, bridge.acceptedCurrentSessionHmdPoseMessageSample())
 		assertEquals(1_000_000, pose.receivedAtSystemNanos)
 	}
@@ -401,7 +438,7 @@ class RawHmdPoseAdmissionTests {
 		assertEquals(1, clockCalls)
 		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		assertEquals(1_000_000, pose.receivedAtSystemNanos)
-		rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(ready(pose)))
+		rejects(SAMPLE_STALE, bridge.admitSyntheticFixture(ready(pose)))
 	}
 
 	@Test fun backlogPreservesEverySamplesIngressTimeAndOldestRejectsWhileNewerAreFresh() {
@@ -419,8 +456,8 @@ class RawHmdPoseAdmissionTests {
 		rejects(SAMPLE_STALE, admit(poses[0], ready(poses[0]), now, active))
 		assertIs<RawHmdPoseInputAdmission.Accepted>(admit(poses[1], ready(poses[1]), now, active))
 		assertIs<RawHmdPoseInputAdmission.Accepted>(admit(poses[2], ready(poses[2]), now, active))
-		rejects(SAMPLE_SEQUENCE_MISMATCH, bridge.admitCurrentRawHmdPoseInput(ready(poses[1])))
-		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(poses[2])))
+		rejects(SAMPLE_SEQUENCE_MISMATCH, bridge.admitSyntheticFixture(ready(poses[1])))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(ready(poses[2])))
 	}
 
 	@Test fun rolloverDiscardsOldQueuedCandidateAndNewSessionUsesItsOwnIngressAge() {
@@ -432,18 +469,18 @@ class RawHmdPoseAdmissionTests {
 		now += 90; bridge.dataRead()
 		assertNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
 		assertEquals(1_000_010, bridge.acceptedHmdPoseMessageSample()!!.receivedAtSystemNanos)
-		rejects(POSITION_UNAVAILABLE, bridge.admitCurrentRawHmdPoseInput(ready(old)))
+		rejects(POSITION_UNAVAILABLE, bridge.admitSyntheticFixture(ready(old)))
 		bridge.enqueueFull(b); now += 501; bridge.dataRead()
 		val delayed = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		assertEquals(b.epoch, delayed.transportSessionEpoch)
 		assertEquals(1_000_100, delayed.receivedAtSystemNanos)
-		rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(ready(delayed)))
-		rejects(SESSION_EPOCH_MISMATCH, bridge.admitCurrentRawHmdPoseInput(ready(old)))
+		rejects(SAMPLE_STALE, bridge.admitSyntheticFixture(ready(delayed)))
+		rejects(SESSION_EPOCH_MISMATCH, bridge.admitSyntheticFixture(ready(old)))
 		bridge.acceptFull(b)
 		val fresh = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		assertEquals(now, fresh.receivedAtSystemNanos)
-		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(fresh)))
-		rejects(SAMPLE_SEQUENCE_MISMATCH, bridge.admitCurrentRawHmdPoseInput(ready(delayed)))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(ready(fresh)))
+		rejects(SAMPLE_SEQUENCE_MISMATCH, bridge.admitSyntheticFixture(ready(delayed)))
 	}
 
 	@Test fun missingIngressTimeFailsClosedWithoutClockFallbackOrReusingPreviousCandidate() {
@@ -457,14 +494,14 @@ class RawHmdPoseAdmissionTests {
 			assertNull(bridge.acceptedCurrentSessionHmdPositionSample())
 			assertNull(bridge.acceptedCurrentSessionHmdPoseMessageSample())
 			assertSame(previous, bridge.acceptedHmdPoseMessageSample()) // History cannot substitute for current.
-			rejects(POSITION_UNAVAILABLE, bridge.admitCurrentRawHmdPoseInput(ready(previous)))
+			rejects(POSITION_UNAVAILABLE, bridge.admitSyntheticFixture(ready(previous)))
 			rejects(FRAME_REFERENCE_UNAVAILABLE, bridge.currentRawHmdPoseAdmission())
 			assertEquals(Vector3(9f, 8f, 7f), bridge.hmd.position) // Legacy processing still runs.
 			assertEquals(Quaternion.IDENTITY, bridge.hmd.getRawRotation())
 			bridge.acceptFull()
 			val next = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 			assertEquals(previous.sequence + 1, next.sequence)
-			assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitCurrentRawHmdPoseInput(ready(next)))
+			assertIs<RawHmdPoseInputAdmission.Accepted>(bridge.admitSyntheticFixture(ready(next)))
 		}
 	}
 
@@ -474,10 +511,17 @@ class RawHmdPoseAdmissionTests {
 		now += 1_000_000_000; bridge.dataRead()
 		val pose = bridge.acceptedCurrentSessionHmdPoseMessageSample()!!
 		assertEquals(1_000_000, pose.receivedAtSystemNanos)
-		rejects(SAMPLE_STALE, bridge.admitCurrentRawHmdPoseInput(ready(pose)))
+		rejects(SAMPLE_STALE, bridge.admitSyntheticFixture(ready(pose)))
 	}
 
-	private class Capture(clock: () -> Long = { 1_000_000 }) : ProtobufBridge("admission-test", clock) {
+	private inner class Capture(private val clock: () -> Long = { 1_000_000 }) : ProtobufBridge("admission-test", clock) {
+		/** Unit evaluator over SYNTHETIC evidence. Production currentRawHmdPoseAdmission remains rejected. */
+		fun admitSyntheticFixture(capability: RawHmdPoseInputCapability): RawHmdPoseInputAdmission {
+			val pose = acceptedCurrentSessionHmdPoseMessageSample()?.let(::syntheticPose)
+			val provider = (capability as? RawHmdPoseInputCapability.Ready)?.providerSession
+			return admitRawHmdPoseInput(capability, ::active, { pose }, clock, { provider })
+		}
+
 		val processedPoses = mutableListOf<HmdAcceptedPoseMessageSample>()
 		var beforePositionProcessing: (() -> Unit)? = null
 		private fun tracker() = Tracker(Device(DeviceOrigin.STEAMVR), 900, "external-hmd",

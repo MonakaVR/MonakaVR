@@ -1,5 +1,7 @@
 # Phase 2B-5K: trusted Raw HMD pose admission
 
+**2B-5R supersession:** The sections below describe the delivered 5K/5M baseline. Current Strong Trusted requirements are defined in [the 5Q/5R support policy](position-correction-phase2b5q-strong-trusted-hmd-support-policy.md). Frame-only Ready evidence no longer admits. Ready is derived from complete sample-bound provider evidence and a reviewed current provider context; ordinary ingress records are separate from trusted candidates. OpenVR always supplies null provider evidence and four explicit capability blockers. The complete gate additionally rechecks provider/raw/output/validity, exact immutable sample binding and current candidate stability. No predictor/correction runtime is connected.
+
 Phase 5K implements an explicit admission proof model and one desktop trusted input boundary. It does not enable a predictor or Position Correction. Current generic OpenVR ingress, including the inspected Virtual Desktop / `oculus` route, has no authoritative pose-level HMD frame reference. Its capability remains **Unavailable**, and trusted input generation remains **fail-closed**. Ordinary HMD position/orientation handling continues independently.
 
 The preimplementation audit found two fixed `rawPoseInputEligible=false` properties and a public structural `RawHmdPoseInput` constructor, with no contextual frame/session/freshness gate. This phase removes those eligibility properties, introduces typed evidence/results, and adds dedicated contract tests. Source receipt, source identity and same-message pairing were already established by [Phase 2B-3](position-correction-phase2b3-hmd-pose-pairing.md) and [Phase 2B-4b](position-correction-phase2b4b-hmd-session-integration.md); they do not establish an HMD frame.
@@ -87,6 +89,10 @@ Reasons are typed enum values with stable string codes. Rejection and Unavailabl
 | FRESHNESS_POLICY_INVALID | `hmd_freshness_policy_invalid` |
 | MAPPING_REVISION_INVALID | `hmd_mapping_revision_invalid` |
 | FEEDBACK_SOURCE_NOT_ALLOWED | `hmd_feedback_source_not_allowed` |
+| PROVIDER_SESSION_UNAVAILABLE | `hmd_provider_session_unavailable` |
+| OBSERVATION_ID_UNAVAILABLE | `hmd_observation_id_unavailable` |
+| RAW_SPACE_GENERATION_UNAVAILABLE | `hmd_raw_space_generation_unavailable` |
+| PROVIDER_EVIDENCE_INVALID | `hmd_provider_evidence_invalid` |
 
 ## Verification and production status
 
