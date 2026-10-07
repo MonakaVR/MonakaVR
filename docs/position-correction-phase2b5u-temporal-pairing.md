@@ -4,7 +4,8 @@
 stateless production boundary after `PositionCorrectionTeacherEligibility`.
 `eligible_for_pairing` remains structural preflight. `Pairable` means the sample and
 prediction are comparison candidates in time and current context. **Pairable does not
-mean learning is allowed.** The only callers are dedicated core tests.
+mean learning is allowed.** Phase 2B-6B adds a dormant production measurement
+caller; there is still no production runtime caller.
 
 ## Time and explicit policy
 
@@ -119,3 +120,10 @@ The Phase 2B-5T report's future proposal used endpoint-max skew, oldest-input fr
 positive-only age limits and additional FULL/HIP checks. The explicit 5U implementation
 instruction supersedes that proposal: interval distance, latest-input freshness, four
 nonnegative limits and the unchanged existing structural contract are used here.
+
+[Phase 2B-6B](position-correction-phase2b6b-position-error-measurement.md) internally
+executes this unchanged boundary and copies the same input into an immutable
+teacher-minus-prediction world measurement. Pairable facts remain unchanged and
+carry no positions or error. Its Measured result is not learning authority;
+runtime/learner/correction law/IK stay disconnected or unimplemented. The earlier
+algorithm/error-deferred status above is historical and superseded by 6A/6B.

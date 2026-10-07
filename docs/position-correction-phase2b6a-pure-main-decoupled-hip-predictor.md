@@ -117,7 +117,12 @@ and no Strong Trusted HMD is available. Software goldens are not physical HIL.
 Fresh test/build/E2E, source audit, protected-patch and Git receipts:
 `build/reports/phase2b6a-pure-main-decoupled-hip-predictor-20261007/report.md`.
 
-Recommended next phase: **Phase 2B-6B — Position Error Sample / Correction-Law
-Foundation**. Teacher HIP_CENTER, prediction HIP_CENTER and temporal compatibility
-now exist in pure software. That foundation can proceed independently of the HMD
-backend blocker; runtime input assembly remains constrained by that blocker.
+[Phase 2B-6B](position-correction-phase2b6b-position-error-measurement.md) now supplies
+the pure immutable PositionErrorSample boundary. It executes real pairing
+internally against the same input, retaining exact teacher/prediction lineage,
+sample identity and distinct physical/generation/evaluation times. It copies
+positions and calculates teacher minus prediction in exact world space, rejecting
+nonfinite subtraction. This is Main-derived comparison measurement, never a
+predictor input or learning/correction/IK authority. Predictor API, dependencies
+and algorithm are unchanged; runtime remains constrained by the HMD blocker.
+Recommended next phase is 2B-6C, independent state/bounded learning-law design.

@@ -43,3 +43,11 @@ Phase 2B-5Y adds the [dormant Raw IMU production boundary](position-correction-p
 [Phase 2B-5Z](position-correction-phase2b5z-fixed-calibration-numerical-foundation.md) replaces fixed identity-only input with an explicit immutable HMD-local rigid relation to the model HEAD root reference frame, source/model binding and complete calibration ID/content/session lineage. Acquisition, persistence/UI, predictor algorithm and runtime remain deferred; no implicit identity calibration or CoordinateSpace proof is supplied.
 
 Phase 2B-6A implements the [pure Main-decoupled HIP predictor](position-correction-phase2b6a-pure-main-decoupled-hip-predictor.md) from these four numerical inputs. HEAD/NECK use calibrated HMD orientation; UPPER_CHEST through HIP use independent Raw IMU body orientation. HIP_CENTER is the central hipBone tail. MainDecoupledHipInput now requires caller-owned predictionSequence, excluded from epoch, and the predictor requires explicit per-source age/skew limits with no defaults. Earlier algorithm-deferred status in this phase is superseded by 6A; runtime assembly, learner, correction law and IK remain disconnected/unimplemented, and the production HMD backend blocker remains.
+
+[Phase 2B-6B](position-correction-phase2b6b-position-error-measurement.md) adds pure
+immutable error measurement after internally executed PositionTemporalPairing.
+It retains exact sample/epoch/time/space facts and copies positions from the same
+input; teacher minus prediction is the world-space sign convention. Finite-source
+subtraction overflow fails closed. Zero and huge finite residuals are valid,
+without thresholds. Measured remains measurement validity only; persistent
+learning, correction law, predictor feedback, runtime and IK remain deferred.
