@@ -46,6 +46,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 
 	// Manual mounting orientation
 	var mountingOrientation = HalfHorizontal
+		@Synchronized
 		set(value) {
 			correctionResetGeneration.incrementAndGet()
 			field = value
@@ -170,6 +171,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 		resetHmdPitch = config.resetHmdPitch
 	}
 
+	@Synchronized
 	fun trySetMountingReset(quat: Quaternion) {
 		if (saveMountingReset) {
 			correctionResetGeneration.incrementAndGet()
@@ -271,6 +273,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	 * Reset the tracker so that its current rotation is counted as (0, HMD Yaw,
 	 * 0). This allows the tracker to be strapped to body at any pitch and roll.
 	 */
+	@Synchronized
 	fun resetFull(reference: Quaternion) {
 		correctionResetGeneration.incrementAndGet()
 		constraintFix = Quaternion.IDENTITY
@@ -368,6 +371,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	 * should still report yaw as if it was mounted facing HMD, mounting
 	 * position should be corrected in the source.
 	 */
+	@Synchronized
 	fun resetYaw(reference: Quaternion) {
 		correctionResetGeneration.incrementAndGet()
 		// TODO HMD doesn't get yaw reset, which makes it so tracker.resetFilteringQuats() doesn't get called
@@ -413,6 +417,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 	 * Perform the math to align the tracker to go forward
 	 * and stores it in mountRotFix, and adjusts yawFix
 	 */
+	@Synchronized
 	fun resetMounting(reference: Quaternion) {
 		correctionResetGeneration.incrementAndGet()
 		if (tracker.trackerDataType == TrackerDataType.FLEX_RESISTANCE) {
@@ -480,6 +485,7 @@ class TrackerResetsHandler(val tracker: Tracker) {
 		constraintFix *= correctedRotation
 	}
 
+	@Synchronized
 	fun clearMounting() {
 		correctionResetGeneration.incrementAndGet()
 		mountRotFix = Quaternion.IDENTITY
