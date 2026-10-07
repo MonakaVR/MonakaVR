@@ -25,7 +25,7 @@ class PositionPredictionContractTests {
 			provenance(80, spaceValue = spaceValue)),
 		RawImuOrientationInput(imuIdentity, Quaternion.IDENTITY, spaceValue,
 			provenance(90, spaceValue = spaceValue)),
-		bodyModel(), FixedCalibrationIdentity("fixed", "fixed:1"),
+		bodyModel(), syntheticHeadAnchorCalibration(hmdIdentity.sourceId, HipBodyModelSnapshot.MODEL_ID),
 		spaceValue, 3, 100)
 	private fun prediction(source: MainDecoupledHipInput = input(),
 		dependencies: Set<PositionPredictionDependency> = safe,
@@ -199,7 +199,7 @@ class PositionPredictionContractTests {
 			source.copy(rawImu = source.rawImu.copy(provenance = source.rawImu.provenance.copy(sourceEpoch = "imu:2"))),
 			source.copy(rawImu = source.rawImu.copy(provenance = source.rawImu.provenance.copy(calibrationEpoch = "mount:2"))),
 			source.copy(bodyModel = bodyModel(hipLength = .2f)),
-			source.copy(fixedCalibration = source.fixedCalibration.copy(epoch = "fixed:2")),
+			source.copy(fixedCalibration = syntheticHeadAnchorCalibration(source.rawHmd.source.sourceId, source.bodyModel.identity.modelId, sessionEpoch = "synthetic-fit:2")),
 			source.copy(assignmentGeneration = 4),
 			input(space.copy(revision = 3)),
 			input(space.copy(convention = "other")),

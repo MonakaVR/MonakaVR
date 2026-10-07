@@ -105,3 +105,5 @@ The now-ready body handoff does not resolve that input prerequisite. Keep the
 next boundary dormant until the other predictor/runtime gates are satisfied.
 
 Phase 2B-5Y adds the [dormant Raw IMU production boundary](position-correction-phase2b5y-raw-imu-production-boundary.md): shared physical acceptance capture, independent fixed mount/reset orientation and separate explicit exact-space binding. Phase 1 q_corr remains excluded; runtime assembly stays disconnected.
+
+Phase 2B-5Z adds the [fixed numerical calibration snapshot](position-correction-phase2b5z-fixed-calibration-numerical-foundation.md), bound to the body model ID and HMD source. Its HEAD anchor is the root position/reference axes before geometric Bone.rotationOffset. Body length/content changes remain separate in bodyModelEpoch and can reuse fixed calibration. The identity-only fixed input is removed; both calibration ID and effective epoch enter prediction lineage. No predictor algorithm/runtime is connected.

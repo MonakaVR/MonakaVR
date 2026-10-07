@@ -41,7 +41,7 @@ class BodyModelPredictorHandoffTests {
 		RawImuOrientationInput(RawSourceIdentity("synthetic:imu", RawSourceKind.RAW_IMU),
 			Quaternion.IDENTITY, space,
 			ObservationSampleProvenance(4, 90, "imu:1", "imu-cal:1", 1, space)),
-		body, FixedCalibrationIdentity("fixed", "fixed:1"), space, 3, 100)
+		body, syntheticHeadAnchorCalibration("synthetic:hmd", body.identity.modelId), space, 3, 100)
 	private fun prediction(source: MainDecoupledHipInput, position: Vector3) = PositionPrediction.available(
 		TrackerPosition.HIP, position, space, PositionBodyReference.HIP_CENTER,
 		PositionPredictionProvenance(7, source.nowNanos, source.rawHmd.provenance.sampleAtNanos,
