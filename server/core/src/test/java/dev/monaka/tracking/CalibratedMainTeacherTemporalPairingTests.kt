@@ -25,7 +25,7 @@ class CalibratedMainTeacherTemporalPairingTests {
 		RawImuOrientationInput(RawSourceIdentity("imu", RawSourceKind.RAW_IMU),
 			Quaternion.IDENTITY, space,
 			ObservationSampleProvenance(4, 90, "imu:1", "imu-cal:1", 1, space)),
-		snapshot, syntheticHeadAnchorCalibration("hmd", snapshot.identity.modelId), space, 3, 100)
+		snapshot, syntheticHeadAnchorCalibration("hmd", snapshot.identity.modelId), space, 3, 100, predictionSequence = 7)
 	private val safe = setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
 		PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION)
 	private val policy = PositionTemporalPairingPolicy(10, 100, 100, 100)

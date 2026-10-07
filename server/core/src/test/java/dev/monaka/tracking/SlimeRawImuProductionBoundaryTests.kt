@@ -52,7 +52,7 @@ class SlimeRawImuProductionBoundaryTests {
 			Vector3(0f, 1.7f, 0f), Quaternion.IDENTITY, imu.space,
 			ObservationSampleProvenance(1, 1, "hmd-session", "hmd-cal", null, imu.space))
 		return MainDecoupledHipInput(hmd, imu, body, syntheticHeadAnchorCalibration(hmd.source.sourceId, body.identity.modelId),
-			imu.space, 3, 1000).epoch()
+			imu.space, 3, 1000, predictionSequence = 7).epoch()
 	}
 
 	@Test fun physicalHipProducesExactRawIdentityAndProvenance() {
