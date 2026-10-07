@@ -95,8 +95,12 @@ registration, IK writeback or Direct/visible output connection is added.
 
 OpenVR HMD remains **POSE_ONLY**, Strong Trusted **UNSUPPORTED**, correction authority
 **NO**, and 2B-5P **NOT READY**. HMD remains blocked by its backend. Main MTP provenance
-is available, but mount-to-HIP-center calibration is missing; production MTP is never
-relabeled HIP_CENTER. Raw IMU production adapter/exact space, body-model predictor
+is available. [Phase 2B-5V](position-correction-phase2b5v-main-mount-calibration.md) adds
+the dormant mount-to-HIP-center calibration foundation; production MTP is never
+relabeled HIP_CENTER. Before integration, PositionTeacherEpoch must additionally bind
+the Main mount calibration identity and reject old-calibration teachers against current
+context. Position-only teacher projection and runtime wiring remain deferred.
+Raw IMU production adapter/exact space, body-model predictor
 handoff and Fixed Calibration implementation remain deferred. Test HIP_CENTER and
 prediction lineage, including fixed calibration identity, are explicitly synthetic.
 
