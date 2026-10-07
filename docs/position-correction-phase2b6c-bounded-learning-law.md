@@ -168,6 +168,9 @@ policy and no runtime application).
 
 Receipts: `build/reports/phase2b6c-bounded-position-correction-learning-20261007/report.md`.
 6D supplies the pure/dormant exactly-once pre-IK/IK boundary, including rotation
-preservation and structural double-application rejection. Next: **Phase 2B-6E —
+preservation and structural double-application rejection. The
+[6E solver reacquisition contract](position-correction-phase2b6e-solver-position-reacquisition.md)
+now closes Main-return position continuity using current snapshots only, without
+learning changes. Next: **Phase 2B-6F —
 Position Correction Runtime Orchestration Foundation**, with injected software
 inputs and the production Raw HMD blocker retained.

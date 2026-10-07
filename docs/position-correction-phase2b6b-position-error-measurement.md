@@ -125,5 +125,7 @@ identity dedupe, teacher-time dt, explicit no-default policy, hold/decay and sta
 reacquisition. Full epoch/space/assignment changes hard invalidate; no snapshot is
 application authority by itself. 6D separately validates a current solver-facing
 candidate with exactly-once construction and exact fallback rotation preservation.
-Next is 6E, the dormant/injected runtime orchestration foundation. Runtime stays
+The [6E solver reacquisition contract](position-correction-phase2b6e-solver-position-reacquisition.md)
+now closes fallback-to-Main position continuity without measurement changes.
+Next is 6F, the dormant/injected runtime orchestration foundation. Runtime stays
 disconnected and the HMD backend gate remains unresolved.

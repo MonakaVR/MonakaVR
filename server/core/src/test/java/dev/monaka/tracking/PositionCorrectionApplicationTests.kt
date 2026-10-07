@@ -248,9 +248,13 @@ internal class PositionCorrectionApplicationTests {
 		val source = Files.readString(root.resolve("dev/monaka/tracking/PositionCorrectionApplication.kt"))
 		for (forbidden in listOf("System.nanoTime", "System.currentTimeMillis", "Instant.now", "ObservationStore", "ConstraintPipeline", ".observe(", "advanceWithoutMeasurement("))
 			assertFalse(source.contains(forbidden), forbidden)
-		Files.walk(root).use { paths -> paths.filter { it.toString().endsWith(".kt") && it.fileName.toString() != "PositionCorrectionApplication.kt" }.forEach {
+		// 6E consumes an already prepared Ready value; preparation remains dormant.
+		Files.walk(root).use { paths -> paths.filter { it.toString().endsWith(".kt") && it.fileName.toString() !in
+			setOf("PositionCorrectionApplication.kt", "PositionCorrectionSolverContinuity.kt") }.forEach {
 			assertFalse(Files.readString(it).contains("PositionCorrectionApplication"), it.toString())
 		} }
+		assertFalse(Files.readString(root.resolve("dev/monaka/tracking/PositionCorrectionSolverContinuity.kt"))
+			.contains("PositionCorrectionApplication.prepare"))
 	}
 	@Test fun realMeasurementLearningAndGapAdvanceApplyOnlyCurrentHeldOrDecayedState() {
 		val law = PositionCorrectionLearningLaw(PositionCorrectionTuning(1.0, 2.0, 10.0, 5.0, 10.0, 2.0,
