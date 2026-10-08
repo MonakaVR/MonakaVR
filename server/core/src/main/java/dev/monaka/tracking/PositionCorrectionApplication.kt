@@ -23,9 +23,9 @@ internal data class PositionCorrectionApplicationCandidate(
 	val positionSourceId: String,
 	val baseRotation: ResolvedComponent<Quaternion>,
 ) {
-	fun ikConstraint() = EffectiveConstraint(target,
+	fun solverConstraint() = SolverEffectiveConstraint(target,
 		ResolvedComponent(correctedPosition, positionSourceId, ObservationQuality.DEGRADED, positionObservedAtNanos),
-		baseRotation)
+		baseRotation, SolverPositionReference.IK_EFFECTIVE_TARGET)
 }
 
 internal enum class PositionCorrectionApplicationRejectionReason {

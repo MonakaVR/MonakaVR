@@ -29,6 +29,17 @@ class IKSolver(private val root: Bone) {
 	fun calibrationSnapshot(): Map<Pair<String, Int?>, IKConstraint.Calibration> =
 		calibration + chainList.flatMap { it.positionalInputs() }.associate { key(it.tracker) to it.calibration() }
 
+	/** Current active value wins over retained calibration; exact stable name/body key only. */
+	internal fun calibrationFor(trackerName: String, bodyPart: Int?): IKConstraint.Calibration? =
+		chainList.asSequence().flatMap { it.positionalInputs().asSequence() }
+			.lastOrNull { key(it.tracker) == (trackerName to bodyPart) }?.calibration()
+			?: calibration[trackerName to bodyPart]
+
+	/** Diagnostic/test only: reads actual IKConstraint, never source-selection authority. */
+	internal fun effectivePositionTargetFor(trackerName: String, bodyPart: Int?) =
+		chainList.asSequence().flatMap { it.positionalInputs().asSequence() }
+			.firstOrNull { key(it.tracker) == (trackerName to bodyPart) }?.getPosition()
+
 	/**
 	 * Any time the skeleton is rebuilt or trackers are assigned / unassigned the chains
 	 * should be rebuilt.

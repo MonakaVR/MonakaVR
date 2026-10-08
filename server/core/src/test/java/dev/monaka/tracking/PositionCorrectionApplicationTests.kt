@@ -65,7 +65,7 @@ internal class PositionCorrectionApplicationTests {
 		val first = ready(p, s, b, a)
 		assertEquals(first, ready(p, s, b, a))
 		rejected(PositionCorrectionApplicationRejectionReason.BASE_POSITION_ALREADY_PRESENT,
-			prepare(p, s, first.ikConstraint(), a))
+			prepare(p, s, EffectiveConstraint(first.target, first.solverConstraint().position, first.baseRotation), a))
 	}
 	@Test fun mainPositionIsNeverOverwrittenEvenWhenFallbackRotationMatches() {
 		val b = base().copy(position = ResolvedComponent(Vector3(99f, 98f, 97f), "main", ObservationQuality.TRACKED, 90))
@@ -74,7 +74,8 @@ internal class PositionCorrectionApplicationTests {
 	}
 	@Test fun rotationCorrectionNumericsAndAllMetadataAreExactlyPreservedWithoutNormalization() {
 		val b = base().copy(rotation = base().rotation!!.copy(value = Quaternion(2f, .2f, -.3f, .4f)))
-		val c = ready(b = b); val ik = c.ikConstraint()
+		val c = ready(b = b); val ik = c.solverConstraint()
+		assertEquals(SolverPositionReference.IK_EFFECTIVE_TARGET, ik.positionReference)
 		assertSame(b.rotation, c.baseRotation); assertSame(b.rotation, ik.rotation)
 		val rotation = assertNotNull(ik.rotation)
 		assertSame(b.rotation!!.value, rotation.value)
@@ -84,7 +85,7 @@ internal class PositionCorrectionApplicationTests {
 	@ParameterizedTest @EnumSource(value = PositionCorrectionPhase::class, names = ["UNINITIALIZED"], mode = EnumSource.Mode.EXCLUDE)
 	fun everyActivePhaseUsesItsExactCurrentCorrectionAndDegradedOldestSupport(phase: PositionCorrectionPhase) {
 		val s = state().copy(phase = phase, correctionWorld = if (phase == PositionCorrectionPhase.EXPIRED) zero else state().correctionWorld)
-		val c = ready(s = s); val position = c.ikConstraint().position!!
+		val c = ready(s = s); val position = c.solverConstraint().position!!
 		assertEquals(s.correctionWorld, c.correctionWorld); assertEquals(phase, c.correctionPhase)
 		assertEquals(ObservationQuality.DEGRADED, position.quality); assertEquals(80L, position.observedAtNanos)
 		assertEquals(100L, c.applicationAtNanos); assertEquals(80L, c.positionObservedAtNanos)
@@ -298,7 +299,7 @@ internal class PositionCorrectionApplicationTests {
 		val baseline = manager.skeleton.computedHipTracker!!.position
 		val c = ready(p = prediction(position = baseline), s = state().copy(correctionWorld = Vector3(.1f, 0f, 0f)))
 		ConstraintIkWriteback(manager.skeleton).use { writeback ->
-			writeback.apply(mapOf(TrackerPosition.HIP to c.ikConstraint()), assignment())
+			writeback.applySolver(mapOf(TrackerPosition.HIP to c.solverConstraint()), assignment())
 			assertEquals(ConstraintIkWriteback.ComponentMask(true, true), writeback.masks().getValue(TrackerPosition.HIP))
 			val proxy = assertNotNull(manager.skeleton.hipTracker)
 			assertNotSame(trackers.hip, proxy); assertTrue(FeedbackExclusion.isOutput(proxy.name)); assertFalse(FeedbackExclusion.accepts(proxy))
@@ -313,7 +314,7 @@ internal class PositionCorrectionApplicationTests {
 			val positional = extraction.invoke(manager.skeleton.ikSolver, view.constraints) as List<*>
 			assertTrue(proxy in positional)
 			val rebuilds = writeback.topologyRebuilds
-			writeback.apply(mapOf(TrackerPosition.HIP to c.ikConstraint()), assignment())
+			writeback.applySolver(mapOf(TrackerPosition.HIP to c.solverConstraint()), assignment())
 			assertEquals(rebuilds, writeback.topologyRebuilds); assertSame(proxy, manager.skeleton.hipTracker)
 			manager.skeleton.ikSolver.enabled = true; repeat(5) { manager.update() }
 			val solved = manager.skeleton.computedHipTracker!!.position
