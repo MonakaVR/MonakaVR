@@ -71,5 +71,9 @@ is IMPLEMENTED / DORMANT and closes fallback-to-Main position continuity before
 orchestration. [6F solver effective-target semantics](position-correction-phase2b6f-solver-effective-target-semantics.md)
 closes the raw tracker origin / calibrated HIP_CENTER mismatch with typed references,
 writeback precompensation and current Main effective-target projection. 6D/6E remain
-IMPLEMENTED / DORMANT. Next is **6G**, the runtime orchestration foundation;
-production correction IK and runtime remain NOT CONNECTED. The Raw HMD blocker remains.
+IMPLEMENTED / DORMANT. [6G runtime orchestration](position-correction-phase2b6g-runtime-orchestration-foundation.md)
+now binds 6A–6F on one immutable injected tick with exactly one learning operation
+and one typed solver commit. Same-tick software orchestration is READY; actual IK
+sink integration is VERIFIED IN TEST / DORMANT. MonakaRuntime production caller
+is NONE and production correction remains NOT ENABLED. Next is **6H — Production
+Integration Gate / Runtime Adapter Audit**. The Raw HMD blocker remains.

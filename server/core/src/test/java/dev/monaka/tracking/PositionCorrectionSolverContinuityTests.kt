@@ -399,7 +399,9 @@ internal class PositionCorrectionSolverContinuityTests {
 			"ConstraintPipeline", "OutputContinuityController", "BackgroundIkPoseReader", "PureMainDecoupledHipPredictor",
 			"PositionErrorMeasurement", ".observe(", "advanceWithoutMeasurement(", "PositionCorrectionApplication.prepare", "MonakaRuntime"))
 			assertFalse(source.contains(forbidden), forbidden)
-		Files.walk(root).use { paths -> paths.filter { it.toString().endsWith(".kt") && it != file }.forEach {
+		// Only explicit injected 6G orchestration may call continuity; production stays disconnected.
+		Files.walk(root).use { paths -> paths.filter { it.toString().endsWith(".kt") && it != file &&
+			it.fileName.toString() != "PositionCorrectionRuntimeOrchestrator.kt" }.forEach {
 			assertFalse(Files.readString(it).contains("PositionCorrectionSolverContinuity"), it.toString())
 		} }
 	}

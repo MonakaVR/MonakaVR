@@ -2,7 +2,7 @@
 
 Solver position reference semantics and IK effective-target writeback are implemented.
 6D application and 6E continuity remain IMPLEMENTED / DORMANT. Runtime orchestration
-is deferred to **Phase 2B-6G — Position Correction Runtime Orchestration Foundation**.
+is implemented in injected synchronous 6G; production caller remains NONE.
 
 ## Defect and source proof
 
@@ -138,7 +138,7 @@ lineage, ownership and reloss rules remain intact.
 
 Projection and writeback must run in the same server-thread phase with no
 calibration reset/rebuild between them. Dormant software tests enforce this
-ordering; future 6G must make it a runtime rule. No cross-thread mutable cache or
+ordering; 6G now enforces it in the injected synchronous pipeline. No cross-thread mutable cache or
 synthetic revision is added. Explicit reset changes the next Main projection and
 precompensation; it does not invalidate the anchor's physical HIP_CENTER point.
 
@@ -158,8 +158,9 @@ target diagnostics at fallback, first return, midpoint, moving Main and completi
 Existing application, continuity, ArchitectureRevision and positional IK regressions
 remain required, along with full Core/Desktop, shadowJar and MTP process E2E.
 
-Production correction caller: NONE. MonakaRuntime and orchestration are unchanged.
-Runtime orchestration and production Position Correction IK: NOT CONNECTED.
+Production correction caller: NONE. MonakaRuntime remains unchanged.
+6G runtime orchestration: IMPLEMENTED / DORMANT / INJECTED; actual typed IK sink
+integration: VERIFIED IN TEST / DORMANT. Production Position Correction IK: NOT CONNECTED.
 Existing generic raw writeback continues. Predictor, learner, measurement,
 selection pipeline, output continuity and Background IK remain unchanged.
 
@@ -168,8 +169,9 @@ BLOCKED BY BACKEND. 2B-5P: NOT READY. 5S HIL: pending.
 6F HIL: NOT REQUIRED / NOT RUN: this is solver reference semantics remediation
 with dormant software calibration tests, not physical tracker mounting validation.
 
-Next: **Phase 2B-6G — Position Correction Runtime Orchestration Foundation**.
-Solver physical-point semantics now permit same-tick orchestration and the actual
-writeback sink to be bound safely, retaining the production Raw HMD blocker.
+[6G runtime orchestration](position-correction-phase2b6g-runtime-orchestration-foundation.md)
+now binds immutable same-tick facts, exclusive learning, current Main projection,
+one continuity selection and one actual typed writeback. The production Raw HMD
+blocker remains. Next: **Phase 2B-6H — Production Integration Gate / Runtime Adapter Audit**.
 
 Receipts: `build/reports/phase2b6f-solver-effective-target-semantics-20261008/report.md`.

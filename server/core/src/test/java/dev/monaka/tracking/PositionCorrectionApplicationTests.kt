@@ -249,9 +249,9 @@ internal class PositionCorrectionApplicationTests {
 		val source = Files.readString(root.resolve("dev/monaka/tracking/PositionCorrectionApplication.kt"))
 		for (forbidden in listOf("System.nanoTime", "System.currentTimeMillis", "Instant.now", "ObservationStore", "ConstraintPipeline", ".observe(", "advanceWithoutMeasurement("))
 			assertFalse(source.contains(forbidden), forbidden)
-		// 6E consumes an already prepared Ready value; preparation remains dormant.
+		// 6E consumes Ready; only the explicit injected 6G orchestrator may prepare it.
 		Files.walk(root).use { paths -> paths.filter { it.toString().endsWith(".kt") && it.fileName.toString() !in
-			setOf("PositionCorrectionApplication.kt", "PositionCorrectionSolverContinuity.kt") }.forEach {
+			setOf("PositionCorrectionApplication.kt", "PositionCorrectionSolverContinuity.kt", "PositionCorrectionRuntimeOrchestrator.kt") }.forEach {
 			assertFalse(Files.readString(it).contains("PositionCorrectionApplication"), it.toString())
 		} }
 		assertFalse(Files.readString(root.resolve("dev/monaka/tracking/PositionCorrectionSolverContinuity.kt"))
