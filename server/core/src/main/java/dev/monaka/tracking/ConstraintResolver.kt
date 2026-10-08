@@ -9,8 +9,13 @@ class ConstraintResolver(
  private val assignments: () -> Map<TrackerPosition, MainTrackerAssignment> = { emptyMap() },
 ) {
  fun resolve(target: TrackerPosition, observations: Iterable<PoseObservation>): EffectiveConstraint {
+  return resolve(target, observations, assignments())
+ }
+
+ fun resolve(target: TrackerPosition, observations: Iterable<PoseObservation>,
+  assignments: Map<TrackerPosition, MainTrackerAssignment>): EffectiveConstraint {
   val matching = observations.filter { it.target == target }.associateBy { it.sourceId }
-  val relation = assignments()[target]
+  val relation = assignments[target]
   val main = relation?.let { matching[it.mainTracker.observationId] }
    ?: if (relation == null && matching.size == 1) matching.values.single() else null
   val fallback = relation?.rotationFallbackTracker?.let { matching[it.observationId] }

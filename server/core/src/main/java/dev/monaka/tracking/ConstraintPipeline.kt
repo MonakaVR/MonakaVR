@@ -13,6 +13,7 @@ class ConstraintPipeline(
 	private val freshnessPolicy: ObservationFreshnessPolicy = ObservationFreshnessPolicy(),
 	private val profileRegistry: ObservationSourceProfileRegistry = ObservationSourceProfileRegistry(),
 	private val eligibility: (PoseObservation, Long) -> PoseObservation = { observation, _ -> observation },
+	private val pinnedEligibility: ((PoseObservation, Long, TrackerBodyAssignments.Snapshot) -> PoseObservation)? = null,
 ) {
 	private val sourceProfiles = mutableMapOf<String, ObservationSourceProfile>()
 
@@ -81,6 +82,12 @@ class ConstraintPipeline(
 	fun resolveAll(nowNanos: Long): Map<TrackerPosition, EffectiveConstraint> =
 		store.targets().associateWith { resolve(it, nowNanos) }
 
+	fun resolve(target: TrackerPosition, nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): EffectiveConstraint =
+		resolver.resolve(target, store.observationsFor(target).map { applyFreshness(it, nowNanos, assignment) }, assignment.targets)
+
+	fun resolveAll(nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): Map<TrackerPosition, EffectiveConstraint> =
+		store.targets().associateWith { resolve(it, nowNanos, assignment) }
+
 	fun removeSource(sourceId: String): PoseObservation? {
 		sourceProfiles.remove(sourceId)
 		return store.removeSource(sourceId)
@@ -106,4 +113,9 @@ class ConstraintPipeline(
 		(sourceProfiles[observation.sourceId]?.freshnessPolicy ?: freshnessPolicy).apply(observation, nowNanos),
 		nowNanos,
 	)
+
+	private fun applyFreshness(observation: PoseObservation, nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): PoseObservation {
+		val fresh = (sourceProfiles[observation.sourceId]?.freshnessPolicy ?: freshnessPolicy).apply(observation, nowNanos)
+		return pinnedEligibility?.invoke(fresh, nowNanos, assignment) ?: eligibility(fresh, nowNanos)
+	}
 }

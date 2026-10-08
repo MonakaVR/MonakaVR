@@ -17,7 +17,10 @@ class AssignedImuSampleFreshness(
 	private var lastSampleAt: Long? = null
 
 	fun apply(observation: PoseObservation, now: Long): PoseObservation {
-		val assignment = assignments.snapshot()
+		return apply(observation, now, assignments.snapshot())
+	}
+
+	fun apply(observation: PoseObservation, now: Long, assignment: TrackerBodyAssignments.Snapshot): PoseObservation {
 		val fallback = assignment.targets[TrackerPosition.HIP]?.rotationFallbackTracker?.observationId
 		if (observation.target != TrackerPosition.HIP || observation.sourceId != fallback ||
 			!observation.rotationQuality.usable) return observation

@@ -10,7 +10,7 @@ class MtpObservationBackend(
 	private val expectedSpace: CoordinateSpace,
 	override val backendId: String = "mtp",
 	override val profileId: String = "mtp",
-) : ObservationBackend {
+) : ObservationBackend, AssignmentSnapshotAwareObservationBackend {
 	data class Sample(val pose: MtpPose, val sampleTime: Long)
 	private class Lifetime(val session: String, val clock: String, val peer: String, val retired: MutableSet<String>) {
 		var quarantined = false
@@ -66,10 +66,11 @@ class MtpObservationBackend(
 	}
 	override fun drainRemovedSources(): Set<String> = removed.toSet().also { removed.clear() }
 
-	override fun poll(observedAtNanos: Long): List<PoseObservation> {
+	override fun poll(observedAtNanos: Long): List<PoseObservation> = poll(observedAtNanos, assignments.snapshot())
+
+	override fun poll(observedAtNanos: Long, assignment: TrackerBodyAssignments.Snapshot): List<PoseObservation> {
 		val dirty = linkedSetOf<LogicalTracker>()
 		for (message in inbox.drain()) admit(message, dirty)
-		val assignment = assignments.snapshot()
 		if (assignment.generation != assignmentGeneration) {
 			dirty += devices.keys
 			removed += devices.keys.map { it.observationId }

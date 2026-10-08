@@ -59,6 +59,16 @@ class ObservationBackendRunner(
 		return accepted
 	}
 
+	fun poll(
+		backendId: String,
+		observedAtNanos: Long,
+		assignment: TrackerBodyAssignments.Snapshot,
+	): Int {
+		val backend = backendsById[backendId]
+			?: throw IllegalArgumentException("Unknown observation backend '$backendId'")
+		return pollBackend(backend, observedAtNanos, assignment)
+	}
+
 	fun remove(backendId: String): ObservationBackend? {
 		val removed = backendsById.remove(backendId) ?: return null
 		releaseBackendSources(backendId)
@@ -88,8 +98,10 @@ class ObservationBackendRunner(
 	private fun pollBackend(
 		backend: ObservationBackend,
 		observedAtNanos: Long,
+		assignment: TrackerBodyAssignments.Snapshot? = null,
 	): Int {
-		val observations = backend.poll(observedAtNanos)
+		val observations = if (assignment != null && backend is AssignmentSnapshotAwareObservationBackend)
+			backend.poll(observedAtNanos, assignment) else backend.poll(observedAtNanos)
 		val observedSourceIds = linkedSetOf<String>()
 
 		for (observation in observations) {
