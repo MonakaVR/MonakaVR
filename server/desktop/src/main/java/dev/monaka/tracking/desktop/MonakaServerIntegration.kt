@@ -9,7 +9,7 @@ import dev.slimevr.tracking.trackers.TrackerPosition
 class MonakaServerIntegration private constructor(
 	val runtime: MonakaRuntime,
 	val receiver: MtpUdpReceiver,
-	private val writeback: ConstraintIkWriteback,
+	private val solverComposition: MonakaSolverComposition,
 	val directOutput: DirectConstraintOutput,
 	private val skeleton: HumanSkeleton,
 	private val registerBeforePose: (Runnable?) -> Unit,
@@ -27,37 +27,37 @@ class MonakaServerIntegration private constructor(
 	private val controllers = outputAssignments.mapValues { (target, relation) ->
 		OutputContinuityController(target, relation.continuity, tuning, onTransition)
 	}
-	private var pendingPoses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>? = null
-	private var pendingMain: PoseObservation? = null
-	private var pendingImu: PoseObservation? = null
-	private var pendingRawHip: ResolvedTrackingPose? = null
-	private var pendingMainSource: String? = null
-	private var pendingImuSource: String? = null
+	private data class PendingPoseFrame(
+		val tick: MonakaResolvedTickSnapshot,
+		val poses: Map<TrackerPosition, ResolvedTrackingPose>,
+		val main: PoseObservation?, val imu: PoseObservation?, val rawHip: ResolvedTrackingPose?,
+		val mainSource: String?, val imuSource: String?,
+	)
+	private var pendingFrame: PendingPoseFrame? = null
+	val positionCorrectionGate get() = solverComposition.positionCorrectionGate
 	val lastDiagnosticSnapshot: HybridTrackingDiagnosticSnapshot? get() = diagnostics?.latest
 	fun tick() {
 		if (closed) return
 		try {
-			check(runtime.assignments.snapshot().targets.filterValues { it.outputMode != OutputMode.IK } == outputAssignments) {
-				"Changing visible output assignment/strategy requires a server restart"
-			}
+			check(pendingFrame == null) { "Previous post-IK frame has not been consumed" }
 			if (receiver.failure != null && !transportReported) {
 				runtime.inbox.clear(); runtime.mtp.invalidateSamples(); runtime.runner.remove("mtp")
 				transportReported = true; onFailure(receiver.failure!!)
 			}
-			val constraints = runtime.tick(skeleton.getPauseTracking())
-			val resolvedRaw = runtime.resolvedTrackingPoses(constraints)
-			val assignment = runtime.assignments.snapshot()
+			val tick = runtime.tickSnapshot(skeleton.getPauseTracking())
+			val assignment = tick.assignment
+			check(assignment.targets.filterValues { it.outputMode != OutputMode.IK } == outputAssignments) {
+				"Changing visible output assignment/strategy requires a server restart"
+			}
+			val resolvedRaw = runtime.resolvedTrackingPoses(tick)
 			val hip = assignment.targets[TrackerPosition.HIP]
 			val observations = if (rotationCorrection == null && diagnostics == null) emptyMap() else
-				runtime.pipeline.observations(runtime.lastTickNanos).associateBy { it.sourceId }
+				runtime.pipeline.observations(tick.nowNanos, tick.assignment).associateBy { it.sourceId }
 			val main = hip?.mainTracker?.observationId?.let(observations::get)
 			val imu = hip?.rotationFallbackTracker?.observationId?.let(observations::get)
-			pendingMain = main; pendingImu = imu; pendingRawHip = resolvedRaw[TrackerPosition.HIP]
-			pendingMainSource = hip?.mainTracker?.observationId
-			pendingImuSource = hip?.rotationFallbackTracker?.observationId
 			// Raw teacher observations remain separate from Resolver ownership.
-			val corrected = if (skeleton.getPauseTracking()) null else rotationCorrection?.update(main, imu,
-				resolvedRaw[TrackerPosition.HIP]?.rotationOwner, runtime.lastTickNanos, assignment.generation, runtime.expectedSpace)
+			val corrected = if (tick.paused) null else rotationCorrection?.update(main, imu,
+				resolvedRaw[TrackerPosition.HIP]?.rotationOwner, tick.nowNanos, assignment.generation, runtime.expectedSpace)
 			val correctedRotation = corrected?.rotation
 			val resolvedHip = resolvedRaw[TrackerPosition.HIP]
 			// One derived component fans out to IK and visible continuity. Never alter Main.
@@ -67,8 +67,9 @@ class MonakaServerIntegration private constructor(
 				resolvedRaw + (TrackerPosition.HIP to resolvedHip.copy(rotation = correctedRotation))
 			else resolvedRaw
 			val ik = resolved.mapValues { it.value.ikConstraint() }
-			writeback.apply(ik, assignment, runtime.mtp.historyGeneration)
-			pendingPoses = resolved
+			check(solverComposition.commitGeneric(tick, ik, runtime.mtp.historyGeneration) is MonakaSolverCommitResult.GenericCommitted)
+			pendingFrame = PendingPoseFrame(tick, resolved, main, imu, resolvedRaw[TrackerPosition.HIP],
+				hip?.mainTracker?.observationId, hip?.rotationFallbackTracker?.observationId)
 			if (registerAfterPose == null) finishPoseUpdate() else directOutput.applyPoses(emptyMap())
 		} catch (e: Exception) { close(); onFailure(e) }
 	}
@@ -76,28 +77,29 @@ class MonakaServerIntegration private constructor(
 	/** Server thread, after HumanPoseManager.update and before any bridge dataWrite. */
 	fun finishPoseUpdate() {
 		if (closed) return
-		val poses = pendingPoses ?: return
-		pendingPoses = null
+		val pending = pendingFrame ?: return
+		pendingFrame = null
+		val poses = pending.poses
 		try {
-			val now = runtime.lastTickNanos
+			val now = pending.tick.nowNanos
 			val output = controllers.mapValues { (target, controller) ->
 				val background = if (registerAfterPose != null && outputAssignments.getValue(target).useAsIkConstraint)
 					backgroundIk.read(target, runtime.expectedSpace, now)
 				else BackgroundIkResult(null, "background_not_participating_or_no_post_ik_hook")
-				controller.update(poses.getValue(target), background, now, skeleton.getPauseTracking())
+				controller.update(poses.getValue(target), background, now, pending.tick.paused)
 			}
-			directOutput.applyPoses(output, skeleton.getPauseTracking())
+			directOutput.applyPoses(output, pending.tick.paused)
 			if (diagnostics != null) {
-				val main = pendingMain; val imu = pendingImu; val raw = pendingRawHip
-				val correction = rotationCorrection; val now = runtime.lastTickNanos
+				val main = pending.main; val imu = pending.imu; val raw = pending.rawHip
+				val correction = rotationCorrection
 				val transition = controllers[TrackerPosition.HIP]?.lastTransition
 				val visible = output[TrackerPosition.HIP]
-				val paused = skeleton.getPauseTracking()
+				val paused = pending.tick.paused
 				fun age(sample: PoseObservation?) = sample?.provenance?.sampleAtNanos?.let { now - it }
 				diagnostics.record(HybridTrackingDiagnosticSnapshot(
-					main = raw?.main ?: MainSampleState.from(main), mainSource = pendingMainSource,
+					main = raw?.main ?: MainSampleState.from(main), mainSource = pending.mainSource,
 					mainSequence = main?.provenance?.sequence, mainAgeNanos = age(main),
-					imuSource = pendingImuSource, imuProvenanceAvailable = imu?.provenance != null,
+					imuSource = pending.imuSource, imuProvenanceAvailable = imu?.provenance != null,
 					imuSequence = imu?.provenance?.sequence, imuAgeNanos = age(imu),
 					imuFresh = correction != null && !paused && imu?.rotationQuality?.usable == true,
 					imuRotationUsable = imu?.rotationQuality?.usable == true,
@@ -120,10 +122,16 @@ class MonakaServerIntegration private constructor(
 	}
 	override fun close() {
 		if (closed) return
-		closed = true; pendingPoses = null; pendingMain = null; pendingImu = null; pendingRawHip = null
-		pendingMainSource = null; pendingImuSource = null
-		registerBeforePose(null); registerAfterPose?.invoke(null)
-		try { receiver.close() } finally { directOutput.close(); runtime.close(); writeback.close() }
+		closed = true; pendingFrame = null
+		try { registerBeforePose(null) } finally {
+			try { registerAfterPose?.invoke(null) } finally {
+				try { receiver.close() } finally {
+					try { directOutput.close() } finally {
+						try { runtime.close() } finally { solverComposition.close() }
+					}
+				}
+			}
+		}
 	}
 	companion object {
 		fun startIfEnabled(
@@ -148,19 +156,31 @@ class MonakaServerIntegration private constructor(
 			val runtime = MonakaRuntime(trackers, config.space, config.assignments, clock = clock, timeoutNanos = config.timeoutNanos,
 				maxImuSampleAgeNanos = config.rotationCorrection?.tuning?.maxImuSampleAgeNanos)
 			val receiver = try { MtpUdpReceiver(runtime.inbox, clock, config.port) } catch (e: Exception) { runtime.close(); throw e }
-			val writeback = try { ConstraintIkWriteback(skeleton) } catch (e: Exception) { receiver.close(); runtime.close(); throw e }
-			val direct = DirectConstraintOutput(config.assignments.snapshot(), config.space, nextTrackerId)
-			val background = BackgroundIkPoseReader(skeleton, config.backgroundIkSharedSpace?.let(BackgroundIkAlignment::confirmedSameSpace) ?: BackgroundIkAlignment.UNVERIFIED)
-			try { configureDirectOutputs(direct.trackers.values.toList()) } catch (e: Exception) {
-				direct.close(); writeback.close(); receiver.close(); runtime.close(); throw e
-			}
-			val diagnosticEnabled = config.rotationCorrection != null ||
-				config.assignments.snapshot().targets.values.any { it.outputMode == OutputMode.HYBRID }
-			return MonakaServerIntegration(runtime, receiver, writeback, direct, skeleton, registerBeforePose, onFailure, registerAfterPose, background,
-				config.continuityTuning, onTransition, config.rotationCorrection?.let { HipRotationCorrection(it.frames, it.tuning) },
-				if (diagnosticEnabled) HybridTrackingDiagnosticRecorder(onDiagnostic) else null).also {
-				registerBeforePose(Runnable(it::tick))
-				registerAfterPose?.invoke(Runnable(it::finishPoseUpdate))
+			var composition: MonakaSolverComposition? = null
+			var direct: DirectConstraintOutput? = null
+			var integration: MonakaServerIntegration? = null
+			try {
+				val owner = MonakaSolverComposition(skeleton, config.positionCorrection, trackers,
+					skeleton.humanPoseManager::currentHipBodyModelSnapshot).also { composition = it }
+				val output = DirectConstraintOutput(config.assignments.snapshot(), config.space, nextTrackerId).also { direct = it }
+				val background = BackgroundIkPoseReader(skeleton, config.backgroundIkSharedSpace?.let(BackgroundIkAlignment::confirmedSameSpace) ?: BackgroundIkAlignment.UNVERIFIED)
+				configureDirectOutputs(output.trackers.values.toList())
+				val diagnosticEnabled = config.rotationCorrection != null ||
+					config.assignments.snapshot().targets.values.any { it.outputMode == OutputMode.HYBRID }
+				val result = MonakaServerIntegration(runtime, receiver, owner, output, skeleton, registerBeforePose, onFailure, registerAfterPose, background,
+					config.continuityTuning, onTransition, config.rotationCorrection?.let { HipRotationCorrection(it.frames, it.tuning) },
+					if (diagnosticEnabled) HybridTrackingDiagnosticRecorder(onDiagnostic) else null).also { integration = it }
+				registerBeforePose(Runnable(result::tick))
+				registerAfterPose?.invoke(Runnable(result::finishPoseUpdate))
+				return result
+			} catch (e: Exception) {
+				// Continue teardown even if a registration/output callback itself throws.
+				fun cleanup(action: () -> Unit) { try { action() } catch (failure: Exception) { e.addSuppressed(failure) } }
+				if (integration != null) cleanup { integration!!.close() } else {
+					cleanup { receiver.close() }; cleanup { direct?.close() }
+					cleanup { composition?.close() }; cleanup { runtime.close() }
+				}
+				throw e
 			}
 		}
 	}

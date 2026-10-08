@@ -115,3 +115,14 @@ Cutoff-aware physical IMU capture rejects post-cutoff samples without backdating
 Raw sources, MTP backend ownership/context, live body publication and configured
 calibration compose an immutable Non-HMD bundle. Production invocation/writeback
 remain disconnected; Raw HMD remains BLOCKED BY BACKEND.
+
+## Phase 2B-6L ownership update
+
+Core MonakaSolverComposition now owns one shared ConstraintIkWriteback, exclusive
+per-tick reservation and pause hard session disposal. Production remains generic;
+Position Correction is NOT ENABLED / CONFIGURED_RAW_HMD_BLOCKED. Non-HMD capture and
+orchestration remain dormant. Integration carries tickSnapshot assignment/time
+through writeback and the consumed-once pending post-IK frame. Resume never reuses
+an old future session; fresh-input activation remains deferred. See
+[position-correction-phase2b6l-production-composition-writeback.md](position-correction-phase2b6l-production-composition-writeback.md)
+for the current contract, validation and next gate.

@@ -82,6 +82,15 @@ class MonakaRuntime(
 	}
 
 	/** Wrap the already-selected components. Fresh Main metadata is diagnostic only. */
+	fun resolvedTrackingPoses(tick: MonakaResolvedTickSnapshot): Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose> {
+		val observations = pipeline.observations(tick.nowNanos, tick.assignment).associateBy { it.sourceId }
+		return (tick.constraints.keys + tick.assignment.targets.keys).associateWith { target ->
+			ResolvedTrackingPose.from(tick.constraints[target] ?: EffectiveConstraint(target), expectedSpace,
+				tick.assignment.targets[target]?.mainTracker?.observationId?.let(observations::get))
+		}
+	}
+
+	/** Legacy callers; production uses the pinned tick overload. */
 	fun resolvedTrackingPoses(constraints: Map<dev.slimevr.tracking.trackers.TrackerPosition, EffectiveConstraint>): Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose> {
 		val assignments = assignments.snapshot().targets
 		val observations = pipeline.observations(lastTickNanos).associateBy { it.sourceId }
