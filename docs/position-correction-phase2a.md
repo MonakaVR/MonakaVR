@@ -77,3 +77,15 @@ and one typed solver commit. Same-tick software orchestration is READY; actual I
 sink integration is VERIFIED IN TEST / DORMANT. MonakaRuntime production caller
 is NONE and production correction remains NOT ENABLED. Next is **6H — Production
 Integration Gate / Runtime Adapter Audit**. The Raw HMD blocker remains.
+
+## Phase 2B-6J configuration follow-up
+
+[6J configuration/calibration foundation](position-correction-phase2b6j-configuration-calibration.md)
+adds schema v3 explicit opt-in persistence and pure validated runtime-policy
+materialization. v1/v2 and absent/disabled v3 remain Position Correction opt-out.
+All calibration/space/policy inputs are mandatory with exact source/body/HMD/session
+binding; no defaults or identity/zero inference. This supersedes earlier statements
+that configuration/calibration persistence is unimplemented. Production invocation,
+live source acquisition and writeback ownership remain unchanged and disconnected.
+Raw HMD remains BLOCKED BY BACKEND. Next is 6K Non-HMD Production Input Adapter
+Foundation; HIL for 6J is NOT REQUIRED / NOT RUN.
