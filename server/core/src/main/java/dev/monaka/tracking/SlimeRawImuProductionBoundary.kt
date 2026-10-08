@@ -15,7 +15,7 @@ internal enum class SlimeRawImuInputRejectionReason {
 	TRACKER_NOT_PHYSICAL, TRACKER_NOT_IMU, TRACKER_INTERNAL, TRACKER_COMPUTED, TRACKER_IS_HMD,
 	TARGET_NOT_HIP, ROTATION_UNAVAILABLE, STATUS_UNUSABLE, FEEDBACK_SOURCE_NOT_ALLOWED,
 	SAMPLE_UNAVAILABLE, SAMPLE_UNSTABLE, SOURCE_EPOCH_CHANGED, CALIBRATION_EPOCH_CHANGED,
-	SAMPLE_TIME_UNAVAILABLE, ORIENTATION_INVALID,
+	SAMPLE_TIME_UNAVAILABLE, SAMPLE_AFTER_TICK_CUTOFF, ORIENTATION_INVALID,
 	SPACE_BINDING_UNCONFIRMED, SPACE_BINDING_SOURCE_MISMATCH, SPACE_INVALID,
 }
 
@@ -32,7 +32,14 @@ internal class SlimeRawImuProductionBoundary(
 	init { require(sourcePrefix.isNotBlank()) }
 
 	fun adapt(tracker: Tracker, observedAtNanos: Long,
-		binding: SlimeRawImuCoordinateSpaceBinding): SlimeRawImuInputResult {
+		binding: SlimeRawImuCoordinateSpaceBinding): SlimeRawImuInputResult = adaptCaptured(tracker, observedAtNanos, binding, null)
+
+	fun adaptAtTick(tracker: Tracker, observedAtNanos: Long, receiptCutoffSystemNanos: Long,
+		binding: SlimeRawImuCoordinateSpaceBinding): SlimeRawImuInputResult =
+		adaptCaptured(tracker, observedAtNanos, binding, receiptCutoffSystemNanos)
+
+	private fun adaptCaptured(tracker: Tracker, observedAtNanos: Long,
+		binding: SlimeRawImuCoordinateSpaceBinding, cutoff: Long?): SlimeRawImuInputResult {
 		require(observedAtNanos >= 0L)
 		fun reject(reason: SlimeRawImuInputRejectionReason) = SlimeRawImuInputResult.Unavailable(reason)
 		val sourceId = "$sourcePrefix:${tracker.name}"
@@ -56,7 +63,9 @@ internal class SlimeRawImuProductionBoundary(
 		val space = binding.space
 		if (space.id.isBlank() || space.revision < 0 || space.convention != "rh_y_up_neg_z_forward")
 			return reject(SlimeRawImuInputRejectionReason.SPACE_INVALID)
-		val sample = when (val result = capture.capture(tracker, observedAtNanos)) {
+		val captured = if (cutoff == null) capture.capture(tracker, observedAtNanos)
+			else capture.captureAtTick(tracker, observedAtNanos, cutoff)
+		val sample = when (val result = captured) {
 			is SlimeImuCaptureResult.Available -> result.sample
 			is SlimeImuCaptureResult.Unavailable -> return reject(when (result.reason) {
 				SlimeImuCaptureRejection.SAMPLE_UNAVAILABLE -> SlimeRawImuInputRejectionReason.SAMPLE_UNAVAILABLE
@@ -64,6 +73,7 @@ internal class SlimeRawImuProductionBoundary(
 				SlimeImuCaptureRejection.SOURCE_EPOCH_CHANGED -> SlimeRawImuInputRejectionReason.SOURCE_EPOCH_CHANGED
 				SlimeImuCaptureRejection.CALIBRATION_EPOCH_CHANGED -> SlimeRawImuInputRejectionReason.CALIBRATION_EPOCH_CHANGED
 				SlimeImuCaptureRejection.SAMPLE_TIME_UNAVAILABLE -> SlimeRawImuInputRejectionReason.SAMPLE_TIME_UNAVAILABLE
+				SlimeImuCaptureRejection.SAMPLE_AFTER_TICK_CUTOFF -> SlimeRawImuInputRejectionReason.SAMPLE_AFTER_TICK_CUTOFF
 			})
 		}
 		val q = sample.orientation

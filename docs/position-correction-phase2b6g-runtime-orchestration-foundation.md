@@ -127,3 +127,12 @@ that configuration/calibration persistence is unimplemented. Production invocati
 live source acquisition and writeback ownership remain unchanged and disconnected.
 Raw HMD remains BLOCKED BY BACKEND. Next is 6K Non-HMD Production Input Adapter
 Foundation; HIL for 6J is NOT REQUIRED / NOT RUN.
+
+## Phase 2B-6K input follow-up
+
+[6K Non-HMD input foundation](position-correction-phase2b6k-non-hmd-production-inputs.md)
+captures same-tick raw IMU, calibrated Main teacher, independently owned expected
+teacher context, live Body Model and configured Fixed compatibility. It never
+assembles complete predictor sources or invokes the 6G orchestrator. Raw HMD
+remains blocked; production caller, hard session lifecycle reset and exclusive
+writeback ownership are deferred to future composition.

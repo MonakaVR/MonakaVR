@@ -188,3 +188,12 @@ Position Correction enablement remain outside that next adapter foundation.
 2026-10-08 software validation: Position config 284 PASS, Rotation config 4 PASS,
 full Core 1672 PASS, full Desktop 131 PASS, shadowJar PASS, MTP E2E 11 stages PASS.
 Both full suites have zero failures, errors and skipped tests.
+
+## Phase 2B-6K input follow-up
+
+[6K Non-HMD input foundation](position-correction-phase2b6k-non-hmd-production-inputs.md)
+consumes the configured foundation without global rereads or automatic rebinding.
+Current Main/fallback sources must match exactly; Fixed bodyModelId must match the
+single live atomic publication. Backend-owned MTP current context supplies the
+independent expected teacher epoch. Non-HMD capture is READY / DORMANT; complete
+predictor sources, production orchestration and writeback remain unavailable.

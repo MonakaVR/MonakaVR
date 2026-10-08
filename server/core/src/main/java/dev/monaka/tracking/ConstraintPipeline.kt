@@ -98,6 +98,9 @@ class ConstraintPipeline(
 	fun observations(nowNanos: Long): List<PoseObservation> =
 		store.snapshot().map { applyFreshness(it, nowNanos) }
 
+	fun observations(nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): List<PoseObservation> =
+		store.snapshot().map { applyFreshness(it, nowNanos, assignment) }
+
 	fun clear() {
 		store.clear()
 		sourceProfiles.clear()

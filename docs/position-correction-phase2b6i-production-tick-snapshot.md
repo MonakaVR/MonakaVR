@@ -105,3 +105,13 @@ that configuration/calibration persistence is unimplemented. Production invocati
 live source acquisition and writeback ownership remain unchanged and disconnected.
 Raw HMD remains BLOCKED BY BACKEND. Next is 6K Non-HMD Production Input Adapter
 Foundation; HIL for 6J is NOT REQUIRED / NOT RUN.
+
+## Phase 2B-6K input follow-up
+
+[6K Non-HMD input foundation](position-correction-phase2b6k-non-hmd-production-inputs.md)
+adds a physical receipt cutoff captured once before the single runtime clock read,
+and a latest-completed-tick raw source snapshot using pinned assignment eligibility.
+Cutoff-aware physical IMU capture rejects post-cutoff samples without backdating.
+Raw sources, MTP backend ownership/context, live body publication and configured
+calibration compose an immutable Non-HMD bundle. Production invocation/writeback
+remain disconnected; Raw HMD remains BLOCKED BY BACKEND.

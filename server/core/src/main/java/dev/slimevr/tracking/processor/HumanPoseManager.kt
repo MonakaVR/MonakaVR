@@ -32,6 +32,11 @@ class HumanPoseManager(val server: VRServer?) {
 	private val onSkeletonUpdated: MutableList<Consumer<HumanSkeleton>> = FastList()
 	private val skeletonConfigManager = SkeletonConfigManager(true, this)
 
+	/** One atomic publication read; no solved pose or mutable offset access. */
+	@ThreadSafe
+	fun currentHipBodyModelSnapshot(): dev.monaka.tracking.HipBodyModelSnapshotResult =
+		skeletonConfigManager.currentHipBodyModelSnapshot()
+
 	@get:ThreadSafe
 	lateinit var skeleton: HumanSkeleton
 	private var timeAtLastReset: Long = 0
