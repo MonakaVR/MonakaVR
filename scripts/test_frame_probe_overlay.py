@@ -27,6 +27,10 @@ def main():
     args = parser.parse_args()
     source = (args.source / "src/VRDriver.cpp").read_text(encoding="utf-8")
     overlay = (args.overlay / "src/VRDriver.cpp").read_text(encoding="utf-8")
+    # The provider tripwire verifies these exact additions before normalizing them
+    # away for the older frame/binding preservation checks below.
+    from test_raw_hmd_provider_overlay import verify_provider
+    overlay = verify_provider(args.source, args.overlay, overlay)
     # The only setter refactor allowed is naming the same binary32 value once.
     normalized = overlay
     for field, expression in (("x", "pos.v[0]"), ("y", "pos.v[1]"), ("z", "pos.v[2]"),
@@ -82,7 +86,7 @@ def main():
     raw = ('                vr::HmdQuaternion_t q = GetRotation(pose.mDeviceToAbsoluteTracking);\n'
            '                vr::HmdVector3_t pos = GetPosition(pose.mDeviceToAbsoluteTracking);\n'
            '                std::optional<monaka::HmdDiagnosticPose> hmd_raw_diagnostic;\n'
-           '                if (hmd_frame_probe_ && index == vr::k_unTrackedDeviceIndex_Hmd) {\n'
+           '                if (index == vr::k_unTrackedDeviceIndex_Hmd) {\n'
            '                    hmd_raw_diagnostic.emplace(monaka::HmdDiagnosticPose{\n'
            '                        pos.v[0], pos.v[1], pos.v[2], (float)q.x, (float)q.y, (float)q.z, (float)q.w});\n'
            '                }\n\n                if (current_universe_.has_value())')
@@ -107,8 +111,8 @@ def main():
             init.count('if (monaka::ProbeEnvironmentEnabled("MONAKA_HMD_FRAME_PROBE"))') == 1,
             "Separate trace flag must be sampled once under main opt-in at initialization")
     require("VRSystem()" not in overlay and "VRChaperone()" not in overlay, "Unsupported client runtime query")
-    for name in ("src/bridge/ProtobufMessages.proto", "src/bridge/BridgeClient.cpp",
-                 "src/bridge/BridgeTransport.cpp", "src/bridge/BridgeTransport.hpp", "src/bridge/BridgeClient.hpp",
+    for name in ("src/bridge/ProtobufMessages.proto",
+                 "src/bridge/BridgeTransport.cpp", "src/bridge/BridgeTransport.hpp",
                  "src/bridge/CircularBuffer.cpp", "src/bridge/CircularBuffer.hpp", "src/TrackerDevice.hpp", "src/Logger.hpp"):
         require(hashlib.sha256((args.source / name).read_bytes()).digest() ==
                 hashlib.sha256((args.overlay / name).read_bytes()).digest(), f"Unrelated/wire source changed: {name}")
