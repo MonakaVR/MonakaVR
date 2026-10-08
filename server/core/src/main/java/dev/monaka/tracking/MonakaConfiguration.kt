@@ -18,11 +18,13 @@ data class MonakaConfiguration(
  val backgroundIkSharedSpace: CoordinateSpace? = null,
  val continuityTuning: ContinuityTuning = ContinuityTuning(),
  val rotationCorrection: RotationCorrectionConfig? = null,
+ val positionCorrection: PositionCorrectionConfig? = null,
 ) {
  init {
   require(space.id.isNotBlank() && space.convention == "rh_y_up_neg_z_forward" && space.revision in 0..4294967295L)
   require(port in 0..65535 && timeoutNanos >= 0)
   require(backgroundIkSharedSpace == null || backgroundIkSharedSpace == space) { "Background IK shared-space assertion must match the configured MTP space/revision" }
+  positionCorrection?.validateBinding(space, assignments.snapshot().targets[TrackerPosition.HIP])
   if (rotationCorrection != null) {
    require(backgroundIkSharedSpace == space && rotationCorrection.frames.assertedSpace == space) {
     "Rotation correction requires explicit shared-space assertion"
@@ -38,6 +40,8 @@ data class MonakaConfiguration(
   }
  }
  fun save(path: Path) {
+  val assignmentSnapshot = assignments.snapshot()
+  positionCorrection?.validateBinding(space, assignmentSnapshot.targets[TrackerPosition.HIP])
   fun reference(ref: TrackerReference): Map<String, String> = ref.mtp?.let {
    mapOf("kind" to "mtp", "publisher_id" to it.publisherId, "source_id" to it.sourceId, "tracker_id" to it.trackerId)
   } ?: run {
@@ -45,14 +49,14 @@ data class MonakaConfiguration(
    mapOf("kind" to "slime", "name" to ref.observationId.removePrefix("slime:"))
   }
   val document = mapOf(
-   "version" to 2, "port" to port, "timeout_ns" to timeoutNanos.toString(),
+   "version" to 3, "port" to port, "timeout_ns" to timeoutNanos.toString(),
    "space" to mapOf("id" to space.id, "revision" to space.revision, "convention" to space.convention),
    "backgroundIkAlignment" to backgroundIkSharedSpace?.let {
     mapOf("kind" to "confirmed_same_space", "space" to mapOf("id" to it.id, "revision" to it.revision, "convention" to it.convention))
    },
    "continuityTuning" to mapOf("stableFullDwellMs" to continuityTuning.stableFullDwellMs,
     "reacquireDurationMs" to continuityTuning.reacquireDurationMs, "fallbackBlendMs" to continuityTuning.fallbackBlendMs),
-   "assignments" to assignments.snapshot().targets.map { (body, relation) ->
+   "assignments" to assignmentSnapshot.targets.map { (body, relation) ->
     mapOf("body" to body.name, "outputMode" to relation.outputMode.name.lowercase(), "mainTracker" to reference(relation.mainTracker),
      "rotationFallbackTracker" to relation.rotationFallbackTracker?.let(::reference),
      "useAsIkConstraint" to relation.useAsIkConstraint, "continuity" to relation.continuity.name.lowercase())
@@ -75,7 +79,7 @@ data class MonakaConfiguration(
    "recoveryPairs" to correction.tuning.recoveryPairs,
    "maxDtNanos" to correction.tuning.maxDtNanos,
    "maxImuSampleAgeNanos" to correction.tuning.maxImuSampleAgeNanos,
-  )) } ?: emptyMap())
+  )) } ?: emptyMap()) + (positionCorrection?.let { mapOf("positionCorrection" to PositionCorrectionConfigJson.write(it)) } ?: emptyMap())
   val absolute = path.toAbsolutePath()
   Files.createDirectories(absolute.parent)
   val temporary = absolute.resolveSibling(absolute.fileName.toString() + ".pending")
@@ -98,7 +102,8 @@ data class MonakaConfiguration(
    require(Files.isRegularFile(path)) { "MTP requires explicit world/assignments in $path" }
    val root = ObjectMapper().readTree(path.toFile())
    val version = root["version"]
-   require(version?.isIntegralNumber == true && version.asInt() in 1..2)
+   require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 1..3)
+   require(version.asInt() == 3 || !root.has("positionCorrection")) { "Position correction requires schema v3" }
    val space = requireNotNull(root["space"])
    val revision = space["revision"]
    require(revision != null && revision.isIntegralNumber && revision.canConvertToLong())
@@ -180,7 +185,8 @@ data class MonakaConfiguration(
        double("maxRadiansPerSecond"), recoveryPairs.intValue(), long("maxDtNanos"), long("maxImuSampleAgeNanos")))
     }
    }
-   return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction)
+   val positionCorrection = root["positionCorrection"]?.let(PositionCorrectionConfigJson::read)
+   return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction, positionCorrection)
   }
   fun migrate(path: Path, legacyMapping: Map<Pair<String, String>, LogicalTracker>): MonakaConfiguration {
    val config = load(path, legacyMapping) // Validate everything before any write.

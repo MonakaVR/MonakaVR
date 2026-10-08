@@ -120,7 +120,7 @@ class DirectConstraintOutputTests {
 		val file = directory.resolve("direct.json"); config.save(file)
 		assertEquals(assignments.snapshot().targets, MonakaConfiguration.load(file).assignments.snapshot().targets)
 		val mapper = ObjectMapper(); val json = mapper.readTree(file.toFile())
-		assertEquals(2, json["version"].intValue())
+		assertEquals(3, json["version"].intValue())
 		val item = json["assignments"][0] as ObjectNode
 		item.remove("outputMode"); mapper.writeValue(file.toFile(), json)
 		assertEquals(OutputMode.IK, MonakaConfiguration.load(file).assignments.snapshot().targets.getValue(TrackerPosition.HIP).outputMode)
