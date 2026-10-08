@@ -13,6 +13,7 @@ class MonakaRuntime(
 	val clock: () -> Long = monotonicClock(),
 	timeoutNanos: Long = 500_000_000,
 	maxImuSampleAgeNanos: Long? = null,
+	private val trackerReceiptClock: () -> Long = System::nanoTime,
 ) : AutoCloseable {
 	private val assignedImuFreshness = maxImuSampleAgeNanos?.let { AssignedImuSampleFreshness(assignments, it) }
 	val profiles = ObservationSourceProfileRegistry(listOf(
@@ -30,6 +31,7 @@ class MonakaRuntime(
 	private var wasPaused = false
 	private var nextTickSequence = 0L
 	private var tickSequenceExhausted = false
+	private var lastCompletedTick: MonakaResolvedTickSnapshot? = null
 	var lastTickNanos: Long = 0
 		private set
 	fun tick(paused: Boolean = false): Map<dev.slimevr.tracking.trackers.TrackerPosition, EffectiveConstraint> =
@@ -41,6 +43,9 @@ class MonakaRuntime(
 		check(!tickSequenceExhausted) { "Runtime tick sequence exhausted" }
 		val sequence = nextTickSequence
 		if (sequence == Long.MAX_VALUE) tickSequenceExhausted = true else nextTickSequence++
+		// Revoke the old capture seam even if this reserved tick fails partway through.
+		lastCompletedTick = null
+		val receiptCutoff = trackerReceiptClock()
 		val now = clock()
 		require(now >= 0) { "Runtime tick clock must be non-negative" }
 		lastTickNanos = now
@@ -64,7 +69,16 @@ class MonakaRuntime(
 			mtp.suspend(false)
 		}
 		wasPaused = paused
-		return MonakaResolvedTickSnapshot(sequence, now, now, paused, assignment, pipeline.resolveAll(now, assignment))
+		return MonakaResolvedTickSnapshot(sequence, now, now, paused, assignment,
+			pipeline.resolveAll(now, assignment), receiptCutoff).also { lastCompletedTick = it }
+	}
+
+	/** Server-thread read-only seam. Only this runtime's latest completed tick has authority. */
+	internal fun captureSourceSnapshot(tick: MonakaResolvedTickSnapshot): MonakaSourceTickSnapshot {
+		check(!closed && tick === lastCompletedTick && tick.nowNanos == lastTickNanos) { "Source capture requires latest completed runtime tick" }
+		return MonakaSourceTickSnapshot(tick.tickSequence, tick.nowNanos, tick.assignment,
+			pipeline.observations(tick.nowNanos, tick.assignment).associateBy { it.sourceId },
+			runner.sourceOwnersSnapshot(), mtp.sourceContexts())
 	}
 
 	/** Wrap the already-selected components. Fresh Main metadata is diagnostic only. */

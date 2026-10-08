@@ -11,6 +11,8 @@ class MonakaResolvedTickSnapshot(
 	val paused: Boolean,
 	val assignment: TrackerBodyAssignments.Snapshot,
 	constraints: Map<TrackerPosition, EffectiveConstraint>,
+	/** Opaque physical Tracker receipt clock domain, captured before runtime now. */
+	val trackerReceiptCutoffSystemNanos: Long,
 ) {
 	// Components and their Vector3/Quaternion values are immutable; only the map needs copying.
 	val constraints: Map<TrackerPosition, EffectiveConstraint> = Collections.unmodifiableMap(LinkedHashMap(constraints))

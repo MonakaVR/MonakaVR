@@ -87,6 +87,9 @@ class ObservationBackendRunner(
 
 	fun snapshot(): Map<String, ObservationBackend> = backendsById.toMap()
 
+	internal fun sourceOwnersSnapshot(): Map<String, String> =
+		java.util.Collections.unmodifiableMap(LinkedHashMap(sourceOwnerById))
+
 	fun ownedSources(backendId: String): Set<String> = sourcesByBackend[backendId]?.toSet() ?: emptySet()
 
 	/** Isolate a failed backend without disturbing its peers or their profiles. */

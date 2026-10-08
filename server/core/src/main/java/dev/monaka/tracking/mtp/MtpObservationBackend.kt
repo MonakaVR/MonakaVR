@@ -3,6 +3,15 @@ package dev.monaka.tracking.mtp
 import dev.monaka.protocol.v2.*
 import dev.monaka.tracking.*
 
+/** Backend-owned admitted source context, independent of teacher extraction/assignment. */
+internal data class MtpSourceContextSnapshot(
+	val logicalTracker: LogicalTracker,
+	val sourceEpoch: String,
+	val calibrationEpoch: String,
+	val mappingRevision: Long?,
+	val coordinateSpace: CoordinateSpace,
+)
+
 /** Server-thread incremental cache. Watermarks survive loss/pause; pose age never changes. */
 class MtpObservationBackend(
 	private val inbox: MtpInbox,
@@ -22,6 +31,7 @@ class MtpObservationBackend(
 		var mappingRevision = -1L
 		var absentAt = -1L
 		var sample: Sample? = null
+		var context: MtpSourceContextSnapshot? = null
 	}
 	private val lifetimes = linkedMapOf<String, Lifetime>()
 	private val devices = linkedMapOf<LogicalTracker, Device>()
@@ -35,6 +45,10 @@ class MtpObservationBackend(
 
 	init { require(expectedSpace.convention == "rh_y_up_neg_z_forward") }
 	fun samples(): Map<LogicalTracker, Sample> = devices.mapNotNull { (k, d) -> d.sample?.let { k to it } }.toMap()
+	internal fun sourceContexts(): Map<LogicalTracker, MtpSourceContextSnapshot> =
+		java.util.Collections.unmodifiableMap(LinkedHashMap(devices.mapNotNull { (key, device) ->
+			device.context?.let { key to it }
+		}.toMap()))
 	fun suspend(value: Boolean) {
 		if (suspended != value) {
 			invalidateSamples()
@@ -59,7 +73,7 @@ class MtpObservationBackend(
 	/** Retain sequence/session tombstones so old packets cannot resurrect cleared constraints. */
 	fun invalidateSamples() {
 		if (devices.values.any { it.sample != null }) historyGeneration++
-		for ((key, device) in devices) { device.sample = null; removed += key.observationId }
+		for ((key, device) in devices) { device.sample = null; device.context = null; removed += key.observationId }
 	}
 	fun close() {
 		invalidateSamples(); inbox.clear(); devices.clear(); lifetimes.clear(); assignmentGeneration = -1
@@ -83,6 +97,7 @@ class MtpObservationBackend(
 			val target = assignment.entries[key] ?: run { inbox.count("UnassignedPose"); return@mapNotNull null }
 			try { adapter.adapt(sample.pose, target, sample.sampleTime) } catch (_: IllegalArgumentException) {
 				devices.getValue(key).sample = null
+				devices.getValue(key).context = null
 				inbox.count("FloatOverflow"); null
 			}
 		}
@@ -93,6 +108,7 @@ class MtpObservationBackend(
 		for (key in devices.keys.filter { it.lifetimeId == source }) {
 			removed += key.observationId
 			devices.getValue(key).sample = null
+			devices.getValue(key).context = null
 		}
 	}
 	private fun admit(received: MtpInbox.Received, dirty: MutableSet<LogicalTracker>) {
@@ -125,7 +141,7 @@ class MtpObservationBackend(
 				devices.keys.filter { it.lifetimeId == key.lifetimeId }.forEach { devices.remove(it) }
 				inbox.count("SessionChanged")
 			} else if (clock != lifetime.clock) {
-				devices[key]?.let { it.sample = null }; removed += key.observationId
+				devices[key]?.let { it.sample = null; it.context = null }; removed += key.observationId
                 inbox.count("ClockMismatch"); return
 			}
 		}
@@ -138,20 +154,20 @@ class MtpObservationBackend(
 		val space = pose?.coordinate_space ?: state!!.coordinate_space
 		if (space != expectedSpace) {
 			if (device.sample != null) historyGeneration++
-			device.sample = null; removed += key.observationId; inbox.count("SpaceMismatch"); return
+			device.sample = null; device.context = null; removed += key.observationId; inbox.count("SpaceMismatch"); return
 		}
 		val revision = pose?.mapping_revision ?: state!!.mapping_revision
 		if (revision < device.mappingRevision) { inbox.count("OldMappingRevision"); return }
 		if (revision > device.mappingRevision) {
 			historyGeneration++
-			device.sample = null; removed += key.observationId; device.mappingRevision = revision
+			device.sample = null; device.context = null; removed += key.observationId; device.mappingRevision = revision
 		}
 		if (pose == null) {
 			if (state!!.presence == "absent" || state.tracking_state in listOf("lost", "disconnected")) {
 				device.absentAt = maxOf(device.absentAt, state.timestamp_ns)
 				if (device.sample?.pose?.timestamp_ns?.let { it <= device.absentAt } != false) {
 					if (device.sample != null) historyGeneration++
-					device.sample = null; removed += key.observationId
+					device.sample = null; device.context = null; removed += key.observationId
 				}
 			}
 			lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
@@ -159,12 +175,15 @@ class MtpObservationBackend(
 		}
 		dirty += key
 		device.sample = null
+		device.context = null
 		if (pose.timestamp_ns <= device.absentAt) return
         lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
         if (suspended) return
 		val age = pose.sent_at_ns - pose.timestamp_ns // Both U63, codec checked timestamp <= sent_at.
 		if (age > received.receivedAtNanos) { inbox.count("BeforeLocalEpoch"); return }
 		device.sample = Sample(pose, received.receivedAtNanos - age)
+		device.context = MtpSourceContextSnapshot(key, "${pose.session_id}:${pose.clock_id}",
+			pose.input.session_id, pose.mapping_revision, pose.coordinate_space)
 		inbox.count("PoseAccepted")
 	}
 }

@@ -201,7 +201,7 @@ class MonakaResolvedTickSnapshotTests {
 	@Test fun snapshotCopiesConstraintsAndPreventsEntryMutation() {
 		val assignment = TrackerBodyAssignments().snapshot(); val constraint = EffectiveConstraint(hip)
 		val original = mutableMapOf(hip to constraint)
-		val snapshot = MonakaResolvedTickSnapshot(0, 100, 100, false, assignment, original)
+		val snapshot = MonakaResolvedTickSnapshot(0, 100, 100, false, assignment, original, -10)
 		original.clear(); assertEquals(constraint, snapshot.constraints[hip])
 		assertFailsWith<UnsupportedOperationException> { (snapshot.constraints as MutableMap)[foot] = EffectiveConstraint(foot) }
 		assertFailsWith<UnsupportedOperationException> {

@@ -11,7 +11,7 @@ internal data class SlimeIndependentImuOrientationSample(
 
 internal enum class SlimeImuCaptureRejection {
 	SAMPLE_UNAVAILABLE, SAMPLE_UNSTABLE, SOURCE_EPOCH_CHANGED, CALIBRATION_EPOCH_CHANGED,
-	SAMPLE_TIME_UNAVAILABLE,
+	SAMPLE_TIME_UNAVAILABLE, SAMPLE_AFTER_TICK_CUTOFF,
 }
 
 internal sealed interface SlimeImuCaptureResult {
@@ -27,29 +27,40 @@ internal class SlimeIndependentImuOrientationCapture(
 
 	@Synchronized
 	fun capture(tracker: Tracker, observedAtNanos: Long): SlimeImuCaptureResult = synchronized(tracker.resetsHandler) {
-		synchronized(tracker) { captureLocked(tracker, observedAtNanos) }
+		synchronized(tracker) { captureLocked(tracker, observedAtNanos, null) }
 	}
 
-	private fun captureLocked(tracker: Tracker, observedAtNanos: Long): SlimeImuCaptureResult {
+	/** Receipt cutoff is opaque System.nanoTime-domain data; this path reads no clock. */
+	@Synchronized
+	fun captureAtTick(tracker: Tracker, observedAtNanos: Long, receiptCutoffSystemNanos: Long): SlimeImuCaptureResult =
+		synchronized(tracker.resetsHandler) {
+			synchronized(tracker) { captureLocked(tracker, observedAtNanos, receiptCutoffSystemNanos) }
+		}
+
+	private fun captureLocked(tracker: Tracker, observedAtNanos: Long, cutoff: Long?): SlimeImuCaptureResult {
 		require(observedAtNanos >= 0L)
 		fun reject(reason: SlimeImuCaptureRejection) = SlimeImuCaptureResult.Unavailable(reason)
 		val before = tracker.correctionOrientationSample()
 			?: return reject(SlimeImuCaptureRejection.SAMPLE_UNAVAILABLE)
+		if (cutoff != null && before.receivedAtSystemNanos > cutoff)
+			return reject(SlimeImuCaptureRejection.SAMPLE_AFTER_TICK_CUTOFF)
 		val sourceEpoch = tracker.correctionSourceEpoch
 		val calibrationEpoch = tracker.resetsHandler.correctionCalibrationEpoch()
 		// Tracker.setRotation holds the same monitor: raw value and receipt publication cannot split.
 		val independent = tracker.resetsHandler.getCorrectionReferenceRotationFrom(tracker.getRawRotation())
-		val age = receiptClock() - before.receivedAtSystemNanos
+		val receiptAnchor = cutoff ?: receiptClock()
 		if (before != tracker.correctionOrientationSample())
 			return reject(SlimeImuCaptureRejection.SAMPLE_UNSTABLE)
 		if (sourceEpoch != tracker.correctionSourceEpoch)
 			return reject(SlimeImuCaptureRejection.SOURCE_EPOCH_CHANGED)
 		if (calibrationEpoch != tracker.resetsHandler.correctionCalibrationEpoch())
 			return reject(SlimeImuCaptureRejection.CALIBRATION_EPOCH_CHANGED)
-		val sampleAt = sampleTimes[tracker]?.takeIf { it.first == before.sequence }?.second
-			?: if (age >= 0 && age <= observedAtNanos) (observedAtNanos - age).also {
-				sampleTimes[tracker] = before.sequence to it
-			} else return reject(SlimeImuCaptureRejection.SAMPLE_TIME_UNAVAILABLE)
+		val sampleAt = sampleTimes[tracker]?.takeIf { it.first == before.sequence }?.second ?: run {
+			val age = try { Math.subtractExact(receiptAnchor, before.receivedAtSystemNanos) }
+				catch (_: ArithmeticException) { return reject(SlimeImuCaptureRejection.SAMPLE_TIME_UNAVAILABLE) }
+			if (age < 0 || age > observedAtNanos) return reject(SlimeImuCaptureRejection.SAMPLE_TIME_UNAVAILABLE)
+			(observedAtNanos - age).also { sampleTimes[tracker] = before.sequence to it }
+		}
 		return SlimeImuCaptureResult.Available(SlimeIndependentImuOrientationSample(independent,
 			ObservationSampleProvenance(before.sequence, sampleAt, sourceEpoch, calibrationEpoch)))
 	}
