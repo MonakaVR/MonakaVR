@@ -49,7 +49,7 @@ class TrackerBodyAssignments(initial: Map<LogicalTracker, TrackerPosition> = emp
 			listOfNotNull(assignment.mainTracker.mtp, assignment.rotationFallbackTracker?.mtp).map { it to target }
 		}.toMap()
 	}
-	@Volatile private var state = Snapshot(0, migrate(initial))
+	@Volatile private var state = Snapshot(0, java.util.Collections.unmodifiableMap(LinkedHashMap(migrate(initial))))
 	fun snapshot(): Snapshot = state
 	@Synchronized fun replace(entries: Map<LogicalTracker, TrackerPosition>) {
 		replaceTargets(migrate(entries))
@@ -64,7 +64,7 @@ class TrackerBodyAssignments(initial: Map<LogicalTracker, TrackerPosition> = emp
         }
 		val refs = targets.values.flatMap { listOfNotNull(it.mainTracker, it.rotationFallbackTracker) }
 		require(refs.map { it.observationId }.distinct().size == refs.size) { "A tracker can belong to only one body target" }
-		if (state.targets != targets) state = Snapshot(state.generation + 1, targets.toMap())
+		if (state.targets != targets) state = Snapshot(Math.incrementExact(state.generation), java.util.Collections.unmodifiableMap(LinkedHashMap(targets)))
 	}
 	@Synchronized fun configure(
 		target: TrackerPosition, main: TrackerReference, fallback: TrackerReference? = null,

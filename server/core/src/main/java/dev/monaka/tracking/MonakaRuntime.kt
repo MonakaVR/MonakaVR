@@ -20,25 +20,38 @@ class MonakaRuntime(
 		ObservationSourceProfile.sixDof("mtp", 100, timeoutNanos, timeoutNanos),
 	))
 	val pipeline = ConstraintPipeline(profileRegistry = profiles, resolver = ConstraintResolver { assignments.snapshot().targets },
-		eligibility = { observation, now -> assignedImuFreshness?.apply(observation, now) ?: observation })
+		eligibility = { observation, now -> assignedImuFreshness?.apply(observation, now) ?: observation },
+		pinnedEligibility = { observation, now, assignment -> assignedImuFreshness?.apply(observation, now, assignment) ?: observation })
 	val mtp = MtpObservationBackend(inbox, assignments, expectedSpace)
 	val runner = ObservationBackendRunner(pipeline, listOf(
 		SlimeTrackerObservationBackend("slime", "slime", { trackers().filter(FeedbackExclusion::accepts) }, assignments = { assignments.snapshot().targets }), mtp,
 	))
 	private var closed = false
 	private var wasPaused = false
+	private var nextTickSequence = 0L
+	private var tickSequenceExhausted = false
 	var lastTickNanos: Long = 0
 		private set
-	fun tick(paused: Boolean = false): Map<dev.slimevr.tracking.trackers.TrackerPosition, EffectiveConstraint> {
+	fun tick(paused: Boolean = false): Map<dev.slimevr.tracking.trackers.TrackerPosition, EffectiveConstraint> =
+		tickSnapshot(paused).constraints
+
+	/** Server-thread tick: assignment changes after capture become visible on the next tick. */
+	fun tickSnapshot(paused: Boolean = false): MonakaResolvedTickSnapshot {
 		check(!closed)
+		check(!tickSequenceExhausted) { "Runtime tick sequence exhausted" }
+		val sequence = nextTickSequence
+		if (sequence == Long.MAX_VALUE) tickSequenceExhausted = true else nextTickSequence++
 		val now = clock()
+		require(now >= 0) { "Runtime tick clock must be non-negative" }
 		lastTickNanos = now
+		val assignment = assignments.snapshot()
 		val resuming = !paused && wasPaused
 		// Drain paused traffic with its sequence watermarks, then discard its samples on either edge.
 		if (paused != wasPaused) { mtp.suspend(true); runner.invalidate("mtp") }
-		for (backend in runner.snapshot().keys) {
+		val backendIds = runner.snapshot().keys.toList()
+		for (backend in backendIds) {
 			if (backend == "mtp" && resuming) continue
-			try { runner.poll(backend, now) } catch (_: Exception) {
+			try { runner.poll(backend, now, assignment) } catch (_: Exception) {
 				runner.invalidate(backend)
 				if (backend == "mtp") mtp.invalidateSamples()
 				inbox.count("BackendFailure:$backend")
@@ -51,7 +64,7 @@ class MonakaRuntime(
 			mtp.suspend(false)
 		}
 		wasPaused = paused
-		return pipeline.resolveAll(now)
+		return MonakaResolvedTickSnapshot(sequence, now, now, paused, assignment, pipeline.resolveAll(now, assignment))
 	}
 
 	/** Wrap the already-selected components. Fresh Main metadata is diagnostic only. */
