@@ -68,5 +68,8 @@ Production Raw HMD remains BLOCKED BY BACKEND, OpenVR POSE_ONLY, Strong Trusted
 UNSUPPORTED, 2B-5P NOT READY and 5S HIL pending. The
 [6E solver position reacquisition contract](position-correction-phase2b6e-solver-position-reacquisition.md)
 is IMPLEMENTED / DORMANT and closes fallback-to-Main position continuity before
-orchestration. Next is 6F, the dormant/injected runtime orchestration foundation,
-retaining the production Raw HMD blocker.
+orchestration. [6F solver effective-target semantics](position-correction-phase2b6f-solver-effective-target-semantics.md)
+closes the raw tracker origin / calibrated HIP_CENTER mismatch with typed references,
+writeback precompensation and current Main effective-target projection. 6D/6E remain
+IMPLEMENTED / DORMANT. Next is **6G**, the runtime orchestration foundation;
+production correction IK and runtime remain NOT CONNECTED. The Raw HMD blocker remains.

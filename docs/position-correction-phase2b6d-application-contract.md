@@ -39,7 +39,7 @@ The rotation cannot come from an output/private source. Its quaternion component
 and squared length must be finite, length squared > 1e-10, and its observed time
 must be in [0, application time]. No new rotation freshness threshold is added;
 resolver freshness and future orchestration own that policy. Preparation and
-`ikConstraint()` retain the exact original `ResolvedComponent<Quaternion>` object,
+`solverConstraint()` retain the exact original `ResolvedComponent<Quaternion>` object,
 including numeric value, source, quality and time. Phase 1 Rotation Correction's
 fallback numeric result can therefore coexist without recalculation. The pure
 predictor continues to depend on Raw IMU, never on Rotation Correction.
@@ -89,7 +89,7 @@ corrected position into separate Vector3 values. It retains prediction sequence,
 full provenance (physical sequences, individual times and oldest/latest support),
 prediction epoch, correction phase/lineage, application time and base rotation.
 
-`ikConstraint()` creates a full HIP `EffectiveConstraint` with:
+`solverConstraint()` creates a full HIP `SolverEffectiveConstraint` with explicit `IK_EFFECTIVE_TARGET` and:
 
 | Component | Metadata |
 | --- | --- |
@@ -119,7 +119,7 @@ in SkeletonInputView constraints and rotations. Actual IKSolver positional
 extraction accepts that usable, non-internal proxy. Repeated writeback does not
 duplicate proxies or rebuild unchanged topology. Numerical IK smoke verifies a
 finite changed computed HIP; this is software compatibility, not physical pose
-quality. Production ConstraintIkWriteback and IKSolver remain unchanged.
+quality. 6F adds typed effective-target precompensation and read-only calibration/target seams to writeback/IKSolver; solver iterations remain unchanged.
 
 Application contract: **IMPLEMENTED / DORMANT**. Application runtime, predictor
 runtime, temporal pairing runtime, Position Correction runtime orchestration and
@@ -142,9 +142,14 @@ would otherwise violate hysteresis convergence. 6D prepare is unchanged; its
 position-present rejection remains mandatory. Reacquisition is separate from
 visible OutputContinuity and has no production caller.
 
-Next: **Phase 2B-6F — Position Correction Runtime Orchestration Foundation**.
-Orchestration was deferred from 6E to close solver position continuity first.
-Build a dormant/injected same-tick chain through prediction, observe/gap advance,
-6D preparation, 6E selection and manual writeback, retaining the Raw HMD blocker.
+[6F solver effective-target semantics](position-correction-phase2b6f-solver-effective-target-semantics.md)
+precompensates current IK mount calibration exclusively at writeback. Candidate
+HIP_CENTER remains a world-space effective target; 6D never performs a calibration inverse.
+Main calibration survives reference-mode switches on the same stable proxy.
+
+Next: **Phase 2B-6G - Position Correction Runtime Orchestration Foundation**.
+Orchestration was deferred to fix double calibration and reference-point mismatch.
+Future ordering is same-phase projection -> selection -> writeback with no intervening
+calibration reset/rebuild, retaining the Raw HMD blocker.
 
 Receipts: `build/reports/phase2b6d-position-correction-application-20261008/report.md`.

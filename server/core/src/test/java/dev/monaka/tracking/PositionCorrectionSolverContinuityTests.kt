@@ -45,7 +45,8 @@ internal class PositionCorrectionSolverContinuityTests {
 			PositionCorrectionApplicationResult.Ready(candidate))
 	}
 	private fun mainInput(now: Long = 110, b: EffectiveConstraint = main()) =
-		PositionCorrectionSolverContinuityInput(now, now, space, assignment(), b, state(now), null)
+		PositionCorrectionSolverContinuityInput(now, now, space, assignment(), b, state(now), null,
+			(MainEffectiveHipTarget.project(b, assignment(), now, null) as? MainEffectiveHipTargetResult.Available)?.target)
 	private fun unavailable(now: Long) = fallback(now).copy(fallbackApplication = null)
 	private fun invalid(c: PositionCorrectionSolverContinuity, i: PositionCorrectionSolverContinuityInput,
 		reason: PositionCorrectionSolverContinuityReason = PositionCorrectionSolverContinuityReason.MALFORMED_TICK) {
@@ -61,7 +62,7 @@ internal class PositionCorrectionSolverContinuityTests {
 		val i = mainInput().let { it.copy(correctionState = it.correctionState.copy(
 			phase = PositionCorrectionPhase.UNINITIALIZED, lineage = null, coordinateSpace = null, lastStateAdvanceAtNanos = null)) }
 		val c = controller(); val r = c.select(i)
-		assertSame(i.baseHipConstraint, r.constraint); assertEquals(PositionCorrectionSolverContinuityPhase.MAIN_DIRECT, r.phase)
+		assertEquals(i.baseHipConstraint.solverConstraint(), r.constraint); assertEquals(PositionCorrectionSolverContinuityPhase.MAIN_DIRECT, r.phase)
 		assertEquals(PositionCorrectionSolverContinuityReason.COLD_MAIN_DIRECT, r.reason); assertNull(c.snapshot().lastFallbackAnchor)
 	}
 	@Test fun selectedFallbackIsExactAndOnlyLatestSelectedPositionBecomesCopiedAnchor() {
@@ -70,7 +71,7 @@ internal class PositionCorrectionSolverContinuityTests {
 		assertNull(c.snapshot().lastFallbackAnchor)
 		for (i in listOf(a, b)) {
 			val r = c.select(i); val candidate = i.fallbackApplication!!.candidate
-			assertEquals(candidate.ikConstraint(), r.constraint); assertSame(candidate.baseRotation, r.constraint.rotation)
+			assertEquals(candidate.solverConstraint(), r.constraint); assertSame(candidate.baseRotation, r.constraint.rotation)
 			assertEquals(PositionCorrectionSolverContinuityPhase.FALLBACK_ACTIVE, r.phase)
 			val snapshot = c.snapshot().lastFallbackAnchor!!
 			assertEquals(r.constraint.position!!.value, snapshot.position); assertNotSame(r.constraint.position.value, snapshot.position)
@@ -93,13 +94,13 @@ internal class PositionCorrectionSolverContinuityTests {
 		val boundary = mainInput(210, main(Vector3(.1234567f, -.2345678f, .3456789f), 200))
 		val completed = c.select(boundary)
 		assertEquals(PositionCorrectionSolverContinuityReason.MAIN_REACQUIRE_COMPLETE, completed.reason)
-		assertSame(boundary.baseHipConstraint, completed.constraint); assertNull(c.snapshot().lastFallbackAnchor)
+		assertEquals(boundary.baseHipConstraint.solverConstraint(), completed.constraint); assertNull(c.snapshot().lastFallbackAnchor)
 		assertNull(c.snapshot().reacquireStartedAtNanos)
-		val later = mainInput(211); assertSame(later.baseHipConstraint, c.select(later).constraint)
+		val later = mainInput(211); assertEquals(later.baseHipConstraint.solverConstraint(), c.select(later).constraint)
 	}
 	@Test fun durationOvershootReturnsExactMainRatherThanWrappedLerp() {
 		val c = controller(); c.select(fallback()); c.select(mainInput())
-		val i = mainInput(500); assertSame(i.baseHipConstraint, c.select(i).constraint)
+		val i = mainInput(500); assertEquals(i.baseHipConstraint.solverConstraint(), c.select(i).constraint)
 	}
 	@ParameterizedTest @ValueSource(longs = [60, 70, 90])
 	fun derivedMetadataIsPrivateDegradedOldestSupportAndRotationExact(mainAt: Long) {
@@ -119,7 +120,7 @@ internal class PositionCorrectionSolverContinuityTests {
 		if (!reacquiring) c.select(mainInput(210))
 		val f = fallback(220, Vector3(8f, 9f, 10f)); val r = c.select(f)
 		assertEquals(PositionCorrectionSolverContinuityReason.MAIN_RELOSS, r.reason)
-		assertEquals(f.fallbackApplication!!.candidate.ikConstraint(), r.constraint)
+		assertEquals(f.fallbackApplication!!.candidate.solverConstraint(), r.constraint)
 		assertNull(c.snapshot().reacquireStartedAtNanos)
 		assertEquals(r.constraint.position!!.value, c.select(mainInput(230)).constraint.position!!.value)
 		assertEquals(230L, c.snapshot().reacquireStartedAtNanos)
@@ -130,8 +131,8 @@ internal class PositionCorrectionSolverContinuityTests {
 		if (reacquiring) c.select(mainInput())
 		val gap = unavailable(120); val r = c.select(gap)
 		assertEquals(PositionCorrectionSolverContinuityPhase.UNAVAILABLE, r.phase)
-		assertSame(gap.baseHipConstraint, r.constraint); assertNull(r.constraint.position); assertNull(c.snapshot().lastFallbackAnchor)
-		val main = mainInput(130); assertSame(main.baseHipConstraint, c.select(main).constraint)
+		assertEquals(gap.baseHipConstraint.solverConstraint(), r.constraint); assertNull(r.constraint.position); assertNull(c.snapshot().lastFallbackAnchor)
+		val main = mainInput(130); assertEquals(main.baseHipConstraint.solverConstraint(), c.select(main).constraint)
 		assertEquals(PositionCorrectionSolverContinuityReason.NO_SAFE_FALLBACK_ANCHOR, c.select(main).reason)
 	}
 	@Test fun unavailableAfterMainDirectDoesNotManufacturePosition() {
@@ -164,7 +165,7 @@ internal class PositionCorrectionSolverContinuityTests {
 		for (reacquire in listOf(false, true)) {
 			val c = controller(); c.select(fallback()); if (reacquire) c.select(mainInput())
 			val i = changed(mainInput(120), which); val r = c.select(i)
-			assertSame(i.baseHipConstraint, r.constraint); assertEquals(PositionCorrectionSolverContinuityPhase.MAIN_DIRECT, r.phase)
+			assertEquals(i.baseHipConstraint.solverConstraint(), r.constraint); assertEquals(PositionCorrectionSolverContinuityPhase.MAIN_DIRECT, r.phase)
 			assertNull(c.snapshot().lastFallbackAnchor); assertNull(c.snapshot().reacquireStartedAtNanos)
 		}
 	}
@@ -177,10 +178,11 @@ internal class PositionCorrectionSolverContinuityTests {
 			correctionLineage = l, predictionEpoch = l.predictionEpoch,
 			predictionProvenance = changed.fallbackApplication.candidate.predictionProvenance.copy(epoch = l.predictionEpoch))
 		val i = changed.copy(fallbackApplication = PositionCorrectionApplicationResult.Ready(candidate))
-		assertEquals(candidate.ikConstraint(), c.select(i).constraint)
+		assertEquals(candidate.solverConstraint(), c.select(i).constraint)
 		assertEquals(l, c.snapshot().lastFallbackAnchor!!.lineage)
 		val returning = i.copy(nowNanos = 130, resolvedAtNanos = 130, baseHipConstraint = main(),
-			correctionState = s.copy(lastStateAdvanceAtNanos = 130), fallbackApplication = null)
+			correctionState = s.copy(lastStateAdvanceAtNanos = 130), fallbackApplication = null,
+			mainEffectiveHipTarget = assertIs<MainEffectiveHipTargetResult.Available>(MainEffectiveHipTarget.project(main(), i.assignment, 130, null)).target)
 		assertEquals(candidate.correctedPosition, c.select(returning).constraint.position!!.value)
 	}
 	@ParameterizedTest @ValueSource(strings = ["other", "monaka-private:x", "monaka-solver:x", "monaka-direct:x", "human://x"])
@@ -197,7 +199,7 @@ internal class PositionCorrectionSolverContinuityTests {
 			val b = main(); val next = if (position) b.copy(position = b.position!!.copy(quality = quality))
 			else b.copy(rotation = b.rotation!!.copy(quality = quality))
 			val c = controller(); val i = mainInput(b = next)
-			if (quality.usable) assertSame(next, c.select(i).constraint) else invalid(c, i)
+			if (quality.usable) assertEquals(next.solverConstraint(), c.select(i).constraint) else invalid(c, i)
 		}
 	}
 	@ParameterizedTest @ValueSource(longs = [-1, 111])
@@ -211,7 +213,7 @@ internal class PositionCorrectionSolverContinuityTests {
 			val c = controller(); c.select(fallback()); c.select(mainInput())
 			invalid(c, mainInput(120, main(p)), PositionCorrectionSolverContinuityReason.NUMERIC_INVALID)
 			assertNull(c.snapshot().lastFallbackAnchor)
-			val valid = mainInput(130); assertSame(valid.baseHipConstraint, c.select(valid).constraint)
+			val valid = mainInput(130); assertEquals(valid.baseHipConstraint.solverConstraint(), c.select(valid).constraint)
 		}
 	}
 	@ParameterizedTest @ValueSource(ints = [0, 1, 2, 3, 4, 5, 6])
@@ -245,14 +247,14 @@ internal class PositionCorrectionSolverContinuityTests {
 		val c = controller(); c.select(fallback(Long.MAX_VALUE - 60))
 		c.select(mainInput(Long.MAX_VALUE - 50)); near(Vector3(3f, 4f, 5f), c.select(mainInput(Long.MAX_VALUE)).constraint.position!!.value)
 		val complete = controller(40); complete.select(fallback(Long.MAX_VALUE - 60)); complete.select(mainInput(Long.MAX_VALUE - 50))
-		val i = mainInput(Long.MAX_VALUE); assertSame(i.baseHipConstraint, complete.select(i).constraint)
+		val i = mainInput(Long.MAX_VALUE); assertEquals(i.baseHipConstraint.solverConstraint(), complete.select(i).constraint)
 	}
 	@Test fun extremeFiniteEndpointsCannotOverflowFloatSubtractionAndFirstTickRemainsExact() {
 		val a = Vector3(Float.MAX_VALUE, -Float.MAX_VALUE, Float.MAX_VALUE)
 		val target = a * -1f; val c = controller(); c.select(fallback(p = a))
 		assertEquals(a, c.select(mainInput(b = main(target))).constraint.position!!.value)
 		assertEquals(zero, c.select(mainInput(160, main(target))).constraint.position!!.value)
-		val i = mainInput(210, main(target)); assertSame(i.baseHipConstraint, c.select(i).constraint)
+		val i = mainInput(210, main(target)); assertEquals(i.baseHipConstraint.solverConstraint(), c.select(i).constraint)
 	}
 	@Test fun defensiveNonfiniteIntermediateGuardFailsClosedWithoutMainSnap() {
 		val c = controller(); c.select(fallback()); c.select(mainInput())
@@ -321,7 +323,7 @@ internal class PositionCorrectionSolverContinuityTests {
 		}
 		val c = controller(); c.select(fallback()); c.select(mainInput())
 		val i = mainInput(120).let { it.copy(correctionState = it.correctionState.copy(lineage = lineage.copy(predictionEpoch = next))) }
-		assertSame(i.baseHipConstraint, c.select(i).constraint); assertNull(c.snapshot().lastFallbackAnchor)
+		assertEquals(i.baseHipConstraint.solverConstraint(), c.select(i).constraint); assertNull(c.snapshot().lastFallbackAnchor)
 	}
 	@ParameterizedTest @ValueSource(ints = [0, 1, 2, 3, 4, 5])
 	fun everyTeacherIdentityChangeDiscardsAnchor(which: Int) {
@@ -333,7 +335,7 @@ internal class PositionCorrectionSolverContinuityTests {
 		}
 		val c = controller(); c.select(fallback()); c.select(mainInput())
 		val i = mainInput(120).let { it.copy(correctionState = it.correctionState.copy(lineage = lineage.copy(teacherEpoch = next))) }
-		assertSame(i.baseHipConstraint, c.select(i).constraint); assertNull(c.snapshot().lastFallbackAnchor)
+		assertEquals(i.baseHipConstraint.solverConstraint(), c.select(i).constraint); assertNull(c.snapshot().lastFallbackAnchor)
 	}
 	@ParameterizedTest @ValueSource(ints = [0, 1, 2, 3, 4, 5, 6, 7, 8])
 	fun fallbackRejectsMissingAssignmentOrInvalidStateAndContext(which: Int) {
@@ -354,7 +356,7 @@ internal class PositionCorrectionSolverContinuityTests {
 	@Test fun hardInvalidationPhaseDiscardsAnchorEvenIfMalformedLineageRemains() {
 		val c = controller(); c.select(fallback()); c.select(mainInput())
 		val i = mainInput(120).let { it.copy(correctionState = it.correctionState.copy(phase = PositionCorrectionPhase.UNINITIALIZED)) }
-		assertSame(i.baseHipConstraint, c.select(i).constraint); assertNull(c.snapshot().lastFallbackAnchor)
+		assertEquals(i.baseHipConstraint.solverConstraint(), c.select(i).constraint); assertNull(c.snapshot().lastFallbackAnchor)
 	}
 	@Test fun feedbackEpochCannotGrantFallbackAuthority() {
 		val i = fallback(); val e = epoch.copy(hmdSourceId = "monaka-private:x")
@@ -367,7 +369,7 @@ internal class PositionCorrectionSolverContinuityTests {
 	@Test fun unavailableGapAlsoPreventsReusingAnOldReadyBundle() {
 		val c = controller(); val f = fallback(); c.select(f); c.select(unavailable(110))
 		invalid(c, unavailable(120).copy(fallbackApplication = f.fallbackApplication))
-		val i = mainInput(130); assertSame(i.baseHipConstraint, c.select(i).constraint)
+		val i = mainInput(130); assertEquals(i.baseHipConstraint.solverConstraint(), c.select(i).constraint)
 	}
 	@Test fun explicitNanosecondDurationAndZeroTimeNeedNoDwell() {
 		val c = controller(1)
@@ -381,7 +383,7 @@ internal class PositionCorrectionSolverContinuityTests {
 		c.select(i)
 		val b = main(at = 0).copy(rotation = rotation("main", 0))
 		assertEquals(anchor, c.select(mainInput(0, b)).constraint.position!!.value)
-		assertSame(b, c.select(mainInput(1, b)).constraint)
+		assertEquals(b.solverConstraint(), c.select(mainInput(1, b)).constraint)
 	}
 	@Test fun noMutationOrFeedbackOrExecutionOfEarlierContractsAndNoProductionCaller() {
 		val c = controller(); val i = fallback(); val candidate = i.fallbackApplication!!.candidate
@@ -415,7 +417,7 @@ internal class PositionCorrectionSolverContinuityTests {
 			val phases = mutableListOf<PositionCorrectionSolverContinuityPhase>()
 			for (i in inputs) {
 				val r = c.select(i); phases += r.phase
-				writeback.apply(mapOf(TrackerPosition.HIP to r.constraint), i.assignment)
+				writeback.applySolver(mapOf(TrackerPosition.HIP to r.constraint), i.assignment)
 				assertEquals(ConstraintIkWriteback.ComponentMask(true, true), writeback.masks().getValue(TrackerPosition.HIP))
 				val current = manager.skeleton.hipTracker!!
 				if (proxy == null) { proxy = current; rebuilds = writeback.topologyRebuilds }

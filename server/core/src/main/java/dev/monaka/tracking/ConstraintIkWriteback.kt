@@ -3,6 +3,8 @@ package dev.monaka.tracking
 import dev.slimevr.tracking.processor.skeleton.HumanSkeleton
 import dev.slimevr.tracking.processor.skeleton.SkeletonInputView
 import dev.slimevr.tracking.trackers.*
+import io.github.axisangles.ktmath.Quaternion
+import io.github.axisangles.ktmath.Vector3
 
 /** Private capability-correct inputs to the existing solver; never register these as raw trackers. */
 class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable {
@@ -32,15 +34,45 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 		assignment: TrackerBodyAssignments.Snapshot,
 		@Suppress("UNUSED_PARAMETER") historyRevision: Long = 0,
 	) {
+		applySolver(constraints.mapValues { it.value.solverConstraint() }, assignment)
+	}
+
+	internal sealed interface ApplyResult {
+		data object Applied : ApplyResult
+		data object Paused : ApplyResult
+		data class Rejected(val reason: SolverTargetFailure) : ApplyResult
+	}
+	private fun stableName(target: TrackerPosition, relation: MainTrackerAssignment) =
+		"monaka-private:${target.name}:${relation.mainTracker.observationId}"
+
+	/** Current raw Main -> effective HIP_CENTER. No cached calibration or teacher calibration. */
+	internal fun projectMainEffectiveHipTarget(raw: EffectiveConstraint, assignment: TrackerBodyAssignments.Snapshot,
+		nowNanos: Long): MainEffectiveHipTargetResult {
 		check(!closed)
-		if (skeleton.getPauseTracking()) return
+		val relation = assignment.targets[TrackerPosition.HIP]
+		val calibration = relation?.let { skeleton.ikSolver.calibrationFor(stableName(TrackerPosition.HIP, it), TrackerPosition.HIP.bodyPart) }
+		return MainEffectiveHipTarget.project(raw, assignment, nowNanos, calibration)
+	}
+
+	/** Diagnostic/test only; actual active IKConstraint.getPosition(), not proxy storage. */
+	internal fun effectivePositionTargetSnapshot(target: TrackerPosition): Vector3? =
+		proxies[target]?.let { skeleton.ikSolver.effectivePositionTargetFor(it.name, target.bodyPart) }
+
+	/** Typed sink remains dormant for correction. Generic production apply adapts raw origins. */
+	internal fun applySolver(
+		constraints: Map<TrackerPosition, SolverEffectiveConstraint>,
+		assignment: TrackerBodyAssignments.Snapshot,
+	): Map<TrackerPosition, ApplyResult> {
+		check(!closed)
+		if (skeleton.getPauseTracking()) return constraints.mapValues { ApplyResult.Paused }
+		val results = linkedMapOf<TrackerPosition, ApplyResult>()
 		val ikAssignments = assignment.targets.filterValues { it.useAsIkConstraint }
 		val targets = ikAssignments.keys
 		var rebuild = targets != managed || generation != assignment.generation
 		// Sample/history invalidation is handled by the cache. Calibration belongs to
 		// the stable Main/body relation, not the current modality or fallback sample.
 		stableNames = ikAssignments.mapValues { (target, relation) ->
-			"monaka-private:${target.name}:${relation.mainTracker.observationId}"
+			stableName(target, relation)
 		}
 		managed = targets
 		generation = assignment.generation
@@ -49,8 +81,31 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 		}
 		for (target in targets) {
 			val constraint = constraints[target]
-			val position = constraint?.position?.value
+			var position = constraint?.position?.value
 			val rotation = constraint?.rotation?.value
+			val reference = constraint?.positionReference ?: SolverPositionReference.NONE
+			var failure: SolverTargetFailure? = null
+			if (constraint != null && (constraint.target != target || (position == null) != (reference == SolverPositionReference.NONE)))
+				failure = SolverTargetFailure.TARGET_REFERENCE_INVALID
+			else if ((position != null && !SolverCalibrationTransform.finite(position)) ||
+				(rotation != null && !SolverCalibrationTransform.valid(rotation))) failure = SolverTargetFailure.INPUT_INVALID
+			else if (position != null && reference == SolverPositionReference.IK_EFFECTIVE_TARGET) {
+				// Same exact rotation subsequently stored on an unfiltered, no-reset proxy.
+				val calibration = skeleton.ikSolver.calibrationFor(stableNames.getValue(target), target.bodyPart)
+				val offset = SolverCalibrationTransform.rotatedOffset(rotation ?: Quaternion.IDENTITY, calibration)
+				if (offset == null) failure = SolverTargetFailure.CALIBRATION_INVALID
+				else {
+					position -= offset
+					if (!SolverCalibrationTransform.finite(position)) failure = SolverTargetFailure.PRECOMPENSATION_NONFINITE
+				}
+			}
+			if (failure != null) {
+				// Remove stale input while retaining the stable calibration name across rebuild.
+				if (proxies.remove(target) != null) rebuild = true
+				results[target] = ApplyResult.Rejected(failure)
+				continue
+			}
+			results[target] = ApplyResult.Applied
 			if (position == null && rotation == null) {
 				if (proxies.remove(target) != null) rebuild = true
 				continue
@@ -66,13 +121,14 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 				proxies[target] = proxy
 				rebuild = true
 			}
-			if (position != null) proxy.position = position
 			if (rotation != null) proxy.setRotation(rotation)
+			if (position != null) proxy.position = position
 		}
 		if (rebuild) {
 			skeleton.refreshConstraintInputs()
 			topologyRebuilds++
 		}
+		return results
 	}
 	override fun close() {
 		if (closed) return

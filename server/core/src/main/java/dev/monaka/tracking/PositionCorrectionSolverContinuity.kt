@@ -27,6 +27,7 @@ internal data class PositionCorrectionSolverContinuityInput(
 	val baseHipConstraint: EffectiveConstraint,
 	val correctionState: PositionCorrectionStateSnapshot,
 	val fallbackApplication: PositionCorrectionApplicationResult.Ready?,
+	val mainEffectiveHipTarget: MainEffectiveHipTarget? = null,
 )
 
 /** Last selected solver-facing fallback position, never merely a prepared candidate. */
@@ -51,7 +52,7 @@ internal data class PositionCorrectionSolverContinuitySnapshot(
 /** Solver input only. No raw/prediction/visible-output conversion. */
 internal data class PositionCorrectionSolverContinuityResult(
 	val phase: PositionCorrectionSolverContinuityPhase,
-	val constraint: EffectiveConstraint,
+	val constraint: SolverEffectiveConstraint,
 	val reason: PositionCorrectionSolverContinuityReason,
 )
 
@@ -81,15 +82,15 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 		val now = input.nowNanos
 		if (lastTick?.let { now < it } == true)
 			return PositionCorrectionSolverContinuityResult(PositionCorrectionSolverContinuityPhase.UNAVAILABLE,
-				EffectiveConstraint(TrackerPosition.HIP), PositionCorrectionSolverContinuityReason.TIME_ROLLBACK)
+				SolverEffectiveConstraint(TrackerPosition.HIP), PositionCorrectionSolverContinuityReason.TIME_ROLLBACK)
 		if (input == lastInput) return lastResult!!.let {
-			if (it.phase == PositionCorrectionSolverContinuityPhase.MAIN_DIRECT) it.copy(constraint = input.baseHipConstraint) else it
+			if (it.phase == PositionCorrectionSolverContinuityPhase.MAIN_DIRECT) it.copy(constraint = input.baseHipConstraint.solverConstraint()) else it
 		}
 		fun reject(reason: PositionCorrectionSolverContinuityReason): PositionCorrectionSolverContinuityResult {
 			clearAnchor()
 			// A rejected future tick cannot subsequently be used to rewind the controller.
 			if (now >= 0) lastTick = now
-			return finish(input, PositionCorrectionSolverContinuityPhase.UNAVAILABLE, EffectiveConstraint(TrackerPosition.HIP), reason)
+			return finish(input, PositionCorrectionSolverContinuityPhase.UNAVAILABLE, SolverEffectiveConstraint(TrackerPosition.HIP), reason)
 		}
 		val base = input.baseHipConstraint
 		val state = input.correctionState
@@ -129,26 +130,29 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 					phase == PositionCorrectionSolverContinuityPhase.MAIN_DIRECT -> PositionCorrectionSolverContinuityReason.MAIN_DIRECT
 					else -> PositionCorrectionSolverContinuityReason.NO_SAFE_FALLBACK_ANCHOR
 				}
-				return finish(input, PositionCorrectionSolverContinuityPhase.MAIN_DIRECT, base, reason)
+				return finish(input, PositionCorrectionSolverContinuityPhase.MAIN_DIRECT, base.solverConstraint(), reason)
 			}
+			val mainTarget = input.mainEffectiveHipTarget
+			if (mainTarget == null || !mainTarget.matches(base, input.assignment, now))
+				return reject(PositionCorrectionSolverContinuityReason.MALFORMED_TICK)
 			val first = startedAt == null
 			if (first) startedAt = now
 			// Ordered, nonnegative subtraction; no overflow-prone end-time addition.
 			val elapsed = now - startedAt!!
 			if (elapsed >= tuning.reacquireDurationNanos) {
 				clearAnchor()
-				return finish(input, PositionCorrectionSolverContinuityPhase.MAIN_DIRECT, base,
+				return finish(input, PositionCorrectionSolverContinuityPhase.MAIN_DIRECT, base.solverConstraint(),
 					PositionCorrectionSolverContinuityReason.MAIN_REACQUIRE_COMPLETE)
 			}
 			val u = elapsed.toDouble() / tuning.reacquireDurationNanos.toDouble()
 			val a = fallback.position
 			fun blend(x: Float, y: Float) = (x.toDouble() * (1.0 - u) + y.toDouble() * u).toFloat()
-			val position = if (first) copy(a) else Vector3(blend(a.x, p.value.x), blend(a.y, p.value.y), blend(a.z, p.value.z))
+			val position = if (first) copy(a) else Vector3(blend(a.x, mainTarget.position.x), blend(a.y, mainTarget.position.y), blend(a.z, mainTarget.position.z))
 			if (!finite(position)) return reject(PositionCorrectionSolverContinuityReason.NUMERIC_INVALID)
 			return finish(input, PositionCorrectionSolverContinuityPhase.REACQUIRING,
-				EffectiveConstraint(TrackerPosition.HIP, ResolvedComponent(position,
+				SolverEffectiveConstraint(TrackerPosition.HIP, ResolvedComponent(position,
 					"monaka-private:position-correction-reacquire-v1:HIP", ObservationQuality.DEGRADED,
-					minOf(fallback.positionObservedAtNanos, p.observedAtNanos)), r),
+					minOf(fallback.positionObservedAtNanos, mainTarget.observedAtNanos)), r, SolverPositionReference.IK_EFFECTIVE_TARGET),
 				if (first) PositionCorrectionSolverContinuityReason.MAIN_REACQUIRE_STARTED
 				else PositionCorrectionSolverContinuityReason.MAIN_REACQUIRE_PROGRESS)
 		}
@@ -157,7 +161,7 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 		val candidate = input.fallbackApplication?.candidate
 		if (candidate == null) {
 			clearAnchor()
-			return finish(input, PositionCorrectionSolverContinuityPhase.UNAVAILABLE, base,
+			return finish(input, PositionCorrectionSolverContinuityPhase.UNAVAILABLE, base.solverConstraint(),
 				if (changed) PositionCorrectionSolverContinuityReason.CONTEXT_CHANGED
 				else if (reloss) PositionCorrectionSolverContinuityReason.MAIN_RELOSS
 				else PositionCorrectionSolverContinuityReason.FALLBACK_UNAVAILABLE)
@@ -181,7 +185,7 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 		if (!finite(candidate.correctedPosition) || !finite(candidate.basePredictionPosition) || !finite(candidate.correctionWorld) ||
 			(state.phase == PositionCorrectionPhase.EXPIRED && candidate.correctionWorld != Vector3(0f, 0f, 0f)))
 			return reject(PositionCorrectionSolverContinuityReason.NUMERIC_INVALID)
-		val selected = candidate.ikConstraint()
+		val selected = candidate.solverConstraint()
 		val position = selected.position!!
 		anchor = PositionCorrectionFallbackAnchor(copy(position.value), position.observedAtNanos, input.expectedSpace,
 			input.assignment.generation, candidate.correctionLineage)
@@ -194,7 +198,7 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 
 	private fun clearAnchor() { anchor = null; startedAt = null }
 	private fun finish(input: PositionCorrectionSolverContinuityInput, next: PositionCorrectionSolverContinuityPhase,
-		constraint: EffectiveConstraint, reason: PositionCorrectionSolverContinuityReason): PositionCorrectionSolverContinuityResult {
+		constraint: SolverEffectiveConstraint, reason: PositionCorrectionSolverContinuityReason): PositionCorrectionSolverContinuityResult {
 		phase = next
 		return PositionCorrectionSolverContinuityResult(next, constraint, reason).also { lastInput = input; lastResult = it }
 	}

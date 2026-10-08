@@ -1,7 +1,7 @@
 # Phase 2B-6E — Solver Position Reacquisition / Hysteresis Contract
 
 Solver position reacquisition is **IMPLEMENTED / DORMANT**. Runtime orchestration
-is deferred to **Phase 2B-6F — Position Correction Runtime Orchestration Foundation**.
+is deferred to **Phase 2B-6G — Position Correction Runtime Orchestration Foundation**.
 
 ## Why this phase precedes orchestration
 
@@ -22,14 +22,15 @@ uses nor modifies visible continuity or post-solve readback.
 `PositionCorrectionSolverContinuity.select` consumes one explicit tick bundle:
 local monotonic `nowNanos`, `resolvedAtNanos`, expected `CoordinateSpace`, one
 assignment snapshot, base HIP constraint, current 6C state snapshot, optional
-already prepared 6D `Ready`. The result contains phase, `EffectiveConstraint` and
+already prepared 6D `Ready`, and current projected `MainEffectiveHipTarget` for reacquisition.
+The result contains phase, `SolverEffectiveConstraint` and
 typed reason. It is neither an observation, prediction nor visible output and
 has no conversion to those types. It never enters the observation store.
 
 The caller must apply each selected constraint to its solver sink in order.
 Selection is the commit point for anchor ownership. A prepared candidate that is
 never selected does not affect the anchor. Actual runtime delivery/acknowledgement
-belongs to future 6F; this dormant API does not claim a production writeback.
+belongs to future 6G; this dormant API does not claim a production writeback.
 The manual compatibility test applies every selection to actual writeback/IK.
 
 Required: `now >= 0`, `resolvedAt == now`, HIP target, enabled HIP assignment.
@@ -49,9 +50,9 @@ exactly. Resolver freshness remains caller-owned; no extra age threshold is adde
 | Phase | Selected solver input / transition |
 | --- | --- |
 | UNINITIALIZED | Cold Main FULL → exact MAIN_DIRECT; Ready → FALLBACK_ACTIVE; otherwise UNAVAILABLE |
-| FALLBACK_ACTIVE | Exact candidate `ikConstraint()`; each selection replaces the last fallback anchor |
-| REACQUIRING | Position interpolates from copied anchor to moving current Main position; current Main rotation remains exact |
-| MAIN_DIRECT | Exact current base Main constraint |
+| FALLBACK_ACTIVE | Exact candidate `solverConstraint()` with IK_EFFECTIVE_TARGET; each selection replaces the last fallback anchor |
+| REACQUIRING | Position interpolates from copied anchor to moving current Main effective HIP_CENTER (IK_EFFECTIVE_TARGET); current Main rotation remains exact |
+| MAIN_DIRECT | Current base Main adapted as TRACKER_ORIGIN with exact component objects |
 | UNAVAILABLE | No manufactured/held position; later Main with no safe anchor is direct; current Ready can restart fallback |
 
 `PositionCorrectionReacquisitionTuning(reacquireDurationNanos)` is required;
@@ -61,14 +62,15 @@ loss-side blend or rotation blend.
 
 ```text
 u = clamp((now - reacquireStartedAt) / reacquireDuration, 0, 1)
-p_solver = p_anchor * (1-u) + p_main_current * u
+p_main_effective = p_raw + (q_raw * currentIKRotationOffset).sandwich(currentIKOffset)
+p_solver_effective = p_anchor * (1-u) + p_main_effective_current * u
 ```
 
 The first Main return tick starts reacquisition at `u=0`, with position exactly
 equal to the last selected corrected fallback position and rotation exactly the
 current Main component object. The target updates each tick; the anchor stays
-fixed throughout recovery. At elapsed >= duration, the exact current Main base
-constraint is returned, restoring all position/rotation metadata without residual.
+fixed throughout recovery. At elapsed >= duration, the current Main base
+constraint is adapted to typed TRACKER_ORIGIN, restoring all position/rotation metadata without residual.
 
 Time uses ordered nonnegative subtraction, never `start + duration` (which could
 overflow Long). Double weighted interpolation avoids Float endpoint subtraction
@@ -95,7 +97,7 @@ when present, otherwise becomes unavailable.
 | --- | --- |
 | Position source | `monaka-private:position-correction-reacquire-v1:HIP` |
 | Position quality | `DEGRADED` |
-| Position observed time | `min(anchor.positionObservedAt, currentMain.position.observedAt)` |
+| Position observed time | `min(anchor.positionObservedAt, currentMainEffectiveTarget.observedAt)` |
 | Rotation | Exact current Main `ResolvedComponent`, without normalization or blending |
 
 No reapplication of correction is performed. The fallback candidate's corrected
@@ -112,8 +114,8 @@ positional extraction accepts the proxy, and computed HIP remains finite across
 test-only solver ticks. This is software boundary validation, not physical quality.
 
 Production caller: **NONE**. MonakaRuntime, production IK writeback call-sites,
-Background IK, OutputContinuity, predictor, measurement, learning and 6D prepare
-remain unchanged. Runtime orchestration and correction production writeback:
+Background IK, OutputContinuity, predictor, measurement, learning remain unchanged. 6F migrates 6D output and writeback semantics
+while retaining the dormant correction path. Runtime orchestration and correction production writeback:
 **NOT CONNECTED**. Existing generic writeback continues independently.
 
 OpenVR HMD: **POSE_ONLY**. Strong Trusted: **UNSUPPORTED**.
@@ -121,9 +123,31 @@ Production Raw HMD: **BLOCKED BY BACKEND**. 2B-5P: **NOT READY**. 5S HIL: pendin
 6E HIL: **NOT REQUIRED / NOT RUN**, because this is a dormant pre-IK state machine
 with explicit synthetic duration and manual software compatibility only.
 
-Next: **Phase 2B-6F**. One immutable same-tick bundle and assignment snapshot can
+Next: **Phase 2B-6G**. One immutable same-tick bundle and assignment snapshot can
 sequence resolve → pure prediction → optional teacher measurement → exactly one
 observe OR gap advance → 6D prepare → 6E selection → one solver-ready map →
 injected/manual writeback sink. The production Raw HMD blocker remains.
 
 Receipts: `build/reports/phase2b6e-solver-position-reacquisition-20261008/report.md`.
+
+## 6F reference-point remediation
+
+The old Main endpoint was raw tracker origin; the fallback anchor was HIP_CENTER.
+[6F](position-correction-phase2b6f-solver-effective-target-semantics.md) requires a
+current IK-calibration projection for every reacquiring tick, including completion.
+Missing or mismatched raw-bundle/assignment projections fail closed and discard the
+anchor. Factory-created Main effective targets preserve position source, quality
+and physical time. Cold/direct Main keeps its raw TRACKER_ORIGIN behavior.
+
+Fallback and interpolation explicitly use IK_EFFECTIVE_TARGET. Writeback subtracts
+the exact current rotated calibration offset before proxy storage, so actual
+IKConstraint.getPosition equals selected HIP_CENTER. Completion switches to raw
+Main TRACKER_ORIGIN at the same effective endpoint without an added calibration jump.
+Nonzero offset, nonidentity rotationOffset, moving/nonunit rotation and actual
+first/midpoint/completion targets are tested.
+
+Reset changes the next current Main projection; the effective HIP_CENTER anchor
+remains the same physical point. No synthetic calibration revision exists.
+Future 6G must project, select and write back in the same server-thread phase with
+no intervening reset/rebuild. Runtime orchestration was deferred to 6G to close
+double-application and same-physical-point semantics first.
