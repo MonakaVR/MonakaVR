@@ -53,6 +53,7 @@ data class HmdAcceptedPoseMessageSample internal constructor(
 	val transportSessionEpoch: String? = null,
 	/** Exact provider snapshot, absent on generic OpenVR. Never synthesized by this receiver. */
 	val providerEvidence: RawHmdProviderPoseEvidence? = null,
+	val providerTransportEvidence: HmdProviderSampleTransportEvidenceV1? = null,
 ) {
 	init { require(transportSessionEpoch == null || transportSessionEpoch.isNotBlank()) }
 	// Match Phase 2A's numeric validity contract; retain decoded values without normalization.
@@ -124,9 +125,12 @@ internal class TrustedRawHmdPositionSource(
 	}
 
 	@VRServerThread
-	fun invalidateCurrentCandidate(tracker: Tracker? = null) {
+	fun invalidateCurrentCandidate(tracker: Tracker? = null, discardTransportEvidence: Boolean = false) {
 		if (tracker != null && tracker !== registeredTracker) return
 		providerObservations.invalidate(); trustedCandidate = null
+		currentSessionLatest?.takeIf { discardTransportEvidence && it.pose.providerTransportEvidence != null }?.let {
+			currentSessionLatest = it.copy(pose = it.pose.copy(providerTransportEvidence = null, providerEvidence = null))
+		}
 	}
 
 	/** Transport-thread boundary only changes volatile eligibility; observation state stays server-thread. */
@@ -175,6 +179,7 @@ internal class TrustedRawHmdPositionSource(
 		transportSessionEpoch: String?, isCurrentTransportSession: Boolean,
 		receivedAtSystemNanos: Long?,
 		providerEvidence: RawHmdProviderPoseEvidence? = null,
+		providerTransportEvidence: HmdProviderSampleTransportEvidenceV1? = null,
 	) {
 		if (registeredTracker !== tracker) return
 		// Missing ingress metadata cannot be repaired with processing time or an older candidate.
@@ -195,7 +200,9 @@ internal class TrustedRawHmdPositionSource(
 			accepted.position, PositionComponentPresence(message.hasX(), message.hasY(), message.hasZ()),
 			Quaternion(message.qw, message.qx, message.qy, message.qz),
 			accepted.sequence, accepted.receivedAtSystemNanos, accepted.sourceEpoch, accepted.ingressIdentity,
-			message.dataSourceValue, message.hasDataSource(), modality, transportSessionEpoch, providerEvidence,
+			message.dataSourceValue, message.hasDataSource(), modality, transportSessionEpoch,
+			providerTransportEvidence?.partialProviderEvidence(accepted.ingressIdentity.sourceId) ?: providerEvidence,
+			providerTransportEvidence,
 		)
 		val acceptedMessage = AcceptedMessage(accepted, pose)
 		historicalLatest = acceptedMessage

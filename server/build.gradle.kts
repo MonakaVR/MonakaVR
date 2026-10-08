@@ -57,7 +57,7 @@ configure<com.diffplug.gradle.spotless.SpotlessExtension> {
 	}
 	java {
 		target("**/*.java")
-		targetExclude("**/BuildConfig.java")
+		targetExclude("**/BuildConfig.java", "**/ProtobufMessages.java")
 
 		removeUnusedImports()
 		// Use eclipse JDT formatter

@@ -69,6 +69,7 @@ public:
         catch (...) { state_.RetireSession(); return std::nullopt; }
     }
 private:
+    friend struct RawHmdProviderDriverTestAccess;
     void StartLocked() noexcept {
         try { state_.StartSession(); }
         catch (...) { state_.RetireSession(); } // Evidence fails closed; existing sends continue.

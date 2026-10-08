@@ -13,7 +13,7 @@ static void require(bool ok, const char* why) { if (!ok) throw std::runtime_erro
 namespace monaka {
 struct RawHmdProviderEvidenceTestAccess {
     static void NearOverflow(RawHmdProviderEvidenceState& state) {
-        state.next_ = (std::numeric_limits<uint64_t>::max)() - 1;
+        state.next_ = static_cast<uint64_t>((std::numeric_limits<int64_t>::max)()) - 1;
     }
 };
 }
@@ -99,9 +99,9 @@ static void Overflow() {
     RawHmdProviderEvidenceState s(factory()); s.StartSession();
     const auto a = *s.CurrentSession();
     RawHmdProviderEvidenceTestAccess::NearOverflow(s);
-    require(s.Capture(a, sample())->observationId == (std::numeric_limits<uint64_t>::max)() - 1, "max minus one");
+    require(s.Capture(a, sample())->observationId == static_cast<uint64_t>((std::numeric_limits<int64_t>::max)()) - 1, "max minus one");
     const auto last = s.Capture(a, sample());
-    require(last->observationId == (std::numeric_limits<uint64_t>::max)() &&
+    require(last->observationId == static_cast<uint64_t>((std::numeric_limits<int64_t>::max)()) &&
         s.Lifecycle() == ProviderEvidenceLifecycle::EXHAUSTED && !s.CurrentSession(), "max retires immediately");
     require(!s.Capture(a, sample()) && !s.Capture(a, sample()), "no wrapping/reuse after exhaustion");
     require(s.StartSession() && *s.CurrentSession() != a, "fresh session required after overflow");

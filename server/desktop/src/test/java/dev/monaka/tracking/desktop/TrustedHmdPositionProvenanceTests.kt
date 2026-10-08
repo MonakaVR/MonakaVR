@@ -150,7 +150,7 @@ class TrustedHmdPositionProvenanceTests {
 	}
 
 	@Test fun wireHasNoAcquisitionTimestampSequenceOrFrameIdentitySoReceiptClockIsSeparate() {
-		assertEquals(listOf("tracker_id", "x", "y", "z", "qx", "qy", "qz", "qw", "data_source", "vx", "vy", "vz"),
+		assertEquals(listOf("tracker_id", "x", "y", "z", "qx", "qy", "qz", "qw", "data_source", "vx", "vy", "vz", "hmd_provider_evidence_v1"),
 			Position.getDescriptor().fields.map { it.name })
 	}
 

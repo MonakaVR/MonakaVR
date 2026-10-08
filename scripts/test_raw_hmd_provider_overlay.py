@@ -20,14 +20,16 @@ def verify_provider(source, output, driver):
     header = (output / 'src/VRDriver.hpp').read_text(encoding='utf-8')
     require(header.index('monaka::RawHmdProviderDriver hmd_provider_;') < header.index('pose_request_thread_') <
             header.index('std::shared_ptr<BridgeClient> bridge_'), 'Provider must outlive workers/bridge callbacks')
+    driver = strip_once(driver, '                if (hmd_provider_evidence) hmd_provider_transport_.Attach(*position, *hmd_provider_evidence);\n')
     # No edits to query/send expressions; remove only these reviewed lifecycle additions.
     for addition in (
         '    bridge_->SetProviderLifecycleCallbacks(\n'
-        '        [this] { hmd_provider_.Reestablish(); }, [this] { hmd_provider_.Retire(); });\n',
+        '        [this] { hmd_provider_transport_.Reset(); hmd_provider_.Reestablish(); }, [this] { hmd_provider_transport_.Reset(); hmd_provider_.Retire(); });\n',
+        '    hmd_provider_transport_.Reset();\n',
         '    hmd_provider_.Retire();\n',
         '        const auto hmd_provider_session = hmd_provider_.BeginSample();\n',
         '                // Freeze one software observation from this iteration and the exact final send locals.\n'
-        '                // No transport/admission claim; stale lifecycle tickets fail closed without altering sends.\n'
+        '                // No full admission claim; stale lifecycle tickets fail closed without altering sends.\n'
         '                std::optional<monaka::RawHmdProviderEvidenceSnapshot> hmd_provider_evidence;\n'
         '                if (index == vr::k_unTrackedDeviceIndex_Hmd && hmd_provider_session) {\n'
         '                    const auto& raw = *hmd_raw_diagnostic;\n'
@@ -81,29 +83,37 @@ def verify_provider(source, output, driver):
 
 
 def verify_server(root):
-    # Every existing tracked server/schema byte must remain identical to the 5S base.
-    base = '9a09dd25b4c62a3457d465e7fe0b12c72067a58b'
+    # Only the reviewed 5U integration/generation paths may change existing server bytes.
+    base = '164a2d86bfdd0ea29fa269e69fa9825c0707e3fb'
+    allowed = {
+        'server/build.gradle.kts', 'server/desktop/protobuf_update.bat',
+        'server/desktop/src/main/java/dev/monaka/tracking/desktop/TrustedRawHmdPositionSource.kt',
+        'server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt',
+        'server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufMessages.java',
+        'server/desktop/src/test/java/dev/monaka/tracking/desktop/TrustedHmdPositionProvenanceTests.kt',
+        'server/desktop/src/test/java/dev/monaka/tracking/desktop/InboundTransportSessionTests.kt',
+    }
     archive = subprocess.check_output(['git', '-C', str(root), 'archive', '--format=tar', base, 'server'])
-    paths = []
+    checked = 0
     with tarfile.open(fileobj=io.BytesIO(archive)) as files:
         for entry in files:
-            if not entry.isfile():
-                continue
-            paths.append(entry.name)
+            if not entry.isfile() or entry.name in allowed: continue
             original = files.extractfile(entry).read()
             require((root / entry.name).read_bytes().replace(b'\r\n', b'\n') == original.replace(b'\r\n', b'\n'),
-                    'Server production/test/schema changed: ' + entry.name)
-    require(not subprocess.check_output(['git', '-C', str(root), 'status', '--porcelain',
-                                         '--untracked-files=all', '--', 'server'], text=True).strip(),
-            'Server has modified/new production/test/schema paths')
+                    'Unrelated server/admission file changed: ' + entry.name)
+            checked += 1
     bridge = (root / 'server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt').read_text()
-    start = bridge.index('rawHmdPositions.positionMessageAccepted(')
-    call = bridge[start:bridge.index('\n\t\t\t\t)', start)]
-    require('providerEvidence' not in call and 'receivedAtSystemNanos,' in call,
-            'Production providerEvidence must remain default null')
-    require('ReviewedHmdBackendContract(' not in bridge and 'establishProviderSession(' not in bridge,
-            'No production reviewed backend/session establishment')
-    print(f'PASS server unchanged ({len(paths)} tracked files); provider evidence absent at production ingress')
+    source = (root / 'server/desktop/src/main/java/dev/monaka/tracking/desktop/TrustedRawHmdPositionSource.kt').read_text()
+    dto = (root / 'server/desktop/src/main/java/dev/monaka/tracking/desktop/HmdProviderSampleTransport.kt').read_text()
+    require('ReviewedHmdBackendContract(' not in bridge + source + dto and
+            'establishProviderSession(' not in bridge + dto, 'No production full backend/session registration')
+    require('val rawHmdPoseInputCapability: RawHmdPoseInputCapability = RawHmdPoseInputCapability.Unavailable(' in source,
+            'Production admission remains unavailable')
+    require('sourceIdentity, providerSessionEpoch, observationId, null, null, null, null, null' in dto,
+            'Only partial projection; sourceValid and all raw/mapping authority absent')
+    require('providerTransportEvidence?.partialProviderEvidence(accepted.ingressIdentity.sourceId)' in source,
+            'One-way projection from DTO, server-derived registered source identity')
+    print(f'PASS {checked} unrelated server/admission files unchanged; partial-only projection, no full registration')
 
 
 def main():
