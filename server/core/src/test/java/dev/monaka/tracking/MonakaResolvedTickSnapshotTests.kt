@@ -273,6 +273,22 @@ class MonakaResolvedTickSnapshotTests {
 		}
 	}
 
+	@Test fun resolvedTrackingPosesRetainsPinnedAssignmentAndTimeAfterLiveChanges() {
+		val p = fixture(); val assignments = TrackerBodyAssignments(mapOf(key(p) to hip))
+		var now = 1_000_000_000L
+		MonakaRuntime({ emptyList() }, p.coordinate_space, assignments, clock = { now }).use { r ->
+			submit(r.inbox, p); val t = r.tickSnapshot()
+			val original = r.resolvedTrackingPoses(t)
+			assignments.configure(hip, TrackerReference("missing"))
+			now += 1_000_000_000
+			// Change legacy clock state without replacing the current tick's observations.
+			r.javaClass.getDeclaredField("lastTickNanos").also { it.isAccessible = true }.setLong(r, now)
+			assertEquals(original, r.resolvedTrackingPoses(t))
+			assertEquals(TrackingModality.FULL, original.getValue(hip).main.modality)
+			assertEquals(key(p).observationId, original.getValue(hip).positionOwner)
+		}
+	}
+
 	@Test fun backendRegistrationDuringPollIsVisibleOnNextTick() {
 		val p = fixture(); var extraPolls = 0
 		MonakaRuntime({ emptyList() }, p.coordinate_space, clock = { 100 }).use { r ->

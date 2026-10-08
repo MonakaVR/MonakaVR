@@ -132,3 +132,14 @@ dedicated tests, full Core/Desktop, shadowJar, MTP process E2E and Git/source
 preservation. Next: Phase 2B-6L — Production Composition / Writeback Ownership
 Foundation, to establish one core facade and exclusive future handoff while Raw
 HMD remains blocked and full production enablement remains deferred.
+
+## Phase 2B-6L ownership update
+
+Core MonakaSolverComposition now owns one shared ConstraintIkWriteback, exclusive
+per-tick reservation and pause hard session disposal. Production remains generic;
+Position Correction is NOT ENABLED / CONFIGURED_RAW_HMD_BLOCKED. Non-HMD capture and
+orchestration remain dormant. Integration carries tickSnapshot assignment/time
+through writeback and the consumed-once pending post-IK frame. Resume never reuses
+an old future session; fresh-input activation remains deferred. See
+[position-correction-phase2b6l-production-composition-writeback.md](position-correction-phase2b6l-production-composition-writeback.md)
+for the current contract, validation and next gate.
