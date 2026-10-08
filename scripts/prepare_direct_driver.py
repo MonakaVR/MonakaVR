@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+from monaka_bridge_protocol_overlay import PIN, write_patched_schema
 
-PIN = "dcc0f56bcb2a3196d6f92b1ed1d029faa425b931"
 OPENVR_PIN = "91825305130f446f82054c1ec3d416321ace0072"
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -68,6 +68,9 @@ def main():
         shutil.copy2(ROOT / "native/direct-driver" / name, output / "src" / name)
     shutil.copy2(ROOT / "native/direct-driver/raw_hmd_provider_evidence_test.cpp", output / "raw_hmd_provider_evidence_test.cpp")
     shutil.copy2(ROOT / "native/direct-driver/raw_hmd_provider_integration_test.cpp", output / "raw_hmd_provider_integration_test.cpp")
+    write_patched_schema(source / "src/bridge/ProtobufMessages.proto", output / "src/bridge/ProtobufMessages.proto")
+    shutil.copy2(ROOT / "native/direct-driver/MonakaHmdProviderTransport.hpp", output / "src/MonakaHmdProviderTransport.hpp")
+    shutil.copy2(ROOT / "native/direct-driver/hmd_provider_transport_test.cpp", output / "hmd_provider_transport_test.cpp")
     tracker = output / "src/TrackerDevice.cpp"
     replace(tracker, '#include "TrackerDevice.hpp"', '#include "TrackerDevice.hpp"\n#include "MonakaDirectPose.hpp"')
     replace(tracker, ', last_pose_atomic_(MakeDefaultPose()) { }',
@@ -83,7 +86,7 @@ def main():
     driver = output / "src/VRDriver.cpp"
     driver_header = output / "src/VRDriver.hpp"
     replace(driver_header, '#include "Logger.hpp"',
-            '#include "Logger.hpp"\n#include "MonakaHmdFrameProbeDriver.hpp"\n#include "MonakaRawHmdProviderDriver.hpp"')
+            '#include "Logger.hpp"\n#include "MonakaHmdFrameProbeDriver.hpp"\n#include "MonakaRawHmdProviderDriver.hpp"\n#include "MonakaHmdProviderTransport.hpp"')
     replace(driver_header, '    std::optional<std::pair<uint64_t, UniverseTranslation>> current_universe_ = std::nullopt;',
             '    std::optional<std::pair<uint64_t, UniverseTranslation>> current_universe_ = std::nullopt;\n'
             '    // Created before worker startup and never reassigned during driver lifetime. Default OFF.\n'
@@ -91,7 +94,8 @@ def main():
     replace(driver_header, 'private:\n',
             'private:\n'
             '    // Outlives worker/bridge members and their synchronous lifecycle callbacks.\n'
-            '    monaka::RawHmdProviderDriver hmd_provider_;\n')
+            '    monaka::RawHmdProviderDriver hmd_provider_;\n'
+            '    monaka::HmdProviderTransport hmd_provider_transport_;\n')
     # Generated overlay only: synchronous notifications, no changes to transport bytes/buffers.
     # Retirement cannot miss a disconnect/reconnect occurring between pose-thread polls.
     bridge_header = output / "src/bridge/BridgeClient.hpp"
@@ -111,9 +115,9 @@ def main():
             '    if (provider_retire_) provider_retire_();\n    connected_ = false;')
     replace(driver, '    bridge_->Start();',
             '    bridge_->SetProviderLifecycleCallbacks(\n'
-            '        [this] { hmd_provider_.Reestablish(); }, [this] { hmd_provider_.Retire(); });\n'
+            '        [this] { hmd_provider_transport_.Reset(); hmd_provider_.Reestablish(); }, [this] { hmd_provider_transport_.Reset(); hmd_provider_.Retire(); });\n'
             '    bridge_->Start();')
-    replace(driver, '    exiting_.store(true);', '    hmd_provider_.Retire();\n    exiting_.store(true);')
+    replace(driver, '    exiting_.store(true);', '    hmd_provider_transport_.Reset();\n    hmd_provider_.Retire();\n    exiting_.store(true);')
     replace(driver, '        vr::PropertyContainerHandle_t hmd_prop_container = vr::VRProperties()->TrackedDeviceToPropertyContainer(vr::k_unTrackedDeviceIndex_Hmd);',
             '        const auto hmd_provider_session = hmd_provider_.BeginSample();\n'
             '        vr::PropertyContainerHandle_t hmd_prop_container = vr::VRProperties()->TrackedDeviceToPropertyContainer(vr::k_unTrackedDeviceIndex_Hmd);')
@@ -183,7 +187,7 @@ def main():
     replace(driver, '                position->set_qw(wire_qw);\n                bridge_->SendBridgeMessage(*message);',
             '                position->set_qw(wire_qw);\n'
             '                // Freeze one software observation from this iteration and the exact final send locals.\n'
-            '                // No transport/admission claim; stale lifecycle tickets fail closed without altering sends.\n'
+            '                // No full admission claim; stale lifecycle tickets fail closed without altering sends.\n'
             '                std::optional<monaka::RawHmdProviderEvidenceSnapshot> hmd_provider_evidence;\n'
             '                if (index == vr::k_unTrackedDeviceIndex_Hmd && hmd_provider_session) {\n'
             '                    const auto& raw = *hmd_raw_diagnostic;\n'
@@ -195,6 +199,7 @@ def main():
             '                            pose.bDeviceIsConnected, static_cast<int32_t>(pose.eTrackingResult)});\n'
             '                    if (captured) hmd_provider_evidence.emplace(*captured);\n'
             '                }\n'
+            '                if (hmd_provider_evidence) hmd_provider_transport_.Attach(*position, *hmd_provider_evidence);\n'
             '                if (hmd_frame_probe_ && index == vr::k_unTrackedDeviceIndex_Hmd) {\n'
             '                    hmd_frame_probe_->BindAndSend(*hmd_capture, hmd_probe_input, *hmd_raw_diagnostic,\n'
             '                        monaka::HmdDiagnosticPose{wire_x, wire_y, wire_z, wire_qx, wire_qy, wire_qz, wire_qw},\n'
@@ -215,7 +220,10 @@ def main():
             '        // Tap the existing pump; preserve its full event vector and haptic consumption.\n'
             '        if (hmd_frame_probe_) hmd_frame_probe_->ObserveEvent(event.eventType, *logger_);')
     replace(driver, 'if (message.has_tracker_added()) {',
-            'if (message.has_user_action() && message.user_action().name() == "monaka-direct-output-v1?") {\n'
+            'messages::ProtobufMessage hmd_reply;\n'
+            '    if (hmd_provider_transport_.Confirm(message, hmd_reply)) {\n'
+            '        bridge_->SendBridgeMessage(hmd_reply);\n'
+            '    } else if (message.has_user_action() && message.user_action().name() == "monaka-direct-output-v1?") {\n'
             '        messages::ProtobufMessage reply;\n'
             '        *reply.mutable_user_action() = message.user_action();\n'
             '        reply.mutable_user_action()->set_name("monaka-direct-output-v1");\n'
@@ -250,6 +258,10 @@ def main():
                 'if(WIN32)\n'
                 '  target_link_libraries(SlimeVR-OpenVR-Driver_static PUBLIC bcrypt)\n'
                 'endif()\n')
+    with (output / "CMakeLists.txt").open("a", encoding="utf-8") as f:
+        f.write('\nadd_executable(monaka_hmd_provider_transport_test hmd_provider_transport_test.cpp)\n'
+                'target_link_libraries(monaka_hmd_provider_transport_test PRIVATE SlimeVR-OpenVR-Driver_static)\n'
+                'add_test(NAME monaka_hmd_provider_transport COMMAND monaka_hmd_provider_transport_test)\n')
     (output / "monaka-overlay.json").write_text(json.dumps({"upstream_commit": PIN, "submodules": modules}, indent=2), encoding="utf-8")
     print(f"PASS prepared Direct driver overlay: {output}")
 

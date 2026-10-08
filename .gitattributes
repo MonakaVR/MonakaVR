@@ -1,5 +1,8 @@
 * text=auto
 
+# Keep protoc's deterministic output byte-identical on Windows checkouts.
+server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufMessages.java -text whitespace=-blank-at-eol
+
 *.png binary
 *.webp binary
 *.gif binary

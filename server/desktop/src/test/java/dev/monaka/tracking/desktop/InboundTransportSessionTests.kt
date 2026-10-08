@@ -97,14 +97,14 @@ class InboundTransportSessionTests {
 		DirectConstraintOutput(assignments.snapshot(), CoordinateSpace("test", "rh_y_up_neg_z_forward", 0)) { 123 }.use { output ->
 			bridge.configureDirectOutputs(output.trackers.values.toList())
 			val a = bridge.open(); bridge.reconnectCallback(); bridge.flush()
-			val queryA = bridge.sent.single { it.hasUserAction() }.userAction
+			val queryA = bridge.sent.single { it.hasUserAction() && it.userAction.name == "${ProtobufBridge.DIRECT_CAPABILITY}?" }.userAction
 			assertSame(a, bridge.active()); assertNotEquals(a.epoch, queryA.actionArgumentsMap["connection"])
 			bridge.enqueue(ProtobufMessage.newBuilder().setUserAction(queryA.toBuilder().setName(ProtobufBridge.DIRECT_CAPABILITY)).build(), a)
 			bridge.dataRead(); assertSame(a, bridge.active())
 			bridge.disconnectCallback(); assertSame(a, bridge.active()) // Output lifecycle is not transport close.
 			assertTrue(bridge.close(a)); val b = bridge.open()
 			bridge.sent.clear(); bridge.reconnectCallback(); bridge.flush()
-			val queryB = bridge.sent.single { it.hasUserAction() }.userAction
+			val queryB = bridge.sent.single { it.hasUserAction() && it.userAction.name == "${ProtobufBridge.DIRECT_CAPABILITY}?" }.userAction
 			assertNotEquals(queryA.actionArgumentsMap, queryB.actionArgumentsMap)
 			assertSame(b, bridge.active()); assertNotEquals(b.epoch, queryB.actionArgumentsMap["connection"])
 		}

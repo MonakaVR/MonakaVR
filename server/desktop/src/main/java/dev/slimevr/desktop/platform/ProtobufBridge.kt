@@ -3,6 +3,9 @@ package dev.slimevr.desktop.platform
 import dev.slimevr.VRServer.Companion.instance
 import dev.monaka.tracking.desktop.RawHmdPoseInputCapability
 import dev.monaka.tracking.desktop.admitRawHmdPoseInput
+import dev.monaka.tracking.desktop.HmdProviderTransportAssociation
+import dev.monaka.tracking.desktop.REVIEWED_HMD_SAMPLE_TRANSPORT_V1
+import dev.monaka.tracking.desktop.decodeHmdProviderSampleTransport
 import dev.slimevr.bridge.BridgeThread
 import dev.slimevr.bridge.ISteamVRBridge
 import dev.slimevr.desktop.platform.ProtobufMessages.*
@@ -67,6 +70,18 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@ThreadSafe
 	private val inputQueue: Queue<InboundProtobufEnvelope> = LinkedBlockingQueue()
 	private val inboundTransportSession = AtomicReference<TransportSessionHandle?>(null)
+	private var hmdTransportChallenge: String? = null
+	private var hmdTransportAssociation: HmdProviderTransportAssociation? = null
+
+	internal fun currentHmdProviderTransportAssociation(): HmdProviderTransportAssociation? = synchronized(inboundTransportSession) {
+		hmdTransportAssociation?.takeIf { it.transportSessionEpoch == currentInboundTransportSession()?.epoch }
+	}
+	internal fun acceptedCurrentSessionHmdProviderTransportEvidence() = synchronized(inboundTransportSession) {
+		val association = currentHmdProviderTransportAssociation()
+		acceptedCurrentSessionHmdPoseMessageSample()?.takeIf {
+			association != null && it.transportSessionEpoch == association.transportSessionEpoch
+		}?.providerTransportEvidence
+	}
 
 	/** Transport accept boundary only; independent of VRServer-side output reconnected callbacks. */
 	@ThreadSafe
@@ -74,6 +89,12 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 		TransportSessionHandle(java.util.UUID.randomUUID().toString()).also {
 			inboundTransportSession.set(it)
 			rawHmdPositions.onTransportSessionChanged(it.epoch)
+			hmdTransportAssociation = null
+			val challenge = java.util.UUID.randomUUID().toString()
+			hmdTransportChallenge = challenge
+			outputQueue.removeIf { queued -> queued.hasUserAction() && queued.userAction.name == "$HMD_PROVIDER_CAPABILITY?" }
+			sendMessage(ProtobufMessage.newBuilder().setUserAction(UserAction.newBuilder()
+				.setName("$HMD_PROVIDER_CAPABILITY?").putActionArguments("connection", challenge)).build())
 		}
 	}
 
@@ -81,7 +102,11 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@ThreadSafe
 	protected fun closeInboundTransportSession(handle: TransportSessionHandle): Boolean = synchronized(inboundTransportSession) {
 		inboundTransportSession.compareAndSet(handle, null).also {
-			if (it) rawHmdPositions.onTransportSessionChanged(null)
+			if (it) {
+				rawHmdPositions.onTransportSessionChanged(null)
+				hmdTransportChallenge = null
+				hmdTransportAssociation = null
+			}
 		}
 	}
 
@@ -253,7 +278,14 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 		if (message!!.hasPosition()) {
 			positionReceived(message.position, transportSession, receivedAtSystemNanos)
 		} else if (message.hasUserAction()) {
-			userActionReceived(message.userAction)
+			if (message.userAction.name == HMD_PROVIDER_CAPABILITY) {
+				synchronized(inboundTransportSession) {
+					if (transportSession != null && transportSession === currentInboundTransportSession() &&
+						hmdTransportChallenge != null && message.userAction.actionArgumentsMap["connection"] == hmdTransportChallenge) {
+						hmdTransportAssociation = HmdProviderTransportAssociation(transportSession.epoch, REVIEWED_HMD_SAMPLE_TRANSPORT_V1)
+					}
+				}
+			} else userActionReceived(message.userAction)
 		} else if (message.hasTrackerStatus()) {
 			trackerStatusReceived(message.trackerStatus, transportSession)
 		} else if (message.hasTrackerAdded()) {
@@ -280,7 +312,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 			}
 			tracker.sampleModality = modality
 			val isCurrentSession = transportSession != null && transportSession === currentInboundTransportSession()
-			if (isCurrentSession && !positionMessage.hasX()) rawHmdPositions.invalidateCurrentCandidate(tracker)
+			if (isCurrentSession && !positionMessage.hasX()) rawHmdPositions.invalidateCurrentCandidate(tracker, discardTransportEvidence = true)
 			if (positionMessage.hasX()) {
 				val acceptedPosition = Vector3(
 					positionMessage.x,
@@ -291,6 +323,9 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 				rawHmdPositions.positionMessageAccepted(
 					tracker, acceptedPosition, positionMessage, modality, transportSession?.epoch, isCurrentSession,
 					receivedAtSystemNanos,
+					providerTransportEvidence = if (isCurrentSession &&
+						currentHmdProviderTransportAssociation()?.transportSessionEpoch == transportSession?.epoch)
+						decodeHmdProviderSampleTransport(positionMessage) else null,
 				)
 			}
 
@@ -473,6 +508,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	}
 
 	companion object {
+		const val HMD_PROVIDER_CAPABILITY = "monaka-hmd-provider-evidence-v1"
 		const val DIRECT_CAPABILITY = "monaka-direct-output-v1"
 		private const val resetSourceNamePrefix = "ProtobufBridge"
 		private const val PROTOCOL_VERSION = 2

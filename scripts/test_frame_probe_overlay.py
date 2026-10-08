@@ -111,7 +111,11 @@ def main():
             init.count('if (monaka::ProbeEnvironmentEnabled("MONAKA_HMD_FRAME_PROBE"))') == 1,
             "Separate trace flag must be sampled once under main opt-in at initialization")
     require("VRSystem()" not in overlay and "VRChaperone()" not in overlay, "Unsupported client runtime query")
-    for name in ("src/bridge/ProtobufMessages.proto",
+    from monaka_bridge_protocol_overlay import patched_schema
+    require((args.overlay / 'src/bridge/ProtobufMessages.proto').read_text(encoding='utf-8') ==
+            patched_schema((args.source / 'src/bridge/ProtobufMessages.proto').read_text(encoding='utf-8')),
+            "Schema must use single deterministic patch authority")
+    for name in (
                  "src/bridge/BridgeTransport.cpp", "src/bridge/BridgeTransport.hpp",
                  "src/bridge/CircularBuffer.cpp", "src/bridge/CircularBuffer.hpp", "src/TrackerDevice.hpp", "src/Logger.hpp"):
         require(hashlib.sha256((args.source / name).read_bytes()).digest() ==

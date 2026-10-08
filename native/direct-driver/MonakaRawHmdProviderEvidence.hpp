@@ -88,7 +88,8 @@ public:
         if (lifecycle_ != ProviderEvidenceLifecycle::ACTIVE || !session_ || *session_ != expected)
             return std::nullopt;
         const RawHmdProviderEvidenceSnapshot snapshot{*session_, next_, sample};
-        if (next_ == (std::numeric_limits<uint64_t>::max)()) {
+        // Keep issuance in the wire/server nonnegative Kotlin Long domain.
+        if (next_ == static_cast<uint64_t>((std::numeric_limits<int64_t>::max)())) {
             session_.reset();
             lifecycle_ = ProviderEvidenceLifecycle::EXHAUSTED;
         } else {
