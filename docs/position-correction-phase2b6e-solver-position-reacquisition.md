@@ -1,7 +1,7 @@
 # Phase 2B-6E — Solver Position Reacquisition / Hysteresis Contract
 
 Solver position reacquisition is **IMPLEMENTED / DORMANT**. Runtime orchestration
-is deferred to **Phase 2B-6G — Position Correction Runtime Orchestration Foundation**.
+is implemented as the injected synchronous 6G foundation; production caller is NONE.
 
 ## Why this phase precedes orchestration
 
@@ -30,7 +30,7 @@ has no conversion to those types. It never enters the observation store.
 The caller must apply each selected constraint to its solver sink in order.
 Selection is the commit point for anchor ownership. A prepared candidate that is
 never selected does not affect the anchor. Actual runtime delivery/acknowledgement
-belongs to future 6G; this dormant API does not claim a production writeback.
+is now bound by injected 6G; this dormant API does not claim a production writeback.
 The manual compatibility test applies every selection to actual writeback/IK.
 
 Required: `now >= 0`, `resolvedAt == now`, HIP target, enabled HIP assignment.
@@ -115,7 +115,8 @@ test-only solver ticks. This is software boundary validation, not physical quali
 
 Production caller: **NONE**. MonakaRuntime, production IK writeback call-sites,
 Background IK, OutputContinuity, predictor, measurement, learning remain unchanged. 6F migrates 6D output and writeback semantics
-while retaining the dormant correction path. Runtime orchestration and correction production writeback:
+while retaining the dormant correction path. 6G orchestration is IMPLEMENTED /
+DORMANT / INJECTED with actual IK VERIFIED IN TEST. Correction production writeback:
 **NOT CONNECTED**. Existing generic writeback continues independently.
 
 OpenVR HMD: **POSE_ONLY**. Strong Trusted: **UNSUPPORTED**.
@@ -123,10 +124,14 @@ Production Raw HMD: **BLOCKED BY BACKEND**. 2B-5P: **NOT READY**. 5S HIL: pendin
 6E HIL: **NOT REQUIRED / NOT RUN**, because this is a dormant pre-IK state machine
 with explicit synthetic duration and manual software compatibility only.
 
-Next: **Phase 2B-6G**. One immutable same-tick bundle and assignment snapshot can
-sequence resolve → pure prediction → optional teacher measurement → exactly one
-observe OR gap advance → 6D prepare → 6E selection → one solver-ready map →
-injected/manual writeback sink. The production Raw HMD blocker remains.
+[6G](position-correction-phase2b6g-runtime-orchestration-foundation.md) now executes
+pure prediction → optional teacher measurement → exactly one observe OR gap advance
+→ optional 6D prepare → optional Main effective projection → exactly one 6E selection
+→ one typed solver map → one actual injected writeback. Resolver and assignment facts
+are captured before processing and never reread. Main/loss/return/context-loss actual
+IK integration is VERIFIED IN TEST / DORMANT. Production caller remains NONE.
+Next: **Phase 2B-6H — Production Integration Gate / Runtime Adapter Audit**.
+The production Raw HMD blocker remains.
 
 Receipts: `build/reports/phase2b6e-solver-position-reacquisition-20261008/report.md`.
 
@@ -148,6 +153,6 @@ first/midpoint/completion targets are tested.
 
 Reset changes the next current Main projection; the effective HIP_CENTER anchor
 remains the same physical point. No synthetic calibration revision exists.
-Future 6G must project, select and write back in the same server-thread phase with
-no intervening reset/rebuild. Runtime orchestration was deferred to 6G to close
-double-application and same-physical-point semantics first.
+6G projects, selects and writes back in the same owning-thread phase with no
+intervening callback, reset/rebuild or handoff. Actual nonzero-calibration target
+evidence verifies first return, midpoint and completion through the orchestrator.

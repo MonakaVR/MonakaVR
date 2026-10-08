@@ -121,9 +121,9 @@ duplicate proxies or rebuild unchanged topology. Numerical IK smoke verifies a
 finite changed computed HIP; this is software compatibility, not physical pose
 quality. 6F adds typed effective-target precompensation and read-only calibration/target seams to writeback/IKSolver; solver iterations remain unchanged.
 
-Application contract: **IMPLEMENTED / DORMANT**. Application runtime, predictor
-runtime, temporal pairing runtime, Position Correction runtime orchestration and
-its IK writeback runtime: **NOT CONNECTED**. MonakaRuntime has no caller or
+Application contract: **IMPLEMENTED / DORMANT**. 6G connects prediction, pairing,
+learning, application and actual IK writeback in an injected synchronous orchestrator.
+Production adapters remain **NOT CONNECTED**. MonakaRuntime has no caller or
 knowledge of this application. MainFallbackPolicy, ConstraintResolver and
 ConstraintPipeline selection are unchanged. Direct output remains disconnected.
 OutputContinuityController and BackgroundIkPoseReader retain their visible output
@@ -147,9 +147,12 @@ precompensates current IK mount calibration exclusively at writeback. Candidate
 HIP_CENTER remains a world-space effective target; 6D never performs a calibration inverse.
 Main calibration survives reference-mode switches on the same stable proxy.
 
-Next: **Phase 2B-6G - Position Correction Runtime Orchestration Foundation**.
-Orchestration was deferred to fix double calibration and reference-point mismatch.
-Future ordering is same-phase projection -> selection -> writeback with no intervening
-calibration reset/rebuild, retaining the Raw HMD blocker.
+[6G runtime orchestration](position-correction-phase2b6g-runtime-orchestration-foundation.md)
+now invokes prepare at most once after the same-tick exclusive learning operation,
+and only when base HIP position is absent and prediction is available. Main position
+present skips application. Actual typed writeback is VERIFIED IN TEST / DORMANT;
+MonakaRuntime production caller remains NONE. Same-phase projection -> selection ->
+writeback has no intervening calibration reset/rebuild. The Raw HMD blocker remains.
+Next: **Phase 2B-6H — Production Integration Gate / Runtime Adapter Audit**.
 
 Receipts: `build/reports/phase2b6d-position-correction-application-20261008/report.md`.
