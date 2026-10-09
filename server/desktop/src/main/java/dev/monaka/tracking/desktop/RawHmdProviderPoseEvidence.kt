@@ -128,6 +128,7 @@ internal class HmdProviderObservationState {
 	private var lastObservation: HmdAcceptedPoseMessageSample? = null
 	private val retiredRawSpaces = mutableSetOf<Pair<String, String>>()
 	private val retiredOutputEpochs = mutableSetOf<String>()
+	private val retiredCalibrationEpochs = mutableSetOf<String>()
 	var session: RawHmdProviderSession? = null
 		private set
 	var candidate: HmdAcceptedPoseMessageSample? = null
@@ -136,23 +137,40 @@ internal class HmdProviderObservationState {
 	fun establish(next: RawHmdProviderSession): Boolean {
 		if (session == next) return true
 		if (exhausted || next.providerSessionEpoch in retired) return false
+		if (next.appliedMapping.outputSpaceEpoch in retiredOutputEpochs ||
+			next.appliedMapping.calibrationEpoch in retiredCalibrationEpochs) { retire(); return false }
 		val old = session
 		if (old?.providerSessionEpoch == next.providerSessionEpoch) {
 			val raw = next.rawSpaceIncarnation to next.rawSpaceGeneration
 			val oldRaw = old.rawSpaceIncarnation to old.rawSpaceGeneration
-			if (raw in retiredRawSpaces || next.appliedMapping.outputSpaceEpoch in retiredOutputEpochs ||
-				(next.appliedMapping != old.appliedMapping && next.appliedMapping.outputSpaceEpoch == old.appliedMapping.outputSpaceEpoch)) {
+			if (raw in retiredRawSpaces) {
 				retire(); return false
 			}
+			val before = old.appliedMapping
+			val after = next.appliedMapping
+			if (before != after && before.outputSpaceEpoch == after.outputSpaceEpoch) {
+				// Mapping content may change within one world. Physical observation progression stays independent.
+				if (before.revision != null && after.revision != null && after.revision < before.revision) {
+					candidate = null; return false
+				}
+				if (before.outputSpace != after.outputSpace || before.revision == null || after.revision == null ||
+					after.revision <= before.revision) { retire(); return false }
+			}
 			if (raw != oldRaw) retiredRawSpaces += oldRaw
+		}
+		if (old != null) {
 			if (next.appliedMapping.outputSpaceEpoch != old.appliedMapping.outputSpaceEpoch)
 				retiredOutputEpochs += old.appliedMapping.outputSpaceEpoch
-			if (retiredRawSpaces.size > 128 || retiredOutputEpochs.size > 128) { exhausted = true; retire(); return false }
+			if (next.appliedMapping.calibrationEpoch != old.appliedMapping.calibrationEpoch)
+				retiredCalibrationEpochs += old.appliedMapping.calibrationEpoch
+		}
+		if (retiredRawSpaces.size > 128 || retiredOutputEpochs.size > 128 || retiredCalibrationEpochs.size > 128) {
+			exhausted = true; retire(); return false
 		}
 		// Changing raw/mapping context in one provider epoch keeps the observation high-water.
 		if (session?.providerSessionEpoch != next.providerSessionEpoch) {
 			retire(); highWater = null; lastObservation = null
-			retiredRawSpaces.clear(); retiredOutputEpochs.clear()
+			retiredRawSpaces.clear()
 			if (exhausted) return false
 		}
 		session = next; candidate = null

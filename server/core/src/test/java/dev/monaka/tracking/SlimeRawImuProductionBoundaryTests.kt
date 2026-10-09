@@ -20,6 +20,20 @@ import kotlin.math.abs
 import kotlin.test.*
 
 class SlimeRawImuProductionBoundaryTests {
+	@Test fun runtimeWorldBindingCopiesEpochWithoutChangingNativeCalibrationOrPhysicalIdentity() {
+		val t = tracker(); val raw = SlimeRawImuProductionBoundary(capture(t))
+		val legacy = available(t, raw)
+		assertNull(legacy.provenance.commonWorldEpoch)
+		val bound = binding(t).copy(commonWorldEpoch = "W1")
+		val world = available(t, raw, bound = bound)
+		assertEquals("W1", world.provenance.commonWorldEpoch)
+		assertEquals(legacy.provenance, world.provenance.copy(commonWorldEpoch = null))
+		assertEquals(legacy.orientation, world.orientation)
+		assertFailsWith<IllegalArgumentException> { bound.copy(commonWorldEpoch = " ") }
+		assertTrue(PositionCorrectionRawImuSpaceConfig::class.java.declaredFields.none { it.name == "commonWorldEpoch" })
+		assertNull(PositionCorrectionRawImuSpaceConfig(bound.sourceId, bound.space, true).toBinding().commonWorldEpoch)
+	}
+
 	private val space = CoordinateSpace("explicit-world", "rh_y_up_neg_z_forward", 7)
 	private fun tracker(name: String = "physical-hip", physical: Boolean = true, imu: Boolean = true,
 		internal: Boolean = false, computed: Boolean = false, hmd: Boolean = false,

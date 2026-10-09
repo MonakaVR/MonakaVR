@@ -35,6 +35,7 @@ internal class PositionCorrectionRuntimeTick(
 internal enum class PositionCorrectionAssemblyFailure {
 	SOURCES_ABSENT, HMD_SPACE_MISMATCH, IMU_SPACE_MISMATCH, FUTURE_HMD_SAMPLE,
 	FUTURE_IMU_SAMPLE, FIXED_HMD_SOURCE_MISMATCH, FIXED_BODY_MODEL_MISMATCH,
+	COMMON_WORLD_EPOCH_MISMATCH,
 }
 
 internal sealed interface PositionCorrectionPredictorAssemblyResult {
@@ -167,6 +168,8 @@ internal class PositionCorrectionRuntimeOrchestrator(
 		val s = t.predictorSources ?: return unavailable(PositionCorrectionAssemblyFailure.SOURCES_ABSENT)
 		if (s.rawHmd.space != t.expectedSpace) return unavailable(PositionCorrectionAssemblyFailure.HMD_SPACE_MISMATCH)
 		if (s.rawImu.space != t.expectedSpace) return unavailable(PositionCorrectionAssemblyFailure.IMU_SPACE_MISMATCH)
+		if (s.rawHmd.provenance.commonWorldEpoch != s.rawImu.provenance.commonWorldEpoch)
+			return unavailable(PositionCorrectionAssemblyFailure.COMMON_WORLD_EPOCH_MISMATCH)
 		if (s.rawHmd.provenance.sampleAtNanos > t.nowNanos) return unavailable(PositionCorrectionAssemblyFailure.FUTURE_HMD_SAMPLE)
 		if (s.rawImu.provenance.sampleAtNanos > t.nowNanos) return unavailable(PositionCorrectionAssemblyFailure.FUTURE_IMU_SAMPLE)
 		if (s.fixedCalibration.hmdSourceId != s.rawHmd.source.sourceId) return unavailable(PositionCorrectionAssemblyFailure.FIXED_HMD_SOURCE_MISMATCH)
