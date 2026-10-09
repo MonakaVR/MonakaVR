@@ -31,6 +31,7 @@ void validate(const json& v, const json& s, const std::string& path) {
     if(s.contains("$ref")) {
         auto name=s.at("$ref").get<std::string>().substr(8);
         validate(v,schema.at("$defs").at(name),path);
+        if(name=="I64") { auto x=v.get<std::string>(); try { (void)std::stoll(x); } catch(...) { fail(ErrorCode::OutOfRange,path); } }
         if(name=="U63") {
             auto x=v.get<std::string>();
             need(x.size()<19 || x<="9223372036854775807",ErrorCode::OutOfRange,path);
@@ -90,11 +91,39 @@ std::string dispatch(const json& j) {
     if(p=="monaka.observation" && t=="device_state") return "ObservationDeviceState";
     if(p=="monaka.tracking" && t=="pose") return "MtpPose";
     if(p=="monaka.tracking" && t=="tracker_state") return "MtpTrackerState";
+    if(p=="monaka.hmd_authority" && t=="source_authority") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "TrustedHmdSourceAuthority"; }
+    if(p=="monaka.hmd_authority" && t=="source_pose") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "TrustedHmdSourcePose"; }
+    if(p=="monaka.hmd_authority" && t=="source_unavailable") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "TrustedHmdSourceUnavailable"; }
+    if(p=="monaka.hmd_authority" && t=="source_revocation") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "TrustedHmdSourceRevocation"; }
+    if(p=="monaka.common_world" && t=="world_authority") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "CommonWorldAuthorityPublication"; }
+    if(p=="monaka.common_world" && t=="mapping_publication") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "CommonWorldMappingPublication"; }
+    if(p=="monaka.common_world" && t=="common_pose") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "TrustedHmdCommonPose"; }
+    if(p=="monaka.common_world" && t=="common_unavailable") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "TrustedHmdCommonUnavailable"; }
+    if(p=="monaka.common_world" && t=="mapping_revocation") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "CommonWorldMappingRevocation"; }
+    if(p=="monaka.common_world" && t=="world_revocation") { need(j["version"].contains("minor"),ErrorCode::MissingField,"version.minor"); need(j["version"]["minor"].is_number(),ErrorCode::InvalidType,"version.minor"); auto m=j["version"]["minor"].get<double>(); need(std::isfinite(m)&&std::floor(m)==m,ErrorCode::InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode::OutOfRange,"version.minor"); need(m>=1,ErrorCode::UnsupportedVersion,"authority minor"); return "CommonWorldRevocation"; }
     fail(ErrorCode::UnsupportedMessage,"protocol/type");
+}
+void authoritySemantics(const json& j) {
+    auto unit=[](const json& q) { double n=0; for(const auto& x:q) n=std::hypot(n,x.get<double>()); need(std::abs(n-1)<=1e-5,ErrorCode::InvalidQuaternion,"authority quaternion"); };
+    auto nonblank=[](const json& x) { const auto s=x.get<std::string>(); bool content=false; for(std::size_t i=0;i<s.size();) { unsigned cp=(unsigned char)s[i++]; if(cp>=128) { unsigned count=cp<224?1:cp<240?2:3; cp&=count==1?31:count==2?15:7; while(count--) cp=(cp<<6)|((unsigned char)s[i++]&63); } bool ws=cp==32||cp==160||cp==5760||(cp>=8192&&cp<=8202)||cp==8232||cp==8233||cp==8239||cp==8287||cp==12288; content|=!ws; } need(content,ErrorCode::OutOfRange,"blank authority Id"); };
+    auto source=[&](const json& s) { for(auto k:{"source_id","source_authority_session_epoch","source_space_id"}) nonblank(s.at(k)); };
+    auto world=[&](const json& w) { nonblank(w.at("owner_id")); nonblank(w.at("world_epoch")); nonblank(w["coordinate_space"]["id"]); need(w["coordinate_space"]["convention"]=="rh_y_up_neg_z_forward",ErrorCode::UnsupportedValue,"world convention"); };
+    nonblank(j.at("publisher_id"));
+    if(j.contains("source_space")) source(j["source_space"]);
+    if(j.contains("anchor_source")) source(j["anchor_source"]);
+    if(j.contains("source")) { source(j["source"]["source_space"]); nonblank(j["source"]["source_time_domain_id"]); }
+    if(j.contains("source_time_domain_id")) nonblank(j["source_time_domain_id"]);
+    if(j.contains("world")) world(j["world"]);
+    if(j.contains("mapping")) { const auto& m=j["mapping"]; world(m["world"]); source(m["source_space"]); nonblank(m["calibration_epoch"]); }
+    for(auto k:{"orientation","source_orientation","common_orientation"}) if(j.contains(k)) unit(j[k]);
+    if(j.contains("transform")) unit(j["transform"]["rotation_xyzw"]);
+    if(j.contains("source") && j.contains("mapping")) for(auto k:{"source_id","source_authority_session_epoch","source_space_id","source_space_generation"}) need(j["source"]["source_space"][k]==j["mapping"]["source_space"][k],ErrorCode::InconsistentValidity,"source/mapping authority mismatch");
+    // Flags are exact source facts, including false/tracked combinations. No inferred validity.
 }
 void semantics(const json& j) {
     auto u=[](const json& x) { return std::stoll(x.get<std::string>()); };
     need(u(j.at("timestamp_ns"))<=u(j.at("sent_at_ns")),ErrorCode::OutOfRange,"timestamp_ns > sent_at_ns");
+    if(j["protocol"]=="monaka.hmd_authority" || j["protocol"]=="monaka.common_world") { authoritySemantics(j); return; }
     auto has=[&](const std::string& name) { for(const auto& x:j.at("capabilities")) if(x==name) return true; return false; };
     if(j.contains("battery") && !j["battery"].is_null()) {
         need(u(j["battery"]["timestamp_ns"])<=u(j["sent_at_ns"]),ErrorCode::OutOfRange,"battery timestamp > sent_at_ns");
@@ -165,7 +194,17 @@ bool DecodeEnvelope(const std::uint8_t* data, std::size_t size, Envelope& out, E
         if(name=="TrackerObservation") result=j.get<TrackerObservation>();
         else if(name=="ObservationDeviceState") result=j.get<ObservationDeviceState>();
         else if(name=="MtpPose") result=j.get<MtpPose>();
-        else result=j.get<MtpTrackerState>();
+        else if(name=="MtpTrackerState") result=j.get<MtpTrackerState>();
+        else if(name=="TrustedHmdSourceAuthority") result=j.get<TrustedHmdSourceAuthority>();
+        else if(name=="TrustedHmdSourcePose") result=j.get<TrustedHmdSourcePose>();
+        else if(name=="TrustedHmdSourceUnavailable") result=j.get<TrustedHmdSourceUnavailable>();
+        else if(name=="TrustedHmdSourceRevocation") result=j.get<TrustedHmdSourceRevocation>();
+        else if(name=="CommonWorldAuthorityPublication") result=j.get<CommonWorldAuthorityPublication>();
+        else if(name=="CommonWorldMappingPublication") result=j.get<CommonWorldMappingPublication>();
+        else if(name=="TrustedHmdCommonPose") result=j.get<TrustedHmdCommonPose>();
+        else if(name=="TrustedHmdCommonUnavailable") result=j.get<TrustedHmdCommonUnavailable>();
+        else if(name=="CommonWorldMappingRevocation") result=j.get<CommonWorldMappingRevocation>();
+        else if(name=="CommonWorldRevocation") result=j.get<CommonWorldRevocation>();
         out=std::move(result); error.message.clear(); return true;
     } catch(const Failure& f) { error={f.code,f.message}; }
       catch(const json::out_of_range& e) { error={ErrorCode::OutOfRange,e.what()}; }
@@ -177,7 +216,7 @@ bool EncodeEnvelope(const Envelope& value, std::string& utf8, Error& error) {
         json j=std::visit([](const auto& v) { return json(v); },value);
         finiteTree(j);
         auto name=dispatch(j); validate(j,schema.at("$defs").at(name),"envelope"); semantics(j);
-        j["version"]["minor"]=0;
+        j["version"]["minor"]=(j["protocol"]=="monaka.hmd_authority" || j["protocol"]=="monaka.common_world")?1:0;
         std::string encoded=j.dump();
         Envelope checked;
         if(!DecodeEnvelope(reinterpret_cast<const std::uint8_t*>(encoded.data()),encoded.size(),checked,error)) return false;

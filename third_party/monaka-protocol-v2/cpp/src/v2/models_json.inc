@@ -238,3 +238,363 @@ void from_json(const json& j, MtpTrackerState& v) {
     if(j.contains("battery") && !j.at("battery").is_null()) v.battery=j.at("battery").get<Battery>(); else v.battery.reset();
     v.mapping_revision=j.at("mapping_revision").get<std::uint32_t>();
 }
+void to_json(json& j, const AuthorityHeader& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+}
+void from_json(const json& j, AuthorityHeader& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+}
+void to_json(json& j, const SourceSpaceAuthority& v) { j=json::object();
+    j["source_id"]=v.source_id;
+    j["source_authority_session_epoch"]=v.source_authority_session_epoch;
+    j["source_space_id"]=v.source_space_id;
+    j["source_space_generation"]=std::to_string(v.source_space_generation);
+}
+void from_json(const json& j, SourceSpaceAuthority& v) {
+    v.source_id=j.at("source_id").get<std::string>();
+    v.source_authority_session_epoch=j.at("source_authority_session_epoch").get<std::string>();
+    v.source_space_id=j.at("source_space_id").get<std::string>();
+    v.source_space_generation=std::stoll(j.at("source_space_generation").get<std::string>());
+}
+void to_json(json& j, const SourceObservationIdentity& v) { j=json::object();
+    j["source_space"]=v.source_space;
+    j["observation_id"]=std::to_string(v.observation_id);
+    j["source_locate_time_ns"]=std::to_string(v.source_locate_time_ns);
+    j["source_time_domain_id"]=v.source_time_domain_id;
+}
+void from_json(const json& j, SourceObservationIdentity& v) {
+    v.source_space=j.at("source_space").get<SourceSpaceAuthority>();
+    v.observation_id=std::stoll(j.at("observation_id").get<std::string>());
+    v.source_locate_time_ns=std::stoll(j.at("source_locate_time_ns").get<std::string>());
+    v.source_time_domain_id=j.at("source_time_domain_id").get<std::string>();
+}
+void to_json(json& j, const HmdValidityEvidence& v) { j=json::object();
+    j["position_valid"]=v.position_valid;
+    j["orientation_valid"]=v.orientation_valid;
+    j["position_tracked"]=v.position_tracked;
+    j["orientation_tracked"]=v.orientation_tracked;
+    j["view_position_valid"]=v.view_position_valid;
+    j["view_orientation_valid"]=v.view_orientation_valid;
+}
+void from_json(const json& j, HmdValidityEvidence& v) {
+    v.position_valid=j.at("position_valid").get<bool>();
+    v.orientation_valid=j.at("orientation_valid").get<bool>();
+    v.position_tracked=j.at("position_tracked").get<bool>();
+    v.orientation_tracked=j.at("orientation_tracked").get<bool>();
+    v.view_position_valid=j.at("view_position_valid").get<bool>();
+    v.view_orientation_valid=j.at("view_orientation_valid").get<bool>();
+}
+void to_json(json& j, const RigidTransform& v) { j=json::object();
+    j["rotation_xyzw"]=v.rotation_xyzw;
+    j["translation_xyz"]=v.translation_xyz;
+}
+void from_json(const json& j, RigidTransform& v) {
+    v.rotation_xyzw=j.at("rotation_xyzw").get<QuatXyzw>();
+    v.translation_xyz=j.at("translation_xyz").get<Vec3>();
+}
+void to_json(json& j, const CommonWorldReference& v) { j=json::object();
+    j["owner_id"]=v.owner_id;
+    j["world_epoch"]=v.world_epoch;
+    j["coordinate_space"]=v.coordinate_space;
+}
+void from_json(const json& j, CommonWorldReference& v) {
+    v.owner_id=j.at("owner_id").get<std::string>();
+    v.world_epoch=j.at("world_epoch").get<std::string>();
+    v.coordinate_space=j.at("coordinate_space").get<CoordinateSpace>();
+}
+void to_json(json& j, const CommonMappingReference& v) { j=json::object();
+    j["world"]=v.world;
+    j["source_space"]=v.source_space;
+    j["calibration_epoch"]=v.calibration_epoch;
+    j["mapping_revision"]=v.mapping_revision;
+}
+void from_json(const json& j, CommonMappingReference& v) {
+    v.world=j.at("world").get<CommonWorldReference>();
+    v.source_space=j.at("source_space").get<SourceSpaceAuthority>();
+    v.calibration_epoch=j.at("calibration_epoch").get<std::string>();
+    v.mapping_revision=j.at("mapping_revision").get<std::uint32_t>();
+}
+void to_json(json& j, const TrustedHmdSourceAuthority& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["source_space"]=v.source_space;
+    j["source_space_kind"]=v.source_space_kind;
+    j["source_time_domain_id"]=v.source_time_domain_id;
+    j["protocol"]="monaka.hmd_authority"; j["type"]="source_authority";
+}
+void from_json(const json& j, TrustedHmdSourceAuthority& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.source_space=j.at("source_space").get<SourceSpaceAuthority>();
+    v.source_space_kind=j.at("source_space_kind").get<std::string>();
+    v.source_time_domain_id=j.at("source_time_domain_id").get<std::string>();
+}
+void to_json(json& j, const TrustedHmdSourcePose& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["source"]=v.source;
+    j["position"]=v.position;
+    j["orientation"]=v.orientation;
+    j["validity"]=v.validity;
+    j["protocol"]="monaka.hmd_authority"; j["type"]="source_pose";
+}
+void from_json(const json& j, TrustedHmdSourcePose& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.source=j.at("source").get<SourceObservationIdentity>();
+    v.position=j.at("position").get<Vec3>();
+    v.orientation=j.at("orientation").get<QuatXyzw>();
+    v.validity=j.at("validity").get<HmdValidityEvidence>();
+}
+void to_json(json& j, const TrustedHmdSourceUnavailable& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["source_space"]=v.source_space;
+    j["reason"]=v.reason;
+    if(v.validity) j["validity"]=*v.validity; else j["validity"]=nullptr;
+    j["protocol"]="monaka.hmd_authority"; j["type"]="source_unavailable";
+}
+void from_json(const json& j, TrustedHmdSourceUnavailable& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.source_space=j.at("source_space").get<SourceSpaceAuthority>();
+    v.reason=j.at("reason").get<std::string>();
+    if(j.contains("validity") && !j.at("validity").is_null()) v.validity=j.at("validity").get<HmdValidityEvidence>(); else v.validity.reset();
+}
+void to_json(json& j, const TrustedHmdSourceRevocation& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["source_space"]=v.source_space;
+    j["reason"]=v.reason;
+    j["protocol"]="monaka.hmd_authority"; j["type"]="source_revocation";
+}
+void from_json(const json& j, TrustedHmdSourceRevocation& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.source_space=j.at("source_space").get<SourceSpaceAuthority>();
+    v.reason=j.at("reason").get<std::string>();
+}
+void to_json(json& j, const CommonWorldAuthorityPublication& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["world"]=v.world;
+    j["anchor_source"]=v.anchor_source;
+    j["protocol"]="monaka.common_world"; j["type"]="world_authority";
+}
+void from_json(const json& j, CommonWorldAuthorityPublication& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.world=j.at("world").get<CommonWorldReference>();
+    v.anchor_source=j.at("anchor_source").get<SourceSpaceAuthority>();
+}
+void to_json(json& j, const CommonWorldMappingPublication& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["mapping"]=v.mapping;
+    j["transform"]=v.transform;
+    j["protocol"]="monaka.common_world"; j["type"]="mapping_publication";
+}
+void from_json(const json& j, CommonWorldMappingPublication& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.mapping=j.at("mapping").get<CommonMappingReference>();
+    v.transform=j.at("transform").get<RigidTransform>();
+}
+void to_json(json& j, const TrustedHmdCommonPose& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["mapping"]=v.mapping;
+    j["source"]=v.source;
+    j["source_position"]=v.source_position;
+    j["source_orientation"]=v.source_orientation;
+    j["validity"]=v.validity;
+    j["common_position"]=v.common_position;
+    j["common_orientation"]=v.common_orientation;
+    j["protocol"]="monaka.common_world"; j["type"]="common_pose";
+}
+void from_json(const json& j, TrustedHmdCommonPose& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.mapping=j.at("mapping").get<CommonMappingReference>();
+    v.source=j.at("source").get<SourceObservationIdentity>();
+    v.source_position=j.at("source_position").get<Vec3>();
+    v.source_orientation=j.at("source_orientation").get<QuatXyzw>();
+    v.validity=j.at("validity").get<HmdValidityEvidence>();
+    v.common_position=j.at("common_position").get<Vec3>();
+    v.common_orientation=j.at("common_orientation").get<QuatXyzw>();
+}
+void to_json(json& j, const TrustedHmdCommonUnavailable& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["mapping"]=v.mapping;
+    j["reason"]=v.reason;
+    if(v.validity) j["validity"]=*v.validity; else j["validity"]=nullptr;
+    j["protocol"]="monaka.common_world"; j["type"]="common_unavailable";
+}
+void from_json(const json& j, TrustedHmdCommonUnavailable& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.mapping=j.at("mapping").get<CommonMappingReference>();
+    v.reason=j.at("reason").get<std::string>();
+    if(j.contains("validity") && !j.at("validity").is_null()) v.validity=j.at("validity").get<HmdValidityEvidence>(); else v.validity.reset();
+}
+void to_json(json& j, const CommonWorldMappingRevocation& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["mapping"]=v.mapping;
+    j["reason"]=v.reason;
+    j["protocol"]="monaka.common_world"; j["type"]="mapping_revocation";
+}
+void from_json(const json& j, CommonWorldMappingRevocation& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.mapping=j.at("mapping").get<CommonMappingReference>();
+    v.reason=j.at("reason").get<std::string>();
+}
+void to_json(json& j, const CommonWorldRevocation& v) { j=json::object();
+    j["version"]=v.version;
+    j["publisher_id"]=v.publisher_id;
+    j["session_id"]=v.session_id;
+    j["clock_id"]=v.clock_id;
+    j["sequence"]=std::to_string(v.sequence);
+    j["timestamp_ns"]=std::to_string(v.timestamp_ns);
+    j["sent_at_ns"]=std::to_string(v.sent_at_ns);
+    j["timestamp_kind"]=v.timestamp_kind;
+    j["world"]=v.world;
+    j["reason"]=v.reason;
+    j["protocol"]="monaka.common_world"; j["type"]="world_revocation";
+}
+void from_json(const json& j, CommonWorldRevocation& v) {
+    v.version=j.at("version").get<Version>();
+    v.publisher_id=j.at("publisher_id").get<std::string>();
+    v.session_id=j.at("session_id").get<std::string>();
+    v.clock_id=j.at("clock_id").get<std::string>();
+    v.sequence=std::stoll(j.at("sequence").get<std::string>());
+    v.timestamp_ns=std::stoll(j.at("timestamp_ns").get<std::string>());
+    v.sent_at_ns=std::stoll(j.at("sent_at_ns").get<std::string>());
+    v.timestamp_kind=j.at("timestamp_kind").get<std::string>();
+    v.world=j.at("world").get<CommonWorldReference>();
+    v.reason=j.at("reason").get<std::string>();
+}

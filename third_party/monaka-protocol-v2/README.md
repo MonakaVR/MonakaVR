@@ -1,81 +1,90 @@
 # MonakaProtocol
 
-C1 candidate wire 1.0: typed models, JSON Schema 2020-12, strict codecs,
-validation and fixtures. Reference master reconciliation remains pending.
-Read [C1](docs/C1.md) before implementing a consumer.
+MonakaProtocol owns the shared wire contracts used between MonakaVR backends, MonakaBridge, and MonakaVR.
+
+## Active contract on `refactor/monaka-layer-separation`
+
+The coordinated Architecture Revision introduced wire 2.0 at commit `572e58cfa20b8b4335207ea5dbcb3f04c587ddff`.
+
+Read in this order:
+
+1. [`docs/architecture-revision.md`](docs/architecture-revision.md)
+2. [`docs/C2.md`](docs/C2.md)
+3. [`docs/C1.md`](docs/C1.md) only for rules C2 explicitly inherits unchanged
+
+C1/wire 1.0 remains in-tree as historical compatibility and audit evidence. The current revision does **not** auto-upgrade v1 packets by guessing modality from numeric fields.
+
+Wire 2.0 adds explicit `full` / `rotation_only` / `none` modality semantics and preserves backend identity separately from Bridge publisher identity. Main/Fallback body policy remains a MonakaVR responsibility, not a protocol responsibility.
 
 ## Build and verify
 
 Prerequisites: C++17 compiler, CMake 3.20+, Java 17, Gradle 8.14.4, Python 3.13.
-The tested Windows compiler is MSVC 19.51.36257. Kotlin is pinned to 2.3.10.
-Gson 2.11.0 and Kotlin runtime 2.3.10 JARs are vendored; the Kotlin Gradle plugin
-is fetched by Gradle when not already cached. No Maven publication is assumed.
+The tested Windows compiler for the original v1 work was MSVC 19.51.36257. Kotlin is pinned to 2.3.10. Gson 2.11.0 and Kotlin runtime 2.3.10 JARs are vendored; the Kotlin Gradle plugin is fetched by Gradle when not cached.
 
 ```sh
+python -m pip install -r tools/test-requirements.txt
+python tools/check_boundaries.py
 cmake -S cpp -B build/cpp -DMONAKA_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release
 cmake --build build/cpp --config Release
 ctest --test-dir build/cpp -C Release --output-on-failure
 gradle -p jvm --no-daemon build
-python -m pip install -r tools/test-requirements.txt
-python tools/check_boundaries.py
+
+# Historical wire 1.0 suite
 python tools/test.py
+
+# Current wire 2.0 capability/identity/time suite
+python tools/test_v2.py
 ```
 
-`gradle build` compiles the JVM fixture runner. The actual model/fixture and
-cross-language assertions run through `tools/test.py`, not Gradle's empty
-JUnit task. Both Windows and Linux configurations are in CI; consult the
-verification report for which were actually executed.
+`tools/test_v2.py` executes strict v2 schema/codec cases and C++↔JVM cross-language checks. Hardware remains `NOT RUN`; protocol tests are software evidence only.
 
-## Use the kit in one repository
+## Package and verify a fixed kit
 
-Extract `monaka-protocol-kit-v1.0.zip` into `third_party/monaka-protocol`.
-Verify its external handoff manifest and internal `SHA256SUMS` first.
-Copy the supplied `protocol.lock.json` to your dependency lock location.
+Packaging requires a clean committed source tree and a built JVM JAR.
 
-CMake consumer:
-
-```cmake
-add_subdirectory(third_party/monaka-protocol/cpp)
-target_link_libraries(your_target PRIVATE MonakaProtocol::Codec)
-```
-
-Include `monaka/protocol/v1/codec.hpp`; use
-`monaka::protocol::v1::DecodeEnvelope` and `EncodeEnvelope`. `Envelope` is a
-variant of four independent message structs. Error names are available through
-`ErrorCodeName(error.code)`. Decode and encode outputs remain unchanged on
-failure. A success clears the error message; the error code is meaningful only
-on failure. U63 values are signed 64-bit nonnegative integers in the model and
-decimal strings on the wire. Nullable samples are `std::optional`.
-
-JVM consumer: add **all three** JARs from `jvm/libs` to the runtime classpath,
-or use local file dependencies in your build. The API package is
-`dev.monaka.protocol.v1`. `MonakaCodec.decodeEnvelope(ByteArray)` returns
-`DecodeResult.Success(Envelope)` or `Failure(ErrorCode, message)`;
-`encodeEnvelope(Envelope)` returns `EncodeResult.Success(ByteArray)` or
-`Failure(ErrorCode, message)`. Kotlin nullable samples use `null`.
-See `jvm/runtime-dependencies.json` for the exact runtime list. The kit's JVM
-sources can also be rebuilt with its Gradle files.
-
-Unknown optional fields are accepted and discarded. Optional derivative
-absence decodes as null; encoders emit explicit null and wire minor 0. No
-identity fallback exists for an unknown MTP coordinate convention. Consumers
-must implement session/sequence/freshness policy; this library has no cache,
-clock synchronization, sockets, device access or runtime lifecycle.
-
-POTB v1 and PICO C ABI v1 remain different protocols. Equal version numbers
-do not imply compatibility. Existing consumers require explicit adapter
-migration in their owning repositories; this repository changes none of them.
-
-## Packaging
-
-After committing a clean source tree and running the checks:
+Historical v1 kit:
 
 ```sh
-python tools/package.py
-python tools/verify_kit.py
+python tools/package.py --wire-major 1
+python tools/verify_kit.py --wire-major 1
 ```
 
-Use `--cmake /path/to/cmake` for the verifier when CMake is not on PATH.
-The lock records real source/schema commits and hashes of schemas, fixtures,
-API sources and binary artifacts. ZIP hash lives only in the external handoff
-manifest. `dist/` and build products are excluded from the source commit.
+Current v2 kit:
+
+```sh
+python tools/test_v2.py
+python tools/package.py --wire-major 2
+python tools/verify_kit.py --wire-major 2
+```
+
+The v2 package is written under `dist/v2/`. Downstream repositories must pin the actual generated ZIP, manifest, source commit, and hashes. Do not infer or regenerate a supposedly identical handoff and then reuse an old hash.
+
+`tools/verify_protocol_v2.py` is a downstream pin verifier/template: it expects a consumer repository to provide `dependencies/monaka-protocol-v2.lock.json`. It is not a replacement for this repository's `test_v2.py` + `package.py --wire-major 2` + `verify_kit.py --wire-major 2` source-tree validation flow.
+
+## Consumer API
+
+The repository intentionally retains both API namespaces:
+
+- wire 1.0: `monaka::protocol::v1` / `dev.monaka.protocol.v1`
+- wire 2.0: `monaka::protocol::v2` / `dev.monaka.protocol.v2`
+
+A consumer must use one fixed major contract explicitly. v1 and v2 reject the other major at runtime; there is no implicit compatibility shim.
+
+CMake consumers link `MonakaProtocol::Codec`. C++ includes the matching `monaka/protocol/vN/codec.hpp`; JVM consumers use the matching `dev.monaka.protocol.vN` package.
+
+The protocol library owns models/codecs/validation only. Consumers own sockets, session/sequence caches, freshness policy, device access, mapping/calibration, body assignment, fallback, and runtime lifecycle according to the Architecture Revision.
+# Wire 2.1 trusted HMD authority superset
+
+See [C2.1](docs/C2.1.md) and [5Z projection audit](docs/authority-consumer-projection.md).
+Existing observation/MTP messages remain wire 2.0. The ten authority/control/pose
+messages use separate namespaces and canonical minor 1. Codec decode proves valid
+wire only; no runtime transport or production trusted ingress is enabled.
+
+Generate/check with `python tools/generate.py --wire-major 2 --wire-minor 1 --check`
+(minor 0 also checks the unchanged v2.0 definitions in the superset library).
+After C++/JVM builds, run `tools/prepare_old_v20.py`, `tools/test_v2.py` and
+`tools/test_v21.py`. Package and isolated verification require explicit
+`--wire-major 2 --wire-minor 1`; output is `dist/v2.1/monaka-protocol-kit-v2.1.zip`.
+Windows clean-source release: `python scripts/release_v21.py --cmake PATH
+--gradle PATH --java-home JDK17`; recheck with `--verify RELEASE_DIRECTORY`.
+The historical v2.0 release profile keeps its strict minor 0 identity.

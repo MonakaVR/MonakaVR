@@ -10,4 +10,5 @@ server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufMessages.java 
 third_party/monaka-protocol/** -text
 dependencies/** -text
 *.zip binary
-third_party/monaka-protocol-v2/** -text
+third_party/monaka-protocol-v2/** -text whitespace=cr-at-eol
+dependencies/protocol-v2.1/** whitespace=cr-at-eol
