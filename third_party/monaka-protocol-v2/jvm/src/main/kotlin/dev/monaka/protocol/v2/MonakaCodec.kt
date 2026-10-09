@@ -74,6 +74,7 @@ private fun validate(v: JsonElement, s: JsonObject, path: String) {
     if(s.has("\$ref")) {
         val name = s["\$ref"].asString.substring(8)
         validate(v,schema["\$defs"].asJsonObject[name].asJsonObject,path)
+        if(name == "I64") need(v.asString.toLongOrNull()!=null,ErrorCode.OutOfRange,path)
         if(name == "U63") need(v.asString.toLongOrNull()!=null,ErrorCode.OutOfRange,path)
         if(name == "Id") need(v.asString.toByteArray(Charsets.UTF_8).size<=96,ErrorCode.OutOfRange,path)
         return
@@ -133,11 +134,38 @@ private fun dispatch(v: JsonElement): String {
         "monaka.observation" to "device_state" -> "ObservationDeviceState"
         "monaka.tracking" to "pose" -> "MtpPose"
         "monaka.tracking" to "tracker_state" -> "MtpTrackerState"
+        "monaka.hmd_authority" to "source_authority" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "TrustedHmdSourceAuthority" }
+        "monaka.hmd_authority" to "source_pose" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "TrustedHmdSourcePose" }
+        "monaka.hmd_authority" to "source_unavailable" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "TrustedHmdSourceUnavailable" }
+        "monaka.hmd_authority" to "source_revocation" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "TrustedHmdSourceRevocation" }
+        "monaka.common_world" to "world_authority" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "CommonWorldAuthorityPublication" }
+        "monaka.common_world" to "mapping_publication" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "CommonWorldMappingPublication" }
+        "monaka.common_world" to "common_pose" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "TrustedHmdCommonPose" }
+        "monaka.common_world" to "common_unavailable" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "TrustedHmdCommonUnavailable" }
+        "monaka.common_world" to "mapping_revocation" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "CommonWorldMappingRevocation" }
+        "monaka.common_world" to "world_revocation" -> { need(ver.has("minor"),ErrorCode.MissingField,"version.minor"); need(ver["minor"].number(),ErrorCode.InvalidType,"version.minor"); val m=ver["minor"].asDouble; need(m.isFinite()&&floor(m)==m,ErrorCode.InvalidType,"version.minor"); need(m>=0&&m<=65535,ErrorCode.OutOfRange,"version.minor"); need(m>=1,ErrorCode.UnsupportedVersion,"authority minor"); "CommonWorldRevocation" }
         else -> fail(ErrorCode.UnsupportedMessage,"protocol/type")
     }
 }
+private fun authoritySemantics(j: JsonObject) {
+    fun nonblank(x: JsonElement) { need(x.asString.isNotBlank(),ErrorCode.OutOfRange,"blank authority Id") }
+    fun source(s: JsonObject) { for(k in listOf("source_id","source_authority_session_epoch","source_space_id")) nonblank(s[k]) }
+    fun world(w: JsonObject) { nonblank(w["owner_id"]); nonblank(w["world_epoch"]); val c=w["coordinate_space"].asJsonObject; nonblank(c["id"]); need(c["convention"].asString=="rh_y_up_neg_z_forward",ErrorCode.UnsupportedValue,"world convention") }
+    fun unit(q: JsonElement) { val n=q.asJsonArray.fold(0.0) { a,x -> hypot(a,x.asDouble) }; need(abs(n-1)<=1e-5,ErrorCode.InvalidQuaternion,"authority quaternion") }
+    nonblank(j["publisher_id"])
+    if(j.has("source_space")) source(j["source_space"].asJsonObject)
+    if(j.has("anchor_source")) source(j["anchor_source"].asJsonObject)
+    if(j.has("source")) { val s=j["source"].asJsonObject; source(s["source_space"].asJsonObject); nonblank(s["source_time_domain_id"]) }
+    if(j.has("source_time_domain_id")) nonblank(j["source_time_domain_id"])
+    if(j.has("world")) world(j["world"].asJsonObject)
+    if(j.has("mapping")) { val m=j["mapping"].asJsonObject; world(m["world"].asJsonObject); source(m["source_space"].asJsonObject); nonblank(m["calibration_epoch"]) }
+    for(k in listOf("orientation","source_orientation","common_orientation")) if(j.has(k)) unit(j[k])
+    if(j.has("transform")) unit(j["transform"].asJsonObject["rotation_xyzw"])
+    if(j.has("source")&&j.has("mapping")) for(k in listOf("source_id","source_authority_session_epoch","source_space_id","source_space_generation")) need(j["source"].asJsonObject["source_space"].asJsonObject[k]==j["mapping"].asJsonObject["source_space"].asJsonObject[k],ErrorCode.InconsistentValidity,"source/mapping authority mismatch")
+}
 private fun semantics(j: JsonObject) {
     need(j["timestamp_ns"].asString.toLong()<=j["sent_at_ns"].asString.toLong(),ErrorCode.OutOfRange,"timestamp_ns > sent_at_ns")
+    if(j["protocol"].asString in listOf("monaka.hmd_authority","monaka.common_world")) { authoritySemantics(j); return }
     val caps = j["capabilities"].asJsonArray.map { it.asString }
     if(j.has("battery") && !j["battery"].isJsonNull) {
         val b = j["battery"].asJsonObject
@@ -196,7 +224,18 @@ object MonakaCodec {
             "TrackerObservation" -> readTrackerObservation(j)
             "ObservationDeviceState" -> readObservationDeviceState(j)
             "MtpPose" -> readMtpPose(j)
-            else -> readMtpTrackerState(j)
+            "MtpTrackerState" -> readMtpTrackerState(j)
+            "TrustedHmdSourceAuthority" -> readTrustedHmdSourceAuthority(j)
+            "TrustedHmdSourcePose" -> readTrustedHmdSourcePose(j)
+            "TrustedHmdSourceUnavailable" -> readTrustedHmdSourceUnavailable(j)
+            "TrustedHmdSourceRevocation" -> readTrustedHmdSourceRevocation(j)
+            "CommonWorldAuthorityPublication" -> readCommonWorldAuthorityPublication(j)
+            "CommonWorldMappingPublication" -> readCommonWorldMappingPublication(j)
+            "TrustedHmdCommonPose" -> readTrustedHmdCommonPose(j)
+            "TrustedHmdCommonUnavailable" -> readTrustedHmdCommonUnavailable(j)
+            "CommonWorldMappingRevocation" -> readCommonWorldMappingRevocation(j)
+            "CommonWorldRevocation" -> readCommonWorldRevocation(j)
+            else -> fail(ErrorCode.UnsupportedMessage,"protocol/type")
         })
     } catch(e: Invalid) { DecodeResult.Failure(e.code,e.message) }
       catch(e: Exception) { DecodeResult.Failure(ErrorCode.MalformedJson,e.message ?: "malformed JSON") }
@@ -205,11 +244,21 @@ object MonakaCodec {
         val j = when(value) {
             is TrackerObservation -> value.toJson(); is ObservationDeviceState -> value.toJson()
             is MtpPose -> value.toJson(); is MtpTrackerState -> value.toJson()
+            is TrustedHmdSourceAuthority -> value.toJson()
+            is TrustedHmdSourcePose -> value.toJson()
+            is TrustedHmdSourceUnavailable -> value.toJson()
+            is TrustedHmdSourceRevocation -> value.toJson()
+            is CommonWorldAuthorityPublication -> value.toJson()
+            is CommonWorldMappingPublication -> value.toJson()
+            is TrustedHmdCommonPose -> value.toJson()
+            is TrustedHmdCommonUnavailable -> value.toJson()
+            is CommonWorldMappingRevocation -> value.toJson()
+            is CommonWorldRevocation -> value.toJson()
         }
         finiteTree(j)
         val name = dispatch(j)
         validate(j,schema["\$defs"].asJsonObject[name].asJsonObject,"envelope"); semantics(j)
-        j["version"].asJsonObject.addProperty("minor",0)
+        j["version"].asJsonObject.addProperty("minor",if(j["protocol"].asString in listOf("monaka.hmd_authority","monaka.common_world")) 1 else 0)
         val bytes = gson.toJson(sorted(j)).toByteArray(Charsets.UTF_8)
         when(val r = decodeEnvelope(bytes)) {
             is DecodeResult.Failure -> EncodeResult.Failure(r.code,r.message)

@@ -1,0 +1,1835 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://monaka.dev/schema/v2.1/trusted-hmd-authority.schema.json",
+  "$comment": "C2.1 SHA256 be42d149b939c49ebde4be6ed7f0307bbfbaebcc2ae823ac7680a7cbc18522cc",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/TrustedHmdSourceAuthority"
+    },
+    {
+      "$ref": "#/$defs/TrustedHmdSourcePose"
+    },
+    {
+      "$ref": "#/$defs/TrustedHmdSourceUnavailable"
+    },
+    {
+      "$ref": "#/$defs/TrustedHmdSourceRevocation"
+    },
+    {
+      "$ref": "#/$defs/CommonWorldAuthorityPublication"
+    },
+    {
+      "$ref": "#/$defs/CommonWorldMappingPublication"
+    },
+    {
+      "$ref": "#/$defs/TrustedHmdCommonPose"
+    },
+    {
+      "$ref": "#/$defs/TrustedHmdCommonUnavailable"
+    },
+    {
+      "$ref": "#/$defs/CommonWorldMappingRevocation"
+    },
+    {
+      "$ref": "#/$defs/CommonWorldRevocation"
+    }
+  ],
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "Uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "U63": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "maxLength": 19
+    },
+    "UInt32": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "UInt16": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "Fraction": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "Vec3": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "QuatXyzw": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "TrackingState": {
+      "type": "string",
+      "enum": [
+        "initializing",
+        "tracked",
+        "degraded",
+        "lost",
+        "disconnected",
+        "unknown"
+      ]
+    },
+    "Capability": {
+      "type": "string",
+      "enum": [
+        "position",
+        "orientation",
+        "linear_velocity",
+        "angular_velocity",
+        "linear_acceleration",
+        "battery_fraction",
+        "charging"
+      ]
+    },
+    "Presence": {
+      "type": "string",
+      "enum": [
+        "present",
+        "absent",
+        "unknown"
+      ]
+    },
+    "Evidence": {
+      "type": "string",
+      "enum": [
+        "device",
+        "sample_sanity",
+        "none"
+      ]
+    },
+    "TimestampKind": {
+      "type": "string",
+      "enum": [
+        "sample",
+        "receive"
+      ]
+    },
+    "Frame": {
+      "type": "string",
+      "enum": [
+        "space",
+        "device"
+      ]
+    },
+    "DerivativeEvidence": {
+      "type": "string",
+      "enum": [
+        "measured",
+        "derived"
+      ]
+    },
+    "Bool": {
+      "type": "boolean"
+    },
+    "Version": {
+      "type": "object",
+      "properties": {
+        "major": {
+          "type": "integer",
+          "const": 2
+        },
+        "minor": {
+          "$ref": "#/$defs/UInt16"
+        }
+      },
+      "required": [
+        "major",
+        "minor"
+      ],
+      "additionalProperties": true
+    },
+    "Modality": {
+      "type": "string",
+      "enum": [
+        "full",
+        "rotation_only",
+        "none"
+      ]
+    },
+    "CoordinateSpace": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "convention": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision": {
+          "$ref": "#/$defs/UInt32"
+        }
+      },
+      "required": [
+        "id",
+        "convention",
+        "revision"
+      ],
+      "additionalProperties": true
+    },
+    "Battery": {
+      "type": "object",
+      "properties": {
+        "fraction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Fraction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "charging": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Bool"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        }
+      },
+      "required": [
+        "fraction",
+        "charging",
+        "timestamp_ns"
+      ],
+      "additionalProperties": true
+    },
+    "Derivative": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/Vec3"
+        },
+        "frame": {
+          "$ref": "#/$defs/Frame"
+        },
+        "evidence": {
+          "$ref": "#/$defs/DerivativeEvidence"
+        }
+      },
+      "required": [
+        "value",
+        "frame",
+        "evidence"
+      ],
+      "additionalProperties": true
+    },
+    "Validity": {
+      "type": "object",
+      "properties": {
+        "position": {
+          "$ref": "#/$defs/Bool"
+        },
+        "orientation": {
+          "$ref": "#/$defs/Bool"
+        }
+      },
+      "required": [
+        "position",
+        "orientation"
+      ],
+      "additionalProperties": true
+    },
+    "Confidence": {
+      "type": "object",
+      "properties": {
+        "position": {
+          "$ref": "#/$defs/Fraction"
+        },
+        "orientation": {
+          "$ref": "#/$defs/Fraction"
+        }
+      },
+      "required": [
+        "position",
+        "orientation"
+      ],
+      "additionalProperties": true
+    },
+    "Input": {
+      "type": "object",
+      "properties": {
+        "source_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "device_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "orientation_evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "source_id",
+        "device_id",
+        "session_id",
+        "sequence",
+        "orientation_evidence"
+      ],
+      "additionalProperties": true
+    },
+    "Capabilities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Capability"
+      },
+      "uniqueItems": true
+    },
+    "TrackerObservation": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "source_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "device_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "position": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Vec3"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "orientation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuatXyzw"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "validity": {
+          "$ref": "#/$defs/Validity"
+        },
+        "orientation_evidence": {
+          "$ref": "#/$defs/Evidence"
+        },
+        "linear_velocity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Derivative"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "angular_velocity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Derivative"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "linear_acceleration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Derivative"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tracking_state": {
+          "$ref": "#/$defs/TrackingState"
+        },
+        "coordinate_space": {
+          "$ref": "#/$defs/CoordinateSpace"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/Capabilities"
+        },
+        "modality": {
+          "$ref": "#/$defs/Modality"
+        },
+        "battery": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Battery"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.observation"
+        },
+        "type": {
+          "type": "string",
+          "const": "pose"
+        }
+      },
+      "required": [
+        "version",
+        "source_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "device_id",
+        "position",
+        "orientation",
+        "validity",
+        "orientation_evidence",
+        "tracking_state",
+        "coordinate_space",
+        "capabilities",
+        "modality",
+        "battery",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "ObservationDeviceState": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "source_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "device_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "presence": {
+          "$ref": "#/$defs/Presence"
+        },
+        "tracking_state": {
+          "$ref": "#/$defs/TrackingState"
+        },
+        "coordinate_space": {
+          "$ref": "#/$defs/CoordinateSpace"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/Capabilities"
+        },
+        "modality": {
+          "$ref": "#/$defs/Modality"
+        },
+        "battery": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Battery"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.observation"
+        },
+        "type": {
+          "type": "string",
+          "const": "device_state"
+        }
+      },
+      "required": [
+        "version",
+        "source_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "device_id",
+        "presence",
+        "tracking_state",
+        "coordinate_space",
+        "capabilities",
+        "modality",
+        "battery",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "MtpPose": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "source_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "tracker_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "position": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Vec3"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "orientation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/QuatXyzw"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "validity": {
+          "$ref": "#/$defs/Validity"
+        },
+        "linear_velocity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Vec3"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "angular_velocity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Vec3"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "linear_acceleration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Vec3"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "tracking_state": {
+          "$ref": "#/$defs/TrackingState"
+        },
+        "coordinate_space": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/Id"
+            },
+            "convention": {
+              "type": "string",
+              "const": "rh_y_up_neg_z_forward"
+            },
+            "revision": {
+              "$ref": "#/$defs/UInt32"
+            }
+          },
+          "required": [
+            "id",
+            "convention",
+            "revision"
+          ],
+          "additionalProperties": true
+        },
+        "capabilities": {
+          "$ref": "#/$defs/Capabilities"
+        },
+        "modality": {
+          "$ref": "#/$defs/Modality"
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "mapping_revision": {
+          "$ref": "#/$defs/UInt32"
+        },
+        "input": {
+          "$ref": "#/$defs/Input"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.tracking"
+        },
+        "type": {
+          "type": "string",
+          "const": "pose"
+        }
+      },
+      "required": [
+        "version",
+        "source_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "tracker_id",
+        "position",
+        "orientation",
+        "validity",
+        "confidence",
+        "tracking_state",
+        "coordinate_space",
+        "capabilities",
+        "modality",
+        "publisher_id",
+        "mapping_revision",
+        "input",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "MtpTrackerState": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "source_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "tracker_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "presence": {
+          "$ref": "#/$defs/Presence"
+        },
+        "tracking_state": {
+          "$ref": "#/$defs/TrackingState"
+        },
+        "coordinate_space": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/Id"
+            },
+            "convention": {
+              "type": "string",
+              "const": "rh_y_up_neg_z_forward"
+            },
+            "revision": {
+              "$ref": "#/$defs/UInt32"
+            }
+          },
+          "required": [
+            "id",
+            "convention",
+            "revision"
+          ],
+          "additionalProperties": true
+        },
+        "capabilities": {
+          "$ref": "#/$defs/Capabilities"
+        },
+        "modality": {
+          "$ref": "#/$defs/Modality"
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "battery": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Battery"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mapping_revision": {
+          "$ref": "#/$defs/UInt32"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.tracking"
+        },
+        "type": {
+          "type": "string",
+          "const": "tracker_state"
+        }
+      },
+      "required": [
+        "version",
+        "source_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "tracker_id",
+        "presence",
+        "tracking_state",
+        "coordinate_space",
+        "capabilities",
+        "modality",
+        "publisher_id",
+        "battery",
+        "mapping_revision",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "I64": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*|-[1-9][0-9]*)$",
+      "maxLength": 20
+    },
+    "UnavailableReason": {
+      "type": "string",
+      "enum": [
+        "tracking_lost",
+        "position_invalid",
+        "orientation_invalid",
+        "pose_unavailable"
+      ]
+    },
+    "SourceRevocationReason": {
+      "type": "string",
+      "enum": [
+        "event_stream_lost",
+        "source_session_loss",
+        "source_space_ambiguous",
+        "authority_withdrawn",
+        "capacity_exhausted"
+      ]
+    },
+    "MappingRevocationReason": {
+      "type": "string",
+      "enum": [
+        "mapping_withdrawn",
+        "mapping_conflict",
+        "source_space_changed",
+        "calibration_invalidated"
+      ]
+    },
+    "WorldRevocationReason": {
+      "type": "string",
+      "enum": [
+        "anchor_authority_lost",
+        "source_space_changed",
+        "source_session_changed",
+        "event_stream_lost",
+        "explicit_world_replacement",
+        "capacity_exhausted"
+      ]
+    },
+    "SourceSpaceKind": {
+      "type": "string",
+      "enum": [
+        "openxr_view_in_stage"
+      ]
+    },
+    "AuthorityHeader": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind"
+      ],
+      "additionalProperties": true
+    },
+    "SourceSpaceAuthority": {
+      "type": "object",
+      "properties": {
+        "source_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "source_authority_session_epoch": {
+          "$ref": "#/$defs/Id"
+        },
+        "source_space_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "source_space_generation": {
+          "$ref": "#/$defs/U63"
+        }
+      },
+      "required": [
+        "source_id",
+        "source_authority_session_epoch",
+        "source_space_id",
+        "source_space_generation"
+      ],
+      "additionalProperties": true
+    },
+    "SourceObservationIdentity": {
+      "type": "object",
+      "properties": {
+        "source_space": {
+          "$ref": "#/$defs/SourceSpaceAuthority"
+        },
+        "observation_id": {
+          "$ref": "#/$defs/U63"
+        },
+        "source_locate_time_ns": {
+          "$ref": "#/$defs/I64"
+        },
+        "source_time_domain_id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "source_space",
+        "observation_id",
+        "source_locate_time_ns",
+        "source_time_domain_id"
+      ],
+      "additionalProperties": true
+    },
+    "HmdValidityEvidence": {
+      "type": "object",
+      "properties": {
+        "position_valid": {
+          "$ref": "#/$defs/Bool"
+        },
+        "orientation_valid": {
+          "$ref": "#/$defs/Bool"
+        },
+        "position_tracked": {
+          "$ref": "#/$defs/Bool"
+        },
+        "orientation_tracked": {
+          "$ref": "#/$defs/Bool"
+        },
+        "view_position_valid": {
+          "$ref": "#/$defs/Bool"
+        },
+        "view_orientation_valid": {
+          "$ref": "#/$defs/Bool"
+        }
+      },
+      "required": [
+        "position_valid",
+        "orientation_valid",
+        "position_tracked",
+        "orientation_tracked",
+        "view_position_valid",
+        "view_orientation_valid"
+      ],
+      "additionalProperties": true
+    },
+    "RigidTransform": {
+      "type": "object",
+      "properties": {
+        "rotation_xyzw": {
+          "$ref": "#/$defs/QuatXyzw"
+        },
+        "translation_xyz": {
+          "$ref": "#/$defs/Vec3"
+        }
+      },
+      "required": [
+        "rotation_xyzw",
+        "translation_xyz"
+      ],
+      "additionalProperties": true
+    },
+    "CommonWorldReference": {
+      "type": "object",
+      "properties": {
+        "owner_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "world_epoch": {
+          "$ref": "#/$defs/Id"
+        },
+        "coordinate_space": {
+          "$ref": "#/$defs/CoordinateSpace"
+        }
+      },
+      "required": [
+        "owner_id",
+        "world_epoch",
+        "coordinate_space"
+      ],
+      "additionalProperties": true
+    },
+    "CommonMappingReference": {
+      "type": "object",
+      "properties": {
+        "world": {
+          "$ref": "#/$defs/CommonWorldReference"
+        },
+        "source_space": {
+          "$ref": "#/$defs/SourceSpaceAuthority"
+        },
+        "calibration_epoch": {
+          "$ref": "#/$defs/Id"
+        },
+        "mapping_revision": {
+          "$ref": "#/$defs/UInt32"
+        }
+      },
+      "required": [
+        "world",
+        "source_space",
+        "calibration_epoch",
+        "mapping_revision"
+      ],
+      "additionalProperties": true
+    },
+    "TrustedHmdSourceAuthority": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "source_space": {
+          "$ref": "#/$defs/SourceSpaceAuthority"
+        },
+        "source_space_kind": {
+          "$ref": "#/$defs/SourceSpaceKind"
+        },
+        "source_time_domain_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.hmd_authority"
+        },
+        "type": {
+          "type": "string",
+          "const": "source_authority"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "source_space",
+        "source_space_kind",
+        "source_time_domain_id",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "TrustedHmdSourcePose": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceObservationIdentity"
+        },
+        "position": {
+          "$ref": "#/$defs/Vec3"
+        },
+        "orientation": {
+          "$ref": "#/$defs/QuatXyzw"
+        },
+        "validity": {
+          "$ref": "#/$defs/HmdValidityEvidence"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.hmd_authority"
+        },
+        "type": {
+          "type": "string",
+          "const": "source_pose"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "source",
+        "position",
+        "orientation",
+        "validity",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "TrustedHmdSourceUnavailable": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "source_space": {
+          "$ref": "#/$defs/SourceSpaceAuthority"
+        },
+        "reason": {
+          "$ref": "#/$defs/UnavailableReason"
+        },
+        "validity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HmdValidityEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.hmd_authority"
+        },
+        "type": {
+          "type": "string",
+          "const": "source_unavailable"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "source_space",
+        "reason",
+        "validity",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "TrustedHmdSourceRevocation": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "source_space": {
+          "$ref": "#/$defs/SourceSpaceAuthority"
+        },
+        "reason": {
+          "$ref": "#/$defs/SourceRevocationReason"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.hmd_authority"
+        },
+        "type": {
+          "type": "string",
+          "const": "source_revocation"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "source_space",
+        "reason",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "CommonWorldAuthorityPublication": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "world": {
+          "$ref": "#/$defs/CommonWorldReference"
+        },
+        "anchor_source": {
+          "$ref": "#/$defs/SourceSpaceAuthority"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.common_world"
+        },
+        "type": {
+          "type": "string",
+          "const": "world_authority"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "world",
+        "anchor_source",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "CommonWorldMappingPublication": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "mapping": {
+          "$ref": "#/$defs/CommonMappingReference"
+        },
+        "transform": {
+          "$ref": "#/$defs/RigidTransform"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.common_world"
+        },
+        "type": {
+          "type": "string",
+          "const": "mapping_publication"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "mapping",
+        "transform",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "TrustedHmdCommonPose": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "mapping": {
+          "$ref": "#/$defs/CommonMappingReference"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceObservationIdentity"
+        },
+        "source_position": {
+          "$ref": "#/$defs/Vec3"
+        },
+        "source_orientation": {
+          "$ref": "#/$defs/QuatXyzw"
+        },
+        "validity": {
+          "$ref": "#/$defs/HmdValidityEvidence"
+        },
+        "common_position": {
+          "$ref": "#/$defs/Vec3"
+        },
+        "common_orientation": {
+          "$ref": "#/$defs/QuatXyzw"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.common_world"
+        },
+        "type": {
+          "type": "string",
+          "const": "common_pose"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "mapping",
+        "source",
+        "source_position",
+        "source_orientation",
+        "validity",
+        "common_position",
+        "common_orientation",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "TrustedHmdCommonUnavailable": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "mapping": {
+          "$ref": "#/$defs/CommonMappingReference"
+        },
+        "reason": {
+          "$ref": "#/$defs/UnavailableReason"
+        },
+        "validity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HmdValidityEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.common_world"
+        },
+        "type": {
+          "type": "string",
+          "const": "common_unavailable"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "mapping",
+        "reason",
+        "validity",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "CommonWorldMappingRevocation": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "mapping": {
+          "$ref": "#/$defs/CommonMappingReference"
+        },
+        "reason": {
+          "$ref": "#/$defs/MappingRevocationReason"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.common_world"
+        },
+        "type": {
+          "type": "string",
+          "const": "mapping_revocation"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "mapping",
+        "reason",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    },
+    "CommonWorldRevocation": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "object",
+          "properties": {
+            "major": {
+              "type": "integer",
+              "const": 2
+            },
+            "minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "major",
+            "minor"
+          ],
+          "additionalProperties": true
+        },
+        "publisher_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "session_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "clock_id": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "sequence": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "sent_at_ns": {
+          "$ref": "#/$defs/U63"
+        },
+        "timestamp_kind": {
+          "$ref": "#/$defs/TimestampKind"
+        },
+        "world": {
+          "$ref": "#/$defs/CommonWorldReference"
+        },
+        "reason": {
+          "$ref": "#/$defs/WorldRevocationReason"
+        },
+        "protocol": {
+          "type": "string",
+          "const": "monaka.common_world"
+        },
+        "type": {
+          "type": "string",
+          "const": "world_revocation"
+        }
+      },
+      "required": [
+        "version",
+        "publisher_id",
+        "session_id",
+        "clock_id",
+        "sequence",
+        "timestamp_ns",
+        "sent_at_ns",
+        "timestamp_kind",
+        "world",
+        "reason",
+        "protocol",
+        "type"
+      ],
+      "additionalProperties": true
+    }
+  }
+}

@@ -1,0 +1,1639 @@
+[
+  {
+    "file": "valid/source-authority.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_authority",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "source_space_kind": "openxr_view_in_stage",
+      "source_time_domain_id": "xr-time-A"
+    }
+  },
+  {
+    "file": "valid/source-pose.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_pose",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "9007199254740993",
+        "source_locate_time_ns": "-123",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "valid/source-unavailable.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_unavailable",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "reason": "tracking_lost",
+      "validity": {
+        "position_valid": false,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "valid/source-revocation.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_revocation",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "reason": "event_stream_lost"
+    }
+  },
+  {
+    "file": "valid/world-authority.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.common_world",
+      "type": "world_authority",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "world": {
+        "owner_id": "synthetic-bridge",
+        "world_epoch": "world-A",
+        "coordinate_space": {
+          "id": "common-A",
+          "convention": "rh_y_up_neg_z_forward",
+          "revision": 1
+        }
+      },
+      "anchor_source": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      }
+    }
+  },
+  {
+    "file": "valid/world-mapping.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.common_world",
+      "type": "mapping_publication",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "mapping": {
+        "world": {
+          "owner_id": "synthetic-bridge",
+          "world_epoch": "world-A",
+          "coordinate_space": {
+            "id": "common-A",
+            "convention": "rh_y_up_neg_z_forward",
+            "revision": 1
+          }
+        },
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "calibration_epoch": "calibration-A",
+        "mapping_revision": 7
+      },
+      "transform": {
+        "rotation_xyzw": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "translation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  },
+  {
+    "file": "valid/common-hmd-pose.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.common_world",
+      "type": "common_pose",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "mapping": {
+        "world": {
+          "owner_id": "synthetic-bridge",
+          "world_epoch": "world-A",
+          "coordinate_space": {
+            "id": "common-A",
+            "convention": "rh_y_up_neg_z_forward",
+            "revision": 1
+          }
+        },
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "calibration_epoch": "calibration-A",
+        "mapping_revision": 7
+      },
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "9007199254740993",
+        "source_locate_time_ns": "-123",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "source_position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "source_orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      },
+      "common_position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "common_orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  },
+  {
+    "file": "valid/common-hmd-unavailable.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.common_world",
+      "type": "common_unavailable",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "mapping": {
+        "world": {
+          "owner_id": "synthetic-bridge",
+          "world_epoch": "world-A",
+          "coordinate_space": {
+            "id": "common-A",
+            "convention": "rh_y_up_neg_z_forward",
+            "revision": 1
+          }
+        },
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "calibration_epoch": "calibration-A",
+        "mapping_revision": 7
+      },
+      "reason": "pose_unavailable",
+      "validity": null
+    }
+  },
+  {
+    "file": "valid/mapping-revocation.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.common_world",
+      "type": "mapping_revocation",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "mapping": {
+        "world": {
+          "owner_id": "synthetic-bridge",
+          "world_epoch": "world-A",
+          "coordinate_space": {
+            "id": "common-A",
+            "convention": "rh_y_up_neg_z_forward",
+            "revision": 1
+          }
+        },
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "calibration_epoch": "calibration-A",
+        "mapping_revision": 7
+      },
+      "reason": "mapping_withdrawn"
+    }
+  },
+  {
+    "file": "valid/world-revocation.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.common_world",
+      "type": "world_revocation",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "world": {
+        "owner_id": "synthetic-bridge",
+        "world_epoch": "world-A",
+        "coordinate_space": {
+          "id": "common-A",
+          "convention": "rh_y_up_neg_z_forward",
+          "revision": 1
+        }
+      },
+      "reason": "anchor_authority_lost"
+    }
+  },
+  {
+    "file": "invalid/authority-minor0.json",
+    "error": "UnsupportedVersion",
+    "decoded": null
+  },
+  {
+    "file": "invalid/missing-publisher-session.json",
+    "error": "MissingField",
+    "decoded": null
+  },
+  {
+    "file": "invalid/missing-sequence.json",
+    "error": "MissingField",
+    "decoded": null
+  },
+  {
+    "file": "invalid/blank-source-authority-session.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/missing-source-time-domain.json",
+    "error": "MissingField",
+    "decoded": null
+  },
+  {
+    "file": "invalid/nonfinite-source-position.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/nonunit-source-quaternion.json",
+    "error": "InvalidQuaternion",
+    "decoded": null
+  },
+  {
+    "file": "invalid/bad-validity.json",
+    "error": "InvalidType",
+    "decoded": null
+  },
+  {
+    "file": "invalid/missing-validity.json",
+    "error": "MissingField",
+    "decoded": null
+  },
+  {
+    "file": "invalid/blank-world-epoch.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/wrong-world-convention.json",
+    "error": "UnsupportedValue",
+    "decoded": null
+  },
+  {
+    "file": "invalid/mapping-revision-overflow.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/nonunit-mapping-quaternion.json",
+    "error": "InvalidQuaternion",
+    "decoded": null
+  },
+  {
+    "file": "invalid/nonfinite-mapping-translation.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/common-pose-reference-mismatch.json",
+    "error": "InconsistentValidity",
+    "decoded": null
+  },
+  {
+    "file": "invalid/blank-calibration.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/unknown-revocation-reason.json",
+    "error": "UnsupportedValue",
+    "decoded": null
+  },
+  {
+    "file": "invalid/timestamp-after-send.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/missing-common-position.json",
+    "error": "MissingField",
+    "decoded": null
+  },
+  {
+    "file": "invalid/null-common-orientation.json",
+    "error": "InvalidType",
+    "decoded": null
+  },
+  {
+    "file": "invalid/unknown-protocol.json",
+    "error": "UnsupportedMessage",
+    "decoded": null
+  },
+  {
+    "file": "invalid/unknown-type.json",
+    "error": "UnsupportedMessage",
+    "decoded": null
+  },
+  {
+    "file": "invalid/id-byte-overflow.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/too-large-authority-message.json",
+    "error": "TooLarge",
+    "decoded": null
+  },
+  {
+    "file": "valid/sequence-zero.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_authority",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "source_space_kind": "openxr_view_in_stage",
+      "source_time_domain_id": "xr-time-A"
+    }
+  },
+  {
+    "file": "valid/sequence-one.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_authority",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "1",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "source_space_kind": "openxr_view_in_stage",
+      "source_time_domain_id": "xr-time-A"
+    }
+  },
+  {
+    "file": "valid/sequence-max.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_authority",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "9223372036854775807",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "source_space_kind": "openxr_view_in_stage",
+      "source_time_domain_id": "xr-time-A"
+    }
+  },
+  {
+    "file": "invalid/sequence-overflow.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/sequence-negative.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/sequence-decimal.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/sequence-exponent.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/sequence-leading-zero.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/sequence-number.json",
+    "error": "InvalidType",
+    "decoded": null
+  },
+  {
+    "file": "valid/generation-zero.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_authority",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "source_space_kind": "openxr_view_in_stage",
+      "source_time_domain_id": "xr-time-A"
+    }
+  },
+  {
+    "file": "valid/generation-one.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_authority",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "1"
+      },
+      "source_space_kind": "openxr_view_in_stage",
+      "source_time_domain_id": "xr-time-A"
+    }
+  },
+  {
+    "file": "valid/generation-max.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_authority",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "9223372036854775807"
+      },
+      "source_space_kind": "openxr_view_in_stage",
+      "source_time_domain_id": "xr-time-A"
+    }
+  },
+  {
+    "file": "invalid/generation-overflow.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/generation-negative.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/generation-decimal.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/generation-exponent.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/generation-leading-zero.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/generation-number.json",
+    "error": "InvalidType",
+    "decoded": null
+  },
+  {
+    "file": "valid/observation-zero.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_pose",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "0",
+        "source_locate_time_ns": "-123",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "valid/observation-one.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_pose",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "1",
+        "source_locate_time_ns": "-123",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "valid/observation-max.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_pose",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "9223372036854775807",
+        "source_locate_time_ns": "-123",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "invalid/observation-overflow.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/observation-negative.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/observation-decimal.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/observation-exponent.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/observation-leading-zero.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/observation-number.json",
+    "error": "InvalidType",
+    "decoded": null
+  },
+  {
+    "file": "valid/locate-min.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_pose",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "9007199254740993",
+        "source_locate_time_ns": "-9223372036854775808",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "valid/locate-max.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_pose",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "9007199254740993",
+        "source_locate_time_ns": "9223372036854775807",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "invalid/locate-underflow.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/locate-negative-zero.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "invalid/locate-plus.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "valid/source-authority-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_authority",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "source_space_kind": "openxr_view_in_stage",
+      "source_time_domain_id": "xr-time-A"
+    }
+  },
+  {
+    "file": "valid/source-pose-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_pose",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "9007199254740993",
+        "source_locate_time_ns": "-123",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "valid/source-unavailable-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_unavailable",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "reason": "tracking_lost",
+      "validity": {
+        "position_valid": false,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "valid/source-revocation-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_revocation",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "reason": "event_stream_lost"
+    }
+  },
+  {
+    "file": "valid/world-authority-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.common_world",
+      "type": "world_authority",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "world": {
+        "owner_id": "synthetic-bridge",
+        "world_epoch": "world-A",
+        "coordinate_space": {
+          "id": "common-A",
+          "convention": "rh_y_up_neg_z_forward",
+          "revision": 1
+        }
+      },
+      "anchor_source": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      }
+    }
+  },
+  {
+    "file": "valid/world-mapping-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.common_world",
+      "type": "mapping_publication",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "mapping": {
+        "world": {
+          "owner_id": "synthetic-bridge",
+          "world_epoch": "world-A",
+          "coordinate_space": {
+            "id": "common-A",
+            "convention": "rh_y_up_neg_z_forward",
+            "revision": 1
+          }
+        },
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "calibration_epoch": "calibration-A",
+        "mapping_revision": 7
+      },
+      "transform": {
+        "rotation_xyzw": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "translation_xyz": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  },
+  {
+    "file": "valid/common-hmd-pose-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.common_world",
+      "type": "common_pose",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "mapping": {
+        "world": {
+          "owner_id": "synthetic-bridge",
+          "world_epoch": "world-A",
+          "coordinate_space": {
+            "id": "common-A",
+            "convention": "rh_y_up_neg_z_forward",
+            "revision": 1
+          }
+        },
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "calibration_epoch": "calibration-A",
+        "mapping_revision": 7
+      },
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "9007199254740993",
+        "source_locate_time_ns": "-123",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "source_position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "source_orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      },
+      "common_position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "common_orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  },
+  {
+    "file": "valid/common-hmd-unavailable-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.common_world",
+      "type": "common_unavailable",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "mapping": {
+        "world": {
+          "owner_id": "synthetic-bridge",
+          "world_epoch": "world-A",
+          "coordinate_space": {
+            "id": "common-A",
+            "convention": "rh_y_up_neg_z_forward",
+            "revision": 1
+          }
+        },
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "calibration_epoch": "calibration-A",
+        "mapping_revision": 7
+      },
+      "reason": "pose_unavailable",
+      "validity": null
+    }
+  },
+  {
+    "file": "valid/mapping-revocation-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.common_world",
+      "type": "mapping_revocation",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "mapping": {
+        "world": {
+          "owner_id": "synthetic-bridge",
+          "world_epoch": "world-A",
+          "coordinate_space": {
+            "id": "common-A",
+            "convention": "rh_y_up_neg_z_forward",
+            "revision": 1
+          }
+        },
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "calibration_epoch": "calibration-A",
+        "mapping_revision": 7
+      },
+      "reason": "mapping_withdrawn"
+    }
+  },
+  {
+    "file": "valid/world-revocation-future-minor.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 2
+      },
+      "protocol": "monaka.common_world",
+      "type": "world_revocation",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "world": {
+        "owner_id": "synthetic-bridge",
+        "world_epoch": "world-A",
+        "coordinate_space": {
+          "id": "common-A",
+          "convention": "rh_y_up_neg_z_forward",
+          "revision": 1
+        }
+      },
+      "reason": "anchor_authority_lost"
+    }
+  },
+  {
+    "file": "valid/unknown-field.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_authority",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "source_space_kind": "openxr_view_in_stage",
+      "source_time_domain_id": "xr-time-A",
+      "future_note": "ignored"
+    }
+  },
+  {
+    "file": "valid/source-pose-negative-q.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_pose",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "observation_id": "9007199254740993",
+        "source_locate_time_ns": "-123",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      }
+    }
+  },
+  {
+    "file": "valid/source-unavailable-unknown-flags.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.hmd_authority",
+      "type": "source_unavailable",
+      "publisher_id": "synthetic-alvr",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "source_space": {
+        "source_id": "synthetic-alvr",
+        "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+        "source_space_id": "stage-view",
+        "source_space_generation": "0"
+      },
+      "reason": "tracking_lost",
+      "validity": null
+    }
+  },
+  {
+    "file": "invalid/blank-unicode-id.json",
+    "error": "OutOfRange",
+    "decoded": null
+  },
+  {
+    "file": "valid/nested-future-field.json",
+    "error": null,
+    "decoded": {
+      "version": {
+        "major": 2,
+        "minor": 1
+      },
+      "protocol": "monaka.common_world",
+      "type": "common_pose",
+      "publisher_id": "synthetic-bridge",
+      "session_id": "11111111-1111-4111-8111-111111111111",
+      "clock_id": "22222222-2222-4222-8222-222222222222",
+      "sequence": "0",
+      "timestamp_ns": "9007199254740993",
+      "sent_at_ns": "9007199254740994",
+      "timestamp_kind": "receive",
+      "mapping": {
+        "world": {
+          "owner_id": "synthetic-bridge",
+          "world_epoch": "world-A",
+          "coordinate_space": {
+            "id": "common-A",
+            "convention": "rh_y_up_neg_z_forward",
+            "revision": 1
+          }
+        },
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0"
+        },
+        "calibration_epoch": "calibration-A",
+        "mapping_revision": 7
+      },
+      "source": {
+        "source_space": {
+          "source_id": "synthetic-alvr",
+          "source_authority_session_epoch": "00112233445566778899aabbccddeeff",
+          "source_space_id": "stage-view",
+          "source_space_generation": "0",
+          "future_note": "ignored"
+        },
+        "observation_id": "9007199254740993",
+        "source_locate_time_ns": "-123",
+        "source_time_domain_id": "xr-time-A"
+      },
+      "source_position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "source_orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "validity": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true,
+        "view_position_valid": true,
+        "view_orientation_valid": true
+      },
+      "common_position": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "common_orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  }
+]

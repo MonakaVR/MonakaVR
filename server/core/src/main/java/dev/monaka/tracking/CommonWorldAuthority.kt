@@ -130,7 +130,12 @@ internal data class CommonWorldMappedHmdPose(
  * Mutations and final acceptance linearize on this monitor; arithmetic runs outside it.
  * Tombstones/high-waters survive revocation and replacement, with no eviction on saturation.
  */
-internal class CommonWorldAuthorityState(private val expectedOwnerId: String, private val capacity: Int = 128) {
+internal class CommonWorldAuthorityState(
+	private val expectedOwnerId: String,
+	private val capacity: Int = 128,
+	/** C2.1 scopes mapping revisions to owner/world; legacy 5Z callers retain Config-global ordering. */
+	private val worldScopedMappingHighWater: Boolean = false,
+) {
 	init { require(expectedOwnerId.isNotBlank() && capacity > 0) }
 	private var world: CommonWorldAuthorityHandle? = null
 	private var mapping: SourceToCommonMappingHandle? = null
@@ -164,6 +169,12 @@ internal class CommonWorldAuthorityState(private val expectedOwnerId: String, pr
 		if (highest == null && worldRevisions.size >= capacity) { exhaust(); return null }
 		if (old != null) revokeWorld(CommonWorldRevocationReason.EXPLICIT_WORLD_REPLACEMENT)
 		if (exhausted) return null
+		if (worldScopedMappingHighWater) {
+			// An epoch that reached this path is fresh; retired epochs can never revisit this reset.
+			// Repeating the current world returned above and preserves its frozen high-water.
+			lastMapping = null
+			mappingHighWater = null
+		}
 		worldRevisions[authority.space.id] = authority.space.revision
 		return CommonWorldAuthorityHandle(authority).also { world = it }
 	}

@@ -8,9 +8,11 @@ ROOT = Path(__file__).resolve().parents[1]
 CHECK = argparse.ArgumentParser()
 CHECK.add_argument('--check', action='store_true')
 CHECK.add_argument('--wire-major', type=int, choices=[1, 2], default=1)
+CHECK.add_argument('--wire-minor', type=int, choices=[0, 1], default=0)
 args = CHECK.parse_args()
 checking = args.check
 v2 = args.wire_major == 2
+if args.wire_minor and not v2: CHECK.error("minor 1 requires major 2")
 
 def put(name, content):
     if v2:
@@ -111,8 +113,12 @@ for file,names in [('tracker-observation',list(messages)[:2]),('monaka-tracking'
               'oneOf':[ref(n) for n in names], '$defs':defs}
     put(f'schema/{file}.schema.json',json.dumps(schema,indent=2,ensure_ascii=False)+'\n')
 
-cpp_types = {'Id':'std::string','Uuid':'std::string','U63':'std::int64_t','UInt32':'std::uint32_t','UInt16':'std::uint16_t','Fraction':'double','Bool':'bool','Vec3':'Vec3','QuatXyzw':'QuatXyzw','Capabilities':'std::vector<std::string>'}
-kt_types = {'Id':'String','Uuid':'String','U63':'Long','UInt32':'Long','UInt16':'Int','Fraction':'Double','Bool':'Boolean','Vec3':'List<Double>','QuatXyzw':'List<Double>','Capabilities':'List<String>'}
+if v2:
+    import authority_definition as authority
+    authority.define(defs, model, fields, ref, enum, messages, put, ROOT)
+
+cpp_types = {'Id':'std::string','Uuid':'std::string','U63':'std::int64_t','I64':'std::int64_t','UInt32':'std::uint32_t','UInt16':'std::uint16_t','Fraction':'double','Bool':'bool','Vec3':'Vec3','QuatXyzw':'QuatXyzw','Capabilities':'std::vector<std::string>'}
+kt_types = {'Id':'String','Uuid':'String','U63':'Long','I64':'Long','UInt32':'Long','UInt16':'Int','Fraction':'Double','Bool':'Boolean','Vec3':'List<Double>','QuatXyzw':'List<Double>','Capabilities':'List<String>'}
 for n,d in defs.items():
     if 'enum' in d: cpp_types[n]='std::string'; kt_types[n]='String'
 cpp = '#pragma once\n#include <array>\n#include <cstdint>\n#include <optional>\n#include <string>\n#include <variant>\n#include <vector>\nnamespace monaka::protocol::v1 {\nusing Vec3 = std::array<double,3>;\nusing QuatXyzw = std::array<double,4>;\n'
@@ -131,12 +137,12 @@ for name,ff in models.items():
     conversions += f'void to_json(json& j, const {name}& v) {{ j=json::object();\n'
     ktcon += f'internal fun {name}.toJson(): JsonObject = JsonObject().also {{ j ->\n'
     for n,t,null,opt in ff:
-        expr = f'std::to_string(v.{n})' if t=='U63' else f'v.{n}'
+        expr = f'std::to_string(v.{n})' if t in ('U63','I64') else f'v.{n}'
         if null:
-            expr = f'std::to_string(*v.{n})' if t=='U63' else f'*v.{n}'
+            expr = f'std::to_string(*v.{n})' if t in ('U63','I64') else f'*v.{n}'
             conversions += f'    if(v.{n}) j["{n}"]={expr}; else j["{n}"]=nullptr;\n'
         else: conversions += f'    j["{n}"]={expr};\n'
-        kexpr = f'{n}.toString()' if t=='U63' else n
+        kexpr = f'{n}.toString()' if t in ('U63','I64') else n
         if t in models: kexpr=f'{n}{"?" if null else ""}.toJson()'
         else: kexpr=f'gson.toJsonTree({kexpr})'
         ktcon += f'    j.add("{n}", {kexpr})\n'
@@ -150,7 +156,7 @@ for name,ff in models.items():
     ktcon += f'internal fun read{name}(j: JsonObject): {name} = {name}(\n'
     for n,t,null,opt in ff:
         ct=cpp_types.get(t,t)
-        expr=f'std::stoll(j.at("{n}").get<std::string>())' if t=='U63' else f'j.at("{n}").get<{ct}>()'
+        expr=f'std::stoll(j.at("{n}").get<std::string>())' if t in ('U63','I64') else f'j.at("{n}").get<{ct}>()'
         if null: conversions += f'    if(j.contains("{n}") && !j.at("{n}").is_null()) v.{n}={expr}; else v.{n}.reset();\n'
         else: conversions += f'    v.{n}={expr};\n'
         x=f'j.get("{n}")'
@@ -162,7 +168,7 @@ for name,ff in models.items():
         ktcon+=f'    {n} = {kexpr},\n'
     conversions+='}\n'
     ktcon+=')\n'
-cpp += 'using Envelope = std::variant<TrackerObservation,ObservationDeviceState,MtpPose,MtpTrackerState>;\n}\n'
+cpp += 'using Envelope = std::variant<' + ','.join(messages) + '>;\n}\n'
 put('cpp/include/monaka/protocol/v1/models.hpp',cpp)
 put('cpp/src/models_json.inc',conversions)
 put('jvm/src/main/kotlin/dev/monaka/protocol/v1/Models.kt',kt)
@@ -183,6 +189,7 @@ if v2:
             need(j["modality"]=="none",ErrorCode::InconsistentValidity,"inactive state modality");
         return;
     }''')
+    cpp_codec = authority.cpp_codec(cpp_codec)
     put('cpp/src/codec.cpp', cpp_codec)
     put('cpp/include/monaka/protocol/v1/codec.hpp', (ROOT / 'cpp/include/monaka/protocol/v1/codec.hpp').read_text().replace('protocol/v1/', 'protocol/v2/'))
     kt_codec = (ROOT / 'jvm/src/main/kotlin/dev/monaka/protocol/v1/MonakaCodec.kt').read_text(encoding='utf-8').replace('major==1.0,', 'major==2.0,')
@@ -194,4 +201,5 @@ if v2:
             need(j["modality"].asString=="none",ErrorCode.InconsistentValidity,"inactive state modality")
         return
     }''')
+    kt_codec = authority.kt_codec(kt_codec)
     put('jvm/src/main/kotlin/dev/monaka/protocol/v1/MonakaCodec.kt', kt_codec)

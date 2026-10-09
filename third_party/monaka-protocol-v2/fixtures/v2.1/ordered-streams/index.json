@@ -1,0 +1,375 @@
+[
+  {
+    "file": "ordered-streams/source-normal.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "unavailable",
+      "pose"
+    ]
+  },
+  {
+    "file": "ordered-streams/source-revoke-no-pose.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "revoked"
+    ]
+  },
+  {
+    "file": "ordered-streams/common-normal.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "unavailable",
+      "pose"
+    ]
+  },
+  {
+    "file": "ordered-streams/common-revoke-no-pose.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "revoked"
+    ]
+  },
+  {
+    "file": "ordered-streams/mapping-revoke-no-pose.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "revoked"
+    ]
+  },
+  {
+    "file": "ordered-streams/gap.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "gap",
+      "closed",
+      "closed"
+    ]
+  },
+  {
+    "file": "ordered-streams/duplicate-same.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "duplicate"
+    ]
+  },
+  {
+    "file": "ordered-streams/duplicate-resend.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "duplicate"
+    ]
+  },
+  {
+    "file": "ordered-streams/duplicate-conflict.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "conflict",
+      "closed"
+    ]
+  },
+  {
+    "file": "ordered-streams/reorder.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "old",
+      "pose"
+    ]
+  },
+  {
+    "file": "ordered-streams/delayed-after-revoke.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "revoked",
+      "old",
+      "untrusted"
+    ]
+  },
+  {
+    "file": "ordered-streams/pose-before-authority.jsonl",
+    "outcomes": [
+      "bootstrap-failed"
+    ]
+  },
+  {
+    "file": "ordered-streams/common-before-mapping.jsonl",
+    "outcomes": [
+      "world",
+      "untrusted"
+    ]
+  },
+  {
+    "file": "ordered-streams/stale-mapping-pose.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "mapping",
+      "untrusted"
+    ]
+  },
+  {
+    "file": "ordered-streams/common-mapping-update.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "mapping",
+      "pose"
+    ]
+  },
+  {
+    "file": "ordered-streams/common-world-replace.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "revoked",
+      "world",
+      "mapping",
+      "pose"
+    ]
+  },
+  {
+    "file": "ordered-streams/source-generation.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "authority",
+      "pose"
+    ]
+  },
+  {
+    "file": "ordered-streams/fresh-session-after-gap.jsonl",
+    "outcomes": [
+      "authority",
+      "gap",
+      "authority",
+      "pose",
+      "retired"
+    ]
+  },
+  {
+    "file": "ordered-streams/source-revoked-token-replay.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "revoked",
+      "untrusted",
+      "untrusted"
+    ]
+  },
+  {
+    "file": "ordered-streams/mapping-high-water-after-revoke.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "revoked",
+      "untrusted",
+      "mapping",
+      "pose"
+    ]
+  },
+  {
+    "file": "ordered-streams/retired-world-fresh-session.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "revoked",
+      "untrusted",
+      "untrusted"
+    ]
+  },
+  {
+    "file": "ordered-streams/common-seq102-revoke-no-pose.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "pose",
+      "mapping",
+      "pose",
+      "revoked"
+    ]
+  },
+  {
+    "file": "ordered-streams/mapping-high-water-reconnect.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "mapping",
+      "world",
+      "untrusted",
+      "untrusted"
+    ]
+  },
+  {
+    "file": "ordered-streams/mapping-conflict-reconnect.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "mapping",
+      "world",
+      "untrusted",
+      "untrusted"
+    ]
+  },
+  {
+    "file": "ordered-streams/mapping-snapshot-reconnect.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "mapping",
+      "world",
+      "mapping",
+      "pose"
+    ]
+  },
+  {
+    "file": "ordered-streams/mapping-high-water-republication.jsonl",
+    "outcomes": [
+      "world",
+      "mapping",
+      "pose",
+      "mapping",
+      "world",
+      "untrusted",
+      "untrusted"
+    ]
+  },
+  {
+    "file": "ordered-streams/source-ambiguous-revoke-generation.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "revoked",
+      "authority",
+      "pose"
+    ]
+  },
+  {
+    "file": "ordered-streams/source-lost-token-new-generation.jsonl",
+    "outcomes": [
+      "authority",
+      "pose",
+      "revoked",
+      "untrusted",
+      "untrusted"
+    ]
+  }
+]

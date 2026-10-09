@@ -117,6 +117,6 @@ sourceSets.getByName("test").java.exclude("dev/monaka/tracking/pico/**")
 
 val verifyMonakaUpstream by tasks.registering(Exec::class) {
 	workingDir(rootProject.projectDir)
-	commandLine("python", "scripts/verify_protocol_v2.py")
+	commandLine("python", "scripts/verify_protocol_v21.py")
 }
 tasks.named("compileKotlin") { dependsOn(verifyMonakaUpstream) }
