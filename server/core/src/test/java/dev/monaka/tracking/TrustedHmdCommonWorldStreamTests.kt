@@ -333,4 +333,3 @@ internal class TrustedHmdCommonWorldStreamTests {
 		assertEquals("duplicate", s.receive(mapping, 100)); assertEquals(Vector3(0f, 0f, 0f), s.currentMapping()!!.snapshot.transform.translation)
 	}
 }
-
