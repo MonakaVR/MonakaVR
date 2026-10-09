@@ -21,6 +21,18 @@ import java.nio.file.Path
 import kotlin.test.*
 
 internal class PositionCorrectionNonHmdProductionAdapterTests {
+	@Test fun mtpWireHasNoWorldEpochAndRuntimeImuBindingCannotFabricateTeacherWorld() {
+		val t = tracker(); val tick = tick(t); val f = foundation()
+		val result = bundle(adapter(t, f.copy(rawImuBinding = f.rawImuBinding.copy(commonWorldEpoch = "W1"))), tick)
+		assertEquals("W1", assertIs<PositionCorrectionProductionRawImuResult.Available>(result.rawImu).input.provenance.commonWorldEpoch)
+		val teacher = assertIs<PositionCorrectionProductionTeacherResult.Available>(result.teacher).value
+		assertNull(teacher.teacher.provenance.commonWorldEpoch); assertNull(teacher.expectedEpoch.commonWorldEpoch)
+		val raw = observation().let { it.copy(provenance = it.provenance!!.copy(commonWorldEpoch = "W1")) }
+		val spoofed = bundle(adapter(t), tick, sources(tick, raw = raw))
+		assertEquals(PositionCorrectionProductionTeacherRejection.TEACHER_CONTEXT_MISMATCH,
+			assertIs<PositionCorrectionProductionTeacherResult.Unavailable>(spoofed.teacher).reason)
+	}
+
 	private val hip = TrackerPosition.HIP
 	private fun fixture() = (MonakaCodec.decodeEnvelope(File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes()) as DecodeResult.Success).value as MtpPose
 	private val pose = fixture()

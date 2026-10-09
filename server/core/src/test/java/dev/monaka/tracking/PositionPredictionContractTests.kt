@@ -8,6 +8,33 @@ import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class PositionPredictionContractTests {
+	@Test fun commonWorldProvenanceIsOptionalNonblankAndPreservedByCopy() {
+		val legacy = provenance(80)
+		assertNull(legacy.commonWorldEpoch)
+		val world = legacy.copy(commonWorldEpoch = "W1")
+		assertEquals("W1", world.copy(sequence = 5).commonWorldEpoch)
+		for (blank in listOf("", " ", "\t")) {
+			assertFailsWith<IllegalArgumentException> { legacy.copy(commonWorldEpoch = blank) }
+			assertFailsWith<IllegalArgumentException> { input().epoch().copy(commonWorldEpoch = blank) }
+		}
+	}
+
+	@Test fun hmdAndImuWorldEpochsMustMatchIncludingMissingSides() {
+		val original = input()
+		fun withWorlds(hmd: String?, imu: String?) = original.copy(
+			rawHmd = original.rawHmd.copy(provenance = original.rawHmd.provenance.copy(commonWorldEpoch = hmd)),
+			rawImu = original.rawImu.copy(provenance = original.rawImu.provenance.copy(commonWorldEpoch = imu)))
+		assertEquals(original.epoch(), withWorlds(null, null).epoch())
+		val w1 = withWorlds("W1", "W1")
+		assertEquals("W1", w1.epoch().commonWorldEpoch)
+		assertNotEquals(original.epoch(), w1.epoch())
+		assertNotEquals(w1.epoch(), withWorlds("W2", "W2").epoch())
+		assertEquals(w1.epoch(), w1.copy(rawHmd = w1.rawHmd.copy(
+			provenance = w1.rawHmd.provenance.copy(sequence = 99, sampleAtNanos = 81)), predictionSequence = 99).epoch())
+		for ((hmd, imu) in listOf("W1" to null, null to "W1", "W1" to "W2"))
+			assertFailsWith<IllegalArgumentException> { withWorlds(hmd, imu) }
+	}
+
 	private val space = CoordinateSpace("canonical", "rh_y_up_neg_z_forward", 2)
 	private val safe = setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
 		PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION)

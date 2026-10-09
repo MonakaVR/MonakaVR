@@ -10,8 +10,11 @@ data class ObservationSampleProvenance(
 	val calibrationEpoch: String,
 	val mappingRevision: Long? = null,
 	val space: CoordinateSpace? = null,
+	/** Null is legacy/unavailable. Never infer a live world from numeric space revision. */
+	val commonWorldEpoch: String? = null,
 ) {
 	init {
 		require(sequence >= 0 && sampleAtNanos >= 0 && sourceEpoch.isNotBlank() && calibrationEpoch.isNotBlank())
+		require(commonWorldEpoch == null || commonWorldEpoch.isNotBlank())
 	}
 }

@@ -25,10 +25,12 @@ internal data class PositionTeacherEpoch(
 	val assignmentGeneration: Long,
 	val bodyReference: PositionBodyReference,
 	val mountCalibration: MainTrackerMountCalibrationIdentity,
+	val commonWorldEpoch: String? = null,
 ) {
 	init {
 		require(sourceId.isNotBlank() && sourceEpoch.isNotBlank() && calibrationEpoch.isNotBlank())
 		require(assignmentGeneration >= 0 && bodyReference != PositionBodyReference.UNKNOWN)
+		require(commonWorldEpoch == null || commonWorldEpoch.isNotBlank())
 	}
 
 	companion object {
@@ -49,6 +51,7 @@ internal data class PositionTeacherEpoch(
 				assignmentGeneration = input.assignmentGeneration,
 				bodyReference = bodyReference,
 				mountCalibration = main.mountCalibration,
+				commonWorldEpoch = provenance.commonWorldEpoch,
 			)
 		}
 	}

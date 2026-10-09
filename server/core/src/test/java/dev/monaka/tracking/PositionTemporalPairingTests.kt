@@ -9,6 +9,33 @@ import org.junit.jupiter.params.provider.CsvSource
 import kotlin.test.*
 
 class PositionTemporalPairingTests {
+	@Test fun teacherPredictionWorldEpochsMatchExactlyBeforeAnyTemporalComparison() {
+		val legacy = input()
+		for ((teacherWorld, predictionWorld) in listOf(null to null, "W1" to "W1", "W1" to "W2",
+			null to "W1", "W1" to null)) {
+			val expected = epoch.copy(commonWorldEpoch = predictionWorld)
+			val value = legacy.copy(mainTeacher = legacy.mainTeacher.copy(
+				provenance = legacy.mainTeacher.provenance.copy(commonWorldEpoch = teacherWorld)),
+				prediction = prediction(predictionEpoch = expected), expectedPredictionEpoch = expected)
+			val teacher = teacherEpoch(value)
+			assertEquals(teacherWorld, teacher.commonWorldEpoch)
+			if (teacherWorld == predictionWorld) {
+				val paired = pairable(value, teacher)
+				assertEquals(teacherWorld, paired.teacherEpoch.commonWorldEpoch)
+				assertEquals(predictionWorld, paired.predictionEpoch.commonWorldEpoch)
+				val measured = assertIs<PositionErrorMeasurementResult.Measured>(PositionErrorMeasurement.evaluate(value, teacher, policy))
+				assertEquals(teacherWorld, measured.sample.teacherEpoch.commonWorldEpoch)
+			} else {
+				rejected(value, PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE, teacher,
+					structuralReason = "common_world_epoch_mismatch")
+				assertIs<PositionErrorMeasurementResult.Rejected>(PositionErrorMeasurement.evaluate(value, teacher, policy))
+			}
+		}
+		assertFailsWith<IllegalArgumentException> { teacherEpoch().copy(commonWorldEpoch = " ") }
+		rejected(legacy, PositionTemporalPairingRejectionReason.TEACHER_EPOCH_MISMATCH,
+			teacherEpoch().copy(commonWorldEpoch = "W1"))
+	}
+
 	private val space = CoordinateSpace("canonical", "rh_y_up_neg_z_forward", 2)
 	private val origin = RawSourceIdentity("synthetic:main", RawSourceKind.RAW_BACKEND)
 	private val mount = MainTrackerMountCalibrationIdentity("synthetic-mount", "synthetic-mount:1")

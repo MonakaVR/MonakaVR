@@ -14,6 +14,18 @@ import java.nio.file.Path
 import kotlin.test.*
 
 internal class PositionCorrectionRuntimeOrchestratorTests {
+	@Test fun partialWorldActivationProducesUnavailableAssemblyWithoutCallingPredictor() {
+		for ((hmdWorld, imuWorld) in listOf("W1" to null, null to "W1", "W1" to "W2")) {
+			val h = Harness(); val base = tick(1); val s = base.predictorSources!!
+			val mixed = s.copy(rawHmd = s.rawHmd.copy(provenance = s.rawHmd.provenance.copy(commonWorldEpoch = hmdWorld)),
+				rawImu = s.rawImu.copy(provenance = s.rawImu.provenance.copy(commonWorldEpoch = imuWorld)))
+			val r = h.run(tick(1, sourceValue = mixed))
+			assertEquals(PositionCorrectionAssemblyFailure.COMMON_WORLD_EPOCH_MISMATCH,
+				assertIs<PositionCorrectionPredictorAssemblyResult.Unavailable>(r.assembly).reason)
+			assertEquals(0, h.predicts); assertNull(r.prediction)
+		}
+	}
+
 	private val hip = TrackerPosition.HIP
 	private val space = CoordinateSpace("synthetic-world", "rh_y_up_neg_z_forward", 7)
 	private val predictionPolicy = MainDecoupledHipPredictorPolicy(20_000_000, 100_000_000, 100_000_000)

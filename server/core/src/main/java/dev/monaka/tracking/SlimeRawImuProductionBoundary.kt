@@ -9,7 +9,11 @@ internal data class SlimeRawImuCoordinateSpaceBinding(
 	val sourceId: String,
 	val space: CoordinateSpace,
 	val operatorConfirmed: Boolean,
-)
+	/** Runtime-only future Bridge publication seam; absent from persistent config. */
+	val commonWorldEpoch: String? = null,
+) {
+	init { require(commonWorldEpoch == null || commonWorldEpoch.isNotBlank()) }
+}
 
 internal enum class SlimeRawImuInputRejectionReason {
 	TRACKER_NOT_PHYSICAL, TRACKER_NOT_IMU, TRACKER_INTERNAL, TRACKER_COMPUTED, TRACKER_IS_HMD,
@@ -82,6 +86,6 @@ internal class SlimeRawImuProductionBoundary(
 		// Fixed transforms preserve norm for unit inputs. Normalize valid non-unit inputs at this boundary only.
 		return SlimeRawImuInputResult.Available(RawImuOrientationInput(
 			RawSourceIdentity(sourceId, RawSourceKind.RAW_IMU), q.unit(), space,
-			sample.provenance.copy(space = space)))
+			sample.provenance.copy(space = space, commonWorldEpoch = binding.commonWorldEpoch)))
 	}
 }

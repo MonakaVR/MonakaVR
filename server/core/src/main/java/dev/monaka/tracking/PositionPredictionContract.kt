@@ -83,11 +83,13 @@ data class PositionPredictionEpoch(
 	val fixedCalibrationEpoch: String,
 	val coordinateSpace: CoordinateSpace,
 	val assignmentGeneration: Long,
+	val commonWorldEpoch: String? = null,
 ) {
 	init {
 		require(listOf(hmdSourceId, hmdSourceEpoch, hmdCalibrationEpoch, imuSourceId, imuSourceEpoch,
 			imuCalibrationEpoch, bodyModelId, bodyModelEpoch, fixedCalibrationId, fixedCalibrationEpoch).all(String::isNotBlank))
 		require(assignmentGeneration >= 0)
+		require(commonWorldEpoch == null || commonWorldEpoch.isNotBlank())
 	}
 }
 
@@ -143,6 +145,9 @@ data class MainDecoupledHipInput(
 		require(target == TrackerPosition.HIP && assignmentGeneration >= 0 && nowNanos >= 0)
 		require(predictionSequence >= 0)
 		require(rawHmd.space == space && rawImu.space == space)
+		require(rawHmd.provenance.commonWorldEpoch == rawImu.provenance.commonWorldEpoch) {
+			"Raw HMD/IMU common world epoch mismatch"
+		}
 		require(fixedCalibration.hmdSourceId == rawHmd.source.sourceId) { "Fixed calibration HMD source mismatch" }
 		require(fixedCalibration.bodyModelId == bodyModel.identity.modelId) { "Fixed calibration body model mismatch" }
 		require(rawHmd.provenance.sampleAtNanos <= nowNanos && rawImu.provenance.sampleAtNanos <= nowNanos)
@@ -162,6 +167,7 @@ data class MainDecoupledHipInput(
 		fixedCalibrationEpoch = fixedCalibration.identity.epoch,
 		coordinateSpace = space,
 		assignmentGeneration = assignmentGeneration,
+		commonWorldEpoch = rawHmd.provenance.commonWorldEpoch,
 	)
 }
 
@@ -250,6 +256,8 @@ object PositionCorrectionTeacherEligibility {
 		if (main.space != input.expectedSpace || mainProvenance.space != input.expectedSpace ||
 			prediction.space != input.expectedSpace)
 			return reject("space_mismatch")
+		if (mainProvenance.commonWorldEpoch != prediction.provenance!!.epoch.commonWorldEpoch)
+			return reject("common_world_epoch_mismatch")
 		if (main.bodyReference != prediction.bodyReference) return reject("body_reference_mismatch")
 		if (!directlyComparable(main.bodyReference, prediction.bodyReference))
 			return reject("body_reference_not_comparable")

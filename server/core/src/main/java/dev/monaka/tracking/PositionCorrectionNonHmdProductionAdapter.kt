@@ -134,7 +134,8 @@ internal class PositionCorrectionNonHmdProductionAdapter(
 			PositionBodyReference.HIP_CENTER, mount.identity)
 		val p = teacher.provenance
 		if (p.sourceEpoch != expected.sourceEpoch || p.calibrationEpoch != expected.calibrationEpoch ||
-			p.mappingRevision != expected.mappingRevision || p.space != expected.coordinateSpace)
+			p.mappingRevision != expected.mappingRevision || p.space != expected.coordinateSpace ||
+			p.commonWorldEpoch != expected.commonWorldEpoch)
 			return reject(PositionCorrectionProductionTeacherRejection.TEACHER_CONTEXT_MISMATCH)
 		return PositionCorrectionProductionTeacherResult.Available(PositionCorrectionTeacherTickValue(teacher, expected))
 	}

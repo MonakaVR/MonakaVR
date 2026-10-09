@@ -326,10 +326,54 @@ class StrongTrustedHmdPolicyTests {
 		}
 	}
 
-	@Test fun changedMappingCannotKeepOldOutputEpochEvenWithNewRevision() {
-		val f = Fixture()
-		assertFalse(f.raw.establishProviderSession(f.context.copy(appliedMapping = mapping.copy(revision = 24)), policy))
+	@Test fun newerMappingWithinSameOutputEpochClearsCandidateButKeepsObservationHighWater() {
+		for (calibration in listOf(mapping.calibrationEpoch, "fresh-calibration")) {
+			val f = Fixture(); f.seed(10)
+			val old = f.capability()
+			val next = f.context.copy(appliedMapping = mapping.copy(revision = 24, calibrationEpoch = calibration))
+			assertTrue(f.raw.establishProviderSession(next, policy)); assertNull(f.pose())
+			assertEquals(mapping.outputSpaceEpoch, f.raw.currentProviderSession()!!.appliedMapping.outputSpaceEpoch)
+			f.seed(9, proof = f.evidence(9, next)); assertNull(f.pose())
+			f.seed(11, proof = f.evidence(11, next))
+			val input = assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission()).input
+			assertEquals(24, input.provenance.mappingRevision); assertEquals(calibration, input.provenance.calibrationEpoch)
+			rejected(PROVIDER_EVIDENCE_INVALID, f.admission(old))
+		}
+	}
+
+	@Test fun mappingConflictsNullMutableMappingAndOutputDescriptorChangesFailClosed() {
+		for (changed in listOf(mapping.copy(calibrationEpoch = "different"), mapping.copy(identity = true),
+			mapping.copy(revision = null, identity = true), mapping.copy(revision = 24, outputSpace = space.copy(revision = 18)))) {
+			val f = Fixture()
+			assertFalse(f.raw.establishProviderSession(f.context.copy(appliedMapping = changed), policy))
+			assertNull(f.pose()); assertNull(f.raw.currentProviderSession())
+		}
+		val f = Fixture(); val initial = f.context.copy(appliedMapping = mapping.copy(revision = null, identity = true,
+			outputSpaceEpoch = "fresh-output", calibrationEpoch = "fresh-calibration"))
+		assertTrue(f.raw.establishProviderSession(initial, policy))
+		assertFalse(f.raw.establishProviderSession(initial.copy(appliedMapping = initial.appliedMapping.copy(
+			calibrationEpoch = "changed-without-revision")), policy))
 		assertNull(f.pose()); assertNull(f.raw.currentProviderSession())
+	}
+
+	@Test fun mappingRollbackIsRejectedWithoutReplacingCurrentContextOrResettingHighWater() {
+		val f = Fixture(); f.seed(10)
+		assertFalse(f.raw.establishProviderSession(f.context.copy(appliedMapping = mapping.copy(revision = 22)), policy))
+		assertNull(f.pose()); assertEquals(f.context, f.raw.currentProviderSession())
+		f.seed(9); assertNull(f.pose()); f.seed(11)
+		assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
+	}
+
+	@Test fun calibrationAbaAndRetiredOutputEpochAcrossProviderSessionsAreRejected() {
+		val f = Fixture(); val next = f.context.copy(appliedMapping = mapping.copy(revision = 24, calibrationEpoch = "C2"))
+		assertTrue(f.raw.establishProviderSession(next, policy))
+		assertFalse(f.raw.establishProviderSession(next.copy(appliedMapping = next.appliedMapping.copy(
+			revision = 25, calibrationEpoch = mapping.calibrationEpoch)), policy))
+		assertNull(f.pose())
+		val g = Fixture(); val other = g.context.copy(appliedMapping = mapping.copy(outputSpaceEpoch = "W2", revision = 24))
+		assertTrue(g.raw.establishProviderSession(other, policy))
+		assertFalse(g.raw.establishProviderSession(other.copy(providerSessionEpoch = "fresh-provider", appliedMapping = mapping), policy))
+		assertNull(g.pose())
 	}
 
 	@Test fun retiredSessionBoundExhaustionFailsClosedWithoutEvictingOldTokens() {
