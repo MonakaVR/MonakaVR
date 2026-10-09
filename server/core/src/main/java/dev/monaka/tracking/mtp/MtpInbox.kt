@@ -17,12 +17,12 @@ class MtpInbox(private val capacity: Int = DEFAULT_CAPACITY) {
 	fun receive(bytes: ByteArray, receivedAtNanos: Long, peer: String = "in-memory"): Boolean {
 		require(receivedAtNanos >= 0)
 		return when (val decoded = MonakaCodec.decodeEnvelope(bytes)) {
-			is DecodeResult.Failure -> { count(decoded.code.name); false }
+			is DecodeResult.Failure -> { count(decoded.code.name); dev.monaka.tracking.diagnostic.RuntimeDiagnostics.observer?.warning(decoded.code.name); false }
 			is DecodeResult.Success -> {
 				if (decoded.value !is MtpPose && decoded.value !is MtpTrackerState) {
 					count("WrongProtocol"); false
 				} else if (!queue.offer(Received(decoded.value, receivedAtNanos, peer))) {
-					count("QueueFull"); false
+					count("QueueFull"); dev.monaka.tracking.diagnostic.RuntimeDiagnostics.observer?.warning("IngressQueueFull"); false
 				} else { count("Validated"); true }
 			}
 		}

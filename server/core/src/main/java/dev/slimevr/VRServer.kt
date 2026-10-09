@@ -300,6 +300,13 @@ class VRServer @JvmOverloads constructor(
 	fun registerTracker(tracker: Tracker) {
 		configManager.vrConfig.readTrackerConfig(tracker)
 		queueTask {
+			dev.monaka.tracking.diagnostic.RuntimeDiagnostics.event(
+				if (tracker.isComputed) "virtual_tracker_registered" else "tracker_registered", "slime",
+				mapOf("domain" to if (tracker.isComputed) "virtual_tracker_id" else "runtime_registration_id",
+					"value" to tracker.name, "stable_scope" to "MonakaVR-tracker-name", "source" to "slime"),
+				tracker.trackerPosition?.let { mapOf("role_source" to "runtime_role", "role_value" to it.name, "role_scope" to "body_target") },
+				mapOf("duplicate_registration_input" to trackers.any { it.name == tracker.name }),
+			)
 			trackers.add(tracker)
 			trackerAdded(tracker)
 			for (tc in newTrackersConsumers) {
