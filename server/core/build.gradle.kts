@@ -7,6 +7,8 @@
  */
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Properties
+import java.time.Instant
 
 plugins {
 	kotlin("jvm")
@@ -110,6 +112,7 @@ dependencies {
 
 tasks.test {
 	useJUnitPlatform()
+	systemProperty("monaka.diagnostics.output", rootProject.file("build/rr00b-diagnostics").absolutePath)
 	systemProperty("monaka.fixtures", rootProject.file("third_party/monaka-protocol-v2/fixtures").absolutePath)
 }
 sourceSets.getByName("main").java.exclude("dev/monaka/tracking/pico/**")
@@ -120,3 +123,27 @@ val verifyMonakaUpstream by tasks.registering(Exec::class) {
 	commandLine("python", "scripts/verify_protocol_v2.py")
 }
 tasks.named("compileKotlin") { dependsOn(verifyMonakaUpstream) }
+
+// Generate source provenance from this build checkout, never from a runtime working directory.
+val diagnosticResources = layout.buildDirectory.dir("generated/diagnostic-resources")
+val diagnosticBuildProvenance by tasks.registering {
+	outputs.dir(diagnosticResources)
+	outputs.upToDateWhen { false }
+	doLast {
+		fun git(vararg args: String) = rootProject.providers.exec {
+			workingDir(rootProject.projectDir)
+			commandLine(listOf("git") + args)
+		}.standardOutput.asText.get().trim()
+		val properties = Properties()
+		properties["version"] = project.version.toString()
+		properties["git_commit"] = git("rev-parse", "HEAD")
+		properties["git_branch_or_ref"] = git("rev-parse", "--abbrev-ref", "HEAD")
+		properties["dirty_at_build"] = git("status", "--porcelain").isNotEmpty().toString()
+		properties["build_timestamp_utc"] = Instant.now().toString()
+		val file = diagnosticResources.get().file("monaka-diagnostic-build.properties").asFile
+		file.parentFile.mkdirs()
+		file.outputStream().use { properties.store(it, "RR-00B build provenance") }
+	}
+}
+sourceSets["main"].resources.srcDir(diagnosticResources)
+tasks.named("processResources") { dependsOn(diagnosticBuildProvenance) }

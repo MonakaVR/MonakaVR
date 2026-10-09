@@ -10,6 +10,8 @@ class MtpObservationBackend(
 	private val expectedSpace: CoordinateSpace,
 	override val backendId: String = "mtp",
 	override val profileId: String = "mtp",
+	private val diagnostic: dev.monaka.tracking.diagnostic.RuntimeDiagnosticObserver? = dev.monaka.tracking.diagnostic.RuntimeDiagnostics.observer,
+	private val diagnosticTimeoutNanos: Long = 500_000_000,
 ) : ObservationBackend {
 	data class Sample(val pose: MtpPose, val sampleTime: Long)
 	private class Lifetime(val session: String, val clock: String, val peer: String, val retired: MutableSet<String>) {
@@ -62,6 +64,7 @@ class MtpObservationBackend(
 		for ((key, device) in devices) { device.sample = null; removed += key.observationId }
 	}
 	fun close() {
+		diagnostic?.close()
 		invalidateSamples(); inbox.clear(); devices.clear(); lifetimes.clear(); assignmentGeneration = -1
 	}
 	override fun drainRemovedSources(): Set<String> = removed.toSet().also { removed.clear() }
@@ -69,6 +72,7 @@ class MtpObservationBackend(
 	override fun poll(observedAtNanos: Long): List<PoseObservation> {
 		val dirty = linkedSetOf<LogicalTracker>()
 		for (message in inbox.drain()) admit(message, dirty)
+		diagnostic?.tick(observedAtNanos, diagnosticTimeoutNanos)
 		val assignment = assignments.snapshot()
 		if (assignment.generation != assignmentGeneration) {
 			dirty += devices.keys
@@ -132,7 +136,7 @@ class MtpObservationBackend(
 		val device = devices.getOrPut(key) { Device() }
 		val sequence = pose?.sequence ?: state!!.sequence
 		val previous = if (pose != null) device.poseSequence else device.stateSequence
-		if (sequence <= previous) { inbox.count("DuplicateOrOldSequence"); return }
+		if (sequence <= previous) { inbox.count("DuplicateOrOldSequence"); diagnostic?.warning("DuplicateOrOldSequence", key); return }
 		if (pose != null) device.poseSequence = sequence else device.stateSequence = sequence
 		val space = pose?.coordinate_space ?: state!!.coordinate_space
 		if (space != expectedSpace) {
@@ -154,6 +158,7 @@ class MtpObservationBackend(
 				}
 			}
 			lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
+			diagnostic?.observe(received.envelope, received.receivedAtNanos, assignments)
             return // Present/battery heartbeat cannot repair or refresh a pose.
 		}
 		dirty += key
@@ -164,6 +169,7 @@ class MtpObservationBackend(
 		val age = pose.sent_at_ns - pose.timestamp_ns // Both U63, codec checked timestamp <= sent_at.
 		if (age > received.receivedAtNanos) { inbox.count("BeforeLocalEpoch"); return }
 		device.sample = Sample(pose, received.receivedAtNanos - age)
+		diagnostic?.observe(pose, received.receivedAtNanos, assignments)
 		inbox.count("PoseAccepted")
 	}
 }

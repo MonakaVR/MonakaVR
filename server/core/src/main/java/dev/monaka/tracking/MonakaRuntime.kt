@@ -18,7 +18,7 @@ class MonakaRuntime(
 		ObservationSourceProfile.sixDof("mtp", 100, timeoutNanos, timeoutNanos),
 	))
 	val pipeline = ConstraintPipeline(profileRegistry = profiles, resolver = ConstraintResolver { assignments.snapshot().targets })
-	val mtp = MtpObservationBackend(inbox, assignments, expectedSpace)
+	val mtp = MtpObservationBackend(inbox, assignments, expectedSpace, diagnosticTimeoutNanos = timeoutNanos)
 	val runner = ObservationBackendRunner(pipeline, listOf(
 		SlimeTrackerObservationBackend("slime", "slime", { trackers().filter(FeedbackExclusion::accepts) }, assignments = { assignments.snapshot().targets }), mtp,
 	))
@@ -32,7 +32,8 @@ class MonakaRuntime(
 		if (paused != wasPaused) { mtp.suspend(true); runner.invalidate("mtp") }
 		for (backend in runner.snapshot().keys) {
 			if (backend == "mtp" && resuming) continue
-			try { runner.poll(backend, now) } catch (_: Exception) {
+			try { runner.poll(backend, now) } catch (e: Exception) {
+				dev.monaka.tracking.diagnostic.RuntimeDiagnostics.event("fatal_error", backend, details = mapOf("exception_type" to e.javaClass.name, "scope" to "backend-isolated"))
 				runner.invalidate(backend)
 				if (backend == "mtp") mtp.invalidateSamples()
 				inbox.count("BackendFailure:$backend")

@@ -32,7 +32,7 @@ class MtpUdpReceiver(private val inbox: MtpInbox, private val clock: () -> Long,
 						inbox.count("WorkerValidationFailure")
 					}
 				} catch (e: Exception) {
-					if (!closed) { failure = e; inbox.count("TransportFailure") }
+					if (!closed) { failure = e; inbox.count("TransportFailure"); dev.monaka.tracking.diagnostic.RuntimeDiagnostics.event("fatal_error", "mtp-receiver", details = mapOf("exception_type" to e.javaClass.name)) }
 					break
 				}
 			}

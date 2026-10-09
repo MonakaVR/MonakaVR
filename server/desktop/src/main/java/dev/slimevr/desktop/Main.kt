@@ -70,6 +70,7 @@ fun main(args: Array<String>) {
 	val isLinux = OperatingSystem.currentPlatform == OperatingSystem.LINUX
 	options.addOption("h", "help", false, "Show help")
 	options.addOption("V", "version", false, "Show version")
+	options.addOption(null, "version-json", false, "Show embedded diagnostic build provenance")
 	options.addOption("i", "install", false, "Run the driver install")
 	options.addOption("s", "steam", false, "Run the server in steam mode")
 	options.addOption("p", "pico", false, "Legacy PICO option: display MTP migration warning")
@@ -86,6 +87,10 @@ fun main(args: Array<String>) {
 	}
 	if (cmd.hasOption("help")) {
 		formatter.printHelp("slimevr.jar", options)
+		exitProcess(0)
+	}
+	if (cmd.hasOption("version-json")) {
+		println(dev.monaka.tracking.diagnostic.DiagnosticWriter.buildJson())
 		exitProcess(0)
 	}
 	if (cmd.hasOption("version")) {
@@ -110,6 +115,7 @@ fun main(args: Array<String>) {
 		System.err.println("Unknown command: ${cmd.args[0]}, expected 'run'")
 		exitProcess(1)
 	}
+	dev.monaka.tracking.diagnostic.RuntimeDiagnostics.ready()
 
 	val dir = OperatingSystem.resolveLogDirectory(SLIMEVR_IDENTIFIER)?.toFile()?.absoluteFile
 		?: File("").absoluteFile
@@ -239,6 +245,7 @@ fun main(args: Array<String>) {
 		LogManager.closeLogger()
 		exitProcess(0)
 	} catch (e: Throwable) {
+		dev.monaka.tracking.diagnostic.RuntimeDiagnostics.event("fatal_error", details = mapOf("exception_type" to e.javaClass.name))
 		e.printStackTrace()
 		exitProcess(1)
 	}
