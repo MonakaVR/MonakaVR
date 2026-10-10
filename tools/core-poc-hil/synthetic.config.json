@@ -1,0 +1,13 @@
+{
+  "hilMode": false,
+  "operatorConfirmedSameWorld": true,
+  "operatorConfirmedBodyFrames": true,
+  "space": {"id": "poc-synthetic-world", "convention": "rh_y_up_neg_z_forward", "revision": 0},
+  "mainSourceId": "hil:synthetic:main",
+  "imuSourceId": "hil:synthetic:imu",
+  "hmdSourceId": "hil:synthetic:hmd",
+  "correctionEnabled": true,
+  "dwellMs": 150,
+  "blendMs": 300,
+  "fallbackBlendMs": 150
+}

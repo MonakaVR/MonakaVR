@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Core Common Pose diagnostic input (not a wire codec)",
+  "type": "object",
+  "required": [
+    "timestampNanos",
+    "sequence",
+    "imu",
+    "hmd"
+  ],
+  "properties": {
+    "timestampNanos": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "main": {
+      "type": "object",
+      "required": [
+        "sourceId",
+        "sequence",
+        "sampleAtNanos",
+        "sourceEpoch",
+        "calibrationEpoch",
+        "quaternionXyzw",
+        "valid"
+      ],
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sampleAtNanos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceEpoch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "calibrationEpoch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "positionMeters": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "quaternionXyzw": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "valid": {
+          "type": "boolean"
+        },
+        "mappingRevision": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "commonWorldEpoch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "imu": {
+      "type": "object",
+      "required": [
+        "sourceId",
+        "sequence",
+        "sampleAtNanos",
+        "sourceEpoch",
+        "calibrationEpoch",
+        "quaternionXyzw",
+        "valid"
+      ],
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sampleAtNanos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceEpoch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "calibrationEpoch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "positionMeters": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "quaternionXyzw": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "valid": {
+          "type": "boolean"
+        },
+        "mappingRevision": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "commonWorldEpoch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "hmd": {
+      "type": "object",
+      "required": [
+        "sourceId",
+        "sequence",
+        "sampleAtNanos",
+        "sourceEpoch",
+        "calibrationEpoch",
+        "quaternionXyzw",
+        "valid"
+      ],
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sampleAtNanos": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceEpoch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "calibrationEpoch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "positionMeters": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "quaternionXyzw": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "valid": {
+          "type": "boolean"
+        },
+        "mappingRevision": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "commonWorldEpoch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "mainMtp": {
+      "type": "object",
+      "$comment": "Unchanged envelope; validated by actual hash-pinned MonakaCodec, not this carrier schema"
+    },
+    "mainReceivedAtNanos": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "main"
+      ],
+      "not": {
+        "required": [
+          "mainMtp"
+        ]
+      }
+    },
+    {
+      "required": [
+        "mainMtp",
+        "mainReceivedAtNanos"
+      ],
+      "not": {
+        "required": [
+          "main"
+        ]
+      }
+    }
+  ],
+  "additionalProperties": false
+}

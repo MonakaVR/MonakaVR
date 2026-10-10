@@ -1,0 +1,599 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Monaka Core PoC capture v1",
+  "type": "object",
+  "required": [
+    "type",
+    "schema"
+  ],
+  "properties": {
+    "type": {
+      "enum": [
+        "capture_start",
+        "frame",
+        "event",
+        "mark",
+        "capture_stop"
+      ]
+    },
+    "schema": {
+      "const": "monaka-core-poc-capture-v1"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "frame"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "timestampNanos",
+          "sequence",
+          "sourceId",
+          "sourceProvenance",
+          "imuProvenance",
+          "hmdProvenance",
+          "world",
+          "raw6dofValid",
+          "sixDofValid",
+          "gateAvailable",
+          "raw6dofPose",
+          "rawImuOrientationXyzw",
+          "rawIkPose",
+          "correctedIkPose",
+          "solvedIkPose",
+          "correctionOffsetMeters",
+          "correctionQuaternionXyzw",
+          "positionCorrectionState",
+          "rotationCorrectionState",
+          "state",
+          "nativeContinuityState",
+          "transitionReason",
+          "transitionTimestampNanos",
+          "dwellElapsedNanos",
+          "dwellThresholdNanos",
+          "hysteresisState",
+          "blendProgress",
+          "finalOutputPose",
+          "outputPath",
+          "positionResidualMeters",
+          "angularResidualRadians",
+          "positionStepMeters",
+          "angularStepRadians",
+          "rawPositionResidualMeters",
+          "rawAngularResidualRadians",
+          "finalPositionResidualMeters",
+          "finalAngularResidualRadians",
+          "solvedPositionResidualMeters",
+          "outputVelocityMetersPerSecond",
+          "outputAngularVelocityRadiansPerSecond"
+        ],
+        "properties": {
+          "timestampNanos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sourceId": {},
+          "sourceProvenance": {
+            "type": "object",
+            "required": [
+              "sequence",
+              "sampleAtNanos",
+              "sourceEpoch",
+              "calibrationEpoch",
+              "mappingRevision",
+              "commonWorldEpoch"
+            ],
+            "properties": {
+              "sequence": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sampleAtNanos": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sourceEpoch": {
+                "type": "string",
+                "minLength": 1
+              },
+              "calibrationEpoch": {
+                "type": "string",
+                "minLength": 1
+              },
+              "mappingRevision": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "commonWorldEpoch": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "imuProvenance": {
+            "type": "object",
+            "required": [
+              "sequence",
+              "sampleAtNanos",
+              "sourceEpoch",
+              "calibrationEpoch",
+              "mappingRevision",
+              "commonWorldEpoch"
+            ],
+            "properties": {
+              "sequence": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sampleAtNanos": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sourceEpoch": {
+                "type": "string",
+                "minLength": 1
+              },
+              "calibrationEpoch": {
+                "type": "string",
+                "minLength": 1
+              },
+              "mappingRevision": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "commonWorldEpoch": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "hmdProvenance": {
+            "type": "object",
+            "required": [
+              "sequence",
+              "sampleAtNanos",
+              "sourceEpoch",
+              "calibrationEpoch",
+              "mappingRevision",
+              "commonWorldEpoch"
+            ],
+            "properties": {
+              "sequence": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sampleAtNanos": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sourceEpoch": {
+                "type": "string",
+                "minLength": 1
+              },
+              "calibrationEpoch": {
+                "type": "string",
+                "minLength": 1
+              },
+              "mappingRevision": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "commonWorldEpoch": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "world": {},
+          "raw6dofValid": {
+            "type": "boolean"
+          },
+          "sixDofValid": {
+            "type": "boolean"
+          },
+          "gateAvailable": {
+            "type": "boolean"
+          },
+          "raw6dofPose": {
+            "type": "object",
+            "required": [
+              "positionMeters",
+              "quaternionXyzw"
+            ],
+            "properties": {
+              "positionMeters": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "quaternionXyzw": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            },
+            "additionalProperties": false
+          },
+          "rawImuOrientationXyzw": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "rawIkPose": {
+            "type": "object",
+            "required": [
+              "positionMeters",
+              "quaternionXyzw"
+            ],
+            "properties": {
+              "positionMeters": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "quaternionXyzw": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            },
+            "additionalProperties": false
+          },
+          "correctedIkPose": {
+            "type": "object",
+            "required": [
+              "positionMeters",
+              "quaternionXyzw"
+            ],
+            "properties": {
+              "positionMeters": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "quaternionXyzw": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            },
+            "additionalProperties": false
+          },
+          "solvedIkPose": {
+            "type": "object",
+            "required": [
+              "positionMeters",
+              "quaternionXyzw"
+            ],
+            "properties": {
+              "positionMeters": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "quaternionXyzw": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            },
+            "additionalProperties": false
+          },
+          "correctionOffsetMeters": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "correctionQuaternionXyzw": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "positionCorrectionState": {},
+          "rotationCorrectionState": {},
+          "state": {
+            "enum": [
+              "FULL_6DOF",
+              "FALLBACK_IK",
+              "RECOVERY_DWELL",
+              "RECOVERY_BLEND",
+              "UNAVAILABLE"
+            ]
+          },
+          "nativeContinuityState": {},
+          "transitionReason": {},
+          "transitionTimestampNanos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "dwellElapsedNanos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "dwellThresholdNanos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hysteresisState": {},
+          "blendProgress": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "finalOutputPose": {
+            "type": "object",
+            "required": [
+              "positionMeters",
+              "quaternionXyzw"
+            ],
+            "properties": {
+              "positionMeters": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "quaternionXyzw": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputPath": {},
+          "positionResidualMeters": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "angularResidualRadians": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "positionStepMeters": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "angularStepRadians": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "rawPositionResidualMeters": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "rawAngularResidualRadians": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "finalPositionResidualMeters": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "finalAngularResidualRadians": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "solvedPositionResidualMeters": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "outputVelocityMetersPerSecond": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "outputAngularVelocityRadiansPerSecond": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "event"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "event",
+          "timestampNanos",
+          "sequence",
+          "stateBefore",
+          "stateAfter",
+          "reason",
+          "sixDofValid",
+          "positionResidualMeters",
+          "angularResidualRadians",
+          "positionStepMeters",
+          "angularStepRadians"
+        ],
+        "properties": {
+          "event": {
+            "enum": [
+              "6dof_valid",
+              "6dof_lost",
+              "fallback_entered",
+              "recovery_candidate",
+              "dwell_start",
+              "dwell_reset",
+              "recovery_blend_start",
+              "recovery_blend_cancel",
+              "full_restored",
+              "correction_updated"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "capture_start"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "config",
+          "stateMachineVersion",
+          "hilMode",
+          "gateAvailable"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "mark"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "note",
+          "timestampNanos"
+        ]
+      }
+    }
+  ]
+}
