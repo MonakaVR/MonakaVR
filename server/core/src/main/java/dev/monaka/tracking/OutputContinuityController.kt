@@ -6,6 +6,9 @@ import io.github.axisangles.ktmath.Vector3
 
 enum class ContinuityState { MAIN_DIRECT, FALLBACK_ACTIVE, REACQUIRING, UNAVAILABLE }
 
+/** Read-only semantic mapping; selection remains owned by the existing controller. */
+enum class FusionPhase { FULL_6DOF, FALLBACK_IK, RECOVERY_DWELL, RECOVERY_BLEND, UNAVAILABLE }
+
 /** Provisional software defaults; none of these values is calibrated on hardware. */
 data class ContinuityTuning(
 	val stableFullDwellMs: Long = 150,
@@ -65,6 +68,28 @@ class OutputContinuityController(
 	private var fallbackStart: OutputPose? = null
 	private var fallbackStartedAt = 0L
 	private var reacquireStart: OutputPose? = null
+
+	val fusionPhase: FusionPhase get() = when (state) {
+		ContinuityState.MAIN_DIRECT -> FusionPhase.FULL_6DOF
+		ContinuityState.REACQUIRING -> FusionPhase.RECOVERY_BLEND
+		ContinuityState.FALLBACK_ACTIVE -> when {
+			fullSince != null -> FusionPhase.RECOVERY_DWELL
+			lastOutput?.positionValid == true && lastOutput?.rotationValid == true -> FusionPhase.FALLBACK_IK
+			else -> FusionPhase.UNAVAILABLE
+		}
+		ContinuityState.UNAVAILABLE -> FusionPhase.UNAVAILABLE
+	}
+	/** Physical sample span, never wall time accumulated by repeated server ticks. */
+	val recoveryDwellElapsedNanos: Long get() = if (fullSince == null) 0 else
+		(latestFullSampleAt - firstFullSampleAt).coerceAtLeast(0)
+	val recoveryDwellThresholdNanos: Long get() = tuning.stableFullDwellNs
+	val hysteresisState: String get() = when (fusionPhase) {
+		FusionPhase.RECOVERY_DWELL -> "waiting_for_advancing_full_samples"
+		FusionPhase.RECOVERY_BLEND -> "stable_full_blending"
+		FusionPhase.FULL_6DOF -> "full_stable"
+		FusionPhase.FALLBACK_IK -> "loss_resets_recovery_window"
+		FusionPhase.UNAVAILABLE -> "unavailable"
+	}
 
 	private fun fraction(now: Long, start: Long, duration: Long) =
 		((now - start).toDouble() / duration).coerceIn(0.0, 1.0).toFloat()
@@ -167,13 +192,16 @@ class OutputContinuityController(
 				}
 			}
 			else -> {
+				// Dwell shares FALLBACK_ACTIVE's native name, but its selected pose can
+				// already differ from current IK. A cancelled dwell is a fresh loss edge.
+				val cancelledDwell = fullSince != null
 				fullSince = null; firstFullSampleAt = -1L; latestFullSampleAt = -1L
 				reacquireStart = null
 				val position = if (main.rotationValid) fallback?.position else null
 				lossSeen = lossSeen || lastOutput?.positionValid == true || position != null
 				val selected = OutputPose(target, main.space, position, main.rotation,
 					if (position == null) OutputPositionSource.NONE else OutputPositionSource.BACKGROUND_IK)
-				if (position != null && state != ContinuityState.FALLBACK_ACTIVE) {
+				if (position != null && (state != ContinuityState.FALLBACK_ACTIVE || cancelledDwell)) {
 					fallbackStart = lastOutput?.takeIf { it.positionValid && it.rotationValid && it.space == main.space }
 					fallbackStartedAt = now
 				}

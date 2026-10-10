@@ -120,3 +120,12 @@ val verifyMonakaUpstream by tasks.registering(Exec::class) {
 	commandLine("python", "scripts/verify_protocol_v21.py")
 }
 tasks.named("compileKotlin") { dependsOn(verifyMonakaUpstream) }
+
+// Standalone local Core harness. Does not launch VRServer or connect any backend.
+val corePocHilPackage by tasks.registering(Sync::class) {
+	dependsOn(tasks.jar)
+	into(layout.buildDirectory.dir("core-poc-hil"))
+	from(tasks.jar) { into("lib") }
+	from(configurations.runtimeClasspath) { into("lib") }
+	from(rootProject.file("tools/core-poc-hil"))
+}
