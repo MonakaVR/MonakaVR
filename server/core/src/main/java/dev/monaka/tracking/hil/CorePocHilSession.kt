@@ -35,11 +35,14 @@ data class CorePocHilConfig(
 	val rotationTrackingTauSeconds: Double = .1,
 	val rotationRecoveryTauSeconds: Double = .2,
 	val maxAngularCorrectionRate: Double = 2.0,
+	/** Physical identity supplied by an audited exporter; channel IDs remain distinct. */
+	val sameTrackerCanonicalIdentity: String? = null,
 ) {
 	init {
 		require(listOf(mainSourceId, imuSourceId, hmdSourceId).distinct().size == 3)
 		require(listOf(mainSourceId, imuSourceId, hmdSourceId).all { it.isNotBlank() && !FeedbackExclusion.isOutput(it) })
 		require(space.convention == "rh_y_up_neg_z_forward")
+		require(sameTrackerCanonicalIdentity == null || sameTrackerCanonicalIdentity.isNotBlank())
 	}
 	companion object {
 		fun synthetic() = CorePocHilConfig(CoordinateSpace("poc-synthetic-world", "rh_y_up_neg_z_forward", 0),
@@ -48,8 +51,12 @@ data class CorePocHilConfig(
 }
 
 /** Common Pose diagnostic carrier, not a substitute wire protocol or production ingress admission. */
+data class SameTrackerInputIdentity(val sixDofTrackerIdentity: String, val imuTrackerIdentity: String,
+	val trackerPresent: Boolean)
+
 data class CorePocInputFrame(val timestampNanos: Long, val sequence: Long,
-	val main: PoseObservation, val imu: PoseObservation, val hmd: RawHmdPoseInput, val mainEnvelopeJson: String? = null)
+	val main: PoseObservation, val imu: PoseObservation, val hmd: RawHmdPoseInput, val mainEnvelopeJson: String? = null,
+	val sameTracker: SameTrackerInputIdentity? = null)
 
 /** Explicit local HIL owner. No VRServer, receiver, SteamVR bridge, device or OS lifecycle. */
 class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) : AutoCloseable {
@@ -180,12 +187,27 @@ class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) 
 		val dt = lastInput?.let { (now - it.timestampNanos) / 1e9 }
 		val positionStep = distance(priorPose?.first, outputPosition)
 		val angularStep = angular(priorPose?.second, outputRotation)
+		val imuSample = input.imu.provenance!!
+		val imuAdvanced = lastInput?.imu?.provenance?.let { prior ->
+			imuSample.sourceEpoch == prior.sourceEpoch && imuSample.sequence > prior.sequence &&
+				imuSample.sampleAtNanos > prior.sampleAtNanos
+		}
 		val frame = linkedMapOf<String, Any?>(
 			"type" to "frame", "schema" to SCHEMA, "stateMachineVersion" to STATE_VERSION,
 			"timestampNanos" to now, "sequence" to input.sequence,
 			"sourceId" to input.main.sourceId, "sourceProvenance" to provenance(input.main.provenance!!),
 			"sourceNativeEnvelope" to input.mainEnvelopeJson?.let(mapper::readTree),
 			"imuProvenance" to provenance(input.imu.provenance!!), "hmdProvenance" to provenance(input.hmd.provenance),
+			"trackerCanonicalIdentity" to config.sameTrackerCanonicalIdentity,
+			"trackerPresent" to input.sameTracker?.trackerPresent,
+			"sameTrackerIdentityMapping" to input.sameTracker?.let { true },
+			"sixDofSourceId" to input.main.sourceId, "imuSourceId" to input.imu.sourceId,
+			"rawImuValid" to input.imu.rotationQuality.usable,
+			"imuValid" to imu.rotationQuality.usable,
+			"sixDofTimestampNanos" to input.main.provenance!!.sampleAtNanos,
+			"imuTimestampNanos" to imuSample.sampleAtNanos,
+			"timestampSkewNanos" to (input.main.provenance!!.sampleAtNanos - imuSample.sampleAtNanos),
+			"imuSequence" to imuSample.sequence, "imuSampleAdvanced" to imuAdvanced,
 			"assignmentGeneration" to assignment.generation, "world" to spaceRecord(),
 			"raw6dofValid" to (input.main.positionQuality.usable && input.main.rotationQuality.usable),
 			"sixDofValid" to (main.positionQuality.usable && main.rotationQuality.usable && main.modality == TrackingModality.FULL),
@@ -256,6 +278,14 @@ class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) 
 		require(input.timestampNanos >= 0 && input.sequence >= 0)
 		require(lastInput?.let { input.timestampNanos > it.timestampNanos && input.sequence > it.sequence } != false)
 		require(input.main.sourceId == config.mainSourceId && input.imu.sourceId == config.imuSourceId && input.hmd.source.sourceId == config.hmdSourceId)
+		val canonical = config.sameTrackerCanonicalIdentity
+		if (canonical != null) {
+			val identity = requireNotNull(input.sameTracker) { "Same-tracker input requires explicit identities for both paths" }
+			require(identity.sixDofTrackerIdentity == canonical && identity.imuTrackerIdentity == canonical) {
+				"Same-tracker identity mismatch; no association by order or timing"
+			}
+			require(identity.trackerPresent) { "A present tracker is required for the dual-path session" }
+		} else require(input.sameTracker == null) { "Same-tracker input requires a configured canonical identity" }
 		require(input.main.target == hip && input.imu.target == hip && input.imu.rotationQuality.usable)
 		for (p in listOf(input.main.provenance, input.imu.provenance, input.hmd.provenance)) {
 			require(p != null && p.space == config.space && p.sampleAtNanos <= input.timestampNanos)
@@ -269,6 +299,8 @@ class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) 
 	private fun emit(value: Map<String, Any?>) { capture?.let { it.write(mapper.writeValueAsString(value)); it.newLine(); it.flush() } }
 	fun configRecord(): Map<String, Any?> = linkedMapOf("space" to spaceRecord(), "mainSourceId" to config.mainSourceId,
 		"imuSourceId" to config.imuSourceId, "hmdSourceId" to config.hmdSourceId, "correctionEnabled" to config.correctionEnabled,
+		"sameTrackerMapping" to config.sameTrackerCanonicalIdentity?.let { linkedMapOf(
+			"canonicalIdentity" to it, "sixDofSourceId" to config.mainSourceId, "imuSourceId" to config.imuSourceId) },
 		"correctionDisabledMode" to "software counterfactual: IMU-only IK constraints, visible Main remains primary",
 		"dwellMs" to config.continuity.stableFullDwellMs, "blendMs" to config.continuity.reacquireDurationMs,
 		"fallbackBlendMs" to config.continuity.fallbackBlendMs, "positionTrackingTauSeconds" to config.positionTrackingTauSeconds,
@@ -290,7 +322,7 @@ class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) 
 	override fun close() { if (closed) return; captureStop(); writeback.close(); pipeline.clear(); closed = true }
 	companion object {
 		const val SCHEMA = "monaka-core-poc-capture-v1"
-		const val STATE_VERSION = "existing-continuity-physical-dwell-v1+hil-correction-6g-v1"
+		const val STATE_VERSION = "existing-continuity-physical-dwell-v1+hil-correction-6g-v1+same-tracker-evidence-v2c2r"
 		private fun tracker(name: String, role: TrackerPosition, hmd: Boolean) = Tracker(null, -500 - role.ordinal,
 			name, trackerPosition = role, hasPosition = hmd, hasRotation = true, isHmd = hmd,
 			allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false).also { it.status = TrackerStatus.OK }

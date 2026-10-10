@@ -15,8 +15,9 @@ import java.nio.file.Path
 import kotlin.test.*
 
 class CorePocHilTests {
-	private class Fixture(correction: Boolean = true, hil: Boolean = true) : AutoCloseable {
-		val config = CorePocHilConfig.synthetic().copy(correctionEnabled = correction)
+	private class Fixture(correction: Boolean = true, hil: Boolean = true, sameTracker: Boolean = false) : AutoCloseable {
+		val config = CorePocHilConfig.synthetic().copy(correctionEnabled = correction,
+			sameTrackerCanonicalIdentity = if (sameTracker) "software:physical-tracker:T" else null)
 		val session = CorePocHilSession(config, hil)
 		var sequence = 0L
 		var now = 1_000_000_000L
@@ -31,7 +32,8 @@ class CorePocHilTests {
 					rotation = Quaternion.rotationAroundYAxis(angle), provenance = p("main:1"), correctionRotation = Quaternion.rotationAroundYAxis(angle)),
 				PoseObservation(config.imuSourceId, TrackerPosition.HIP, now, rotation = q, provenance = p("imu:1"), correctionRotation = q),
 				RawHmdPoseInput(RawSourceIdentity(config.hmdSourceId, RawSourceKind.RAW_HMD, isHmd = true),
-					Vector3(drift * .25f, 1.7f, 0f), Quaternion.IDENTITY, config.space, p("hmd:1")))
+					Vector3(drift * .25f, 1.7f, 0f), Quaternion.IDENTITY, config.space, p("hmd:1")),
+				sameTracker = config.sameTrackerCanonicalIdentity?.let { SameTrackerInputIdentity(it, it, true) })
 			lastInput = input
 			return session.accept(input)
 		}
@@ -46,6 +48,103 @@ class CorePocHilTests {
 		(f[key] as Map<String, Any?>)["positionMeters"] as List<Number>
 	private fun states(f: Fixture, count: Int, offset: Float = .2f, angle: Float = .5f) =
 		(1..count).map { f.tick(drift = .4f, offset = offset, angle = angle) }
+
+	@Test fun sameTrackerMaskKeepsImuSamplesCorrectionCalibrationAndRecovery(@TempDir dir: Path) =
+		Fixture(sameTracker = true).use { f ->
+			f.session.captureStart(dir.resolve("same-tracker.jsonl"))
+			val before = f.trained()
+			val calibration = f.session.configRecord()["mainMountIdentity"]
+			val fixed = f.session.configRecord()["fixedCalibrationIdentity"]
+			val masked = (0..24).map { f.tick(false, .396f + it * .002f) }
+			assertEquals(before["correctionOffsetMeters"], masked.first()["correctionOffsetMeters"])
+			assertEquals(before["correctionQuaternionXyzw"], masked.first()["correctionQuaternionXyzw"])
+			assertEquals(position(masked.first(), "correctedIkPose"), masked.first()["solverFallbackPosition"])
+			assertNotEquals(position(masked.first(), "rawIkPose"), masked.first()["solverFallbackPosition"])
+			assertEquals(0.0, number(masked.first(), "positionStepMeters"))
+			for (v in masked) {
+				assertEquals("software:physical-tracker:T", v["trackerCanonicalIdentity"])
+				assertEquals(true, v["sameTrackerIdentityMapping"])
+				assertEquals(true, v["trackerPresent"])
+				assertEquals(true, v["raw6dofValid"])
+				assertEquals(false, v["sixDofValid"])
+				assertEquals(true, v["imuValid"])
+				assertEquals(true, v["imuSampleAdvanced"])
+				assertEquals("FALLBACK_IK", v["state"])
+				assertTrue(number(v, "positionResidualMeters").isFinite())
+				assertSame(f.lastInput!!.imu, f.session.gate.apply(f.lastInput!!.imu))
+			}
+			assertTrue(masked.zipWithNext().all { (a, b) ->
+				number(b, "imuTimestampNanos") > number(a, "imuTimestampNanos") &&
+					number(b, "imuSequence") > number(a, "imuSequence") })
+			assertEquals(calibration, f.session.configRecord()["mainMountIdentity"])
+			assertEquals(fixed, f.session.configRecord()["fixedCalibrationIdentity"])
+			assertEquals(before["assignmentGeneration"], masked.last()["assignmentGeneration"])
+			val recovery = (0..35).map { f.tick(true, .446f, .2f, .5f) }
+			assertEquals(listOf("RECOVERY_DWELL", "RECOVERY_BLEND", "FULL_6DOF"),
+				recovery.map { it["state"] }.distinct())
+			assertTrue(recovery.all { it["imuValid"] == true && it["imuSampleAdvanced"] == true })
+			assertTrue(number(recovery.last(), "positionResidualMeters") < number(recovery.first(), "positionResidualMeters"))
+			f.session.captureStop()
+			val frames = Files.readAllLines(dir.resolve("same-tracker.jsonl")).map(ObjectMapper()::readTree)
+				.filter { it.path("type").asText() == "frame" }
+			assertEquals(25, frames.count { !it.required("sixDofValid").booleanValue() &&
+				it.required("imuValid").booleanValue() && it.required("imuSampleAdvanced").booleanValue() })
+		}
+
+	@Test fun sameTrackerIdentityMismatchIsRejectedBeforeChangingIkOrCalibration() = Fixture(sameTracker = true).use { f ->
+		f.trained(); val prior = f.session.latest
+		f.session.gate.setAvailable(false)
+		val input = f.lastInput!!.copy(timestampNanos = f.now + 20_000_000, sequence = f.sequence + 1,
+			sameTracker = SameTrackerInputIdentity("software:physical-tracker:T", "unrelated-tracker", true))
+		assertFailsWith<IllegalArgumentException> { f.session.accept(input) }
+		assertSame(prior, f.session.latest)
+	}
+	@Test fun sameTrackerMissingIdentityCannotBeInferredFromSimultaneousSamples() = Fixture(sameTracker = true).use { f ->
+		f.tick()
+		assertFailsWith<IllegalArgumentException> { f.session.accept(f.lastInput!!.copy(
+			timestampNanos = f.now + 20_000_000, sequence = f.sequence + 1, sameTracker = null)) }
+		Unit
+	}
+	@Test fun sameTrackerPresentFalseIsNotManufacturedByTheValidityGate() = Fixture(sameTracker = true).use { f ->
+		f.tick(); f.session.gate.setAvailable(false)
+		assertFailsWith<IllegalArgumentException> { f.session.accept(f.lastInput!!.copy(
+			timestampNanos = f.now + 20_000_000, sequence = f.sequence + 1,
+			sameTracker = f.lastInput!!.sameTracker!!.copy(trackerPresent = false))) }
+		Unit
+	}
+	@Test fun sameTrackerCaptureDoesNotTreatRepeatedOrStaleImuAsNewSamples() = Fixture(sameTracker = true).use { f ->
+		f.trained(); val last = f.lastInput!!; f.session.gate.setAvailable(false)
+		val repeated = f.session.accept(last.copy(timestampNanos = f.now + 20_000_000, sequence = f.sequence + 1))
+		assertEquals(false, repeated["imuSampleAdvanced"]); assertEquals(true, repeated["imuValid"])
+		val stale = f.session.accept(last.copy(timestampNanos = f.now + 140_000_000, sequence = f.sequence + 2))
+		assertEquals(false, stale["imuSampleAdvanced"]); assertEquals(false, stale["imuValid"])
+		assertEquals(last.imu.provenance!!.sampleAtNanos, stale["imuTimestampNanos"])
+	}
+	@Test fun sameTrackerImuSessionChangeIsNotContinuousSampleEvidence() = Fixture(sameTracker = true).use { f ->
+		f.tick(); val last = f.lastInput!!
+		val v = f.session.accept(last.copy(timestampNanos = f.now + 20_000_000, sequence = f.sequence + 1,
+			imu = last.imu.copy(provenance = last.imu.provenance!!.copy(sourceEpoch = "imu:2"))))
+		assertEquals(false, v["imuSampleAdvanced"])
+		assertEquals("software:physical-tracker:T", v["trackerCanonicalIdentity"])
+	}
+	@Test fun sameTrackerCarrierParsesExplicitBindingAndSignedTimestampSkew() {
+		val mapper = ObjectMapper()
+		val config = CorePocHilJson.config(mapper.readTree("""{
+			"space":{"id":"poc-synthetic-world","convention":"rh_y_up_neg_z_forward","revision":0},
+			"mainSourceId":"hil:synthetic:main","imuSourceId":"hil:synthetic:imu","hmdSourceId":"hil:synthetic:hmd",
+			"operatorConfirmedSameWorld":true,"operatorConfirmedBodyFrames":true,"dwellMs":150,"blendMs":300,
+			"fallbackBlendMs":150,"sameTrackerCanonicalIdentity":"software:physical-tracker:T"}"""))
+		assertEquals("software:physical-tracker:T", config.sameTrackerCanonicalIdentity)
+		Fixture(sameTracker = true).use { f ->
+			f.tick(); val last = f.lastInput!!
+			val v = f.session.accept(last.copy(timestampNanos = f.now + 20_000_000, sequence = f.sequence + 1,
+				main = last.main.copy(observedAtNanos = f.now + 5_000_000,
+					provenance = last.main.provenance!!.copy(sequence = f.sequence + 1, sampleAtNanos = f.now + 5_000_000)),
+				imu = last.imu.copy(observedAtNanos = f.now + 10_000_000,
+					provenance = last.imu.provenance!!.copy(sequence = f.sequence + 1, sampleAtNanos = f.now + 10_000_000))))
+			assertEquals(-5_000_000L, v["timestampSkewNanos"])
+		}
+	}
 
 	@Test fun validIsFullAndPrimaryReference() = Fixture().use { f ->
 		val v = f.tick(); assertEquals("FULL_6DOF", v["state"]); assertEquals(v["raw6dofPose"], v["finalOutputPose"])

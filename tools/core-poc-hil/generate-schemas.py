@@ -21,6 +21,16 @@ required=['timestampNanos','sequence','sourceId','sourceProvenance','imuProvenan
           'finalPositionResidualMeters','finalAngularResidualRadians','solvedPositionResidualMeters',
           'outputVelocityMetersPerSecond','outputAngularVelocityRadiansPerSecond']
 props={key:{} for key in required}
+required += ['trackerCanonicalIdentity','trackerPresent','sameTrackerIdentityMapping','sixDofSourceId','imuSourceId',
+             'rawImuValid','imuValid','sixDofTimestampNanos','imuTimestampNanos','timestampSkewNanos',
+             'imuSequence','imuSampleAdvanced']
+props.update({key:{} for key in required if key not in props})
+props['trackerCanonicalIdentity']={'type':['string','null'],'minLength':1}
+for key in ['trackerPresent','sameTrackerIdentityMapping','imuSampleAdvanced']:props[key]={'type':['boolean','null']}
+for key in ['rawImuValid','imuValid']:props[key]={'type':'boolean'}
+for key in ['sixDofSourceId','imuSourceId']:props[key]={'type':'string','minLength':1}
+for key in ['sixDofTimestampNanos','imuTimestampNanos','imuSequence']:props[key]={'type':'integer','minimum':0}
+props['timestampSkewNanos']={'type':'integer'}
 for key in ['raw6dofPose','rawIkPose','correctedIkPose','solvedIkPose','finalOutputPose']:props[key]=pose
 for key in ['sourceProvenance','imuProvenance','hmdProvenance']:props[key]=provenance
 props['state']={'enum':['FULL_6DOF','FALLBACK_IK','RECOVERY_DWELL','RECOVERY_BLEND','UNAVAILABLE']}
@@ -48,6 +58,12 @@ source={'$schema':SCHEMA,'title':'Core Common Pose diagnostic input (not a wire 
  'mainMtp':{'type':'object','$comment':'Unchanged envelope; validated by actual hash-pinned MonakaCodec, not this carrier schema'},
  'mainReceivedAtNanos':{'type':'integer','minimum':0}},'oneOf':[{'required':['main'],'not':{'required':['mainMtp']}},
  {'required':['mainMtp','mainReceivedAtNanos'],'not':{'required':['main']}}],'additionalProperties':False}
+source['properties']['sameTracker']={'type':'object',
+ 'required':['sixDofTrackerIdentity','imuTrackerIdentity','trackerPresent'],
+ 'properties':{'sixDofTrackerIdentity':{'type':'string','minLength':1},
+               'imuTrackerIdentity':{'type':'string','minLength':1},'trackerPresent':{'type':'boolean'}},
+ 'additionalProperties':False,
+ '$comment':'Runtime requires both identities equal configured sameTrackerCanonicalIdentity; exporter must audit physical provenance.'}
 for name,data in [('capture-schema.json',capture),('input-schema.json',source)]:
  (ROOT/name).write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
 print('Generated capture and input schemas')

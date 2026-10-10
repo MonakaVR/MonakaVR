@@ -70,7 +70,19 @@
           "finalAngularResidualRadians",
           "solvedPositionResidualMeters",
           "outputVelocityMetersPerSecond",
-          "outputAngularVelocityRadiansPerSecond"
+          "outputAngularVelocityRadiansPerSecond",
+          "trackerCanonicalIdentity",
+          "trackerPresent",
+          "sameTrackerIdentityMapping",
+          "sixDofSourceId",
+          "imuSourceId",
+          "rawImuValid",
+          "imuValid",
+          "sixDofTimestampNanos",
+          "imuTimestampNanos",
+          "timestampSkewNanos",
+          "imuSequence",
+          "imuSampleAdvanced"
         ],
         "properties": {
           "timestampNanos": {
@@ -519,6 +531,60 @@
               "null"
             ],
             "minimum": 0
+          },
+          "trackerCanonicalIdentity": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "trackerPresent": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "sameTrackerIdentityMapping": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "sixDofSourceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "imuSourceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rawImuValid": {
+            "type": "boolean"
+          },
+          "imuValid": {
+            "type": "boolean"
+          },
+          "sixDofTimestampNanos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "imuTimestampNanos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "timestampSkewNanos": {
+            "type": "integer"
+          },
+          "imuSequence": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "imuSampleAdvanced": {
+            "type": [
+              "boolean",
+              "null"
+            ]
           }
         }
       }
