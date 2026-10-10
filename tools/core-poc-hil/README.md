@@ -55,7 +55,7 @@ dwell; capture distinguishes it from the post-IK visible Fusion state.
 
 Continuous correction covers HIP-center world translation and HIP global quaternion orientation.
 Valid Main remains the external output reference and continuously drives existing IK constraints.
-The independent central-chain prediction uses raw HMD, raw IMU and the existing body model. Its
+The Main-decoupled central-chain prediction uses raw HMD, raw IMU and the existing body model. Its
 learned translation is retained for the 2s software hold interval, then decays under the existing
 law. Rotation correction is retained only for the same IMU/calibration/assignment/world lineage.
 These quantities are not per-segment offsets or absolute inertial translation. The HMD root
@@ -74,7 +74,7 @@ pre-IK constraint, and `solvedIkPose` is the real current HumanSkeleton result. 
 error and prediction/correction residual must be assessed separately. Final output is selected
 only by the existing continuity controller. Capture has no decision authority.
 
-## Selected source for Phase 2C-2
+## Same tracker source contract for Phase 2C-2R
 
 First choice: the existing PICO Motion Tracker -> MonakaBridge calibrated MTP pose path,
 connected once, using a previously usable tracker as the HIP Main. This choice reuses the existing
@@ -82,11 +82,27 @@ connected once, using a previously usable tracker as the HIP Main. This choice r
 is NOT VERIFIED by 2C-1. If that one-time source is unavailable, choose another already stable
 mapped 6DoF source using the same Common Pose boundary; do not fix reconnect as part of Core PoC.
 
-Prepare an independent physical Slime IMU and an independent HMD/root pose in the same explicitly
-confirmed world. The Main pose must already refer to HIP body center, and IMU orientation to HIP
-body frame; this diagnostic session uses identity mounts and no automatic remount calibration.
-Transform/align inputs through the existing source calibration before this boundary. Do not
-invent a common-world epoch or fabricate a source generation to satisfy an assertion.
+Use one physical tracker providing both absolute 6DoF and its own raw or normalized IMU orientation.
+Separate Main/IMU source IDs identify observation channels, not separate physical devices. Set
+`sameTrackerCanonicalIdentity` in the session config and provide `sameTracker` on every frame:
+
+```json
+{"sixDofTrackerIdentity":"audited-backend-full-device-id",
+ "imuTrackerIdentity":"audited-backend-full-device-id","trackerPresent":true}
+```
+
+Both identities must equal the configured canonical identity. A missing/mismatched identity or
+absent tracker is rejected before ingestion; ordering and simultaneous timestamps cannot establish
+association. The exporter must audit the native serial/device mapping and actual IMU provenance.
+This local binding validates exporter assertions; it does not prove a sensor stream exists. A pose
+quaternion, successful poll, or advancing query timestamp alone is insufficient IMU evidence.
+
+The existing HIP predictor/solver still requires the normal HMD/root input in the explicitly
+confirmed Common world. Use its existing runtime path. Main must already refer to HIP body center
+and IMU orientation to HIP body frame; identity mounts here perform no automatic remount calibration.
+Align through existing source calibration before this boundary. Do not invent world/source epochs.
+An independent IMU is optional future work and is not a prerequisite. IMU-only hardware is not
+required; later validation uses a SlimeVR-fork mode/configuration consuming tracker IMU without 6DoF.
 
 Use `input-schema.json` to forward **actual** source samples through a local JSONL/file exporter.
 The source exporter owns acquisition and local-clock conversion; it must preserve native sequences,
@@ -99,11 +115,11 @@ For a Bridge pose, use `mainMtp` containing the unchanged wire envelope and `mai
 in the local monotonic domain instead of `main`. The package uses the hash-pinned MonakaCodec and
 existing MtpPoseAdapter. It checks exact coordinate space and configured length-prefixed logical
 identity; sample time is receipt minus native envelope age. The native envelope is captured.
-No new codec or UDP receiver is used. Independent IMU/HMD samples must use the same local time
+No new codec or UDP receiver is used. Same-tracker IMU and normal HMD/root samples must use the same local time
 domain and match the actual epoch semantics (legacy null stays null). For direct Common Pose
 `main`, `sourceId` is already the canonical observation ID; do not mint a second identity.
 
-In 2C-2 an operator supplies the real-source exporter/records and confirms frames/calibration.
+In 2C-2R an operator supplies the real-source exporter/records and confirms frames/calibration.
 2C-1 prepares and tests this boundary, not real device operation or world calibration.
 The file source/control surface can stream indefinitely by serialized `input` requests.
 
@@ -114,6 +130,18 @@ Frames include full source provenance, raw input, prediction, correction, actual
 reason/timing, dwell/hysteresis/blend, final pose, residuals and per-tick continuity/velocity.
 Events include validity/loss, fallback, recovery candidate, dwell start/reset, blend start/cancel,
 FULL restore and correction update. `mark` annotates, without affecting Core.
+
+Frames also record canonical identity, tracker presence, explicit channel mapping, independent
+`sixDofValid` / `imuValid`, both local sample timestamps and signed skew (6DoF minus IMU), raw IMU
+validity, IMU sequence and `imuSampleAdvanced`. The latter is true only when IMU sequence and sample
+timestamp both advance within the same source epoch; it is null on the first frame and false for
+duplicates or a changed session. IK movement does not establish IMU continuity. These fields retain
+native/source-derived provenance supplied by the exporter; it must not restamp repeated samples.
+
+The 6DoF gate masks the absolute Main observation only, including its absolute orientation. It
+passes the separately bound same-tracker IMU channel through unchanged. It never writes source
+identity, provenance, world, calibration, IK state or final output. Deterministic software fixtures
+exercise correction, mask continuity, fallback and recovery; they are not physical HIL evidence.
 
 Receiver checkpoint/bootstrap/accepted-metadata/Rig.live NPE/MoveFileEx AccessDenied remain
 quarantined production-side defects. 2C-1/2C-2 do not certify production receiver stability.

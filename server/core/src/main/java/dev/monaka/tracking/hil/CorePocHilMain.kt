@@ -38,7 +38,9 @@ object CorePocHilJson {
 			text(n, "mainSourceId"), text(n, "imuSourceId"), text(n, "hmdSourceId"),
 			n.required("operatorConfirmedSameWorld").booleanValue(), n.required("operatorConfirmedBodyFrames").booleanValue(),
 			ContinuityTuning(number(n, "dwellMs"), number(n, "blendMs"), number(n, "fallbackBlendMs")),
-			n.path("correctionEnabled").asBoolean(true))
+			n.path("correctionEnabled").asBoolean(true),
+			sameTrackerCanonicalIdentity = n.path("sameTrackerCanonicalIdentity")
+				.takeIf { !it.isMissingNode && !it.isNull }?.let { text(n, "sameTrackerCanonicalIdentity") })
 		fun value(name: String, default: Double) = n.path(name).takeIf { !it.isMissingNode }?.let { require(it.isNumber); it.doubleValue() } ?: default
 		return base.copy(positionTrackingTauSeconds = value("positionTrackingTauSeconds", base.positionTrackingTauSeconds),
 			positionRecoveryTauSeconds = value("positionRecoveryTauSeconds", base.positionRecoveryTauSeconds),
@@ -69,7 +71,7 @@ object CorePocHilJson {
 				provenance = provenance(o, c.space), correctionRotation = q)
 		}
 		val h = n.required("hmd")
-		require(h.required("valid").isBoolean && h.required("valid").booleanValue()) { "Independent HMD/root must be available" }
+		require(h.required("valid").isBoolean && h.required("valid").booleanValue()) { "Normal runtime HMD/root must be available for this solver" }
 		val envelope = n.path("mainMtp").takeIf { !it.isMissingNode }
 		require(envelope == null || !n.has("main")) { "Supply exactly one Main input representation" }
 		val main = if (envelope == null) observation("main") else {
@@ -82,10 +84,14 @@ object CorePocHilJson {
 			require(age >= 0 && receipt >= age && receipt <= number(n, "timestampNanos"))
 			MtpPoseAdapter().adapt(pose, TrackerPosition.HIP, receipt - age)
 		}
+		val identity = n.path("sameTracker").takeIf { !it.isMissingNode && !it.isNull }?.let {
+			val present = it.required("trackerPresent").also { value -> require(value.isBoolean) }.booleanValue()
+			SameTrackerInputIdentity(text(it, "sixDofTrackerIdentity"), text(it, "imuTrackerIdentity"), present)
+		}
 		return CorePocInputFrame(number(n, "timestampNanos"), number(n, "sequence"), main, observation("imu"),
 			RawHmdPoseInput(RawSourceIdentity(text(h, "sourceId"), RawSourceKind.RAW_HMD, isHmd = true),
 				vector(h.required("positionMeters")), quaternion(h.required("quaternionXyzw")), c.space, provenance(h, c.space)),
-			envelope?.let(mapper::writeValueAsString))
+			envelope?.let(mapper::writeValueAsString), identity)
 	}
 }
 

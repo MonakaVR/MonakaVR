@@ -5,6 +5,7 @@
   "space": {"id": "operator-confirmed-common-world", "convention": "rh_y_up_neg_z_forward", "revision": 0},
   "mainSourceId": "operator-selected-main",
   "imuSourceId": "operator-selected-imu",
+  "sameTrackerCanonicalIdentity": "operator-selected-canonical-tracker",
   "hmdSourceId": "operator-selected-hmd",
   "correctionEnabled": true,
   "dwellMs": 150,

@@ -240,6 +240,29 @@
     "mainReceivedAtNanos": {
       "type": "integer",
       "minimum": 0
+    },
+    "sameTracker": {
+      "type": "object",
+      "required": [
+        "sixDofTrackerIdentity",
+        "imuTrackerIdentity",
+        "trackerPresent"
+      ],
+      "properties": {
+        "sixDofTrackerIdentity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "imuTrackerIdentity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trackerPresent": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "$comment": "Runtime requires both identities equal configured sameTrackerCanonicalIdentity; exporter must audit physical provenance."
     }
   },
   "oneOf": [
