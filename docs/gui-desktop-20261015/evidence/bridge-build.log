@@ -1,0 +1,173 @@
+MSBuild のバージョン 18.11.0-1.26427.13+9353559c2 (.NET Framework)
+
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\ZERO_CHECK.vcxproj]
+  1>Checking Build System
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\third_party\monaka-protocol-v22\cpp\monaka_protocol_codec.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/third_party/monaka-protocol-v22/cpp/CMakeLists.txt
+  codec.cpp
+  codec.cpp
+  monaka_protocol_codec.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\third_party\monaka-protocol-v22\cpp\Release\monaka_protocol_codec.lib
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_bridge_core.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  trusted_hmd_source_stream.cpp
+  common_world_authority.cpp
+  common_world_publisher.cpp
+  trusted_hmd_common_world_coordinator.cpp
+  registry.cpp
+  calibration.cpp
+  world_calibration.cpp
+  trajectory_calibration.cpp
+  config.cpp
+  bridge.cpp
+  direct.cpp
+  common_world_revision_store.cpp
+  persistent_common_world_runtime.cpp
+  common_world_live_ingress.cpp
+  コードを生成中...
+  monaka_bridge_core.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_bridge_core.lib
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\bridge_performance.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  performance.cpp
+  bridge_performance.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\bridge_performance.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_bridge_transport.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  network.cpp
+  monaka_bridge_transport.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_bridge_transport.lib
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\bridge_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  bridge_tests.cpp
+  bridge_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\bridge_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_common_world_sender.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_live_sender.cpp
+  monaka_common_world_sender.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_common_world_sender.lib
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_common_world_activation.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_activation_config.cpp
+  common_world_production_activation.cpp
+  コードを生成中...
+  monaka_common_world_activation.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_common_world_activation.lib
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\common_world_activation_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_activation_tests.cpp
+  common_world_activation_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\common_world_activation_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_common_world_readiness.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_deployment_readiness.cpp
+  monaka_common_world_readiness.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_common_world_readiness.lib
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\common_world_control_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_control_tests.cpp
+  common_world_control_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\common_world_control_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\common_world_live_ingress_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_live_ingress_tests.cpp
+  common_world_live_ingress_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\common_world_live_ingress_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\common_world_live_sender_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_live_sender_tests.cpp
+  common_world_live_sender_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\common_world_live_sender_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\common_world_persistence_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_persistence_tests.cpp
+  common_world_persistence_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\common_world_persistence_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\common_world_publisher_identity_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_publisher_identity_tests.cpp
+  common_world_publisher_identity_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\common_world_publisher_identity_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\common_world_readiness_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_readiness_tests.cpp
+  common_world_readiness_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\common_world_readiness_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\common_world_runtime_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_runtime_tests.cpp
+  common_world_runtime_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\common_world_runtime_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\coordinate_profile_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  coordinate_profile_tests.cpp
+  coordinate_profile_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\coordinate_profile_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\edge_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  edge_tests.cpp
+  edge_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\edge_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_bridge_health.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  health.cpp
+  monaka_bridge_health.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_bridge_health.lib
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\health_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  health_tests.cpp
+  health_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\health_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\mapping_contract_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  mapping_contract_tests.cpp
+  mapping_contract_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\mapping_contract_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\third_party\monaka-protocol-v22\cpp\monaka_authority_models.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/third_party/monaka-protocol-v22/cpp/CMakeLists.txt
+  authority_models.cpp
+  monaka_authority_models.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\third_party\monaka-protocol-v22\cpp\Release\monaka_authority_models.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_bridge_config.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  bridge_config.cpp
+  monaka_bridge_config.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_bridge_config.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_bridge_service.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  bridge_service.cpp
+  monaka_bridge_service.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_bridge_service.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\third_party\monaka-protocol-v22\cpp\monaka_codec_runner.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/third_party/monaka-protocol-v22/cpp/CMakeLists.txt
+  runner.cpp
+  monaka_codec_runner.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\third_party\monaka-protocol-v22\cpp\Release\monaka_codec_runner.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\third_party\monaka-protocol-v22\cpp\monaka_codec_runner_v2.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/third_party/monaka-protocol-v22/cpp/CMakeLists.txt
+  runner_v2.cpp
+  monaka_codec_runner_v2.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\third_party\monaka-protocol-v22\cpp\Release\monaka_codec_runner_v2.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_common_world_hil_runtime.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_hil_runtime_main.cpp
+  common_world_control_host.cpp
+  コードを生成中...
+  monaka_common_world_hil_runtime.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_common_world_hil_runtime.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_common_world_preflight.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_preflight_main.cpp
+  monaka_common_world_preflight.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_common_world_preflight.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_common_world_runtime.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  common_world_runtime_main.cpp
+  monaka_common_world_runtime.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_common_world_runtime.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_trusted_live_source.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  trusted_live_source.cpp
+  monaka_trusted_live_source.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_trusted_live_source.lib
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\monaka_trusted_live_source_producer.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  trusted_live_source_main.cpp
+  monaka_trusted_live_source_producer.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\monaka_trusted_live_source_producer.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\revision_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  revision_tests.cpp
+  revision_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\revision_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\rotation_only_downstream_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  rotation_only_downstream_tests.cpp
+  rotation_only_downstream_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\rotation_only_downstream_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\trajectory_calibration_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  trajectory_calibration_tests.cpp
+  trajectory_calibration_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\trajectory_calibration_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\trusted_hmd_source_stream_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  trusted_hmd_source_stream_tests.cpp
+  trusted_hmd_source_stream_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\trusted_hmd_source_stream_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\trusted_live_source_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  trusted_live_source_tests.cpp
+  trusted_live_source_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\trusted_live_source_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\world_calibration_tests.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt
+  world_calibration_tests.cpp
+  world_calibration_tests.vcxproj -> C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\Release\world_calibration_tests.exe
+C:\Program Files\Microsoft Visual Studio\18\Insiders\MSBuild\Microsoft\VC\v180\Microsoft.CppBuild.targets(561,5): warning MSB8029: 中間ディレクトリまたは出力ディレクトリを一時ディレクトリに置くことはできません。インクリメンタル ビルドで問題が発生する可能性があります。 [C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\ALL_BUILD.vcxproj]
+  Building Custom Rule C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/CMakeLists.txt

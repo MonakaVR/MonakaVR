@@ -1,0 +1,22 @@
+{
+  "requested_ref": "5fbf2a9a39450e10d4362c440bbecf2c286a4833",
+  "commit": "5fbf2a9a39450e10d4362c440bbecf2c286a4833",
+  "source": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\MonakaBridge",
+  "checkout": "C:\\Users\\nynyp\\AppData\\Local\\Temp\\mbg-desktop-final-1015-a\\inputs\\candidate\\MonakaBridge",
+  "gradle": "C:\\Users\\nynyp\\.gradle\\wrapper\\dists\\gradle-8.14.4-bin\\92wwslzcyst3phie3o264zltu\\gradle-8.14.4\\bin\\gradle.bat",
+  "cmake": "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+  "gradle_relay_sha256": "84242d49a6a4ec673807d0941f07a0f3ce7e5e641457a5247d85237b34231bf3",
+  "steps": {
+    "clone": 0,
+    "checkout": 0,
+    "configure": 0,
+    "build": 0,
+    "ctest": 0
+  },
+  "failed_tests": [],
+  "all_tests_passed": true,
+  "total_tests": 49,
+  "skipped_tests": [],
+  "passed_tests": 49,
+  "checkout_status": ""
+}

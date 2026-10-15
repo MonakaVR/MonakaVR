@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Win32-MSBuild"
+	tests="49"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname="orzkwsk2"
+	time="43"
+	timestamp="2026-10-15T19:23:23"
+	>
+	<testcase name="common_world_control" classname="common_world_control" time="0.657234" status="run">
+		<properties/>
+		<system-out>PASS 01 prepare ArmedDisabled retains exact instance and OFF
+PASS 02 armed pump cannot publish
+PASS 03 armed input does not queue publication
+PASS 04 status is available and side effect free
+PASS 05 armed shutdown clean and idempotent
+PASS 06 fresh readiness binds current instance
+PASS 07 old refreshed token rejects
+PASS 08 owner revoke invalidates readiness
+PASS 09 durable epoch handover invalidates readiness
+PASS 10 world/source identity change invalidates readiness
+PASS 11-18 config change freshness endpoint
+PASS 11-18 config change freshness owner_id
+PASS 11-18 config change freshness world_space_id
+PASS 11-18 config change freshness source_publisher_id
+PASS 11-18 config change freshness transport
+PASS 11-18 config change freshness codec
+PASS 11-18 config change freshness revision_path
+PASS 11-18 config change freshness queue_capacity
+PASS 19 emergency invalidates readiness and is terminal
+PASS 20 runtime replacement rejects token and control
+PASS 21 raw activation cannot bypass armed readiness
+PASS 22 sn...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="common_world_control_host" classname="common_world_control_host" time="0.405544" status="run">
+		<properties/>
+		<system-out>PASS local inherited pipe keeps runtime Created alive
+PASS unknown command excludes raw secret operation from output
+PASS explicit prepare retains OFF ArmedDisabled
+PASS temporary no-data status same source and runtime
+PASS continuous trusted pose admitted with no publication
+PASS fresh reconnect exposed through production API
+PASS late old generation machine rejection
+PASS stale control session rejected without state change
+PASS paired fault evidence exact instance and operation
+PASS source EOF explicit retains process
+PASS shutdown structured terminal quiescence
+PASS independent sentinel works during no-data
+PASS control pipe EOF producer shutdown observable
+PASS 13 local control host cases; no activate request, production remains OFF, no production contact
+</system-out>
+	</testcase>
+	<testcase name="common_world_fault_tooling" classname="common_world_fault_tooling" time="0.0834929" status="run">
+		<properties/>
+		<system-out>PASS pair preserves exact snapshots and operation ID
+PASS prior pair cannot overwrite
+PASS reject runtime_instance
+PASS reject control_session
+PASS reject schema
+PASS reject activation_generation
+PASS snapshot and operation hashes match
+PASS 7 fault evidence tooling cases
+</system-out>
+	</testcase>
+	<testcase name="common_world_control_scope" classname="common_world_control_scope" time="0.319749" status="run">
+		<properties/>
+		<system-out>PASS A2 scope: fixed authority/source validator/codec/store state machines, every prior behavioral test and legacy route unchanged; explicit lifecycle and observation extension; sole guarded send boundary; local pipe only
+</system-out>
+	</testcase>
+	<testcase name="common_world_readiness" classname="common_world_readiness" time="1.62393" status="run">
+		<properties/>
+		<system-out>PASS default OFF template and missing config
+PASS complete OFF configuration ready; no real persistent writes or network API
+PASS strict missing/malformed/duplicate/unknown configuration
+PASS strict missing/malformed/duplicate/unknown configuration
+PASS strict missing/malformed/duplicate/unknown configuration
+PASS strict missing/malformed/duplicate/unknown configuration
+PASS malformed input diagnostics never echo possible secret
+PASS missing required enabled
+PASS missing required mode
+PASS missing required owner_id
+PASS missing required world_space_id
+PASS missing required source_publisher_id
+PASS missing required revision_path
+PASS missing required codec
+PASS missing required peer_policy
+PASS activation ON rejected before recovery
+PASS reject test/loopback/ambiguous production endpoint test://sink
+PASS reject test/loopback/ambiguous production endpoint udp://127.0.0.1:30111
+PASS reject test/loopback/ambiguous production endpoint udp://localhost:30111
+PASS reject test/loopback/ambiguous production endpoint ud...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="common_world_deployment_scope" classname="common_world_deployment_scope" time="0.420953" status="run">
+		<properties/>
+		<system-out>PASS 5AH-A scope: exact 5AG behavior/tests and all prior assertions; observer has no activation/receipt/network/persistent-write path; separate packaged host and no legacy/global OS changes
+</system-out>
+	</testcase>
+	<testcase name="common_world_deployment_tooling" classname="common_world_deployment_tooling" time="1.9603" status="run">
+		<properties/>
+		<system-out>PASS artifact integrity PASS
+PASS altered binary rejected
+PASS unmanifested state rejected
+PASS corrupt manifest rejected
+PASS CRLF manifest digest rejected consistently with native preflight
+PASS manifest traversal rejected
+PASS duplicate manifest entry rejected
+PASS rollback dry run preserves artifact/state
+PASS rollback apply removes only artifact/state preserved
+PASS rollback refuses embedded persistent/unmanifested data
+PASS rollback refuses persistent data even when manifest lists it
+PASS HIL evidence exclusive creation never claims execution
+PASS 12 deployment tooling cases; no activation/deployment/network; persistent rollback protection
+</system-out>
+	</testcase>
+	<testcase name="common_world_hil_host_off" classname="common_world_hil_host_off" time="0.0113336" status="run">
+		<properties/>
+		<system-out>{
+  "activation_enabled": false,
+  "activation_generation": 0,
+  "codec": "",
+  "commit": "5fbf2a9a39450e10d4362c440bbecf2c286a4833",
+  "control_session": "3a453b07-93ff-4a2f-a4b6-a9cd41544081",
+  "delivery_semantics": "ordered best-effort local submission",
+  "emergency_revoked": false,
+  "endpoint_fingerprint_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "gate_state": "DisabledByDefault",
+  "last_accepted_source_event": {
+    "monotonic_ns": 0,
+    "result": "",
+    "sequence": null
+  },
+  "last_activation_transition": {
+    "monotonic_ns": 0,
+    "reason": "",
+    "state": "DisabledByDefault"
+  },
+  "last_control_operation": "",
+  "last_control_result": "",
+  "last_reason": "",
+  "last_reconnect_result": "",
+  "last_rejected_source_event": {
+    "monotonic_ns": 0,
+    "result": "",
+    "sequence": null
+  },
+  "last_source_result": "",
+  "mode": "production",
+  "observed_at_monotonic_ns": 312826784215400,
+  "observed_at_unix_ms": 1792059809431,
+  "owner_epoch": "",
+  "owner_...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="common_world_preflight_host_off" classname="common_world_preflight_host_off" time="0.0324977" status="run">
+		<properties/>
+		<system-out>NotConfigured (activation OFF; observation only)
+</system-out>
+	</testcase>
+	<testcase name="common_world_activation" classname="common_world_activation" time="0.704601" status="run">
+		<properties/>
+		<system-out>PASS default OFF 
+PASS default OFF {}
+PASS default OFF {"enabled":false}
+PASS missing config and process construction perform zero outbound IO
+PASS invalid config fail closed transport "fake"
+PASS invalid config fail closed codec "binary32"
+PASS invalid config fail closed endpoint "udp://192.0.2.1:29811"
+PASS invalid config fail closed owner_id ""
+PASS invalid config fail closed world_space_id ""
+PASS invalid config fail closed source_publisher_id "bad\nidentity"
+PASS invalid config fail closed queue_capacity 1
+PASS invalid config fail closed queue_capacity 4097
+PASS invalid config fail closed queue_capacity 2.5
+PASS invalid config fail closed retry_limit 0
+PASS invalid config fail closed retry_limit 33
+PASS invalid config fail closed retry_limit -1
+PASS invalid config fail closed peer_policy "implicit-world-replacement"
+PASS invalid config fail closed mode "auto"
+PASS invalid config fail closed enabled "true"
+PASS missing required config endpoint
+PASS missing required config owner_id
+PASS missing required co...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="common_world_activation_scope" classname="common_world_activation_scope" time="0.479644" status="run">
+		<properties/>
+		<system-out>PASS 5AG: exact 5AF/5AE/5AD/Owner/Publisher/codec/legacy; prior scope assertions retained; explicit inert production registration; isolated test registration; no driver/global config/deployment changes
+</system-out>
+	</testcase>
+	<testcase name="common_world_activation_host_off" classname="common_world_activation_host_off" time="0.0363917" status="run">
+		<properties/>
+		<system-out>DisabledByDefault
+</system-out>
+	</testcase>
+	<testcase name="common_world_live_sender" classname="common_world_live_sender" time="0.69063" status="run">
+		<properties/>
+		<system-out>PASS explicit source/durable/publisher/transport lifetimes and local acceptance only
+PASS candidate, forged and mismatched exact receipts cannot send
+PASS source and transport connection without owner do not authorize
+PASS revoke before enqueue/dequeue/final send boundary 0
+PASS revoke before enqueue/dequeue/final send boundary 1
+PASS revoke before enqueue/dequeue/final send boundary 2
+PASS post-entry revoke cannot recall escaped datagram or accept late completion
+PASS post-success revoke keeps honest local cursor but cancels later work
+PASS fresh same-owner epoch invalidates queue and completion
+PASS different installation owner identity rejects old receipt and attempt
+PASS epoch handover after reservation before send has no API attempt
+PASS source reconnect cannot admit old callback or auto-enable sender
+PASS sender reconnect retires pending work and does not reauthorize
+PASS disable re-enable needs fresh publisher session and rejects old reservation
+PASS pending head excludes later frames; completion order...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="common_world_live_sender_scope" classname="common_world_live_sender_scope" time="0.449674" status="run">
+		<properties/>
+		<system-out>PASS 5AF scope: frozen 5AD/5AE/Owner/Publisher/kit byte-exact; prior gates retained; sole guarded transport call; separate non-production library; loopback-only endpoint
+</system-out>
+	</testcase>
+	<testcase name="live_sender_generated_streams" classname="live_sender_generated_streams" time="0.0706756" status="run">
+		<properties/>
+		<system-out>PASS sender wire stream sender-normal 4 events
+PASS sender wire stream sender-reconnect 6 events
+</system-out>
+	</testcase>
+	<testcase name="common_world_live_ingress" classname="common_world_live_ingress" time="0.684739" status="run">
+		<properties/>
+		<system-out>PASS start does not acquire owner or publisher; first explicit durable transition
+PASS valid ordered events retain current durable mapping and remain silent
+PASS stop without in-flight work and repeated stop/dispose
+PASS queued immutable old callback and late stop cannot affect reconnect
+PASS rapid same-identity reconnect uses independent callback generation
+PASS source fault recovery fences queued work
+PASS destruction leaves late callback with weak disposed state
+PASS foreign callback cannot authorize stop or persist another ingress
+PASS revoke before admission keeps source running but permanently retires approval
+PASS in-flight persistence fence boundary=0 action=0
+PASS in-flight persistence fence boundary=0 action=1
+PASS in-flight persistence fence boundary=0 action=2
+PASS in-flight persistence fence boundary=0 action=3
+PASS in-flight persistence fence boundary=3 action=0
+PASS in-flight persistence fence boundary=3 action=1
+PASS in-flight persistence fence boundary=3 action=2
+PASS in-flight persistence fe...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="common_world_live_ingress_dormancy" classname="common_world_live_ingress_dormancy" time="0.42039" status="run">
+		<properties/>
+		<system-out>PASS 5AE: all 5AD files except CMake byte-exact; scoped callback adapter only; no production wiring, sender, transport, driver/config or worker/queue
+</system-out>
+	</testcase>
+	<testcase name="live_ingress_common_world_generated_streams" classname="live_ingress_common_world_generated_streams" time="0.0697481" status="run">
+		<properties/>
+		<system-out>PASS live ingress stream live-normal.jsonl 5 events
+PASS live ingress stream live-replacement.jsonl 7 events
+</system-out>
+	</testcase>
+	<testcase name="common_world_persistence" classname="common_world_persistence" time="2.04239" status="run">
+		<properties/>
+		<system-out>PASS missing store and construction are not durable authority
+PASS first successive exact duplicate stale and same-key conflict
+PASS exact identity anchor minima request epoch and receipt payload gates
+RECOVERY boundary=0 expected=old actual=old no-returned-receipt
+PASS fault boundary 0 has no receipt; recover old/new
+RECOVERY boundary=1 expected=old actual=old no-returned-receipt
+PASS fault boundary 1 has no receipt; recover old/new
+RECOVERY boundary=2 expected=old actual=old no-returned-receipt
+PASS fault boundary 2 has no receipt; recover old/new
+RECOVERY boundary=3 expected=old actual=old no-returned-receipt
+PASS fault boundary 3 has no receipt; recover old/new
+RECOVERY boundary=4 expected=new actual=new no-returned-receipt
+PASS fault boundary 4 has no receipt; recover old/new
+PROCESS-CRASH boundary=0 exit=77 recovery=authorization only
+PASS actual process termination boundary 0
+PROCESS-CRASH boundary=1 exit=77 recovery=authorization only
+PASS actual process termination boundary 1
+PROCESS-CRASH boundary=2...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="common_world_persistence_dormancy" classname="common_world_persistence_dormancy" time="0.520797" status="run">
+		<properties/>
+		<system-out>PASS 5AD: frozen 5AC core/tests byte exact; no production wiring, live source/sender/transport, thread, Fanout or driver/config integration
+</system-out>
+	</testcase>
+	<testcase name="persistent_common_world_generated_streams" classname="persistent_common_world_generated_streams" time="0.0728395" status="run">
+		<properties/>
+		<system-out>PASS durable stream durable-lifecycle.jsonl 9 events
+PASS durable stream durable-restart.jsonl 7 events
+PASS durable stream durable-replacement.jsonl 7 events
+</system-out>
+	</testcase>
+	<testcase name="common_world_publisher_identity" classname="common_world_publisher_identity" time="0.361594" status="run">
+		<properties/>
+		<system-out>PASS R counterexample resolved through real authority owner publisher codec
+PASS same canonical publisher deterministic bytes
+PASS source ID is independent of canonical publisher
+PASS schema two binds durable highwater candidate and actual authority
+PASS exact receipt rejects publisher substitution 0
+PASS exact receipt rejects publisher substitution 1
+PASS exact receipt rejects publisher substitution 2
+PASS exact receipt rejects publisher substitution 3
+PASS known rejection retry retains identical identity bytes
+PASS publisher reconnect restamps ephemeral header preserves durable identity
+PASS revoke cancels queued publication without substituting identity
+PASS new owner epoch rejects stale exact receipt
+PASS foreign source cannot replace active publisher or durable revision
+PASS restart retains publisher highwater and requires fresh authorization
+PASS restart foreign configured publisher fails before authorization write
+PASS runtime constructor cannot substitute publisher against schema two
+PASS legacy schem...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="protocol_v2_integrity" classname="protocol_v2_integrity" time="0.1771" status="run">
+		<properties/>
+		<system-out>PASS exact protocol {'major': 2, 'minor': 1} artifact/manifest/lock/contracts/content tree
+</system-out>
+	</testcase>
+	<testcase name="gui_production" classname="gui_production" time="2.03869" status="run">
+		<properties/>
+		<system-out>WPF references: C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8
+WPF GUI/tray: C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\ui\monaka_bridge_control.exe
+PASS GUI state sync: programmatic/user edits, persisted approval, atomic save/reload, stable key/reorder/disappearance, profile validation, diagnostic applied revision
+PASS WPF event wiring: hidden STA controls, save/reload/native validation, observation adoption, unknown profile and missing mapping; interactive UI NOT RUN
+PASS mapping: edit/create/deselect/rebind/collisions/source identity/publisher identity; native config validation
+PASS GUI health: single background read, failure delivery, nonblocking UI updates, close, policy, native/stale/component presentation; interactive UI NOT RUN
+</system-out>
+	</testcase>
+	<testcase name="health_async" classname="health_async" time="0.1782" status="run">
+		<properties/>
+		<system-out>PASS health: write failure / replace failure / retry keep tracking flowing; latest-only, shutdown, atomic native snapshot and stale validity
+</system-out>
+	</testcase>
+	<testcase name="coordinate_profiles" classname="coordinate_profiles" time="0.0359241" status="run">
+		<properties/>
+		<system-out>PASS coordinate profiles: historical v1, HIL-v2 signed components, +X/+Y/+Z, rotations, q/-q, explicit selection and isolation
+</system-out>
+	</testcase>
+	<testcase name="world_calibration" classname="world_calibration" time="0.0301134" status="run">
+		<properties/>
+		<system-out>PASS world calibration: rigid recovery, translation/yaw/3-axis/noise, geometry/reflection rejection, identity/revision guards, measure/apply semantics
+</system-out>
+	</testcase>
+	<testcase name="trajectory_calibration" classname="trajectory_calibration" time="0.258306" status="run">
+		<properties/>
+		<system-out>PASS trajectory: exact W/E, 6DoF, Gaussian noise, outliers, sign, lateral/yaw/static/planar rejection, time/rate/loss, identity/session/clock/revision, bounds, measure/apply
+noise rms m=0.00368857 robust rms m=0.0024666 inliers=484/501
+</system-out>
+	</testcase>
+	<testcase name="mapping_contract" classname="mapping_contract" time="0.0394836" status="run">
+		<properties/>
+		<system-out>PASS mapping identity: same tracker across sources/publishers, collision, exact runtime serial, rebind restart gate and source-change invalidation
+</system-out>
+	</testcase>
+	<testcase name="architecture_revision" classname="architecture_revision" time="0.0341205" status="run">
+		<properties/>
+		<system-out>PASS v2 identity / bounded lease / accepted-only age / absence reorder recovery / tracker isolation / modality
+</system-out>
+	</testcase>
+	<testcase name="rotation_only_downstream" classname="rotation_only_downstream" time="0.0934278" status="run">
+		<properties/>
+		<system-out>PASS Common Observation -&gt; calibrated serialized MTP FULL/ROTATION_ONLY/FULL/NONE, identity, history, age and sessions
+</system-out>
+	</testcase>
+	<testcase name="bridge_core" classname="bridge_core" time="0.0471102" status="run">
+		<properties/>
+		<system-out>PASS registry/calibration/mapping/routing/config/UDP and 7 VIVE v2 synthetic status fixtures
+</system-out>
+	</testcase>
+	<testcase name="upstream_integrity" classname="upstream_integrity" time="0.580794" status="run">
+		<properties/>
+		<system-out>PASS: Task1 fixed kit/lock/C1/internal sums; Task2 artifact/report/manifest/70 source hashes/Git blobs/52 include edges; Task3 artifact/report/11 file hashes
+</system-out>
+	</testcase>
+	<testcase name="bridge_edges" classname="bridge_edges" time="0.0626577" status="run">
+		<properties/>
+		<system-out>PASS absence/retired Direct sessions/reassignment/rigid transform/derivative reset/migration backups/overflow/bounded fanout
+</system-out>
+	</testcase>
+	<testcase name="protocol_v20_historical_integrity" classname="protocol_v20_historical_integrity" time="0.106806" status="run">
+		<properties/>
+		<system-out>PASS exact protocol {'major': 2, 'minor': 0} artifact/manifest/lock/contracts/content historical receipt
+</system-out>
+	</testcase>
+	<testcase name="trusted_hmd_source_stream" classname="trusted_hmd_source_stream" time="0.0481854" status="run">
+		<properties/>
+		<system-out>  ordered-streams/source-normal.jsonl PASS
+  ordered-streams/source-revoke-no-pose.jsonl PASS
+  ordered-streams/duplicate-same.jsonl PASS
+  ordered-streams/duplicate-resend.jsonl PASS
+  ordered-streams/duplicate-conflict.jsonl PASS
+  ordered-streams/reorder.jsonl PASS
+  ordered-streams/pose-before-authority.jsonl PASS
+  ordered-streams/source-generation.jsonl PASS
+  ordered-streams/fresh-session-after-gap.jsonl PASS
+  ordered-streams/source-revoked-token-replay.jsonl PASS
+  ordered-streams/source-ambiguous-revoke-generation.jsonl PASS
+  ordered-streams/source-lost-token-new-generation.jsonl PASS
+PASS exact kit ordered source scenarios
+PASS explicit authorization and fresh bootstrap
+PASS unavailable recovery requires new observation
+PASS source observation replay and conflict
+PASS observation high-water survives generation and session
+PASS gap is immediate and never repaired in same session
+PASS duplicate equality includes timestamp/version/evidence and excludes only resend metadata
+PASS unknown optional field...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="common_world_runtime" classname="common_world_runtime" time="0.139704" status="run">
+		<properties/>
+		<system-out>PASS no source, silent publisher, no receipt and delayed activation
+PASS exact receipt fields, stale receipt, no token mint before durable commit
+PASS pending anchor replacement and ABA request retirement
+PASS persistent world and mapping monotonicity on replacement
+PASS generation replacement ordered revoke, receipt, world, mapping, new observation
+PASS source token replacement and unchanged publisher handoff
+PASS unavailable exact evidence, duplicate and old observations do not recover
+PASS unknown unavailable validity stays null
+PASS same world mapping update and rollback/idempotence
+PASS equal revision changed mapping content immediately revokes
+PASS mapping revoke without pose and fresh reestablishment
+PASS world revocation at EOF immediately blocks all poses
+PASS publisher start with existing authority and restart full snapshot
+PASS restart while mapping revoked remains silent until complete snapshot
+PASS all six exact validity facts and binary64 identity, no normalization
+PASS gap/conflict/clock/malfor...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="common_world_generated_streams" classname="common_world_generated_streams" time="0.0959961" status="run">
+		<properties/>
+		<system-out>PASS normal.jsonl 3 ordered events
+PASS unavailable-recovery.jsonl 5 ordered events
+PASS mapping-update.jsonl 5 ordered events
+PASS mapping-revoke.jsonl 4 ordered events
+PASS mapping-reestablish.jsonl 6 ordered events
+PASS world-replace.jsonl 7 ordered events
+PASS world-revoke-no-pose.jsonl 4 ordered events
+PASS publisher-reconnect.jsonl 6 ordered events
+PASS explicit-world-replace.jsonl 7 ordered events
+</system-out>
+	</testcase>
+	<testcase name="common_world_dormancy" classname="common_world_dormancy" time="6.61112" status="run">
+		<properties/>
+		<system-out>PASS exact protocol {'major': 2, 'minor': 1} artifact/manifest/lock/contracts/content tree
+PASS dormant owner/publisher: no transport/thread/Fanout/persistence/OpenVR/runtime wiring; protected legacy/5AB/kit unchanged
+</system-out>
+	</testcase>
+	<testcase name="common_world_receiver_scope" classname="common_world_receiver_scope" time="0.47363" status="run">
+		<properties/>
+		<system-out>PASS R2 receiver-only scope; 5AI-P sender/Protocol/2.1 fixtures exact; original Core algorithms exact outside recovery APIs
+</system-out>
+	</testcase>
+	<testcase name="common_world_receiver_runtime" classname="common_world_receiver_runtime" time="17.8332" status="run">
+		<properties/>
+		<system-out>PASS exact production protocol 2.2 ZIP/manifest/lock/contracts/member hashes; 2.1 remains separate
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+&gt; Task :checkKotlinGradlePluginConfigurationErrors SKIPPED
+&gt; Task :processResources
+&gt; Task :runtimeDependencies
+&gt; Task :processTestResources NO-SOURCE
+
+&gt; Task :compileKotlin
+w: file:///C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/receiver/src/ReceiverRuntime.kt:49:25 This class is not recommended for use in Kotlin. Use 'kotlin.Any' instead.
+w: file:///C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/receiver/src/ReceiverStore.kt:124:61 No cast needed.
+w: file:///C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/rec...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="trusted_live_source" classname="trusted_live_source" time="0.20733" status="run">
+		<properties/>
+		<system-out>PASS canonical publisher independent from sessions
+PASS invalid canonical publisher rejected before source 0
+PASS invalid canonical publisher rejected before source 1
+PASS invalid canonical publisher rejected before source 97
+PASS invalid canonical publisher rejected before source 4
+PASS invalid canonical publisher rejected before source 1
+PASS otherwise identical A B producers remain distinct
+PASS production envelope bootstrap pose order
+PASS missing accepted-source field fails closed
+PASS authority export session cannot be invented by a sample
+PASS continuous multi-event stream contiguous
+PASS temporary no data preserves authority and sequence
+PASS explicit lifecycle disconnect
+PASS explicit lifecycle orderly-shutdown
+PASS explicit lifecycle stream-failure
+PASS fresh reconnect preserves publisher and source time domain
+PASS late old export session rejected independently from sequence
+PASS duplicate immutable observation no sequence refresh
+PASS stale observation ignored
+PASS same observation conflict retire...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="trusted_live_source_scope" classname="trusted_live_source_scope" time="0.470699" status="run">
+		<properties/>
+		<system-out>PASS additive 5AI-S scope; all R2 authority/store/ingress/A2/sender/receiver/codec and historical behavioral tests byte-exact
+</system-out>
+	</testcase>
+	<testcase name="trusted_live_adapter" classname="trusted_live_adapter" time="0.0653667" status="run">
+		<properties/>
+		<system-out>PASS stream cannot implicitly prepare or authorize
+PASS explicit prepare then continuous current input
+PASS pre-restart queued bootstrap cannot gain authorization
+PASS reconnect fresh A2 generation without owner authorization
+PASS explicit source authorize consumes only fresh bootstrap
+PASS canonical publisher mismatch fail closed
+PASS A2 rejection closes source instead of implicit repair
+PASS temporary no data preserves lifecycle
+PASS stream failure observable separately
+PASS bounded queue overflow fails without unbounded buffering
+PASS orderly EOF distinct from failure
+PASS truncated stream is failure
+PASS duplicate control fields reject
+PASS continuous adapter 13 cases
+</system-out>
+	</testcase>
+	<testcase name="trusted_live_source_host" classname="trusted_live_source_host" time="0.857961" status="run">
+		<properties/>
+		<system-out>PASS actual live-source host 21 cases; output C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\trusted-live-host\e0486140-4763-4750-96a1-8f0594e636c8
+</system-out>
+	</testcase>
+	<testcase name="trusted_live_receiver_identity" classname="trusted_live_receiver_identity" time="0.424533" status="run">
+		<properties/>
+		<system-out>PASS live producer identity actual R2 association 10 checks; C:\Users\nynyp\AppData\Local\Temp\mbg-desktop-final-1015-a\inputs\candidate\MonakaBridge\build\gui-validation\trusted-live-receiver\cf538afd80a74defb24ee41b02cbe885
+</system-out>
+	</testcase>
+	<testcase name="model_validation" classname="model_validation" time="0.0294179" status="run">
+		<properties/>
+		<system-out>PASS C++ atomic decode/encode and nonfinite model checks
+</system-out>
+	</testcase>
+	<testcase name="model_validation_v2" classname="model_validation_v2" time="0.0302573" status="run">
+		<properties/>
+		<system-out>PASS C++ atomic decode/encode and nonfinite model checks
+</system-out>
+	</testcase>
+	<testcase name="authority_model_validation" classname="authority_model_validation" time="0.0328159" status="run">
+		<properties/>
+		<system-out></system-out>
+	</testcase>
+</testsuite>
