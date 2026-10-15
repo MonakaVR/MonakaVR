@@ -1,6 +1,7 @@
+import { commitBridgeCandidate } from '../../electron/main/bridge-config-transaction.js';
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
-import { mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
@@ -95,9 +96,7 @@ test('native validator: save/backup/revision/restore/no-op and untouched fields'
   const restarted = new MonakaBridgeService(f.preferences);
   assert.equal((await restarted.load()).policy, 'monaka');
   assert.equal(
-    (await readdir(f.root)).some(
-      (name) => name.includes('desktop-candidate') || name.endsWith('.lock')
-    ),
+    (await readdir(f.root)).some((name) => name.includes('desktop-candidate')),
     false
   );
 });
@@ -199,28 +198,23 @@ test('duplicate apply, wrong cancellation ID, cancel, window close and retry', a
   await assert.rejects(closing.load(), /closed/);
 });
 
-test('exclusive Desktop writers and stale locks fail closed without deleting foreign locks', async (t) => {
+test('stale Desktop snapshot is rejected and old orphan marker cannot block the native transaction', async (t) => {
   const f = await fixture(t),
-    entered = deferred<void>(),
-    release = deferred<void>();
-  const first = new MonakaBridgeService(f.preferences, async () => {
-    entered.resolve();
-    await release.promise;
-  });
-  const second = new MonakaBridgeService(f.preferences),
-    a = await first.load(),
+    first = new MonakaBridgeService(f.preferences),
+    second = new MonakaBridgeService(f.preferences);
+  const a = await first.load(),
     b = await second.load();
-  const pending = first.apply(a.token!, 'both', 'first');
-  await entered.promise;
-  await assert.rejects(second.apply(b.token!, 'monaka', 'second'), /EEXIST/);
-  release.resolve();
-  await pending;
-  await writeFile(f.config + '.desktop-policy.lock', 'prior instance');
-  const reload = await second.load();
-  await assert.rejects(second.apply(reload.token!, 'disabled', 'stale'), /EEXIST/);
+  await first.apply(a.token!, 'both', 'first');
+  await assert.rejects(second.apply(b.token!, 'monaka', 'stale'), /changed/);
+  await writeFile(f.config + '.desktop-policy.lock', 'legacy orphan marker');
+  const current = await second.load();
+  assert.equal(
+    (await second.apply(current.token!, 'disabled', 'after-orphan')).policy,
+    'disabled'
+  );
   assert.equal(
     await readFile(f.config + '.desktop-policy.lock', 'utf8'),
-    'prior instance'
+    'legacy orphan marker'
   );
 });
 
@@ -231,9 +225,9 @@ test('replacement failure restores no external data, retry works, post-commit ca
   service = new MonakaBridgeService(
     f.preferences,
     validateBridgeCandidate,
-    async (from, to) => {
+    async (...args) => {
       if (fail) throw new Error('replace failed');
-      await rename(from, to);
+      await commitBridgeCandidate(...args);
       service.cancel('after-commit');
     }
   );
@@ -366,6 +360,7 @@ const runtimeContractConfiguration = () => ({
 test('P2R extension: old validator cannot silently approve runtime_contract; original bytes preserved', async (t) => {
   const f = await fixture(t);
   await writeFile(f.config, JSON.stringify(runtimeContractConfiguration()));
+  f.preferences.value.validatorPath = process.env.MONAKA_BRIDGE_TEST_LEGACY_VALIDATOR!;
   const original = await readFile(f.config),
     service = new MonakaBridgeService(f.preferences),
     loaded = await service.load();
@@ -385,7 +380,7 @@ test('P2R matching native validator preserves complete nested contract and chang
     p2rValidator = process.env.MONAKA_BRIDGE_TEST_P2R_VALIDATOR;
   assert.ok(
     p2rValidator,
-    'Provide the independently built 42ec6c8 validator. This test is not skipped.'
+    'Provide the freshly built shared-transaction validator. This test is not skipped.'
   );
   f.preferences.value.validatorPath = p2rValidator;
   const original = runtimeContractConfiguration();
@@ -412,4 +407,17 @@ test('P2R matching native validator preserves complete nested contract and chang
     /validation failed/
   );
   assert.deepEqual(JSON.parse(await readFile(f.config, 'utf8')), invalid);
+});
+
+test('legacy CLI cannot commit even a configuration without P2R extensions', async (t) => {
+  const f = await fixture(t);
+  f.preferences.value.validatorPath = process.env.MONAKA_BRIDGE_TEST_LEGACY_VALIDATOR!;
+  const before = await readFile(f.config),
+    service = new MonakaBridgeService(f.preferences),
+    loaded = await service.load();
+  await assert.rejects(
+    service.apply(loaded.token!, 'both', 'legacy-commit'),
+    /shared transaction CLI/
+  );
+  assert.deepEqual(await readFile(f.config), before);
 });
