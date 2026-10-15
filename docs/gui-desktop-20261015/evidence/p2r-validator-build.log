@@ -1,0 +1,33 @@
+MSBuild 縺ｮ繝舌・繧ｸ繝ｧ繝ｳ 18.11.0-1.26427.13+9353559c2 (.NET Framework)
+
+  1>Checking Build System
+  Building Custom Rule C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/Bridge-Contract-Audit/third_party/mbip-p1/third_party/mvip/cpp/CMakeLists.txt
+  codec.cpp
+  monaka_input_codec.vcxproj -> C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\Bridge-Contract-Audit\build\gui-contract-validator\p1-runtime\mvip\Release\monaka_input_codec.lib
+  Building Custom Rule C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/Bridge-Contract-Audit/third_party/mbip-p1/third_party/mvip/cpp/CMakeLists.txt
+  capabilities.cpp
+  monaka_capabilities.vcxproj -> C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\Bridge-Contract-Audit\build\gui-contract-validator\p1-runtime\mvip\Release\monaka_capabilities.lib
+  Building Custom Rule C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/Bridge-Contract-Audit/third_party/mbip-p1/cpp/CMakeLists.txt
+  normalizer.cpp
+  monaka_capability_normalizer.vcxproj -> C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\Bridge-Contract-Audit\build\gui-contract-validator\p1-runtime\Release\monaka_capability_normalizer.lib
+  Building Custom Rule C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/Bridge-Contract-Audit/CMakeLists.txt
+  trusted_hmd_source_stream.cpp
+  common_world_authority.cpp
+  common_world_publisher.cpp
+  trusted_hmd_common_world_coordinator.cpp
+  registry.cpp
+  calibration.cpp
+  world_calibration.cpp
+  trajectory_calibration.cpp
+  config.cpp
+  bridge.cpp
+  direct.cpp
+  runtime_normalization.cpp
+  common_world_revision_store.cpp
+  persistent_common_world_runtime.cpp
+  common_world_live_ingress.cpp
+  繧ｳ繝ｼ繝峨ｒ逕滓・荳ｭ...
+  monaka_bridge_core.vcxproj -> C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\Bridge-Contract-Audit\build\gui-contract-validator\Release\monaka_bridge_core.lib
+  Building Custom Rule C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/Bridge-Contract-Audit/CMakeLists.txt
+  bridge_config.cpp
+  monaka_bridge_config.vcxproj -> C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\Bridge-Contract-Audit\build\gui-contract-validator\Release\monaka_bridge_config.exe

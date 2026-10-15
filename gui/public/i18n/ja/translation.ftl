@@ -798,3 +798,6 @@ unknown_device-modal-forget = 無視する
 
 ## Tracking checklist section
 
+
+# Desktop Bridge controls
+settings-sidebar-monaka-bridge = Monaka Bridge

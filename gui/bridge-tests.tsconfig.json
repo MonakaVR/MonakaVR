@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "rootDir": ".",
+    "outDir": "build/bridge-tests"
+  },
+  "include": [
+    "tests/bridge/**/*.ts",
+    "src/bridge/**/*.ts",
+    "electron/bridge-types.ts",
+    "electron/bridge-health.ts",
+    "electron/main/monaka-bridge-service.ts",
+    "electron/main/monaka-bridge-ipc.ts",
+    "electron/main/monaka-bridge-tray.ts"
+  ]
+}

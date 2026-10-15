@@ -4,6 +4,7 @@ import {
   SaveDialogOptions,
   SaveDialogReturnValue,
 } from 'electron';
+import type { BridgeDesktopApi } from '../bridge-types';
 
 export type ServerStatusEvent = {
   type: 'stdout' | 'stderr' | 'error' | 'terminated' | 'other';
@@ -39,6 +40,7 @@ export type DiscordPresence =
   | { enable: true; activity: string; iconText: string | undefined };
 
 export interface IElectronAPI {
+  bridge: BridgeDesktopApi;
   onServerStatus: (cb: (data: ServerStatusEvent) => void) => () => void;
   openUrl: (url: string) => Promise<void>;
   osStats: () => Promise<OSStats>;
