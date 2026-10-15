@@ -1,14 +1,9 @@
-import { spawn } from 'node:child_process';
-import { constants } from 'node:fs';
 import {
-  copyFile,
-  open,
-  realpath,
-  rename,
-  stat,
-  unlink,
-  writeFile,
-} from 'node:fs/promises';
+  commitBridgeCandidate,
+  type BridgeCommit,
+} from './bridge-config-transaction.js';
+import { spawn } from 'node:child_process';
+import { open, realpath, stat, unlink, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import {
@@ -204,7 +199,7 @@ export class MonakaBridgeService {
   constructor(
     private readonly preferences: BridgePreferences,
     private readonly validate: BridgeValidator = validateBridgeCandidate,
-    private readonly replace: typeof rename = rename
+    private readonly commit: BridgeCommit = commitBridgeCandidate
   ) {}
   get busy(): boolean {
     return !!this.pending || !!this.reading || this.selecting || this.disposed;
@@ -330,11 +325,7 @@ export class MonakaBridgeService {
     this.pending = { id: requestId, abort };
     const signal = abort.signal;
     const candidate = `${configPath}.desktop-candidate-${randomUUID()}`;
-    const backup = `${configPath}.backup-${randomUUID()}`;
-    const lockPath = `${configPath}.desktop-policy.lock`;
-    let lock: Awaited<ReturnType<typeof open>> | null = null;
     try {
-      lock = await open(lockPath, 'wx');
       signal.throwIfAborted();
       const locations = await this.preferences.read();
       if (
@@ -360,21 +351,13 @@ export class MonakaBridgeService {
       await this.checkRuntimeContractValidator(value, validatorPath, candidate, signal);
       signal.throwIfAborted();
       await unchanged();
-      await copyFile(configPath, backup, constants.COPYFILE_EXCL);
-      signal.throwIfAborted();
-      await unchanged();
-      signal.throwIfAborted();
-      await this.replace(candidate, configPath);
+      await this.commit(validatorPath, configPath, loaded.bytes, candidate, signal);
       // No cancellation check after commit: report the actual saved result.
       const result = configuration(value, loaded.result.locations);
       if (!this.disposed) this.snapshot = { result, bytes, value };
       return result;
     } finally {
       await unlink(candidate).catch(() => {});
-      if (lock) {
-        await lock.close().catch(() => {});
-        await unlink(lockPath).catch(() => {});
-      }
       this.pending = null;
     }
   }

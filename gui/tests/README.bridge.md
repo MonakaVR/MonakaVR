@@ -50,3 +50,16 @@ Desktop byte-conflict checks cannot make their final rename atomic with ours.
 
 Screenshots, TAP, Playwright JSON and build logs are written under ignored
 `build/`. Selected final receipts are archived in `docs/gui-desktop-20261015/`.
+
+## Shared native configuration transaction
+
+Use the newly built shared-transaction CLI for both MONAKA_BRIDGE_TEST_VALIDATOR
+and MONAKA_BRIDGE_TEST_P2R_VALIDATOR. Set MONAKA_BRIDGE_TEST_LEGACY_VALIDATOR
+explicitly for the old-validator negative control. The service now delegates
+commit to native exact-byte CAS, not a Desktop-only lock/rename. Old supplemental
+race-check.mjs describes the frozen pretransaction service at commit9da19816;
+run that historical entry against its historical compiled module, not the updated
+service. Current cooperating-writer/fault process evidence is in the workspace
+config-write-transaction-20261015 task and native config_transaction_process test.
+The selected CLI must return monaka-config-transaction-v1. Unchanged legacy writers
+remain outside the cooperative guarantee; see Bridge docs/config-write-transaction.md.
