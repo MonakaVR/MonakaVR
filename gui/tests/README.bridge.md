@@ -23,6 +23,11 @@ pnpm smoke:bridge
 pnpm test:bridge:browser
 ```
 
+For independent integration checkouts, choose a free task-specific port with
+`pnpm smoke:bridge --port 4183` and set
+`MONAKA_DESKTOP_SMOKE_URL=http://127.0.0.1:4183` in the test terminal. The native
+fixture accepts loopback HTTP only. Do not stop an existing port owner.
+
 Missing validators/Electron are failures, never skips or substituted native
 successes. `bridge-tests.tsconfig.json` compiles real service/controller/IPC
 modules for Node's test runner. Native CLI tests validate actual config files;

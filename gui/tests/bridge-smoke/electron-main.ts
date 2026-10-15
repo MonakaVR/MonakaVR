@@ -59,5 +59,9 @@ app.whenReady().then(async () => {
     control.dispose();
     tray.destroy();
   });
-  await window.loadURL('http://127.0.0.1:4173/tests/bridge-smoke/native.html');
+  const url = new URL(process.env.MONAKA_DESKTOP_SMOKE_URL ?? 'http://127.0.0.1:4173');
+  if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1')
+    throw new Error('The software fixture requires a loopback HTTP server.');
+  url.pathname = '/tests/bridge-smoke/native.html';
+  await window.loadURL(url.href);
 });
