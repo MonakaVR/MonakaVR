@@ -1,0 +1,8 @@
+[19:56:46.433] [31mERROR[39m (65868): [36mFailed to load window state, using defaults[39m
+[19:56:46.476] [33mWARN[39m (65868): [36mNo existing store found at C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\startup-unpackaged-production-fRNVqY\app-data\dev.slimevr.SlimeVR\gui-cache.dat, starting with empty store.[39m
+[19:56:46.477] [32mINFO[39m (65868): [36mserver jar not found, skipping[39m
+[19:56:46.544] [32mINFO[39m (65868): [36mSlimeVR started![39m
+[19:56:46.797] [32mINFO[39m (65868): [36mNon semver version, skipping the server update check[39m
+    [35mversion[39m: "development"
+[19:56:47.246] [32mINFO[39m (65868): [36mApp quitting, saving...[39m
+[19:56:47.248] [32mINFO[39m (65868): [36mDestroying Discord RPC[39m

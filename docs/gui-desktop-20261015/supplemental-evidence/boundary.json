@@ -1,0 +1,55 @@
+{
+  "collected_utc": "2026-10-15T11:04:30.628231+00:00",
+  "baseline": "1d5d556169f7a8c60e39f4f96e0eb9a6ff9e731b",
+  "branch": "dev",
+  "remote": "https://github.com/MonakaVR/MonakaVR.git",
+  "merge_base_with_core_ingress": "c11dc54ed1a745ffc4b15db7f820d8d0c1993990",
+  "product_and_runtime_diff": [],
+  "original_checkouts": {
+    "MonakaBridge": {
+      "head": "5fbf2a9a39450e10d4362c440bbecf2c286a4833",
+      "branch": "",
+      "status": ""
+    },
+    "MonakaProtocol": {
+      "head": "0b4a27c2e2de88705c92fb6dbf5a8d9ca752bf39",
+      "branch": "",
+      "status": ""
+    },
+    "PicoMotionTrackerBridge": {
+      "head": "deb455fe02e4eae1589e41fec3b574925f6b43b0",
+      "branch": "fix/ui-ux-hil-build-exit",
+      "status": ""
+    },
+    "ViveUltimateTrackerBridge": {
+      "head": "2cfa10f321b62fad4fc99c690f05d339ef91bab4",
+      "branch": "codex/ui-ux-hardening",
+      "status": ""
+    }
+  },
+  "bridge_file_count": 972,
+  "bridge_hash_differences": [],
+  "previous_original_receipts_verified": 52,
+  "supplemental_source_sha256": {
+    "gui/tests/bridge-supplemental/compile-legacy.ps1": "7f3aa9623148540c50e6a5d4510e8534dc3a76ef45f86e17f861b73096ec920a",
+    "gui/tests/bridge-supplemental/isolated-production-main.mjs": "b82732ad3b5b352a9096300d4d36dcef2297cf063afa990bd9082deac6b446ca",
+    "gui/tests/bridge-supplemental/LegacyTraySave.cs": "eb7d0752c0074d0e2c638bf78797b0a574b45fc559c19677579bcde8324d84dc",
+    "gui/tests/bridge-supplemental/package-check.mjs": "7b0b2e8521a33bd1dda449ca594f00506581faea319fdf897829c0406269661e",
+    "gui/tests/bridge-supplemental/race-check.mjs": "6732bb2606bee15f070f587161b73bae48a55604ad2d429cd5498a962e1cf9fe",
+    "gui/tests/bridge-supplemental/README.md": "a71de37646a21e30a7006c403e3bd97a752aeee5dae9898bd15033c8fb7b3f17",
+    "gui/tests/bridge-supplemental/startup-check.mjs": "30409a31effa4cbea63cbea5c147bbb8fe7aa31157b8eefb10521aaf1e03bd11"
+  },
+  "legacy_source_sha256": {
+    "ui/steamvr_control_wpf.cs": "174e2b71b37087a3b9820506edb701d88e15472b481b7cf85b40f1b464d2e36b",
+    "ui/steamvr_control_tray.cs": "5dad8de6e3f097dd29a887cfcec337f234d07711aa3c5b1603b403b41c445c59",
+    "ui/control_models.cs": "5922753b2062750316d1f24fcb45c58f764a07a259f688537de1b5ce67e6cf63"
+  },
+  "actions": {
+    "remote_push": false,
+    "service_stop": false,
+    "hardware_or_real_output": false,
+    "body_or_calibration_extension": false,
+    "new_lock_protocol": false
+  },
+  "limits": "Guarded main/test-package startup only; unrestricted full product startup and manual OS/HIL remain BLOCKED/NOT_RUN. Lost update is reproduced, not fixed."
+}

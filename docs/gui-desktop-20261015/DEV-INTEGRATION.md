@@ -1,5 +1,7 @@
 # GUI-only dev 統合の最終報告
 
+後続の [追加 software checks](SUPPLEMENTAL-SOFTWARE-CHECKS.md) で、未変更製品 main の guarded 起動、GUI-only test package の実 exe 起動、旧 tray/CLI との lost update 再現を確認した。無制限の正式起動・手動 OS/HIL の判定とは分離している。
+
 2026-10-15 UTC。ユーザーの「dev で」という明示指示に従い、既存 **MonakaVR/MonakaVR のローカル `dev`** へ GUI 改善を merge した。merge 前・後とも、unit/IPC 26件、画面/Electron/tray smoke 3件、全体 lint/typecheck/build が PASS。**remote push は行っていない**。
 
 実装した機能は、既存 Desktop の Bridge 設定画面、4種類の output policy の review/apply/cancel/失敗復元、saved/observed 設定の分離、鮮度・identity・tracking・成分 validity の診断表示、同じ画面を開く tray entry。4領域の実装済み機能・backend/API・不足・保留理由、旧テスト意図の対応付け、P2R/Core 適合性、スクリーンショットは [詳細 report](REPORT.md) に記録した。

@@ -1,0 +1,40 @@
+{
+  "extends": null,
+  "appId": "local.monaka.softwaretest",
+  "productName": "MonakaGuiIsolatedTest",
+  "directories": {
+    "output": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\package",
+    "buildResources": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\gui\\electron\\resources"
+  },
+  "electronVersion": "40.9.1",
+  "electronDist": "C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/MonakaVR-Desktop/build/gui-validation/electron-runtime",
+  "npmRebuild": false,
+  "asar": true,
+  "asarUnpack": [
+    "out/main/chunks/*.jar"
+  ],
+  "files": [
+    "out/**/*",
+    "package.json",
+    "node_modules/**",
+    {
+      "from": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\package-entry",
+      "to": ".",
+      "filter": [
+        "isolated-production-main.mjs"
+      ]
+    }
+  ],
+  "extraFiles": [],
+  "extraResources": [],
+  "publish": null,
+  "extraMetadata": {
+    "name": "monaka-gui-isolated-test",
+    "main": "isolated-production-main.mjs"
+  },
+  "win": {
+    "target": "dir",
+    "signAndEditExecutable": false,
+    "extraFiles": []
+  }
+}
