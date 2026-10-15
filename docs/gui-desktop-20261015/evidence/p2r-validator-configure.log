@@ -1,0 +1,23 @@
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.26200.
+-- The CXX compiler identification is MSVC 19.51.36260.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/18/Insiders/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Python3: C:/Users/nynyp/AppData/Local/Programs/Python/Python313/python.exe (found version "3.13.15") found components: Interpreter
+PASS exact protocol {'major': 2, 'minor': 1} artifact/manifest/lock/contracts/content tree
+PASS: Task1 fixed kit/lock/C1/internal sums; Task2 artifact/report/manifest/70 source hashes/Git blobs/52 include edges; Task3 artifact/report/11 file hashes
+PASS exact production protocol 2.2 ZIP/manifest/lock/contracts/member hashes; 2.1 remains separate
+PASS pinned canonical P1 runtime source/artifact: 3ea3194479cfa1a04b0fcbcf04916186efb4f9d3 1eea7defe82f39f06f45723444d83bfcce652c3ea519e1dbe29664b7fa21f26b
+PASS pinned MVIP source/ZIP/member/JAR inventory: eb66935481f677293d648241d723258613f3c513
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - not found
+-- Found Threads: TRUE
+-- Configuring done (8.6s)
+-- Generating done (0.6s)
+-- Build files have been written to: C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/Bridge-Contract-Audit/build/gui-contract-validator

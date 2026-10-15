@@ -1,0 +1,32 @@
+Scope: all 3 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +1031
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 1031, reused 873, downloaded 0, added 0
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: C:\Users\nynyp\AppData\Local\pnpm\store\v10
+  Virtual store is at:             node_modules/.pnpm
+窶姥ARN窶・The git-hosted package fetched from "https://codeload.github.com/devsnek/node-register-scheme/tar.gz/e7cc9a63a1f512565da44cb57316d9fb10750e17" has to be built but the build scripts were ignored.
+窶姥ARN窶・The git-hosted package fetched from "https://codeload.github.com/discordjs/rpc/tar.gz/9e7de2a6d917591f10a66389e62e1dc053c04fec" has to be built but the build scripts were ignored.
+Progress: resolved 1031, reused 1029, downloaded 2, added 131
+Progress: resolved 1031, reused 1029, downloaded 2, added 259
+Progress: resolved 1031, reused 1029, downloaded 2, added 328
+Progress: resolved 1031, reused 1029, downloaded 2, added 411
+Progress: resolved 1031, reused 1029, downloaded 2, added 450
+Progress: resolved 1031, reused 1029, downloaded 2, added 540
+Progress: resolved 1031, reused 1029, downloaded 2, added 623
+Progress: resolved 1031, reused 1029, downloaded 2, added 715
+Progress: resolved 1031, reused 1029, downloaded 2, added 814
+Progress: resolved 1031, reused 1029, downloaded 2, added 913
+Progress: resolved 1031, reused 1029, downloaded 2, added 1024
+Progress: resolved 1031, reused 1029, downloaded 2, added 1028
+Progress: resolved 1031, reused 1029, downloaded 2, added 1029
+Progress: resolved 1031, reused 1029, downloaded 2, added 1030
+Progress: resolved 1031, reused 1029, downloaded 2, added 1031, done
+
+devDependencies:
++ husky 9.1.7
++ lint-staged 15.5.2
+
+Done in 19.7s using pnpm v10.33.0
