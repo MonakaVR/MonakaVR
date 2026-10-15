@@ -43,6 +43,10 @@ export function SettingSelectorMobile() {
         value: { url: '/settings/serial' },
       },
       {
+        label: l10n.getString('settings-sidebar-monaka-bridge'),
+        value: { url: '/bridge' },
+      },
+      {
         label: l10n.getString('settings-sidebar-firmware-tool'),
         value: { url: '/settings/firmware-tool' },
       },
