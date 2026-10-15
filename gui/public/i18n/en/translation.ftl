@@ -1712,3 +1712,6 @@ toolbar-mounting_calibration-fingers = Fingers
 toolbar-drift_reset = Drift Reset
 toolbar-assigned_trackers = {$count} trackers assigned
 toolbar-unassigned_trackers = {$count} trackers unassigned
+
+# Desktop Bridge controls
+settings-sidebar-monaka-bridge = Monaka Bridge

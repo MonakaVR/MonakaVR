@@ -1,0 +1,17 @@
+{
+  "user_gui_goal_completed": false,
+  "adopted_gui_commit": null,
+  "architecture_approval_required": true,
+  "unadopted_ref": "codex/gui-proposal-unadopted-20261015",
+  "unadopted_sha": "6700d6304fac6ce7af5dd51ec41b32537c9ad35c",
+  "baseline_only_ref": "codex/gui-scope-baseline-20261015",
+  "baseline_only_sha": "5fbf2a9a39450e10d4362c440bbecf2c286a4833",
+  "baseline_full_ctest": "49/49 PASS, 0 skipped; GUI proposal absent",
+  "gui_proposal_full_ctest": "41/49; 8 scope failures remain, NOT accepted",
+  "active_original_gui_branch_unchanged": true,
+  "source_working_tree_clean": true,
+  "remote_push": false,
+  "merge": false,
+  "report_is_validation_output_only": true,
+  "proposed_decision": "Authorize a separately-owned standalone GUI repository consuming the frozen Bridge existing config/CLI/health contract."
+}

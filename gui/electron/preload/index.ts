@@ -1,8 +1,41 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { IElectronAPI, ServerStatusEvent } from './interface';
 import { IPC_CHANNELS } from '../shared';
+import type { BridgeConfiguration, BridgeHealthRead } from '../bridge-types';
+
+ipcRenderer.on(IPC_CHANNELS.BRIDGE_OPEN, () => {
+  window.location.hash = '/bridge';
+});
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  bridge: {
+    load: (requestId) =>
+      ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_CONTROL, {
+        operation: 'load',
+        requestId,
+      }) as Promise<BridgeConfiguration>,
+    choose: (kind) =>
+      ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_CONTROL, {
+        operation: 'choose',
+        kind,
+      }) as Promise<BridgeConfiguration | null>,
+    health: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_CONTROL, {
+        operation: 'health',
+      }) as Promise<BridgeHealthRead>,
+    apply: (token, policy, requestId) =>
+      ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_CONTROL, {
+        operation: 'apply',
+        token,
+        policy,
+        requestId,
+      }) as Promise<BridgeConfiguration>,
+    cancel: (requestId) =>
+      ipcRenderer.invoke(IPC_CHANNELS.BRIDGE_CONTROL, {
+        operation: 'cancel',
+        requestId,
+      }) as Promise<void>,
+  },
   onServerStatus: (callback) => {
     const subscription = (_event: IpcRendererEvent, value: ServerStatusEvent) =>
       callback(value);
