@@ -11,7 +11,7 @@ export default defineConfig({
     channel: 'msedge',
     headless: true,
     viewport: { width: 1280, height: 1100 },
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: process.env.MONAKA_DESKTOP_SMOKE_URL ?? 'http://127.0.0.1:4173',
     trace: 'retain-on-failure',
   },
 });
