@@ -63,3 +63,9 @@ service. Current cooperating-writer/fault process evidence is in the workspace
 config-write-transaction-20261015 task and native config_transaction_process test.
 The selected CLI must return monaka-config-transaction-v1. Unchanged legacy writers
 remain outside the cooperative guarantee; see Bridge docs/config-write-transaction.md.
+
+Current native/GUI process matrices are versioned as
+`tests/bridge-supplemental/transaction-writers.mjs` and
+`transaction-faults.mjs`. Explicit args: repository root, matching CLI,
+actual compiled SharedWriterHarness (or SleepingCommit test double for faults),
+and a fresh owned output directory. Never target a live user configuration.
