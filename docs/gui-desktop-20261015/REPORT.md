@@ -1,5 +1,7 @@
 # Monaka Desktop GUI 調査・実装・適合性確認
 
+**後続の最終結果：ユーザーの「dev で」の指示を受け、GUI-only 候補をローカル `dev` に merge し、統合後 regression も PASS。前後 SHA・実際の統合先・最新証跡は [DEV-INTEGRATION.md](DEV-INTEGRATION.md) を参照。以下は merge 前の候補・調査・検証の記録である。**
+
 2026-10-15 UTC。既存の **MonakaVR/MonakaVR `gui/`（Electron/React Desktop）** に Bridge の設定・診断画面を実装した。独立ローカル clone/branch に保存し、Bridge の凍結ソースへ GUI 差分を入れていない。新しい GUI repository・二重アプリは作成していない。
 
 GUI 全体 lint/typecheck/build、service/controller/IPC **26/26 件**、実画面 smoke **3/3 件**、別途の凍結 Bridge full CTest **49/49 件** が PASS。いずれも skip なし。実機・実 tracking 出力・runtime 本線の統合結果は含まない。

@@ -1,0 +1,6 @@
+
+> slimevr@0.0.0 check:bridge:smoke C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev-candidate\gui
+> tsc --noEmit --project bridge-smoke.tsconfig.json && prettier --check "tests/**/*.{ts,tsx,html}" "bridge-*.{ts,json}" package.json
+
+Checking formatting...
+All matched files use Prettier code style!

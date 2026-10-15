@@ -1,0 +1,20 @@
+[
+  {
+    "pid": 29448,
+    "command_line": "node   \"C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop\\gui\\node_modules\\.bin\\\\..\\..\\..\\node_modules\\.pnpm\\vite@5.4.21_@types+node@24.12.2_sass@1.99.0\\node_modules\\vite\\bin\\vite.js\" --config bridge-smoke.vite.config.ts",
+    "task_owned_smoke_only": true,
+    "stopped": true
+  },
+  {
+    "pid": 83156,
+    "command_line": "node   \"C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev-candidate\\gui\\node_modules\\.bin\\\\..\\..\\..\\node_modules\\.pnpm\\vite@5.4.21_@types+node@24.12.2_sass@1.99.0\\node_modules\\vite\\bin\\vite.js\" --config bridge-smoke.vite.config.ts \"--port\" \"4183\"",
+    "task_owned_smoke_only": true,
+    "stopped": true
+  },
+  {
+    "pid": 74192,
+    "command_line": "node   \"C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\gui\\node_modules\\.bin\\\\..\\..\\..\\node_modules\\.pnpm\\vite@5.4.21_@types+node@24.12.2_sass@1.99.0\\node_modules\\vite\\bin\\vite.js\" --config bridge-smoke.vite.config.ts \"--port\" \"4184\"",
+    "task_owned_smoke_only": true,
+    "stopped": true
+  }
+]
