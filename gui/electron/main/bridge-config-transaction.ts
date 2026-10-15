@@ -81,13 +81,15 @@ export const commitBridgeCandidate: BridgeCommit = async (
     try {
       await command(executable, [target, 'commit', snapshot, candidate], signal);
     } catch (cause) {
-      // Abort/timeout/transport loss can race the native linearization point.
-      // Report an observed completed candidate honestly; otherwise never retry.
+      // Readback cannot establish which writer committed identical bytes.
+      // Interrupted callers must reload; never silently retry or claim ownership.
       if (
         (signal.aborted || String(cause).includes('timed out')) &&
         (await readFile(target)).equals(bytes)
       )
-        return;
+        throw new Error(
+          'Save outcome unknown after interruption; target matches the proposed configuration. Reload before editing.'
+        );
       throw cause;
     }
   } finally {
