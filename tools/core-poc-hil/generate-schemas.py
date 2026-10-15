@@ -31,6 +31,12 @@ for key in ['rawImuValid','imuValid']:props[key]={'type':'boolean'}
 for key in ['sixDofSourceId','imuSourceId']:props[key]={'type':'string','minLength':1}
 for key in ['sixDofTimestampNanos','imuTimestampNanos','imuSequence']:props[key]={'type':'integer','minimum':0}
 props['timestampSkewNanos']={'type':'integer'}
+props['derivativeDtSeconds']={'type':['number','null'],'exclusiveMinimum':0}
+for key in ['derivativePreviousTimestampNanos','derivativePreviousFrameSequence']:
+    props[key]={'type':['integer','null'],'minimum':0}
+props['derivativePreviousQuaternionXyzw']=quat
+props['derivativePreviousState']={'type':['string','null']}
+props['angularVelocityProvenance']={'type':'string'}
 for key in ['raw6dofPose','rawIkPose','correctedIkPose','solvedIkPose','finalOutputPose']:props[key]=pose
 for key in ['sourceProvenance','imuProvenance','hmdProvenance']:props[key]=provenance
 props['state']={'enum':['FULL_6DOF','FALLBACK_IK','RECOVERY_DWELL','RECOVERY_BLEND','UNAVAILABLE']}

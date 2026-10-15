@@ -12,7 +12,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.math.abs
-import kotlin.math.acos
+import kotlin.math.atan2
+import kotlin.math.sqrt
 
 /** Explicit diagnostic configuration. These limits are provisional software settings, not HIL tuning. */
 data class CorePocHilConfig(
@@ -240,6 +241,12 @@ class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) 
 			"finalPositionResidualMeters" to distance(input.main.position, outputPosition),
 			"finalAngularResidualRadians" to angular(input.main.rotation, outputRotation),
 			"positionStepMeters" to positionStep, "angularStepRadians" to angularStep,
+			"derivativeDtSeconds" to dt,
+			"derivativePreviousTimestampNanos" to lastInput?.timestampNanos,
+			"derivativePreviousFrameSequence" to lastInput?.sequence,
+			"derivativePreviousQuaternionXyzw" to quat(priorPose?.second),
+			"derivativePreviousState" to previous?.get("state"),
+			"angularVelocityProvenance" to "derived scalar double relative-quaternion atan2 shortest-arc angle / Core tick dt; no native velocity switch",
 			"outputVelocityMetersPerSecond" to if (dt != null && dt > 0) positionStep?.div(dt) else null,
 			"outputAngularVelocityRadiansPerSecond" to if (dt != null && dt > 0) angularStep?.div(dt) else null,
 		)
@@ -322,7 +329,7 @@ class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) 
 	override fun close() { if (closed) return; captureStop(); writeback.close(); pipeline.clear(); closed = true }
 	companion object {
 		const val SCHEMA = "monaka-core-poc-capture-v1"
-		const val STATE_VERSION = "existing-continuity-physical-dwell-v1+hil-correction-6g-v1+same-tracker-evidence-v2c2r"
+		const val STATE_VERSION = "existing-continuity-physical-dwell-v1+hil-correction-6g-v1+same-tracker-evidence-v2c2r+angular-recovery-v2c3r"
 		private fun tracker(name: String, role: TrackerPosition, hmd: Boolean) = Tracker(null, -500 - role.ordinal,
 			name, trackerPosition = role, hasPosition = hmd, hasRotation = true, isHmd = hmd,
 			allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false).also { it.status = TrackerStatus.OK }
@@ -330,8 +337,20 @@ class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) 
 		fun quat(q: Quaternion?) = q?.let { listOf(it.x, it.y, it.z, it.w) }
 		fun pose(p: Vector3?, q: Quaternion?) = linkedMapOf("positionMeters" to vector(p), "quaternionXyzw" to quat(q))
 		fun distance(a: Vector3?, b: Vector3?): Double? = if (a == null || b == null) null else (a - b).len().toDouble()
-		fun angular(a: Quaternion?, b: Quaternion?): Double? = if (a == null || b == null) null else
-			2 * acos(abs(a.unit().dot(b.unit()).toDouble()).coerceIn(0.0, 1.0))
+		fun angular(a: Quaternion?, b: Quaternion?): Double? {
+			if (a == null || b == null) return null
+			// Compute b * conjugate(a) in double before any products. atan2 keeps
+			// small rotations observable where float dot/acos invents or erases steps.
+			// Both components share the same norm factor, so this also handles scale
+			// and q/-q equivalence without clamping, smoothing or changing history.
+			val ax = a.x.toDouble(); val ay = a.y.toDouble(); val az = a.z.toDouble(); val aw = a.w.toDouble()
+			val bx = b.x.toDouble(); val by = b.y.toDouble(); val bz = b.z.toDouble(); val bw = b.w.toDouble()
+			val x = bx * aw - bw * ax - by * az + bz * ay
+			val y = by * aw - bw * ay - bz * ax + bx * az
+			val z = bz * aw - bw * az - bx * ay + by * ax
+			val w = bw * aw + bx * ax + by * ay + bz * az
+			return 2 * atan2(sqrt(x * x + y * y + z * z), abs(w))
+		}
 		private fun provenance(p: ObservationSampleProvenance) = linkedMapOf("sequence" to p.sequence,
 			"sampleAtNanos" to p.sampleAtNanos, "sourceEpoch" to p.sourceEpoch, "calibrationEpoch" to p.calibrationEpoch,
 			"mappingRevision" to p.mappingRevision, "commonWorldEpoch" to p.commonWorldEpoch)

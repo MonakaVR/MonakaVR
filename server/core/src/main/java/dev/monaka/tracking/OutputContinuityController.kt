@@ -169,7 +169,12 @@ class OutputContinuityController(
 						ResolvedComponent(interpolate(previous.position!!.value, it.value, progress), it.sourceId, it.quality, now)
 					} ?: previous.position
 					val selectedRotation = main.rotation!!
-					val rotation = ResolvedComponent(interpolate(previous.rotation!!.value, selectedRotation.value, progress),
+					// Dwell qualifies physical FULL samples; it must not accelerate angular
+					// correction beyond the configured recovery time scale. Keep position
+					// following and the dwell/blend deadlines unchanged.
+					val rotationProgress = if (now == fullSince) 0f else fraction(now, previousTick,
+						maxOf(tuning.stableFullDwellNs, tuning.reacquireDurationNs))
+					val rotation = ResolvedComponent(interpolate(previous.rotation!!.value, selectedRotation.value, rotationProgress),
 						selectedRotation.sourceId, selectedRotation.quality, now)
 					output = OutputPose(target, main.space, position, rotation,
 						if (fallback == null) previous.positionSource else OutputPositionSource.BACKGROUND_IK)
