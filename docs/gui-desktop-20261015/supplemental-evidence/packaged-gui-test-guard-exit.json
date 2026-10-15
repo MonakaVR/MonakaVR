@@ -1,0 +1,24 @@
+{
+  "packaged": true,
+  "blockedRequests": [
+    {
+      "url": "ws://localhost:21110/",
+      "layer": "webSocket"
+    }
+  ],
+  "deniedChildren": [],
+  "deniedSockets": [],
+  "menuLabels": [
+    "Monaka Bridge…",
+    "Show",
+    "Hide",
+    "Exit"
+  ],
+  "paths": {
+    "appData": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os\\app-data",
+    "userData": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os\\app-data\\dev.slimevr.SlimeVR",
+    "sessionData": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os\\app-data\\dev.slimevr.SlimeVR\\electron",
+    "logs": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os\\app-data\\dev.slimevr.SlimeVR\\logs",
+    "crashDumps": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os\\crash-dumps"
+  }
+}

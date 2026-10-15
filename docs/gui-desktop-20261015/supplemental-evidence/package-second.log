@@ -1,0 +1,17 @@
+  窶｢ electron-builder  version=26.15.3 os=10.0.26200
+  窶｢ loaded configuration  file=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\test-package-config.json
+  窶｢ description is missed in the package.json  appPackageFile=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\gui\package.json
+  窶｢ packageManager not detected by file, falling back to environment detection  resolvedPackageManager=pnpm detected=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\gui
+  窶｢ detected workspace root for project using packageManager field  pm=pnpm config=pnpm@10.33.0 resolved=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev projectDir=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\gui
+  窶｢ skipped dependencies rebuild  reason=npmRebuild is set to false
+  窶｢ packaging       platform=win32 arch=x64 electron=40.9.1 appOutDir=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\package\win-unpacked
+  窶｢ using custom unpacked Electron distribution  electronDist=C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/MonakaVR-Desktop/build/gui-validation/electron-runtime
+  窶｢ copying unpacked Electron  source=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop\build\gui-validation\electron-runtime destination=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\package\win-unpacked
+  窶｢ searching for node modules  pm=pnpm searchDir=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\gui
+  窶｢ duplicate dependency references  dependencies=["sonic-boom@4.2.1","once@1.4.0"]
+  窶｢ updating asar integrity executable resource  executablePath=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\package\win-unpacked\MonakaGuiIsolatedTest.exe
+  窶｢ executable resource editing and code signing skipped 窶・signAndEditExecutable is false. To skip only code signing while keeping icon and metadata applied, use signExecutable: false instead.  exe=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\package\win-unpacked\MonakaGuiIsolatedTest.exe
+Error: "out/main/index.js" was not found in this archive
+    at Filesystem.getFile (file:///C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/MonakaVR-Desktop-dev/node_modules/.pnpm/@electron+asar@4.2.0/node_modules/@electron/asar/src/filesystem.ts:261:13)
+    at extractFile (file:///C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/MonakaVR-Desktop-dev/node_modules/.pnpm/@electron+asar@4.2.0/node_modules/@electron/asar/src/asar.ts:354:31)
+    at file:///C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/MonakaVR-Desktop-dev/gui/tests/bridge-supplemental/package-check.mjs:84:20
