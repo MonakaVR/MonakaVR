@@ -147,3 +147,27 @@ Receiver checkpoint/bootstrap/accepted-metadata/Rig.live NPE/MoveFileEx AccessDe
 quarantined production-side defects. 2C-1/2C-2 do not certify production receiver stability.
 No real HIL, body-mounted run, production endpoint, SteamVR/VRChat or backend reconnect is performed
 in 2C-1. Next phase is **2C-2 — Real HIL: 6DoF FULL -> IMU/IK Fallback -> 6DoF Recovery**.
+
+## Phase 2C-3R angular diagnosis
+
+`analyze-angular.py RUN OUTPUT_DIRECTORY` joins the standalone capture with
+`root-observations.jsonl` and `live-mtp-native.jsonl` from the external PICO exporter.
+It retains source and Core clocks separately, audits the actual derivative history,
+and reconstructs world angular velocity from adjacent final quaternions using a
+double Hamilton log map, shortest arc, q/-q equivalence and actual Core tick dt.
+The first comparison applies no smoothing or dt clamp. Source angular vectors have
+unverified native frame semantics in the current PICO compatibility profile; their
+magnitudes are supporting evidence only. A reported output angular vector is not
+available in this harness: the reported field is a derived scalar speed.
+
+The Core capture now exposes `derivativeDtSeconds`, previous tick timestamp,
+previous frame sequence, previous output quaternion/state and angular provenance.
+The scalar angle uses double relative-quaternion atan2 to preserve small steps
+without the float-dot acos floor. Run `python test-angular-audit.py` for six analytic
+offline checks; these do not count as Core JUnit tests or hardware validation.
+
+Dwell still qualifies advancing FULL samples for the same configured duration.
+During dwell, angular following uses the slower of the dwell and recovery time
+scales. Position following and the subsequent recovery blend deadline are unchanged.
+This prevents the qualification interval from imposing a faster angular correction
+than the configured recovery interval.

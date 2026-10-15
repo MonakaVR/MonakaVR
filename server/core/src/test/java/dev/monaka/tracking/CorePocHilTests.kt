@@ -49,6 +49,39 @@ class CorePocHilTests {
 	private fun states(f: Fixture, count: Int, offset: Float = .2f, angle: Float = .5f) =
 		(1..count).map { f.tick(drift = .4f, offset = offset, angle = angle) }
 
+	@Test fun derivativeCaptureUsesAdjacentOutputAndTickAcrossEveryRecoveryBoundary() = Fixture().use { f ->
+		var previous = f.trained()
+		val frames = (0..15).map { f.tick(false, .4f) } + (0..35).map { f.tick(true, .4f, .2f, .5f) }
+		@Suppress("UNCHECKED_CAST")
+		for (current in frames) {
+			assertEquals(previous["timestampNanos"], current["derivativePreviousTimestampNanos"])
+			assertEquals(previous["sequence"], current["derivativePreviousFrameSequence"])
+			assertEquals(previous["state"], current["derivativePreviousState"])
+			assertEquals((previous["finalOutputPose"] as Map<String, Any?>)["quaternionXyzw"],
+				current["derivativePreviousQuaternionXyzw"])
+			assertEquals(.02, number(current, "derivativeDtSeconds"))
+			previous = current
+		}
+		assertEquals(listOf("FALLBACK_IK", "RECOVERY_DWELL", "RECOVERY_BLEND", "FULL_6DOF"),
+			frames.map { it["state"] }.distinct())
+	}
+
+	@Test fun angularDiagnosticDoesNotInventStationaryStepsAndTreatsQuaternionTwinsEqually() {
+		val q = Quaternion(.20190653f, .09988137f, -.8350499f, .5019455f)
+		assertEquals(0.0, CorePocHilSession.angular(q, q))
+		assertEquals(0.0, CorePocHilSession.angular(q, -q))
+		assertTrue(CorePocHilSession.angular(q, q * 3f)!! < 1e-7)
+	}
+
+	@Test fun angularDiagnosticResolvesCapturedSmallStepWithoutFloatAcosFloor() {
+		val before = Quaternion(.20190653f, .09988137f, -.8350499f, .5019455f)
+		val after = Quaternion(.20188807f, .09989001f, -.83505803f, .50193775f)
+		val step = CorePocHilSession.angular(before, after)!!
+		assertTrue(step in 4.64e-5..4.68e-5, "step $step")
+		assertEquals(step, CorePocHilSession.angular(before, -after))
+		assertTrue(kotlin.math.abs(CorePocHilSession.angular(Quaternion.IDENTITY, Quaternion.rotationAroundYAxis(.001f))!! - .001) < 1e-8)
+	}
+
 	@Test fun sameTrackerMaskKeepsImuSamplesCorrectionCalibrationAndRecovery(@TempDir dir: Path) =
 		Fixture(sameTracker = true).use { f ->
 			f.session.captureStart(dir.resolve("same-tracker.jsonl"))

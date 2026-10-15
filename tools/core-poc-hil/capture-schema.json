@@ -585,6 +585,47 @@
               "boolean",
               "null"
             ]
+          },
+          "derivativeDtSeconds": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "derivativePreviousTimestampNanos": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "derivativePreviousFrameSequence": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "derivativePreviousQuaternionXyzw": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "number"
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "derivativePreviousState": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "angularVelocityProvenance": {
+            "type": "string"
           }
         }
       }
