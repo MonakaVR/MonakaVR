@@ -1,0 +1,12 @@
+
+> slimevr@0.0.0 smoke:bridge:desktop:build C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop\gui
+> electron-vite build --config bridge-smoke-electron.config.ts
+
+(!) renderer and preload config is missing
+
+vite v5.4.21 building SSR bundle for production...
+transforming...
+笨・6 modules transformed.
+rendering chunks...
+build/bridge-native/main.cjs  16.98 kB
+笨・built in 488ms

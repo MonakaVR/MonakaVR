@@ -1,0 +1,38 @@
+{
+  "mode": "packaged-gui-test",
+  "result": "PASS_GUARDED_STARTUP",
+  "root": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os",
+  "initialUrl": "app://./index.html",
+  "tray": [
+    "Monaka Bridge…",
+    "Show",
+    "Hide",
+    "Exit"
+  ],
+  "guard": {
+    "packaged": true,
+    "blockedRequests": [
+      {
+        "url": "ws://localhost:21110/",
+        "layer": "webSocket"
+      }
+    ],
+    "deniedChildren": [],
+    "deniedSockets": [],
+    "menuLabels": [
+      "Monaka Bridge…",
+      "Show",
+      "Hide",
+      "Exit"
+    ],
+    "paths": {
+      "appData": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os\\app-data",
+      "userData": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os\\app-data\\dev.slimevr.SlimeVR",
+      "sessionData": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os\\app-data\\dev.slimevr.SlimeVR\\electron",
+      "crashDumps": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\startup-packaged-gui-test-Izz8Os\\crash-dumps"
+    }
+  },
+  "pageErrors": [],
+  "productionMainSha256": "128fee941b8bcc5e57ff73eecbec71337b52a90988ff2afffd0a0ad15eab2686",
+  "limits": "Guarded test entry imports unchanged production code. Not unrestricted normal/release launch; no manual OS click or Core/HIL/output validation."
+}

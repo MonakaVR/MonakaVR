@@ -60,6 +60,7 @@ import { ElectronContextC, provideElectron } from './hooks/electron';
 import { AppLocalizationProvider } from './i18n/config';
 import { openUrl } from './hooks/crossplatform';
 import { UdevRulesModal } from './components/onboarding/UdevRulesModal';
+import { MonakaBridgeSettings } from './components/settings/pages/MonakaBridgeSettings';
 
 export const GH_REPO = 'SlimeVR/SlimeVR-Server';
 export const VersionContext = createContext('');
@@ -300,23 +301,31 @@ export default function App() {
     <ElectronContextC.Provider value={electron}>
       <AppLocalizationProvider>
         <Router>
-          <ConfigContextProvider>
-            <WebSocketApiContext.Provider value={websocketAPI}>
-              <AppContextProvider>
-                <OnboardingContextProvider>
-                  <TrackingChecklistProvider>
-                    <VersionContext.Provider value={updateFound}>
-                      <div className="h-full w-full text-standard bg-background-80 text-background-10">
-                        <Preload />
-                        {!websocketAPI.isConnected && <ConnectionLost />}
-                        {websocketAPI.isConnected && <Layout />}
-                      </div>
-                    </VersionContext.Provider>
-                  </TrackingChecklistProvider>
-                </OnboardingContextProvider>
-              </AppContextProvider>
-            </WebSocketApiContext.Provider>
-          </ConfigContextProvider>
+          <Routes>
+            <Route path="/bridge" element={<MonakaBridgeSettings />} />
+            <Route
+              path="*"
+              element={
+                <ConfigContextProvider>
+                  <WebSocketApiContext.Provider value={websocketAPI}>
+                    <AppContextProvider>
+                      <OnboardingContextProvider>
+                        <TrackingChecklistProvider>
+                          <VersionContext.Provider value={updateFound}>
+                            <div className="h-full w-full text-standard bg-background-80 text-background-10">
+                              <Preload />
+                              {!websocketAPI.isConnected && <ConnectionLost />}
+                              {websocketAPI.isConnected && <Layout />}
+                            </div>
+                          </VersionContext.Provider>
+                        </TrackingChecklistProvider>
+                      </OnboardingContextProvider>
+                    </AppContextProvider>
+                  </WebSocketApiContext.Provider>
+                </ConfigContextProvider>
+              }
+            />
+          </Routes>
         </Router>
       </AppLocalizationProvider>
     </ElectronContextC.Provider>

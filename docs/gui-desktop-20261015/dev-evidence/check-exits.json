@@ -1,0 +1,7 @@
+{
+  "check:bridge:smoke": 0,
+  "smoke:bridge:desktop:build": 0,
+  "lint": 0,
+  "build": 0,
+  "test": 0
+}

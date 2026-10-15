@@ -36,6 +36,10 @@ import { options } from './cli';
 import { ServerStatusEvent } from 'electron/preload/interface';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { MenuItem } from 'electron/main';
+import { MonakaBridgeService } from './monaka-bridge-service';
+import { bridgeTrayEntry } from './monaka-bridge-tray';
+import type { BridgeLocations } from '../bridge-types';
+import { bridgeControlHandler } from './monaka-bridge-ipc';
 
 type Stores = Awaited<ReturnType<typeof initStores>>;
 let stores: Stores;
@@ -64,7 +68,31 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 let mainWindow: BrowserWindow | null = null;
-
+let bridgeControl: MonakaBridgeService | null = null;
+const bridgeHandler = bridgeControlHandler(
+  () => mainWindow?.webContents.id ?? null,
+  () => bridgeControl,
+  async (kind) => {
+    if (!mainWindow) throw new Error('Desktop window closed.');
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title:
+        kind === 'config'
+          ? 'Choose the existing Bridge configuration'
+          : 'Choose the tested monaka_bridge_config.exe',
+      properties: ['openFile'],
+      filters: [
+        {
+          name: kind === 'config' ? 'Bridge JSON' : 'Bridge validator',
+          extensions: kind === 'config' ? ['json'] : ['exe'],
+        },
+      ],
+    });
+    return result.canceled ? null : (result.filePaths[0] ?? null);
+  }
+);
+handleIpc(IPC_CHANNELS.BRIDGE_CONTROL, (event, request) =>
+  bridgeHandler(event.sender.id, request)
+);
 handleIpc(IPC_CHANNELS.GH_FETCH, async (e, options) => {
   if (options.type === 'fw-releases') {
     return fetch(
@@ -282,6 +310,7 @@ function createWindow() {
   }
 
   mainWindow.on('closed', () => {
+    bridgeControl?.dispose();
     mainWindow = null;
   });
 
@@ -316,6 +345,10 @@ function createWindow() {
     mainWindow?.show();
   });
   const contextMenu = Menu.buildFromTemplate([
+    bridgeTrayEntry(
+      () => mainWindow?.show(),
+      () => mainWindow?.webContents.send(IPC_CHANNELS.BRIDGE_OPEN)
+    ),
     {
       label: 'Show',
       click: () => {
@@ -494,6 +527,24 @@ app.whenReady().then(async () => {
   }
 
   stores = await initStores();
+  bridgeControl = new MonakaBridgeService({
+    read: async () => {
+      const saved = stores.settings.get<Partial<BridgeLocations>>('monakaBridge');
+      return {
+        configPath: typeof saved?.configPath === 'string' ? saved.configPath : null,
+        validatorPath:
+          typeof saved?.validatorPath === 'string' ? saved.validatorPath : null,
+      };
+    },
+    write: async (value) => {
+      const previous = stores.settings.get('monakaBridge');
+      stores.settings.set('monakaBridge', value);
+      if (!(await stores.settings.save())) {
+        stores.settings.set('monakaBridge', previous);
+        throw new Error('Desktop could not save the Bridge file selection.');
+      }
+    },
+  });
   checkEnvironmentVariables();
   const server = await spawnServer();
 
@@ -510,6 +561,7 @@ app.whenReady().then(async () => {
     isQuitting = true;
     event.preventDefault();
     logger.info('App quitting, saving...');
+    bridgeControl?.dispose();
     server?.close();
     await server?.waitForExit();
     await stores.settings.save();
