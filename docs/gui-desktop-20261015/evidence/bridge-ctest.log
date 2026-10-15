@@ -1,0 +1,103 @@
+Test project C:/Users/nynyp/AppData/Local/Temp/mbg-desktop-final-1015-a/inputs/candidate/MonakaBridge/build/gui-validation
+      Start  1: common_world_control
+ 1/49 Test  #1: common_world_control ..........................   Passed    0.66 sec
+      Start  2: common_world_control_host
+ 2/49 Test  #2: common_world_control_host .....................   Passed    0.41 sec
+      Start  3: common_world_fault_tooling
+ 3/49 Test  #3: common_world_fault_tooling ....................   Passed    0.08 sec
+      Start  4: common_world_control_scope
+ 4/49 Test  #4: common_world_control_scope ....................   Passed    0.32 sec
+      Start  5: common_world_readiness
+ 5/49 Test  #5: common_world_readiness ........................   Passed    1.62 sec
+      Start  6: common_world_deployment_scope
+ 6/49 Test  #6: common_world_deployment_scope .................   Passed    0.42 sec
+      Start  7: common_world_deployment_tooling
+ 7/49 Test  #7: common_world_deployment_tooling ...............   Passed    1.96 sec
+      Start  8: common_world_hil_host_off
+ 8/49 Test  #8: common_world_hil_host_off .....................   Passed    0.01 sec
+      Start  9: common_world_preflight_host_off
+ 9/49 Test  #9: common_world_preflight_host_off ...............   Passed    0.03 sec
+      Start 10: common_world_activation
+10/49 Test #10: common_world_activation .......................   Passed    0.70 sec
+      Start 11: common_world_activation_scope
+11/49 Test #11: common_world_activation_scope .................   Passed    0.48 sec
+      Start 12: common_world_activation_host_off
+12/49 Test #12: common_world_activation_host_off ..............   Passed    0.04 sec
+      Start 13: common_world_live_sender
+13/49 Test #13: common_world_live_sender ......................   Passed    0.69 sec
+      Start 14: common_world_live_sender_scope
+14/49 Test #14: common_world_live_sender_scope ................   Passed    0.45 sec
+      Start 15: live_sender_generated_streams
+15/49 Test #15: live_sender_generated_streams .................   Passed    0.07 sec
+      Start 16: common_world_live_ingress
+16/49 Test #16: common_world_live_ingress .....................   Passed    0.68 sec
+      Start 17: common_world_live_ingress_dormancy
+17/49 Test #17: common_world_live_ingress_dormancy ............   Passed    0.42 sec
+      Start 18: live_ingress_common_world_generated_streams
+18/49 Test #18: live_ingress_common_world_generated_streams ...   Passed    0.07 sec
+      Start 19: common_world_persistence
+19/49 Test #19: common_world_persistence ......................   Passed    2.04 sec
+      Start 20: common_world_persistence_dormancy
+20/49 Test #20: common_world_persistence_dormancy .............   Passed    0.52 sec
+      Start 21: persistent_common_world_generated_streams
+21/49 Test #21: persistent_common_world_generated_streams .....   Passed    0.07 sec
+      Start 22: common_world_publisher_identity
+22/49 Test #22: common_world_publisher_identity ...............   Passed    0.36 sec
+      Start 23: protocol_v2_integrity
+23/49 Test #23: protocol_v2_integrity .........................   Passed    0.18 sec
+      Start 24: gui_production
+24/49 Test #24: gui_production ................................   Passed    2.04 sec
+      Start 25: health_async
+25/49 Test #25: health_async ..................................   Passed    0.18 sec
+      Start 26: coordinate_profiles
+26/49 Test #26: coordinate_profiles ...........................   Passed    0.04 sec
+      Start 27: world_calibration
+27/49 Test #27: world_calibration .............................   Passed    0.03 sec
+      Start 28: trajectory_calibration
+28/49 Test #28: trajectory_calibration ........................   Passed    0.26 sec
+      Start 29: mapping_contract
+29/49 Test #29: mapping_contract ..............................   Passed    0.04 sec
+      Start 30: architecture_revision
+30/49 Test #30: architecture_revision .........................   Passed    0.03 sec
+      Start 31: rotation_only_downstream
+31/49 Test #31: rotation_only_downstream ......................   Passed    0.09 sec
+      Start 32: bridge_core
+32/49 Test #32: bridge_core ...................................   Passed    0.05 sec
+      Start 33: upstream_integrity
+33/49 Test #33: upstream_integrity ............................   Passed    0.58 sec
+      Start 34: bridge_edges
+34/49 Test #34: bridge_edges ..................................   Passed    0.06 sec
+      Start 35: protocol_v20_historical_integrity
+35/49 Test #35: protocol_v20_historical_integrity .............   Passed    0.11 sec
+      Start 36: trusted_hmd_source_stream
+36/49 Test #36: trusted_hmd_source_stream .....................   Passed    0.05 sec
+      Start 37: common_world_runtime
+37/49 Test #37: common_world_runtime ..........................   Passed    0.14 sec
+      Start 38: common_world_generated_streams
+38/49 Test #38: common_world_generated_streams ................   Passed    0.10 sec
+      Start 39: common_world_dormancy
+39/49 Test #39: common_world_dormancy .........................   Passed    6.61 sec
+      Start 40: common_world_receiver_scope
+40/49 Test #40: common_world_receiver_scope ...................   Passed    0.47 sec
+      Start 41: common_world_receiver_runtime
+41/49 Test #41: common_world_receiver_runtime .................   Passed   17.83 sec
+      Start 42: trusted_live_source
+42/49 Test #42: trusted_live_source ...........................   Passed    0.21 sec
+      Start 43: trusted_live_source_scope
+43/49 Test #43: trusted_live_source_scope .....................   Passed    0.47 sec
+      Start 44: trusted_live_adapter
+44/49 Test #44: trusted_live_adapter ..........................   Passed    0.07 sec
+      Start 45: trusted_live_source_host
+45/49 Test #45: trusted_live_source_host ......................   Passed    0.86 sec
+      Start 46: trusted_live_receiver_identity
+46/49 Test #46: trusted_live_receiver_identity ................   Passed    0.42 sec
+      Start 47: model_validation
+47/49 Test #47: model_validation ..............................   Passed    0.03 sec
+      Start 48: model_validation_v2
+48/49 Test #48: model_validation_v2 ...........................   Passed    0.03 sec
+      Start 49: authority_model_validation
+49/49 Test #49: authority_model_validation ....................   Passed    0.03 sec
+
+100% tests passed, 0 tests failed out of 49
+
+Total Test time (real) =  43.60 sec

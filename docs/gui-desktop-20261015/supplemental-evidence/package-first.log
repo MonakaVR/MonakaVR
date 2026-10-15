@@ -1,0 +1,28 @@
+  窶｢ electron-builder  version=26.15.3 os=10.0.26200
+  窶｢ loaded configuration  file=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\test-package-config.json
+  窶｢ description is missed in the package.json  appPackageFile=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\gui\package.json
+  窶｢ packageManager not detected by file, falling back to environment detection  resolvedPackageManager=pnpm detected=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\gui
+  窶｢ detected workspace root for project using packageManager field  pm=pnpm config=pnpm@10.33.0 resolved=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev projectDir=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\gui
+  窶｢ skipped dependencies rebuild  reason=npmRebuild is set to false
+  窶｢ packaging       platform=win32 arch=x64 electron=40.9.1 appOutDir=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\package\win-unpacked
+  窶｢ using custom unpacked Electron distribution  electronDist=C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/MonakaVR-Desktop/build/gui-validation/electron-runtime
+  窶｢ copying unpacked Electron  source=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop\build\gui-validation\electron-runtime destination=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\package\win-unpacked
+  窶｢ searching for node modules  pm=pnpm searchDir=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\gui
+  窶｢ duplicate dependency references  dependencies=["sonic-boom@4.2.1","once@1.4.0"]
+  窶｢ updating asar integrity executable resource  executablePath=C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\package\win-unpacked\MonakaGuiIsolatedTest.exe
+
+C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\app-builder-lib@26.15.3_dmg_c5739d9600ac3f98a55503c35c5a46a9\node_modules\app-builder-lib\src\asar\asarFileChecker.ts:7
+    return new Error(`${messagePrefix} "${relativeFile}" in the "${asarFile}" ${text}`)
+           ^
+Error: Application entry file "isolated-production-main.mjs" in the "C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\build\gui-supplemental-20261015\package\win-unpacked\resources\app.asar" is corrupted: Error: "isolated-production-main.mjs" was not found in this archive
+    at error (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\app-builder-lib@26.15.3_dmg_c5739d9600ac3f98a55503c35c5a46a9\node_modules\app-builder-lib\src\asar\asarFileChecker.ts:7:12)
+    at checkFileInArchive (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\app-builder-lib@26.15.3_dmg_c5739d9600ac3f98a55503c35c5a46a9\node_modules\app-builder-lib\src\asar\asarFileChecker.ts:16:11)
+    at WinPackager.checkFileInPackage (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\app-builder-lib@26.15.3_dmg_c5739d9600ac3f98a55503c35c5a46a9\node_modules\app-builder-lib\src\platformPackager.ts:636:7)
+    at WinPackager.sanityCheckPackage (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\app-builder-lib@26.15.3_dmg_c5739d9600ac3f98a55503c35c5a46a9\node_modules\app-builder-lib\src\platformPackager.ts:684:5)
+    at WinPackager.doPack (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\app-builder-lib@26.15.3_dmg_c5739d9600ac3f98a55503c35c5a46a9\node_modules\app-builder-lib\src\platformPackager.ts:350:5)
+    at WinPackager.pack (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\app-builder-lib@26.15.3_dmg_c5739d9600ac3f98a55503c35c5a46a9\node_modules\app-builder-lib\src\platformPackager.ts:163:5)
+    at Packager.doBuild (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\app-builder-lib@26.15.3_dmg_c5739d9600ac3f98a55503c35c5a46a9\node_modules\app-builder-lib\src\packager.ts:530:11)
+    at executeFinally (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\builder-util@26.15.3\node_modules\builder-util\src\promise.ts:12:14)
+    at Packager.build (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\app-builder-lib@26.15.3_dmg_c5739d9600ac3f98a55503c35c5a46a9\node_modules\app-builder-lib\src\packager.ts:450:31)
+    at executeFinally (C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev\node_modules\.pnpm\builder-util@26.15.3\node_modules\builder-util\src\promise.ts:12:14)
+    at file:///C:/Users/nynyp/Documents/ChatGPT/MonakaVR_UI/.gui-work/MonakaVR-Desktop-dev/gui/tests/bridge-supplemental/package-check.mjs:25:1

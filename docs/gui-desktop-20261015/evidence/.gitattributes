@@ -1,0 +1,2 @@
+# Preserve captured receipts byte-for-byte across Windows checkouts.
+* -text

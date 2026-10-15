@@ -1,0 +1,10 @@
+{
+  "powershell_parse_errors": 0,
+  "parse": {
+    "isolated-production-main.mjs": 0,
+    "race-check.mjs": 0,
+    "startup-check.mjs": 0,
+    "package-check.mjs": 0
+  },
+  "format": 0
+}

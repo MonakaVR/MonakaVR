@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "tests/bridge-browser/**/*",
+    "tests/bridge-smoke/**/*",
+    "bridge-*.config.ts",
+    "src/vite-env.d.ts",
+    "electron/preload/interface.d.ts"
+  ],
+  "references": []
+}

@@ -1,0 +1,497 @@
+{
+  "cases": 8,
+  "checksPassed": true,
+  "actualLegacyTraySaveOnly": true,
+  "hardwareOrServiceNotification": false,
+  "rows": [
+    {
+      "writer": "cli",
+      "phase": "before-apply",
+      "savedPolicy": null,
+      "error": "Configuration changed in another tool; reload before applying.",
+      "external": {
+        "lockPresent": false,
+        "state": {
+          "bridge_id": "race-software-fixture",
+          "mapping_revision": 11,
+          "mappings": [],
+          "namespace": "monaka.bridge",
+          "policy": "disabled",
+          "pose_timeout_ms": 500,
+          "profiles": {},
+          "version": 2
+        }
+      },
+      "final": {
+        "bridge_id": "race-software-fixture",
+        "mapping_revision": 11,
+        "mappings": [],
+        "namespace": "monaka.bridge",
+        "policy": "disabled",
+        "pose_timeout_ms": 500,
+        "profiles": {},
+        "version": 2
+      },
+      "backups": [
+        {
+          "name": "bridge.json.pre-monaka-bridge.bak",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        }
+      ],
+      "externalPolicyLost": false,
+      "externalPolicyInAutomaticBackup": false,
+      "root": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\cli-before-apply-jsqubE",
+      "sourceUnchanged": true,
+      "schedule": "before-apply"
+    },
+    {
+      "writer": "cli",
+      "phase": "during-validation",
+      "savedPolicy": null,
+      "error": "Configuration changed in another tool; reload before applying.",
+      "external": {
+        "lockPresent": true,
+        "state": {
+          "bridge_id": "race-software-fixture",
+          "mapping_revision": 11,
+          "mappings": [],
+          "namespace": "monaka.bridge",
+          "policy": "disabled",
+          "pose_timeout_ms": 500,
+          "profiles": {},
+          "version": 2
+        }
+      },
+      "final": {
+        "bridge_id": "race-software-fixture",
+        "mapping_revision": 11,
+        "mappings": [],
+        "namespace": "monaka.bridge",
+        "policy": "disabled",
+        "pose_timeout_ms": 500,
+        "profiles": {},
+        "version": 2
+      },
+      "backups": [
+        {
+          "name": "bridge.json.pre-monaka-bridge.bak",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        }
+      ],
+      "externalPolicyLost": false,
+      "externalPolicyInAutomaticBackup": false,
+      "root": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\cli-during-validation-zg5SX8",
+      "sourceUnchanged": true,
+      "schedule": "during-validation"
+    },
+    {
+      "writer": "cli",
+      "phase": "after-final-compare",
+      "savedPolicy": "both",
+      "error": null,
+      "external": {
+        "lockPresent": true,
+        "state": {
+          "bridge_id": "race-software-fixture",
+          "mapping_revision": 11,
+          "mappings": [],
+          "namespace": "monaka.bridge",
+          "policy": "disabled",
+          "pose_timeout_ms": 500,
+          "profiles": {},
+          "version": 2
+        }
+      },
+      "final": {
+        "namespace": "monaka.bridge",
+        "version": 2,
+        "bridge_id": "race-software-fixture",
+        "mapping_revision": 11,
+        "policy": "both",
+        "pose_timeout_ms": 500,
+        "profiles": {},
+        "mappings": [],
+        "extension_fixture": {
+          "note": "software test only; preserve unless native serializer drops unknown fields"
+        }
+      },
+      "backups": [
+        {
+          "name": "bridge.json.backup-e05533dd-bde1-49f1-90ae-b9631a22c57c",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        },
+        {
+          "name": "bridge.json.pre-monaka-bridge.bak",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        }
+      ],
+      "externalPolicyLost": true,
+      "externalPolicyInAutomaticBackup": false,
+      "root": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\cli-after-final-compare-1qU66S",
+      "sourceUnchanged": true,
+      "schedule": "Deterministic existing replace test seam: real legacy write before real rename, after final compare"
+    },
+    {
+      "writer": "cli",
+      "phase": "after-commit",
+      "savedPolicy": "both",
+      "error": null,
+      "external": {
+        "lockPresent": false,
+        "state": {
+          "bridge_id": "race-software-fixture",
+          "mapping_revision": 12,
+          "mappings": [],
+          "namespace": "monaka.bridge",
+          "policy": "disabled",
+          "pose_timeout_ms": 500,
+          "profiles": {},
+          "version": 2
+        }
+      },
+      "final": {
+        "bridge_id": "race-software-fixture",
+        "mapping_revision": 12,
+        "mappings": [],
+        "namespace": "monaka.bridge",
+        "policy": "disabled",
+        "pose_timeout_ms": 500,
+        "profiles": {},
+        "version": 2
+      },
+      "backups": [
+        {
+          "name": "bridge.json.backup-861f547e-7c07-415c-bb23-ea478b8031be",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        },
+        {
+          "name": "bridge.json.pre-monaka-bridge.bak",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 11,
+            "policy": "both",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        }
+      ],
+      "externalPolicyLost": false,
+      "externalPolicyInAutomaticBackup": false,
+      "root": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\cli-after-commit-joGL7P",
+      "sourceUnchanged": true,
+      "schedule": "after-commit"
+    },
+    {
+      "writer": "legacy-tray-save",
+      "phase": "before-apply",
+      "savedPolicy": null,
+      "error": "Configuration changed in another tool; reload before applying.",
+      "external": {
+        "lockPresent": false,
+        "state": {
+          "bridge_id": "race-software-fixture",
+          "mapping_revision": 11,
+          "mappings": [],
+          "namespace": "monaka.bridge",
+          "policy": "disabled",
+          "pose_timeout_ms": 500,
+          "profiles": {},
+          "version": 2
+        }
+      },
+      "final": {
+        "bridge_id": "race-software-fixture",
+        "mapping_revision": 11,
+        "mappings": [],
+        "namespace": "monaka.bridge",
+        "policy": "disabled",
+        "pose_timeout_ms": 500,
+        "profiles": {},
+        "version": 2
+      },
+      "backups": [
+        {
+          "name": "bridge.json.pre-monaka-bridge.bak",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        }
+      ],
+      "externalPolicyLost": false,
+      "externalPolicyInAutomaticBackup": false,
+      "root": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\legacy-tray-save-before-apply-domWH6",
+      "sourceUnchanged": true,
+      "schedule": "before-apply"
+    },
+    {
+      "writer": "legacy-tray-save",
+      "phase": "during-validation",
+      "savedPolicy": null,
+      "error": "Configuration changed in another tool; reload before applying.",
+      "external": {
+        "lockPresent": true,
+        "state": {
+          "bridge_id": "race-software-fixture",
+          "mapping_revision": 11,
+          "mappings": [],
+          "namespace": "monaka.bridge",
+          "policy": "disabled",
+          "pose_timeout_ms": 500,
+          "profiles": {},
+          "version": 2
+        }
+      },
+      "final": {
+        "bridge_id": "race-software-fixture",
+        "mapping_revision": 11,
+        "mappings": [],
+        "namespace": "monaka.bridge",
+        "policy": "disabled",
+        "pose_timeout_ms": 500,
+        "profiles": {},
+        "version": 2
+      },
+      "backups": [
+        {
+          "name": "bridge.json.pre-monaka-bridge.bak",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        }
+      ],
+      "externalPolicyLost": false,
+      "externalPolicyInAutomaticBackup": false,
+      "root": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\legacy-tray-save-during-validation-ji977v",
+      "sourceUnchanged": true,
+      "schedule": "during-validation"
+    },
+    {
+      "writer": "legacy-tray-save",
+      "phase": "after-final-compare",
+      "savedPolicy": "both",
+      "error": null,
+      "external": {
+        "lockPresent": true,
+        "state": {
+          "bridge_id": "race-software-fixture",
+          "mapping_revision": 11,
+          "mappings": [],
+          "namespace": "monaka.bridge",
+          "policy": "disabled",
+          "pose_timeout_ms": 500,
+          "profiles": {},
+          "version": 2
+        }
+      },
+      "final": {
+        "namespace": "monaka.bridge",
+        "version": 2,
+        "bridge_id": "race-software-fixture",
+        "mapping_revision": 11,
+        "policy": "both",
+        "pose_timeout_ms": 500,
+        "profiles": {},
+        "mappings": [],
+        "extension_fixture": {
+          "note": "software test only; preserve unless native serializer drops unknown fields"
+        }
+      },
+      "backups": [
+        {
+          "name": "bridge.json.backup-de818366-940f-4308-87ea-77494f1c65bf",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        },
+        {
+          "name": "bridge.json.pre-monaka-bridge.bak",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        }
+      ],
+      "externalPolicyLost": true,
+      "externalPolicyInAutomaticBackup": false,
+      "root": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\legacy-tray-save-after-final-compare-VGy6ho",
+      "sourceUnchanged": true,
+      "schedule": "Deterministic existing replace test seam: real legacy write before real rename, after final compare"
+    },
+    {
+      "writer": "legacy-tray-save",
+      "phase": "after-commit",
+      "savedPolicy": "both",
+      "error": null,
+      "external": {
+        "lockPresent": false,
+        "state": {
+          "bridge_id": "race-software-fixture",
+          "mapping_revision": 12,
+          "mappings": [],
+          "namespace": "monaka.bridge",
+          "policy": "disabled",
+          "pose_timeout_ms": 500,
+          "profiles": {},
+          "version": 2
+        }
+      },
+      "final": {
+        "bridge_id": "race-software-fixture",
+        "mapping_revision": 12,
+        "mappings": [],
+        "namespace": "monaka.bridge",
+        "policy": "disabled",
+        "pose_timeout_ms": 500,
+        "profiles": {},
+        "version": 2
+      },
+      "backups": [
+        {
+          "name": "bridge.json.backup-6269f478-9a91-4722-9ec1-235f93a52c97",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 10,
+            "policy": "steamvr",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        },
+        {
+          "name": "bridge.json.pre-monaka-bridge.bak",
+          "value": {
+            "namespace": "monaka.bridge",
+            "version": 2,
+            "bridge_id": "race-software-fixture",
+            "mapping_revision": 11,
+            "policy": "both",
+            "pose_timeout_ms": 500,
+            "profiles": {},
+            "mappings": [],
+            "extension_fixture": {
+              "note": "software test only; preserve unless native serializer drops unknown fields"
+            }
+          }
+        }
+      ],
+      "externalPolicyLost": false,
+      "externalPolicyInAutomaticBackup": false,
+      "root": "C:\\Users\\nynyp\\Documents\\ChatGPT\\MonakaVR_UI\\.gui-work\\MonakaVR-Desktop-dev\\build\\gui-supplemental-20261015\\legacy-tray-save-after-commit-4jfrge",
+      "sourceUnchanged": true,
+      "schedule": "after-commit"
+    }
+  ],
+  "nativeCliSha256": "23cd90bcdf004ecfa5f95c85e3f4f8ebf3175b1c11e0dcffa78ff58fc70cfa05",
+  "trayHarnessSha256": "1db97b3b98a0d3f1a21ddb3767a106422f518014e703f9d38c1af3085204c467",
+  "limits": "Known race is reproduced, not fixed. No manual tray click or SetRoute/global service event. The critical schedule is forced at the existing replacement seam."
+}

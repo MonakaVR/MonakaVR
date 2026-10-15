@@ -1,0 +1,6 @@
+
+> slimevr@0.0.0 lint C:\Users\nynyp\Documents\ChatGPT\MonakaVR_UI\.gui-work\MonakaVR-Desktop-dev-candidate\gui
+> tsc --noEmit && eslint --max-warnings=0 "{electron,src}/**/*.{js,jsx,ts,tsx,json}" && prettier --check "{electron,src}/**/*.{js,jsx,ts,tsx,css,scss,md,json}"
+
+Checking formatting...
+All matched files use Prettier code style!
