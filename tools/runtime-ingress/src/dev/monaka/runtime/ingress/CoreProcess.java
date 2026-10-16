@@ -13,8 +13,14 @@ final class CoreProcess implements AutoCloseable {
  private final Path session;private final Process process;private int sequence;
  CoreProcess(Path pkg,Path config,Path session)throws Exception{
   this.session=session.toAbsolutePath();
-  var digest=HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(pkg.resolve("lib/core.jar"))));
-  if(!digest.equals("ef37474a804ea0c3705fe556d21c97861fc4c1fd8feb1b622c42130c8f061863"))throw new IllegalArgumentException("Accepted Core JAR hash mismatch");
+  var lib=pkg.resolve("lib").toRealPath();var actual=new TreeMap<String,String>();
+  try(var entries=Files.list(lib)){
+   for(var file:entries.toList()){
+    if(!Files.isRegularFile(file)||Files.isSymbolicLink(file)||!file.toRealPath().getParent().equals(lib))throw new IllegalArgumentException("Core library alias/directory rejected");
+    actual.put(file.getFileName().toString(),HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file))));
+   }
+  }
+  if(!actual.equals(CoreArtifactPin.LIBRARIES))throw new IllegalArgumentException("Pinned Core library inventory/content mismatch");
   if(Files.exists(session))throw new IllegalArgumentException("Refuse reused IPC session");Files.createDirectories(session);
   var java=Path.of(System.getProperty("java.home"),"bin",System.getProperty("os.name").startsWith("Windows")?"java.exe":"java").toString();
   var cmd=List.of(java,"-cp",pkg.toAbsolutePath().resolve("lib").toString()+File.separator+"*","dev.monaka.tracking.hil.CorePocHilMain","--session",this.session.toString(),"--config",config.toAbsolutePath().toString());
