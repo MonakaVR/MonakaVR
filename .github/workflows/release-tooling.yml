@@ -15,5 +15,9 @@ jobs:
         run: python scripts/test_release_v2.py
       - name: Optimized Python release gate regressions
         run: python -O scripts/test_release_v2.py
+      - name: Pinned runtime ingress identity regressions
+        run: python tools/runtime-ingress/test_artifact_identity.py
+      - name: Optimized runtime ingress identity regressions
+        run: python -O tools/runtime-ingress/test_artifact_identity.py
       # Unit tests only. Release artifacts require the documented clean-tree
       # scripts/release_v2.py build on a configured Windows x64 release host.

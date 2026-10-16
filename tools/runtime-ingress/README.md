@@ -5,8 +5,9 @@ source or the accepted `core.jar`. `MtpRuntimeIngress.receive` uses that JAR's
 canonical `MonakaCodec`, `MtpInbox`, `MtpObservationBackend.poll`, and
 `MtpPoseAdapter`. Both pose and tracker_state reach the backend. Present metadata
 does not refresh pose age; lost/absent metadata can remove a sample. All counters
-are the actual accepted backend counters. This Core lineage does not expose the
-P1 reference lineage's cross-packet CapabilityConflict counter.
+are the actual accepted backend counters. The selected Core artifact determines available diagnostics. The original
+accepted Core lacks cross-packet CapabilityConflict; the current static-capability
+Core exposes it. These actual counters pass through unchanged.
 
 Capability normalization belongs to the pinned canonical MBIP P1 dependency in
 MonakaBridge before publication. This tool implements no Normalizer, wire codec,
@@ -36,3 +37,25 @@ launches no device client, sends only input/shutdown operations, and verifies
 clean shutdown. Output is CREATE_NEW. The fixed Core/JAR remains
 `c73805da1a64d0b161775decd60e5632ea295a0f`, SHA-256
 `ef37474a804ea0c3705fe556d21c97861fc4c1fd8feb1b622c42130c8f061863`.
+
+## Current candidate packages
+
+The default legacy mode retains the exact historical Core hash above. It never
+silently accepts a new Core. For a reviewed current candidate, first build the
+Core package from a clean committed checkout, record its source HEAD and every
+`lib/*.jar` SHA256, then supply `--candidate-manifest FILE` to build.py.
+
+The manifest has schema `monaka.runtime-ingress.candidate.v1`, repository
+`MonakaVR/MonakaVR`, `source_commit` equal to that exact clean checkout HEAD, and
+`libraries` entries with `path` (`lib/core.jar`, etc.) and `sha256`. The complete
+inventory must match: missing, extra, foreign, dirty, or changed inputs fail.
+The build compiles this identity into the ingress JAR. CoreProcess verifies every
+library before creating its IPC session or starting its owned child. There is no
+runtime expected-hash override, environment bypass, or fallback to old Core.
+Keep the generated runtime-ingress-provenance.json with the candidate manifest.
+
+Run `python tools/runtime-ingress/test_artifact_identity.py` (also under `-O`).
+Physical operation still requires separate authorization and actual source-flow,
+configuration and calibration preflight. This tool changes no Fusion/recovery,
+wire semantics or Admission settings. Gate default OFF and `hil_ready=false`
+remain until their separate gates are satisfied.
