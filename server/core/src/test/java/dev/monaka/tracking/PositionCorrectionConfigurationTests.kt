@@ -372,7 +372,7 @@ class PositionCorrectionConfigurationTests {
             root.putNull("positionCorrection")
             assertFails { load(root) }
         }
-        for (version in listOf(0L, 4L, 4294967299L)) {
+        for (version in listOf(0L, 5L, 4294967299L)) {
             val root = document(null); root.put("version", version); assertFails { load(root) }
         }
     }

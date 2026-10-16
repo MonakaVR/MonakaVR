@@ -34,8 +34,11 @@ data class MainTrackerAssignment(
 	val outputMode: OutputMode = OutputMode.IK,
 	val useAsIkConstraint: Boolean = true,
 	val continuity: ContinuityPolicy = if (outputMode == OutputMode.HYBRID) ContinuityPolicy.BACKGROUND_IK else ContinuityPolicy.NONE,
+	val sourceSelection: QSixDofSourceSelection? = null,
 ) {
 	init {
+		require(sourceSelection == null || (mainTracker == sourceSelection.mainTracker &&
+			rotationFallbackTracker == sourceSelection.rotationFallbackTracker)) { "Source selection and runtime assignment disagree" }
 		require(mainTracker != rotationFallbackTracker) { "Main cannot be its own external fallback" }
 		require((outputMode == OutputMode.HYBRID) == (continuity == ContinuityPolicy.BACKGROUND_IK)) { "Background continuity requires hybrid output" }
 		require(outputMode != OutputMode.HYBRID || useAsIkConstraint) { "Hybrid requires live background IK participation" }
@@ -78,10 +81,42 @@ class TrackerBodyAssignments(initial: Map<LogicalTracker, TrackerPosition> = emp
         require(current == null || current.mainTracker.mtp == key) { "Target already has a Main; use configure for explicit replacement" }
         replaceTargets(next + (target to (previous ?: MainTrackerAssignment(TrackerReference.mtp(key)))))
     }
+	/** UI/configuration action only; metadata arrival never calls this method. */
+	@Synchronized fun selectQSource(target: TrackerPosition, q: TrackerReference, capabilities: DeclaredTrackerCapabilities?) {
+		val slime = q.mtp == null && q.observationId.startsWith("slime:")
+		require(slime || capabilities?.supportsQ == true) { "Q Source requires declared orientation support" }
+		val current = state.targets[target]
+		val previous = current?.sourceSelection ?: current?.let {
+			// Existing explicit Main/Fallback assignments are user choices, never new auto defaults.
+			QSixDofSourceSelection(it.rotationFallbackTracker ?: it.mainTracker,
+				it.mainTracker.takeIf { ref -> ref.mtp != null }, true)
+		}
+		val selection = previous?.copy(qSource = q) ?: QSixDofSourceSelection(q,
+			q.takeIf { !slime && capabilities?.supportsSixDof == true })
+		applySourceSelection(target, selection)
+	}
+	@Synchronized fun selectSixDofSource(target: TrackerPosition, source: TrackerReference?, capabilities: DeclaredTrackerCapabilities? = null) {
+		require(source == null || capabilities?.supportsSixDof == true) { "6DoF Source requires position and orientation support" }
+		val current = state.targets[target]
+		val previous = current?.sourceSelection ?: current?.let { QSixDofSourceSelection(
+			it.rotationFallbackTracker ?: it.mainTracker, it.mainTracker.takeIf { ref -> ref.mtp != null }, true) }
+		if (previous == null && source == null) return
+		configureSources(target, previous?.qSource, source, true)
+	}
+	/** Explicit GUI transaction only. Arrival/reconnect never calls this method. */
+	@Synchronized fun configureSources(target: TrackerPosition, q: TrackerReference?, sixDof: TrackerReference?, manual: Boolean) {
+		if (q == null && sixDof == null) { replaceTargets(state.targets - target); return }
+		applySourceSelection(target, QSixDofSourceSelection(q, sixDof, manual))
+	}
+	private fun applySourceSelection(target: TrackerPosition, selection: QSixDofSourceSelection) {
+		val current = state.targets[target] ?: MainTrackerAssignment(selection.mainTracker)
+		replaceTargets(state.targets + (target to current.copy(mainTracker = selection.mainTracker,
+			rotationFallbackTracker = selection.rotationFallbackTracker, sourceSelection = selection)))
+	}
     private fun without(key: LogicalTracker) = state.targets.mapNotNull { (target, value) ->
         when (key) {
             value.mainTracker.mtp -> null
-            value.rotationFallbackTracker?.mtp -> target to value.copy(rotationFallbackTracker = null)
+            value.rotationFallbackTracker?.mtp -> target to value.copy(rotationFallbackTracker = null, sourceSelection = null)
             else -> target to value
         }
     }.toMap()

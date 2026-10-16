@@ -28,6 +28,9 @@ class WebSocketVRBridge(
 	private val internalTrackers: MutableList<Tracker> = FastList(computedTrackers.size)
 	private val newHMDData = AtomicBoolean(false)
 	private val mapper = ObjectMapper()
+	private val monakaInputs = dev.monaka.tracking.MonakaInputRpcDispatcher(
+		{ task -> server.queueTask(task) }, { server.monakaInputRequestHandler },
+	)
 	private val internalHMDTracker = Tracker(
 		null,
 		0,
@@ -118,6 +121,8 @@ class WebSocketVRBridge(
 	}
 
 	override fun onMessage(conn: WebSocket, message: String) {
+		if (monakaInputs.receive(message, conn.remoteSocketAddress?.address?.isLoopbackAddress == true,
+			{ conn.isOpen }, { response -> conn.send(response) })) return
 		// LogManager.info(message);
 		try {
 			val json = mapper.readTree(message) as ObjectNode

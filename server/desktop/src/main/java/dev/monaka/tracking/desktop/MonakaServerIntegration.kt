@@ -22,6 +22,12 @@ class MonakaServerIntegration private constructor(
 	private val diagnostics: HybridTrackingDiagnosticRecorder?,
 ) : AutoCloseable {
 	private var closed = false
+	var inputConfiguration: MonakaInputConfigurationApi? = null
+		private set
+	fun inputRequest(raw: String): String {
+		check(!closed) { "Monaka input runtime is closed" }
+		return requireNotNull(inputConfiguration).handleJson(raw, runtime.clock())
+	}
 	private var transportReported = false
 	private val outputAssignments = runtime.assignments.snapshot().targets.filterValues { it.outputMode != OutputMode.IK }
 	private val controllers = outputAssignments.mapValues { (target, relation) ->
@@ -145,6 +151,7 @@ class MonakaServerIntegration private constructor(
 			configureDirectOutputs: (List<Tracker>) -> Unit = { require(it.isEmpty()) { "Direct output requires a compatible SteamVR bridge" } },
 			nextTrackerId: () -> Int = dev.slimevr.VRServer::getNextLocalTrackerId,
 			registerAfterPose: ((Runnable?) -> Unit)? = null,
+			configurationPath: java.nio.file.Path? = null,
 			onTransition: (OutputTransition) -> Unit = {},
 			onDiagnostic: (HybridTrackingDiagnosticEvent) -> Unit = {},
 		): MonakaServerIntegration? {
@@ -170,6 +177,9 @@ class MonakaServerIntegration private constructor(
 				val result = MonakaServerIntegration(runtime, receiver, owner, output, skeleton, registerBeforePose, onFailure, registerAfterPose, background,
 					config.continuityTuning, onTransition, config.rotationCorrection?.let { HipRotationCorrection(it.frames, it.tuning) },
 					if (diagnosticEnabled) HybridTrackingDiagnosticRecorder(onDiagnostic) else null).also { integration = it }
+				result.inputConfiguration = configurationPath?.let { path ->
+					MonakaInputConfigurationApi(config, runtime.mtp, trackers, path)
+				}
 				registerBeforePose(Runnable(result::tick))
 				registerAfterPose?.invoke(Runnable(result::finishPoseUpdate))
 				return result

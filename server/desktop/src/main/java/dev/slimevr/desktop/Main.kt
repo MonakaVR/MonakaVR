@@ -189,14 +189,13 @@ fun main(args: Array<String>) {
 			configManager = configManager,
 		)
 
+		val monakaInputPath = if (mtpEnabled) System.getProperty("monaka.mtp.config")?.let { Path(it) }
+			?: File(configDir).absoluteFile.toPath().resolveSibling("monaka-mtp.json") else null
 		val mtpIntegration = try {
 			MonakaServerIntegration.startIfEnabled(
 				enabled = mtpEnabled,
-				configuration = {
-					val path = System.getProperty("monaka.mtp.config")?.let { Path(it) }
-						?: File(configDir).absoluteFile.toPath().resolveSibling("monaka-mtp.json")
-					MonakaConfiguration.load(path)
-				},
+				configuration = { MonakaConfiguration.load(requireNotNull(monakaInputPath)) },
+				configurationPath = monakaInputPath,
 				trackers = { vrServer.allTrackers },
 				skeleton = vrServer.humanPoseManager.skeleton,
 				registerBeforePose = { vrServer.beforePoseUpdate = it },
@@ -214,6 +213,9 @@ fun main(args: Array<String>) {
 		} catch (e: Exception) {
 			LogManager.severe("Monaka MTP input could not start; Slime input remains active", e)
 			null
+		}
+		vrServer.monakaInputRequestHandler = mtpIntegration?.takeIf { it.inputConfiguration != null }?.let { integration ->
+			{ raw -> integration.inputRequest(raw) }
 		}
 
 		try {
