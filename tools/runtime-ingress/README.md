@@ -59,3 +59,16 @@ Physical operation still requires separate authorization and actual source-flow,
 configuration and calibration preflight. This tool changes no Fusion/recovery,
 wire semantics or Admission settings. Gate default OFF and `hil_ready=false`
 remain until their separate gates are satisfied.
+
+The current candidate uses the opt-in `CorePocHilStdioMain` transport. It calls
+the same `CorePocHilControl.execute` and `CorePocHilSession` as file IPC; source
+admission, validity, Fusion, recovery and tuning are unchanged. Legacy mode keeps
+the original file IPC. The current candidate builder requires the stdio class
+and compiles the transport choice into the ingress; there is no runtime override.
+
+`live-mtp-carrier.py` stamps exact UDP receipt on a dedicated reader before
+forwarding backpressure, retains every raw datagram, and uses a bounded queue.
+Overflow or forwarding delay exceeding the existing 500ms freshness bound stops
+capture visibly. It never clamps timestamps, rewrites validity, or silently drops
+samples. A failed child/pipe still produces transport-result.json. This is an
+explicit synthetic root/fallback diagnostic frontend, never independent IMU proof.
