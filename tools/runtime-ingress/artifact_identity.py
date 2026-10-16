@@ -38,4 +38,5 @@ def java_source(identity):
  entries=',\n'.join('Map.entry('+json.dumps(n)+','+json.dumps(v)+')' for n,v in sorted(identity['libraries'].items()))
  return ('package dev.monaka.runtime.ingress;\nimport java.util.Map;\n'
   'final class CoreArtifactPin {\n static final String SOURCE='+json.dumps(identity['source_commit'])+';\n'
+  ' static final boolean STDIO='+str(identity['mode']=='reviewed-candidate').lower()+';\n'
   ' static final Map<String,String> LIBRARIES=Map.ofEntries('+entries+');\n private CoreArtifactPin() {}\n}\n')
