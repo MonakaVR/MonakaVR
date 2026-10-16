@@ -32,6 +32,8 @@ class MtpObservationBackend(
 		var absentAt = -1L
 		var sample: Sample? = null
 		var context: MtpSourceContextSnapshot? = null
+		var capabilities: DeclaredTrackerCapabilities? = null
+		var capabilityConflict = false
 	}
 	private val lifetimes = linkedMapOf<String, Lifetime>()
 	private val devices = linkedMapOf<LogicalTracker, Device>()
@@ -44,6 +46,24 @@ class MtpObservationBackend(
 		private set
 
 	init { require(expectedSpace.convention == "rh_y_up_neg_z_forward") }
+	/** Static declaration survives absent/loss/pause; usability never follows from support. */
+	data class CapabilitySnapshot(
+		val tracker: LogicalTracker, val capabilities: DeclaredTrackerCapabilities?, val conflict: Boolean,
+		val modality: String, val sampleTime: Long?, val positionValid: Boolean, val orientationValid: Boolean,
+	) {
+		fun freshAt(now: Long, timeoutNanos: Long): Boolean =
+			!conflict && sampleTime?.let { it <= now && now - it < timeoutNanos } == true
+	}
+	fun capabilitiesSnapshot(): Map<LogicalTracker, CapabilitySnapshot> = java.util.Collections.unmodifiableMap(
+		LinkedHashMap(devices.mapValues { (key, d) ->
+			// Reuse the actual component gate, including confidence/tracking/Float checks.
+			val adapted = d.sample?.let { sample -> runCatching {
+				adapter.adapt(sample.pose, dev.slimevr.tracking.trackers.TrackerPosition.HEAD, sample.sampleTime)
+			}.getOrNull() }
+			CapabilitySnapshot(key, d.capabilities.takeUnless { d.capabilityConflict }, d.capabilityConflict,
+				d.sample?.pose?.modality ?: "none", d.sample?.sampleTime,
+				adapted?.position != null, adapted?.rotation != null)
+		}))
 	fun samples(): Map<LogicalTracker, Sample> = devices.mapNotNull { (k, d) -> d.sample?.let { k to it } }.toMap()
 	internal fun sourceContexts(): Map<LogicalTracker, MtpSourceContextSnapshot> =
 		java.util.Collections.unmodifiableMap(LinkedHashMap(devices.mapNotNull { (key, device) ->
@@ -162,6 +182,14 @@ class MtpObservationBackend(
 			historyGeneration++
 			device.sample = null; device.context = null; removed += key.observationId; device.mappingRevision = revision
 		}
+		val declaration = DeclaredTrackerCapabilities(pose?.capabilities ?: state!!.capabilities)
+		if (device.capabilityConflict || (device.capabilities != null && device.capabilities != declaration)) {
+			device.capabilityConflict = true
+			if (device.sample != null) historyGeneration++
+			device.sample = null; device.context = null; removed += key.observationId
+			inbox.count("CapabilityConflict"); return
+		}
+		device.capabilities = declaration
 		if (pose == null) {
 			if (state!!.presence == "absent" || state.tracking_state in listOf("lost", "disconnected")) {
 				device.absentAt = maxOf(device.absentAt, state.timestamp_ns)

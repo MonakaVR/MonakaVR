@@ -111,6 +111,9 @@ class VRServer @JvmOverloads constructor(
 
 	@JvmField
 	val protocolAPI: ProtocolAPI
+
+	/** Installed only by the explicit Monaka desktop runtime; invoked on server thread. */
+	@Volatile var monakaInputRequestHandler: ((String) -> String)? = null
 	private val timer = Timer()
 	private val resetTimerManager = ResetTimerManager()
 	val fpsTimer = NanoTimer()

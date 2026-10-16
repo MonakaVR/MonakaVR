@@ -99,6 +99,11 @@ application {
 	mainClass.set("dev.slimevr.desktop.Main")
 }
 
+// Explicit process probes compile against the same already-resolved runtime
+// dependencies (Core's JSON/WebSocket implementation), without API export or a
+// new production dependency/version. They are never included in the server JAR.
+sourceSets.getByName("test").compileClasspath += configurations.getByName("runtimeClasspath")
+
 buildConfig {
 	useKotlinOutput { topLevelConstants = true }
 	packageName("dev.slimevr.desktop")

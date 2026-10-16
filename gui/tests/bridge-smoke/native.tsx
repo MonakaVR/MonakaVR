@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')!).render(
         SOFTWARE TEST MODE - real Desktop IPC, temporary config only; no Core,
         backend or tracking output
       </p>
-      <MonakaBridgeSettings />
+      <MonakaBridgeSettings inputControls={null} />
     </MemoryRouter>
   </React.StrictMode>
 );

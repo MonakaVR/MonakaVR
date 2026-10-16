@@ -26,8 +26,15 @@ class ConstraintResolver(
    TrackingModality.ROTATION_ONLY -> rotationUsable(fallback)
    else -> false
   }
+  val qOnlyAssignment = relation?.sourceSelection?.let { it.sixDofSource == null } == true
+  // An explicit Q field with no 6DoF field consumes only Q, even when its
+  // source structurally supports a complete FULL pose. Never project an
+  // incomplete/malformed FULL sample into usable rotation.
+  val completeFull = main?.modality == TrackingModality.FULL && positionUsable(main) && rotationUsable(main)
+  val selectedModality = if (qOnlyAssignment && completeFull) TrackingModality.ROTATION_ONLY
+   else main?.modality ?: TrackingModality.NONE
   val decision = MainFallbackPolicy.decide(
-   main?.modality ?: TrackingModality.NONE, positionUsable(main), rotationUsable(main), fallbackUsable,
+   selectedModality, !qOnlyAssignment && positionUsable(main), rotationUsable(main), fallbackUsable,
   )
   val rotation = when (decision.rotationOwner) { RotationOwner.MAIN -> main; RotationOwner.FALLBACK -> fallback; else -> null }
   return EffectiveConstraint(target,

@@ -24,6 +24,7 @@ data class MonakaConfiguration(
   require(space.id.isNotBlank() && space.convention == "rh_y_up_neg_z_forward" && space.revision in 0..4294967295L)
   require(port in 0..65535 && timeoutNanos >= 0)
   require(backgroundIkSharedSpace == null || backgroundIkSharedSpace == space) { "Background IK shared-space assertion must match the configured MTP space/revision" }
+  validateSixDofTeacherSelection()
   positionCorrection?.validateBinding(space, assignments.snapshot().targets[TrackerPosition.HIP])
   if (rotationCorrection != null) {
    require(backgroundIkSharedSpace == space && rotationCorrection.frames.assertedSpace == space) {
@@ -39,7 +40,16 @@ data class MonakaConfiguration(
    }
   }
  }
+ private fun validateSixDofTeacherSelection() {
+  if (rotationCorrection != null || positionCorrection != null) {
+   val selection = assignments.snapshot().targets[TrackerPosition.HIP]?.sourceSelection
+   require(selection == null || selection.sixDofSource != null) {
+    "Correction requires an explicit 6DoF teacher; a Q-only assignment has no position teacher"
+   }
+  }
+ }
  fun save(path: Path) {
+  validateSixDofTeacherSelection()
   val assignmentSnapshot = assignments.snapshot()
   positionCorrection?.validateBinding(space, assignmentSnapshot.targets[TrackerPosition.HIP])
   fun reference(ref: TrackerReference): Map<String, String> = ref.mtp?.let {
@@ -49,7 +59,7 @@ data class MonakaConfiguration(
    mapOf("kind" to "slime", "name" to ref.observationId.removePrefix("slime:"))
   }
   val document = mapOf(
-   "version" to 3, "port" to port, "timeout_ns" to timeoutNanos.toString(),
+   "version" to (if (assignmentSnapshot.targets.values.any { it.sourceSelection != null }) 4 else 3), "port" to port, "timeout_ns" to timeoutNanos.toString(),
    "space" to mapOf("id" to space.id, "revision" to space.revision, "convention" to space.convention),
    "backgroundIkAlignment" to backgroundIkSharedSpace?.let {
     mapOf("kind" to "confirmed_same_space", "space" to mapOf("id" to it.id, "revision" to it.revision, "convention" to it.convention))
@@ -59,7 +69,10 @@ data class MonakaConfiguration(
    "assignments" to assignmentSnapshot.targets.map { (body, relation) ->
     mapOf("body" to body.name, "outputMode" to relation.outputMode.name.lowercase(), "mainTracker" to reference(relation.mainTracker),
      "rotationFallbackTracker" to relation.rotationFallbackTracker?.let(::reference),
-     "useAsIkConstraint" to relation.useAsIkConstraint, "continuity" to relation.continuity.name.lowercase())
+     "useAsIkConstraint" to relation.useAsIkConstraint, "continuity" to relation.continuity.name.lowercase()) +
+     (relation.sourceSelection?.let { selected -> mapOf("sourceSelection" to mapOf(
+      "qSource" to selected.qSource?.let(::reference), "sixDofSource" to selected.sixDofSource?.let(::reference),
+      "sixDofManuallySelected" to selected.sixDofManuallySelected)) } ?: emptyMap())
    },
   ) + (rotationCorrection?.let { correction -> mapOf("rotationCorrection" to mapOf(
    "enabled" to true,
@@ -82,6 +95,15 @@ data class MonakaConfiguration(
   )) } ?: emptyMap()) + (positionCorrection?.let { mapOf("positionCorrection" to PositionCorrectionConfigJson.write(it)) } ?: emptyMap())
   val absolute = path.toAbsolutePath()
   Files.createDirectories(absolute.parent)
+  if (assignmentSnapshot.targets.values.any { it.sourceSelection != null } && Files.exists(absolute)) {
+   val previousVersion = ObjectMapper().readTree(absolute.toFile())["version"]
+   require(previousVersion?.isIntegralNumber == true && previousVersion.canConvertToInt() && previousVersion.asInt() in 2..4) {
+    "Validate/migrate legacy configuration before saving capability selections"
+   }
+   if (previousVersion.asInt() < 4) {
+    Files.copy(absolute, absolute.resolveSibling(absolute.fileName.toString() + ".pre-capability-selection-v4.bak"))
+   }
+  }
   val temporary = absolute.resolveSibling(absolute.fileName.toString() + ".pending")
   Files.write(temporary, ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsBytes(document))
   Files.move(temporary, absolute, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
@@ -102,8 +124,8 @@ data class MonakaConfiguration(
    require(Files.isRegularFile(path)) { "MTP requires explicit world/assignments in $path" }
    val root = ObjectMapper().readTree(path.toFile())
    val version = root["version"]
-   require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 1..3)
-   require(version.asInt() == 3 || !root.has("positionCorrection")) { "Position correction requires schema v3" }
+   require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 1..4)
+   require(version.asInt() >= 3 || !root.has("positionCorrection")) { "Position correction requires schema v3+" }
    val space = requireNotNull(root["space"])
    val revision = space["revision"]
    require(revision != null && revision.isIntegralNumber && revision.canConvertToLong())
@@ -128,7 +150,15 @@ data class MonakaConfiguration(
       require(value.isTextual)
       when (value.asText()) { "none" -> ContinuityPolicy.NONE; "background_ik" -> ContinuityPolicy.BACKGROUND_IK; else -> error("Unknown continuity") }
      } ?: if (mode == OutputMode.HYBRID) ContinuityPolicy.BACKGROUND_IK else ContinuityPolicy.NONE
-     TrackerPosition.valueOf(text(it, "body")) to MainTrackerAssignment(reference(requireNotNull(it["mainTracker"])), fallback, mode, participation, continuity)
+     val selection = it["sourceSelection"]?.let { selected ->
+      require(version.asInt() == 4 && selected.isObject) { "sourceSelection requires config v4" }
+      require(selected.fieldNames().asSequence().toSet() == setOf("qSource", "sixDofSource", "sixDofManuallySelected"))
+      val manual = requireNotNull(selected["sixDofManuallySelected"])
+      require(manual.isBoolean)
+      QSixDofSourceSelection(selected["qSource"]?.takeUnless { value -> value.isNull }?.let(::reference),
+       selected["sixDofSource"]?.takeUnless { value -> value.isNull }?.let(::reference), manual.booleanValue())
+     }
+     TrackerPosition.valueOf(text(it, "body")) to MainTrackerAssignment(reference(requireNotNull(it["mainTracker"])), fallback, mode, participation, continuity, selection)
     }
     require(targets.map { it.first }.distinct().size == targets.size)
     assignments.replaceTargets(targets.toMap())
