@@ -65,7 +65,7 @@ class MtpHilCaptureTests {
 		val original = Files.readAllBytes(cfg)
 		val output = temporary.resolve("capture")
 		fun process(log: String) = ProcessBuilder(
-			File(System.getProperty("java.home"), "bin/java.exe").absolutePath,
+			testJvmExecutable(),
 			"-cp", System.getProperty("monaka.test.classpath"), "dev.monaka.tracking.desktop.MtpHilCapture",
 			cfg.toString(), output.toString(), "2", "0",
 		).redirectErrorStream(true).redirectOutput(temporary.resolve(log).toFile()).start()
