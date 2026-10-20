@@ -93,7 +93,7 @@ The fixture selector belongs to the test harness, outside the read-only panel.
 Only Vite HMR opens a WebSocket. Network assertions permit only fixture GETs/HMR;
 the panel has no editable controls, RPC/save import, clock, timers or effects.
 
-Fixtures cover Q-only, Pos+Q, unknown, conflict, identical tracker names with
+Fixtures include supported telemetry capability declarations (velocity, acceleration, battery, charging) alongside Pos+Q/Q-only, and cover unknown future capabilities without inventing pose support.\n\nFixtures cover Q-only, Pos+Q, unknown, conflict, identical tracker names with
 different IDs, saved offline, invalid reconnect, Slime Q plus separate MVIP 6DoF,
 zero candidates, disconnected, disabled and denied loopback access. Transition
 checks cover retained manual selections, invalid responses, stale generations,
