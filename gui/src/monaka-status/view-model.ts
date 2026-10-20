@@ -73,10 +73,22 @@ const generation = (value: unknown): value is string =>
   /^(0|[1-9][0-9]{0,18})$/.test(value) &&
   BigInt(value) <= 9223372036854775807n;
 
+// Keep this set aligned with Core DeclaredTrackerCapabilities.SUPPORTED.
+// Extra telemetry capabilities do not revoke declared pose support.
+const knownCapabilities = new Set([
+  'position',
+  'orientation',
+  'linear_velocity',
+  'angular_velocity',
+  'linear_acceleration',
+  'battery_fraction',
+  'charging',
+]);
+
 function capability(candidate: InputCandidate): Capability {
   if (candidate.conflict) return 'conflicting';
   const components = candidate.capabilities;
-  if (!components || components.some((x) => !['position', 'orientation'].includes(x)))
+  if (!components || components.some((x) => !knownCapabilities.has(x)))
     return 'unknown';
   if (components.includes('orientation'))
     return components.includes('position')
