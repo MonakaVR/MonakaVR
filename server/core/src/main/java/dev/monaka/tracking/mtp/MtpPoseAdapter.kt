@@ -1,7 +1,11 @@
 package dev.monaka.tracking.mtp
 
 import dev.monaka.protocol.v2.MtpPose
-import dev.monaka.tracking.*
+import dev.monaka.tracking.LogicalTracker
+import dev.monaka.tracking.ObservationQuality
+import dev.monaka.tracking.ObservationSampleProvenance
+import dev.monaka.tracking.PoseObservation
+import dev.monaka.tracking.TrackingModality
 import dev.slimevr.tracking.trackers.TrackerPosition
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
@@ -16,19 +20,28 @@ class MtpPoseAdapter {
 		val available = pose.tracking_state == "tracked" || pose.tracking_state == "degraded"
 		val p = if (available && pose.modality == "full" && pose.validity.position && pose.confidence.position > 0) {
 			floats(requireNotNull(pose.position)).let { Vector3(it[0], it[1], it[2]) }
-		} else null
+		} else {
+			null
+		}
 		val q = if (available && pose.modality != "none" && pose.validity.orientation && pose.confidence.orientation > 0) {
 			floats(requireNotNull(pose.orientation)).let { Quaternion(it[3], it[0], it[1], it[2]) }
-		} else null
+		} else {
+			null
+		}
 		val quality = if (pose.tracking_state == "tracked") ObservationQuality.TRACKED else ObservationQuality.DEGRADED
 		return PoseObservation(
 			LogicalTracker(pose.source_id, pose.tracker_id, pose.publisher_id).observationId, target, sampleTime,
 			position = p, rotation = q, modality = TrackingModality.valueOf(pose.modality.uppercase()),
 			positionQuality = if (p == null) ObservationQuality.LOST else quality,
 			rotationQuality = if (q == null) ObservationQuality.LOST else quality,
-			provenance = ObservationSampleProvenance(pose.sequence, sampleTime,
-				"${pose.session_id}:${pose.clock_id}", pose.input.session_id,
-				pose.mapping_revision, pose.coordinate_space),
+			provenance = ObservationSampleProvenance(
+				pose.sequence,
+				sampleTime,
+				"${pose.session_id}:${pose.clock_id}",
+				pose.input.session_id,
+				pose.mapping_revision,
+				pose.coordinate_space,
+			),
 			correctionRotation = q,
 		)
 	}

@@ -1,6 +1,20 @@
 package dev.monaka.tracking
 
-import dev.monaka.protocol.v2.*
+import dev.monaka.protocol.v2.AuthorityHeader
+import dev.monaka.protocol.v2.CommonMappingReference
+import dev.monaka.protocol.v2.CommonWorldAuthorityPublication
+import dev.monaka.protocol.v2.CommonWorldMappingPublication
+import dev.monaka.protocol.v2.CommonWorldMappingRevocation
+import dev.monaka.protocol.v2.CommonWorldReference
+import dev.monaka.protocol.v2.CommonWorldRevocation
+import dev.monaka.protocol.v2.DecodeResult
+import dev.monaka.protocol.v2.EncodeResult
+import dev.monaka.protocol.v2.Envelope
+import dev.monaka.protocol.v2.HmdValidityEvidence
+import dev.monaka.protocol.v2.MonakaCodec
+import dev.monaka.protocol.v2.SourceSpaceAuthority
+import dev.monaka.protocol.v2.TrustedHmdCommonPose
+import dev.monaka.protocol.v2.TrustedHmdCommonUnavailable
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 
@@ -18,7 +32,9 @@ internal data class TrustedHmdCommonCandidate(
  * invalidates the long-lived foundation itself; that world can never be resurrected by reconnect.
  */
 internal class TrustedHmdCommonWorldStream(private val expectedPublisherId: String, private val capacity: Int = 128) {
-	init { require(expectedPublisherId.isNotBlank() && capacity > 0) }
+	init {
+		require(expectedPublisherId.isNotBlank() && capacity > 0)
+	}
 	private val foundation = CommonWorldAuthorityState(expectedPublisherId, capacity, worldScopedMappingHighWater = true)
 	private val sessions = mutableSetOf<String>() // includes current; no eviction
 	private var session: String? = null
@@ -32,9 +48,14 @@ internal class TrustedHmdCommonWorldStream(private val expectedPublisherId: Stri
 	private var initialMappingRejected = false
 	private var lastWireMapping: CommonWorldMappingPublication? = null
 	private var poseCandidate: TrustedHmdCommonCandidate? = null
-	private data class SourceHistory(var space: SourceSpaceAuthorityEpoch, var retired: Boolean = false,
-		var generationRetired: Boolean = false, var observation: TrustedHmdCommonPose? = null, var receivedAt: Long = 0,
-		var lastMapped: SourceToCommonMappingSnapshot? = null)
+	private data class SourceHistory(
+		var space: SourceSpaceAuthorityEpoch,
+		var retired: Boolean = false,
+		var generationRetired: Boolean = false,
+		var observation: TrustedHmdCommonPose? = null,
+		var receivedAt: Long = 0,
+		var lastMapped: SourceToCommonMappingSnapshot? = null,
+	)
 	private val sources = mutableMapOf<Pair<String, String>, SourceHistory>()
 
 	fun streamValid() = valid && !exhausted
@@ -46,22 +67,40 @@ internal class TrustedHmdCommonWorldStream(private val expectedPublisherId: Stri
 
 	fun beginAuthorizedPublisherSession(publisherId: String, sessionId: String, clockId: String): Boolean {
 		if (exhausted || publisherId != expectedPublisherId || sessionId.isBlank() || clockId.isBlank() || sessionId in sessions) return false
-		if (sessions.size >= capacity) { close(CommonWorldRevocationReason.CAPACITY_EXHAUSTED); exhausted = true; return false }
+		if (sessions.size >= capacity) {
+			close(CommonWorldRevocationReason.CAPACITY_EXHAUSTED)
+			exhausted = true
+			return false
+		}
 		sessions += sessionId
-		session = sessionId; clock = clockId; last = null; lastSequence = null
-		valid = true; worldBootstrapped = false; mappingBootstrapped = false; initialMappingRejected = false; poseCandidate = null
+		session = sessionId
+		clock = clockId
+		last = null
+		lastSequence = null
+		valid = true
+		worldBootstrapped = false
+		mappingBootstrapped = false
+		initialMappingRejected = false
+		poseCandidate = null
 		return true
 	}
 
 	fun onTransportDisconnected() = close(CommonWorldRevocationReason.EVENT_STREAM_LOST)
 	private fun close(reason: CommonWorldRevocationReason = CommonWorldRevocationReason.EVENT_STREAM_LOST) {
-		valid = false; worldBootstrapped = false; mappingBootstrapped = false; poseCandidate = null
+		valid = false
+		worldBootstrapped = false
+		mappingBootstrapped = false
+		poseCandidate = null
 		foundation.revokeWorld(reason)
 	}
 
 	/** Only bytes already associated by the caller with this authorized ordered channel. */
 	fun receiveBytes(bytes: ByteArray, receivedAtNanos: Long): String = when (val d = MonakaCodec.decodeEnvelope(bytes)) {
-		is DecodeResult.Failure -> { close(); "malformed" }
+		is DecodeResult.Failure -> {
+			close()
+			"malformed"
+		}
+
 		is DecodeResult.Success -> receive(d.value, receivedAtNanos)
 	}
 
@@ -70,39 +109,66 @@ internal class TrustedHmdCommonWorldStream(private val expectedPublisherId: Stri
 		if (header.publisher_id != expectedPublisherId) return "unauthorized"
 		if (header.session_id != session) return if (header.session_id in sessions) "retired" else "unauthorized"
 		if (!streamValid()) return "closed"
-		if (MonakaCodec.encodeEnvelope(decoded) is EncodeResult.Failure) { close(); return "malformed" }
+		if (MonakaCodec.encodeEnvelope(decoded) is EncodeResult.Failure) {
+			close()
+			return "malformed"
+		}
 		val message = freeze(decoded)
 		lastSequence?.let { high ->
 			if (header.sequence < high) return "old"
 			if (header.sequence == high) {
 				if (immutable(message) == immutable(last!!)) return "duplicate"
-				close(); return "conflict"
+				close()
+				return "conflict"
 			}
-			if (high == Long.MAX_VALUE || header.sequence != high + 1) { close(); return "gap" }
-		} ?: run { if (header.sequence != 0L) { close(); return "gap" } }
-		if (header.clock_id != clock) { close(); return "conflict" }
-		lastSequence = header.sequence; last = message
-		if (header.sequence == 0L && message !is CommonWorldAuthorityPublication) { close(); return "bootstrap-failed" }
+			if (high == Long.MAX_VALUE || header.sequence != high + 1) {
+				close()
+				return "gap"
+			}
+		} ?: run {
+			if (header.sequence != 0L) {
+				close()
+				return "gap"
+			}
+		}
+		if (header.clock_id != clock) {
+			close()
+			return "conflict"
+		}
+		lastSequence = header.sequence
+		last = message
+		if (header.sequence == 0L && message !is CommonWorldAuthorityPublication) {
+			close()
+			return "bootstrap-failed"
+		}
 		// Seq1 has to be the mapping snapshot, even when a pose/control packet is otherwise valid wire.
 		if (header.sequence == 1L && message !is CommonWorldMappingPublication) {
-			initialMappingRejected = true; poseCandidate = null; return "untrusted"
+			initialMappingRejected = true
+			poseCandidate = null
+			return "untrusted"
 		}
 		if (initialMappingRejected) return "untrusted"
 		return try {
 			val result = apply(message, receivedAtNanos)
 			if (header.sequence == 1L && result != "mapping") initialMappingRejected = true
 			if (foundation.lastRevocation()?.reason == CommonWorldRevocationReason.CAPACITY_EXHAUSTED) {
-				exhausted = true; close(CommonWorldRevocationReason.CAPACITY_EXHAUSTED)
+				exhausted = true
+				close(CommonWorldRevocationReason.CAPACITY_EXHAUSTED)
 			}
 			result
 		} catch (_: IllegalArgumentException) {
 			if (header.sequence == 1L) initialMappingRejected = true
-			poseCandidate = null; "untrusted" // Float overflow/unit contract and projection failure
+			poseCandidate = null
+			"untrusted" // Float overflow/unit contract and projection failure
 		}
 	}
 
-	private fun source(s: SourceSpaceAuthority) = SourceSpaceAuthorityEpoch(s.source_id,
-		s.source_authority_session_epoch, s.source_space_id, s.source_space_generation)
+	private fun source(s: SourceSpaceAuthority) = SourceSpaceAuthorityEpoch(
+		s.source_id,
+		s.source_authority_session_epoch,
+		s.source_space_id,
+		s.source_space_generation,
+	)
 	private fun key(s: SourceSpaceAuthorityEpoch) = s.sourceId to s.sourceSessionEpoch
 	private fun sourceCurrent(s: SourceSpaceAuthorityEpoch): Boolean {
 		val h = sources[key(s)] ?: return false
@@ -111,58 +177,110 @@ internal class TrustedHmdCommonWorldStream(private val expectedPublisherId: Stri
 	private fun establishSource(s: SourceSpaceAuthorityEpoch): Boolean {
 		val h = sources[key(s)]
 		if (h == null) {
-			if (sources.size >= capacity) { exhausted = true; close(CommonWorldRevocationReason.CAPACITY_EXHAUSTED); return false }
-			sources[key(s)] = SourceHistory(s); return true
+			if (sources.size >= capacity) {
+				exhausted = true
+				close(CommonWorldRevocationReason.CAPACITY_EXHAUSTED)
+				return false
+			}
+			sources[key(s)] = SourceHistory(s)
+			return true
 		}
 		if (h.retired || s.generation < h.space.generation || (s.generation == h.space.generation && h.generationRetired)) return false
-		if (s.generation == h.space.generation && s != h.space) { h.generationRetired = true; close(); return false }
-		h.space = s; h.generationRetired = false; return true
+		if (s.generation == h.space.generation && s != h.space) {
+			h.generationRetired = true
+			close()
+			return false
+		}
+		h.space = s
+		h.generationRetired = false
+		return true
 	}
 	private fun worldMatches(w: CommonWorldReference): Boolean = currentWorld()?.authority?.let {
 		it.ownerId == w.owner_id && it.epoch.value == w.world_epoch && it.space == w.coordinate_space
 	} ?: false
 	private fun mappingMatches(m: CommonMappingReference): Boolean = currentMapping()?.snapshot?.let {
-		worldMatches(m.world) && it.sourceSpace == source(m.source_space) && sourceCurrent(it.sourceSpace) &&
-			it.calibrationEpoch.value == m.calibration_epoch && it.mappingRevision.value == m.mapping_revision
+		worldMatches(m.world) &&
+			it.sourceSpace == source(m.source_space) &&
+			sourceCurrent(it.sourceSpace) &&
+			it.calibrationEpoch.value == m.calibration_epoch &&
+			it.mappingRevision.value == m.mapping_revision
 	} ?: false
 
 	private fun apply(m: Envelope, at: Long): String = when (m) {
 		is CommonWorldAuthorityPublication -> {
-			poseCandidate = null; mappingBootstrapped = false
+			poseCandidate = null
+			mappingBootstrapped = false
 			val s = source(m.anchor_source)
 			val w = CommonWorldAuthority(m.world.owner_id, m.world.coordinate_space, CommonWorldEpoch(m.world.world_epoch), s)
 			val prior = foundation.currentWorld()?.authority
 			// C2.1 world replacement must be ordered after old-world revocation, never implicit.
-			if (prior != null && prior.epoch != w.epoch) "untrusted"
-			else if (!establishSource(s) || foundation.establishWorld(w) == null) {
-				worldBootstrapped = false; "untrusted"
-			} else { worldBootstrapped = true; "world" }
+			if (prior != null && prior.epoch != w.epoch) {
+				"untrusted"
+			} else if (!establishSource(s) || foundation.establishWorld(w) == null) {
+				worldBootstrapped = false
+				"untrusted"
+			} else {
+				worldBootstrapped = true
+				"world"
+			}
 		}
+
 		is CommonWorldMappingPublication -> {
 			poseCandidate = null
 			val w = currentWorld()?.authority
 			val s = source(m.mapping.source_space)
-			if (w == null || !worldMatches(m.mapping.world) || s != w.anchor || !sourceCurrent(s)) "untrusted"
-			else if (wireMappingConflict(m)) "untrusted"
-			else {
-				val snapshot = SourceToCommonMappingSnapshot(m.mapping.world.owner_id, s, w,
-					CommonMappingCalibrationEpoch(m.mapping.calibration_epoch), CommonMappingRevision(m.mapping.mapping_revision),
-					SourceToCommonRigidTransform(quaternion(m.transform.rotation_xyzw), vector(m.transform.translation_xyz)))
+			if (w == null || !worldMatches(m.mapping.world) || s != w.anchor || !sourceCurrent(s)) {
+				"untrusted"
+			} else if (wireMappingConflict(m)) {
+				"untrusted"
+			} else {
+				val snapshot = SourceToCommonMappingSnapshot(
+					m.mapping.world.owner_id,
+					s,
+					w,
+					CommonMappingCalibrationEpoch(m.mapping.calibration_epoch),
+					CommonMappingRevision(m.mapping.mapping_revision),
+					SourceToCommonRigidTransform(quaternion(m.transform.rotation_xyzw), vector(m.transform.translation_xyz)),
+				)
 				val handle = foundation.publishMapping(snapshot)
-				if (handle == null) { mappingBootstrapped = foundation.currentMapping() != null && mappingBootstrapped; "untrusted" }
-				else { mappingBootstrapped = true; lastWireMapping = m; "mapping" }
+				if (handle == null) {
+					mappingBootstrapped = foundation.currentMapping() != null && mappingBootstrapped
+					"untrusted"
+				} else {
+					mappingBootstrapped = true
+					lastWireMapping = m
+					"mapping"
+				}
 			}
 		}
+
 		is TrustedHmdCommonPose -> acceptPose(m, at)
-		is TrustedHmdCommonUnavailable -> if (!mappingMatches(m.mapping)) "untrusted" else { poseCandidate = null; "unavailable" }
-		is CommonWorldMappingRevocation -> if (!mappingMatches(m.mapping)) "untrusted" else {
-			foundation.revokeMapping(when (m.reason) {
-				"mapping_conflict" -> CommonWorldRevocationReason.MAPPING_CONFLICT
-				"source_space_changed" -> CommonWorldRevocationReason.SOURCE_SPACE_CHANGED
-				else -> CommonWorldRevocationReason.MAPPING_WITHDRAWN
-			}); mappingBootstrapped = false; poseCandidate = null; "revoked"
+
+		is TrustedHmdCommonUnavailable -> if (!mappingMatches(m.mapping)) {
+			"untrusted"
+		} else {
+			poseCandidate = null
+			"unavailable"
 		}
-		is CommonWorldRevocation -> if (!worldMatches(m.world)) "untrusted" else {
+
+		is CommonWorldMappingRevocation -> if (!mappingMatches(m.mapping)) {
+			"untrusted"
+		} else {
+			foundation.revokeMapping(
+				when (m.reason) {
+					"mapping_conflict" -> CommonWorldRevocationReason.MAPPING_CONFLICT
+					"source_space_changed" -> CommonWorldRevocationReason.SOURCE_SPACE_CHANGED
+					else -> CommonWorldRevocationReason.MAPPING_WITHDRAWN
+				},
+			)
+			mappingBootstrapped = false
+			poseCandidate = null
+			"revoked"
+		}
+
+		is CommonWorldRevocation -> if (!worldMatches(m.world)) {
+			"untrusted"
+		} else {
 			val anchor = currentWorld()!!.authority.anchor
 			// A world-level anchor loss alone is not a source-generation revocation (5AA world-replace fixture).
 			if (m.reason in listOf("source_space_changed", "source_session_changed")) {
@@ -170,8 +288,12 @@ internal class TrustedHmdCommonWorldStream(private val expectedPublisherId: Stri
 				if (m.reason == "source_session_changed") sources.getValue(key(anchor)).retired = true
 			}
 			foundation.revokeWorld(CommonWorldRevocationReason.valueOf(m.reason.uppercase()))
-			worldBootstrapped = false; mappingBootstrapped = false; poseCandidate = null; "revoked"
+			worldBootstrapped = false
+			mappingBootstrapped = false
+			poseCandidate = null
+			"revoked"
 		}
+
 		else -> "wrong-protocol"
 	}
 
@@ -182,42 +304,74 @@ internal class TrustedHmdCommonWorldStream(private val expectedPublisherId: Stri
 		if (old.mapping == m.mapping && old.transform == m.transform) return false
 		// Double facts that round to equal Float values are still different immutable wire facts.
 		foundation.revokeMapping(CommonWorldRevocationReason.MAPPING_CONFLICT)
-		mappingBootstrapped = false; poseCandidate = null
+		mappingBootstrapped = false
+		poseCandidate = null
 		return true
 	}
 
 	private fun acceptPose(m: TrustedHmdCommonPose, at: Long): String {
-		if (!mappingMatches(m.mapping) || source(m.source.source_space) != source(m.mapping.source_space)) { poseCandidate = null; return "untrusted" }
+		if (!mappingMatches(m.mapping) || source(m.source.source_space) != source(m.mapping.source_space)) {
+			poseCandidate = null
+			return "untrusted"
+		}
 		val s = source(m.source.source_space)
 		val h = sources.getValue(key(s))
 		val old = h.observation
 		if (old != null) {
 			if (m.source.observation_id < old.source.observation_id) return "old-observation"
 			if (m.source.observation_id == old.source.observation_id && sourceObservation(m) != sourceObservation(old)) {
-				h.generationRetired = true; close(CommonWorldRevocationReason.ANCHOR_AUTHORITY_LOST); return "observation-conflict"
+				h.generationRetired = true
+				close(CommonWorldRevocationReason.ANCHOR_AUTHORITY_LOST)
+				return "observation-conflict"
 			}
-			if (m.source.source_time_domain_id != old.source.source_time_domain_id) { h.retired = true; close(); return "untrusted" }
+			if (m.source.source_time_domain_id != old.source.source_time_domain_id) {
+				h.retired = true
+				close()
+				return "untrusted"
+			}
 		}
-		val snapshot = TrustedHmdSourcePoseSnapshot(TrustedHmdSourceObservationIdentity(s, m.source.observation_id),
-			vector(m.source_position), quaternion(m.source_orientation))
-		val computed = foundation.mapSourcePose(snapshot) ?: run { poseCandidate = null; return "untrusted" }
-		val p = vector(m.common_position); val q = quaternion(m.common_orientation)
+		val snapshot = TrustedHmdSourcePoseSnapshot(
+			TrustedHmdSourceObservationIdentity(s, m.source.observation_id),
+			vector(m.source_position),
+			quaternion(m.source_orientation),
+		)
+		val computed = foundation.mapSourcePose(snapshot) ?: run {
+			poseCandidate = null
+			return "untrusted"
+		}
+		val p = vector(m.common_position)
+		val q = quaternion(m.common_orientation)
 		if (vectorBits(p) != vectorBits(computed.position) || quaternionBits(q) != quaternionBits(computed.orientation)) {
-			poseCandidate = null; return "untrusted"
+			poseCandidate = null
+			return "untrusted"
 		}
 		val repeated = old != null && m.source.observation_id == old.source.observation_id
-		if (!repeated) { h.observation = m; h.receivedAt = at }
+		if (!repeated) {
+			h.observation = m
+			h.receivedAt = at
+		}
 		// Remapping a known observation preserves its first receipt; unavailable cannot refresh it.
 		if (repeated && poseCandidate?.pose?.mapping == computed.mapping) return "duplicate-observation"
 		if (repeated && poseCandidate == null && h.lastMapped == computed.mapping) return "duplicate-observation"
-		poseCandidate = TrustedHmdCommonCandidate(computed, m.source.source_locate_time_ns,
-			m.source.source_time_domain_id, m.validity, h.receivedAt)
+		poseCandidate = TrustedHmdCommonCandidate(
+			computed,
+			m.source.source_locate_time_ns,
+			m.source.source_time_domain_id,
+			m.validity,
+			h.receivedAt,
+		)
 		h.lastMapped = computed.mapping
 		return "pose"
 	}
 
-	private fun number(d: Double): Float { require(d.isFinite()); return d.toFloat().also { require(it.isFinite()) } }
-	private fun vector(v: List<Double>): Vector3 { require(v.size == 3); return Vector3(number(v[0]), number(v[1]), number(v[2])) }
+	private fun number(d: Double): Float {
+		require(d.isFinite())
+		return d.toFloat().also { require(it.isFinite()) }
+	}
+	private fun vector(v: List<Double>): Vector3 {
+		require(v.size == 3)
+		return Vector3(number(v[0]), number(v[1]), number(v[2]))
+	}
 	private fun quaternion(q: List<Double>): Quaternion {
 		require(q.size == 4)
 		return Quaternion(number(q[3]), number(q[0]), number(q[1]), number(q[2])).also {
