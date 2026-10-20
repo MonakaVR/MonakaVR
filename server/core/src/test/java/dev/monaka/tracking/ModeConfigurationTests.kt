@@ -104,6 +104,24 @@ class ModeConfigurationTests {
    val s = snapshot(api); assertTrue(s["restartRequired"].asBoolean()); assertEquals("ik", s["assignments"][0]["activeMode"].asText())
   }
  }
+ @Test fun emptyPrecreatedConfigurationMayInitializeButCannotOverwritePopulatedFile(@TempDir dir: Path) {
+  // Historical callers and RotationCorrectionConfigurationTests use Files.createTempFile.
+  val path = Files.createTempFile(dir, "precreated-", ".json")
+  val newConfig = config()
+  newConfig.save(path)
+  assertEquals(OutputMode.IK, MonakaConfiguration.load(path).assignments.snapshot().targets
+   .getValue(TrackerPosition.HIP).outputMode)
+  val original = Files.readAllBytes(path)
+  // A detached copy, even from the same value object, has no file authority.
+  assertFailsWith<IllegalArgumentException> { newConfig.copy().save(path) }
+  assertFailsWith<IllegalArgumentException> { config().save(path) }
+  assertContentEquals(original, Files.readAllBytes(path))
+  // It must not replace a concurrently populated pre-created target.
+  val external = Files.createTempFile(dir, "external-", ".json")
+  Files.writeString(external, "{}")
+  assertFailsWith<IllegalArgumentException> { config().save(external) }
+  assertEquals("{}", Files.readString(external))
+ }
  @Test fun dataClassCopyLosesFileProvenanceAndCannotOverwriteCommittedMode(@TempDir dir: Path) {
   val c = config(); val path = dir.resolve("config.json"); c.save(path)
   val staleCopy = c.copy() // Kotlin data-class copy excludes private file provenance.

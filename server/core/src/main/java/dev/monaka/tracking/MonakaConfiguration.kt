@@ -57,13 +57,20 @@ data class MonakaConfiguration(
   val absolute = path.toAbsolutePath().normalize()
   Files.createDirectories(absolute.parent)
   require(!Files.isSymbolicLink(absolute)) { "Configuration aliases require offline review" }
-  // A generated data-class copy does not inherit loadedPath/loadedBytes. It may
-  // create a new configuration, but must never claim an existing file's preimage.
+  // A generated data-class copy does not inherit loadedPath/loadedBytes.
+  // Existing populated files require file provenance; empty pre-created files
+  // (for example Files.createTempFile) may be initialized, but only if still empty
+  // when the lock is acquired and immediately before atomic replacement.
   val ownsExistingFile = loadedPath == absolute && loadedBytes != null
-  require(ownsExistingFile || !Files.exists(absolute)) {
+  val initializingEmptyFile = !ownsExistingFile && Files.isRegularFile(absolute) && Files.size(absolute) == 0L
+  require(ownsExistingFile || initializingEmptyFile || !Files.exists(absolute)) {
    "Existing configuration must be loaded from this path before replacement"
   }
-  val preimage = if (ownsExistingFile) loadedBytes else null
+  val preimage = when {
+   ownsExistingFile -> loadedBytes
+   initializingEmptyFile -> ByteArray(0)
+   else -> null
+  }
   withWriteLock(absolute) {
    fun unchanged() = if (preimage == null) !Files.exists(absolute) else
     Files.isRegularFile(absolute) && Files.readAllBytes(absolute).contentEquals(preimage)

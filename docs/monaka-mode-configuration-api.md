@@ -87,7 +87,7 @@ The existing `MonakaConfiguration.save` now uses the same lock and a preimage
 check. Loaded/written instances remember the source bytes, so an older writer
 cannot serialize the old runtime over a later mode transaction. An unproven
 instance, including a Kotlin data-class `copy()` that does not carry the private
-file provenance, may create a new file but **cannot replace an existing file**.
+file provenance, may create a new file or initialize an existing **zero-byte** regular file (only while the byte preimage remains empty), but **cannot replace an existing populated file**.
 An operator must load the intended existing path first rather than silently
 treat a copied object as a fresh file-owner snapshot. Simultaneous
 cooperating writers are rejected. External tools that ignore file locks are
