@@ -1,20 +1,33 @@
 package dev.monaka.tracking.desktop
 
-import dev.monaka.protocol.v2.*
-import dev.monaka.tracking.*
+import dev.monaka.protocol.v2.DecodeResult
+import dev.monaka.protocol.v2.EncodeResult
+import dev.monaka.protocol.v2.Envelope
+import dev.monaka.protocol.v2.MonakaCodec
+import dev.monaka.protocol.v2.MtpPose
+import dev.monaka.tracking.LogicalTracker
+import dev.monaka.tracking.MonakaConfiguration
+import dev.monaka.tracking.TrackerBodyAssignments
+import dev.monaka.tracking.TrackerReference
 import dev.slimevr.tracking.processor.HumanPoseManager
-import dev.slimevr.tracking.trackers.*
+import dev.slimevr.tracking.trackers.Tracker
+import dev.slimevr.tracking.trackers.TrackerPosition
+import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
-import java.nio.file.Path
-import java.net.DatagramSocket
 import java.net.DatagramPacket
+import java.net.DatagramSocket
 import java.net.InetAddress
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class MonakaDesktopTests {
 	@TempDir lateinit var temporary: Path
@@ -37,10 +50,15 @@ class MonakaDesktopTests {
 	@Test fun featureOffDoesNotOpenSocketRegisterHookOrChangeSlimeComputedOutput() {
 		val left = listOf(tracker(0, TrackerPosition.HEAD, true), tracker(1, TrackerPosition.HIP))
 		val right = listOf(tracker(0, TrackerPosition.HEAD, true), tracker(1, TrackerPosition.HIP))
-		val expected = HumanPoseManager(left); val actual = HumanPoseManager(right)
-		expected.setLegTweaksEnabled(false); actual.setLegTweaksEnabled(false)
+		val expected = HumanPoseManager(left)
+		val actual = HumanPoseManager(right)
+		expected.setLegTweaksEnabled(false)
+		actual.setLegTweaksEnabled(false)
 		val integration = MonakaServerIntegration.startIfEnabled(
-			false, { error("Disabled input read configuration or attempted socket creation") }, { right }, actual.skeleton,
+			false,
+			{ error("Disabled input read configuration or attempted socket creation") },
+			{ right },
+			actual.skeleton,
 			{ error("Disabled input registered a hook") },
 			registerAfterPose = { error("Disabled input registered an output hook") },
 		)
@@ -50,15 +68,18 @@ class MonakaDesktopTests {
 				list[0].position = Vector3(frame * 0.001f, 1.7f, 0f)
 				list[1].setRotation(Quaternion(kotlin.math.cos(frame * 0.01f), 0f, kotlin.math.sin(frame * 0.01f), 0f))
 			}
-			expected.update(); actual.update()
+			expected.update()
+			actual.update()
 			for ((a, b) in expected.computedTrackers.zip(actual.computedTrackers)) {
-				assertEquals(a.position, b.position); assertEquals(a.getRotation(), b.getRotation())
+				assertEquals(a.position, b.position)
+				assertEquals(a.getRotation(), b.getRotation())
 			}
 		}
 	}
 
 	@Test fun persistentAssignmentsRoundTripAndExplicitMigration() {
-		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
+		val p = fixture()
+		val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
 		val config = MonakaConfiguration(p.coordinate_space)
 		config.assignments.migrateLegacy(mapOf("legacy-serial" to TrackerPosition.LEFT_FOOT), mapOf("legacy-serial" to key))
 		val path = temporary.resolve("monaka-mtp.json")
@@ -66,19 +87,26 @@ class MonakaDesktopTests {
 		val restored = MonakaConfiguration.load(path)
 		assertEquals(config.space, restored.space)
 		assertEquals(config.assignments.snapshot().entries, restored.assignments.snapshot().entries)
-		restored.assignments.assign(key, TrackerPosition.HIP); restored.save(path)
+		restored.assignments.assign(key, TrackerPosition.HIP)
+		restored.save(path)
 		assertEquals(TrackerPosition.HIP, MonakaConfiguration.load(path).assignments.snapshot().entries[key])
 	}
 
 	@Test fun loopbackWorkerSurvivesMalformedInputAndStopsOnUnregister() {
-		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
+		val p = fixture()
+		val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
 		val head = tracker(0, TrackerPosition.HEAD, true).also { it.position = Vector3(0f, 1.7f, 0f) }
-		val hpm = HumanPoseManager(listOf(head)); hpm.setLegTweaksEnabled(false)
+		val hpm = HumanPoseManager(listOf(head))
+		hpm.setLegTweaksEnabled(false)
 		var hook: Runnable? = null
 		val failures = mutableListOf<Exception>()
 		val integration = MonakaServerIntegration.startIfEnabled(
-			true, { MonakaConfiguration(p.coordinate_space, TrackerBodyAssignments(mapOf(key to TrackerPosition.HIP)), port = 0) },
-			{ listOf(head) }, hpm.skeleton, { hook = it }, { failures += it },
+			true,
+			{ MonakaConfiguration(p.coordinate_space, TrackerBodyAssignments(mapOf(key to TrackerPosition.HIP)), port = 0) },
+			{ listOf(head) },
+			hpm.skeleton,
+			{ hook = it },
+			{ failures += it },
 		)!!
 		val bound = integration.receiver.port
 		try {
@@ -87,30 +115,45 @@ class MonakaDesktopTests {
 					sender.send(DatagramPacket(data, data.size, InetAddress.getByName("127.0.0.1"), bound))
 				}
 			}
-			await { hook!!.run(); hpm.update(); integration.runtime.pipeline.observationCount == 2 }
+			await {
+				hook!!.run()
+				hpm.update()
+				integration.runtime.pipeline.observationCount == 2
+			}
 			assertEquals(1, integration.runtime.inbox.diagnostics().getValue("MalformedJson"))
 			assertEquals(1, integration.runtime.inbox.diagnostics().getValue("TooLarge"))
-			assertTrue(integration.receiver.isAlive); assertTrue(failures.isEmpty())
-		} finally { integration.close() }
-		assertNull(hook); assertFalse(integration.receiver.isAlive)
+			assertTrue(integration.receiver.isAlive)
+			assertTrue(failures.isEmpty())
+		} finally {
+			integration.close()
+		}
+		assertNull(hook)
+		assertFalse(integration.receiver.isAlive)
 		assertEquals(0, integration.runtime.pipeline.observationCount)
 		DatagramSocket(bound, InetAddress.getByName("127.0.0.1")).close()
 	}
 
 	@Test fun separateProcessUdpEntersSamePipelineAndMovesExistingIk() {
-		val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
+		val p = fixture()
+		val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
 		val head = tracker(0, TrackerPosition.HEAD, true).also { it.position = Vector3(0f, 1.7f, 0f) }
-		val hpm = HumanPoseManager(listOf(head)); hpm.setLegTweaksEnabled(false)
-		hpm.skeleton.ikSolver.enabled = false; hpm.update()
+		val hpm = HumanPoseManager(listOf(head))
+		hpm.setLegTweaksEnabled(false)
+		hpm.skeleton.ikSolver.enabled = false
+		hpm.update()
 		val hip = hpm.skeleton.computedHipTracker!!.position
 		var hook: Runnable? = null
 		val integration = MonakaServerIntegration.startIfEnabled(
-			true, { MonakaConfiguration(p.coordinate_space, TrackerBodyAssignments(mapOf(key to TrackerPosition.HIP)), port = 0) },
-			{ listOf(head) }, hpm.skeleton, { hook = it }, { throw it },
+			true,
+			{ MonakaConfiguration(p.coordinate_space, TrackerBodyAssignments(mapOf(key to TrackerPosition.HIP)), port = 0) },
+			{ listOf(head) },
+			hpm.skeleton,
+			{ hook = it },
+			{ throw it },
 		)!!
 		integration.use {
 			val senderPort = DatagramSocket(0).use { it.localPort }
-            val fixtureFile = temporary.resolve("pose.json").toFile()
+			val fixtureFile = temporary.resolve("pose.json").toFile()
 			fixtureFile.writeBytes(encoded(p.copy(position = listOf(hip.x.toDouble(), hip.y.toDouble(), hip.z.toDouble()))))
 			fun publish(offset: Double, sequence: Long) {
 				val output = temporary.resolve("publisher-$sequence.log").toFile()
@@ -121,43 +164,57 @@ class MonakaDesktopTests {
 				).redirectErrorStream(true).redirectOutput(output).start()
 				assertTrue(process.waitFor(15, TimeUnit.SECONDS), "Publisher timed out: ${output.readText()}")
 				assertEquals(0, process.exitValue(), output.readText())
-				await { hook!!.run(); hpm.update(); integration.runtime.mtp.samples()[key]?.pose?.sequence == sequence }
+				await {
+					hook!!.run()
+					hpm.update()
+					integration.runtime.mtp.samples()[key]?.pose?.sequence == sequence
+				}
 			}
 			publish(0.0, 0)
-			hpm.skeleton.ikSolver.resetOffsets(); hpm.skeleton.ikSolver.enabled = true; hook!!.run(); hpm.update()
+			hpm.skeleton.ikSolver.resetOffsets()
+			hpm.skeleton.ikSolver.enabled = true
+			hook!!.run()
+			hpm.update()
 			val baseline = hpm.skeleton.computedHipTracker!!.position
 			publish(0.1, 1)
-			repeat(5) { hook!!.run(); hpm.update() }
+			repeat(5) {
+				hook!!.run()
+				hpm.update()
+			}
 			assertTrue(hpm.skeleton.computedHipTracker!!.position.x - baseline.x > 0.005f)
 			assertEquals(setOf("slime", "mtp"), integration.runtime.runner.snapshot().keys)
 		}
 	}
 
-    @Test fun v2ConfigPreservesExplicitFallbackAndV1MigrationRequiresFullIdentityMapping() {
-        val p = fixture(); val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
-        val config = MonakaConfiguration(p.coordinate_space)
-        config.assignments.configure(TrackerPosition.HIP, TrackerReference.mtp(key), TrackerReference.slime("stable-slime"))
-        val path = temporary.resolve("composition.json")
-        config.save(path)
-        val restored = MonakaConfiguration.load(path)
-        assertEquals(config.assignments.snapshot().targets, restored.assignments.snapshot().targets)
-        assertFailsWith<IllegalArgumentException> {
-            restored.assignments.configure(TrackerPosition.LEFT_FOOT, TrackerReference.slime("stable-slime"))
-        }
-        val legacy = temporary.resolve("legacy.json")
-        val old = """{"version":1,"space":{"id":"room-A","revision":0,"convention":"rh_y_up_neg_z_forward"},"assignments":[{"source_id":"old-bridge","tracker_id":"tracker-A","body":"HIP"}]}"""
-        legacy.toFile().writeText(old)
-        assertFailsWith<IllegalArgumentException> { MonakaConfiguration.load(legacy) }
-        assertEquals(old, legacy.toFile().readText())
-        val migrated = MonakaConfiguration.migrate(legacy, mapOf(("old-bridge" to "tracker-A") to key))
-        assertNull(migrated.assignments.snapshot().targets.getValue(TrackerPosition.HIP).rotationFallbackTracker)
-        assertEquals(old, temporary.resolve("legacy.json.pre-c2.bak").toFile().readText())
-        assertEquals(key, MonakaConfiguration.load(legacy).assignments.snapshot().targets.getValue(TrackerPosition.HIP).mainTracker.mtp)
-    }
+	@Test fun v2ConfigPreservesExplicitFallbackAndV1MigrationRequiresFullIdentityMapping() {
+		val p = fixture()
+		val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
+		val config = MonakaConfiguration(p.coordinate_space)
+		config.assignments.configure(TrackerPosition.HIP, TrackerReference.mtp(key), TrackerReference.slime("stable-slime"))
+		val path = temporary.resolve("composition.json")
+		config.save(path)
+		val restored = MonakaConfiguration.load(path)
+		assertEquals(config.assignments.snapshot().targets, restored.assignments.snapshot().targets)
+		assertFailsWith<IllegalArgumentException> {
+			restored.assignments.configure(TrackerPosition.LEFT_FOOT, TrackerReference.slime("stable-slime"))
+		}
+		val legacy = temporary.resolve("legacy.json")
+		val old = """{"version":1,"space":{"id":"room-A","revision":0,"convention":"rh_y_up_neg_z_forward"},"assignments":[{"source_id":"old-bridge","tracker_id":"tracker-A","body":"HIP"}]}"""
+		legacy.toFile().writeText(old)
+		assertFailsWith<IllegalArgumentException> { MonakaConfiguration.load(legacy) }
+		assertEquals(old, legacy.toFile().readText())
+		val migrated = MonakaConfiguration.migrate(legacy, mapOf(("old-bridge" to "tracker-A") to key))
+		assertNull(migrated.assignments.snapshot().targets.getValue(TrackerPosition.HIP).rotationFallbackTracker)
+		assertEquals(old, temporary.resolve("legacy.json.pre-c2.bak").toFile().readText())
+		assertEquals(key, MonakaConfiguration.load(legacy).assignments.snapshot().targets.getValue(TrackerPosition.HIP).mainTracker.mtp)
+	}
 
-    private fun await(condition: () -> Boolean) {
+	private fun await(condition: () -> Boolean) {
 		val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
-		while (!condition()) { assertTrue(System.nanoTime() < deadline, "UDP condition timed out"); Thread.sleep(5) }
+		while (!condition()) {
+			assertTrue(System.nanoTime() < deadline, "UDP condition timed out")
+			Thread.sleep(5)
+		}
 	}
 }
 

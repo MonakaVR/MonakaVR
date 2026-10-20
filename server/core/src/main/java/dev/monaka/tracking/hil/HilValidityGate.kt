@@ -1,6 +1,8 @@
 package dev.monaka.tracking.hil
 
-import dev.monaka.tracking.*
+import dev.monaka.tracking.ObservationQuality
+import dev.monaka.tracking.PoseObservation
+import dev.monaka.tracking.TrackingModality
 
 /** Availability boundary only. Raw values and physical provenance are retained for capture. */
 class HilValidityGate(val hilMode: Boolean = false, private val mainSourceId: String) {
@@ -10,7 +12,13 @@ class HilValidityGate(val hilMode: Boolean = false, private val mainSourceId: St
 		check(hilMode) { "Validity control requires explicit HIL mode" }
 		available = value
 	}
-	fun apply(raw: PoseObservation): PoseObservation = if (!hilMode || available || raw.sourceId != mainSourceId) raw else
-		raw.copy(positionQuality = ObservationQuality.UNAVAILABLE, rotationQuality = ObservationQuality.UNAVAILABLE,
-			modality = TrackingModality.NONE)
+	fun apply(raw: PoseObservation): PoseObservation = if (!hilMode || available || raw.sourceId != mainSourceId) {
+		raw
+	} else {
+		raw.copy(
+			positionQuality = ObservationQuality.UNAVAILABLE,
+			rotationQuality = ObservationQuality.UNAVAILABLE,
+			modality = TrackingModality.NONE,
+		)
+	}
 }

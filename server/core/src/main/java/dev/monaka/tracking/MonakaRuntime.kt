@@ -1,7 +1,8 @@
 package dev.monaka.tracking
 
 import dev.monaka.protocol.v2.CoordinateSpace
-import dev.monaka.tracking.mtp.*
+import dev.monaka.tracking.mtp.MtpInbox
+import dev.monaka.tracking.mtp.MtpObservationBackend
 import dev.slimevr.tracking.trackers.Tracker
 
 /** One clock, profile registry, runner, assignment registry and pipeline for every input. */
@@ -16,17 +17,26 @@ class MonakaRuntime(
 	private val trackerReceiptClock: () -> Long = System::nanoTime,
 ) : AutoCloseable {
 	private val assignedImuFreshness = maxImuSampleAgeNanos?.let { AssignedImuSampleFreshness(assignments, it) }
-	val profiles = ObservationSourceProfileRegistry(listOf(
-		ObservationSourceProfile.sixDof("slime", 0, Long.MAX_VALUE, Long.MAX_VALUE),
-		ObservationSourceProfile.sixDof("mtp", 100, timeoutNanos, timeoutNanos),
-	))
-	val pipeline = ConstraintPipeline(profileRegistry = profiles, resolver = ConstraintResolver { assignments.snapshot().targets },
+	val profiles = ObservationSourceProfileRegistry(
+		listOf(
+			ObservationSourceProfile.sixDof("slime", 0, Long.MAX_VALUE, Long.MAX_VALUE),
+			ObservationSourceProfile.sixDof("mtp", 100, timeoutNanos, timeoutNanos),
+		),
+	)
+	val pipeline = ConstraintPipeline(
+		profileRegistry = profiles,
+		resolver = ConstraintResolver { assignments.snapshot().targets },
 		eligibility = { observation, now -> assignedImuFreshness?.apply(observation, now) ?: observation },
-		pinnedEligibility = { observation, now, assignment -> assignedImuFreshness?.apply(observation, now, assignment) ?: observation })
+		pinnedEligibility = { observation, now, assignment -> assignedImuFreshness?.apply(observation, now, assignment) ?: observation },
+	)
 	val mtp = MtpObservationBackend(inbox, assignments, expectedSpace)
-	val runner = ObservationBackendRunner(pipeline, listOf(
-		SlimeTrackerObservationBackend("slime", "slime", { trackers().filter(FeedbackExclusion::accepts) }, assignments = { assignments.snapshot().targets }), mtp,
-	))
+	val runner = ObservationBackendRunner(
+		pipeline,
+		listOf(
+			SlimeTrackerObservationBackend("slime", "slime", { trackers().filter(FeedbackExclusion::accepts) }, assignments = { assignments.snapshot().targets }),
+			mtp,
+		),
+	)
 	private var closed = false
 	private var wasPaused = false
 	private var nextTickSequence = 0L
@@ -34,8 +44,7 @@ class MonakaRuntime(
 	private var lastCompletedTick: MonakaResolvedTickSnapshot? = null
 	var lastTickNanos: Long = 0
 		private set
-	fun tick(paused: Boolean = false): Map<dev.slimevr.tracking.trackers.TrackerPosition, EffectiveConstraint> =
-		tickSnapshot(paused).constraints
+	fun tick(paused: Boolean = false): Map<dev.slimevr.tracking.trackers.TrackerPosition, EffectiveConstraint> = tickSnapshot(paused).constraints
 
 	/** Server-thread tick: assignment changes after capture become visible on the next tick. */
 	fun tickSnapshot(paused: Boolean = false): MonakaResolvedTickSnapshot {
@@ -52,11 +61,16 @@ class MonakaRuntime(
 		val assignment = assignments.snapshot()
 		val resuming = !paused && wasPaused
 		// Drain paused traffic with its sequence watermarks, then discard its samples on either edge.
-		if (paused != wasPaused) { mtp.suspend(true); runner.invalidate("mtp") }
+		if (paused != wasPaused) {
+			mtp.suspend(true)
+			runner.invalidate("mtp")
+		}
 		val backendIds = runner.snapshot().keys.toList()
 		for (backend in backendIds) {
 			if (backend == "mtp" && resuming) continue
-			try { runner.poll(backend, now, assignment) } catch (_: Exception) {
+			try {
+				runner.poll(backend, now, assignment)
+			} catch (_: Exception) {
 				runner.invalidate(backend)
 				if (backend == "mtp") mtp.invalidateSamples()
 				inbox.count("BackendFailure:$backend")
@@ -69,24 +83,39 @@ class MonakaRuntime(
 			mtp.suspend(false)
 		}
 		wasPaused = paused
-		return MonakaResolvedTickSnapshot(sequence, now, now, paused, assignment,
-			pipeline.resolveAll(now, assignment), receiptCutoff).also { lastCompletedTick = it }
+		return MonakaResolvedTickSnapshot(
+			sequence,
+			now,
+			now,
+			paused,
+			assignment,
+			pipeline.resolveAll(now, assignment),
+			receiptCutoff,
+		).also { lastCompletedTick = it }
 	}
 
 	/** Server-thread read-only seam. Only this runtime's latest completed tick has authority. */
 	internal fun captureSourceSnapshot(tick: MonakaResolvedTickSnapshot): MonakaSourceTickSnapshot {
 		check(!closed && tick === lastCompletedTick && tick.nowNanos == lastTickNanos) { "Source capture requires latest completed runtime tick" }
-		return MonakaSourceTickSnapshot(tick.tickSequence, tick.nowNanos, tick.assignment,
+		return MonakaSourceTickSnapshot(
+			tick.tickSequence,
+			tick.nowNanos,
+			tick.assignment,
 			pipeline.observations(tick.nowNanos, tick.assignment).associateBy { it.sourceId },
-			runner.sourceOwnersSnapshot(), mtp.sourceContexts())
+			runner.sourceOwnersSnapshot(),
+			mtp.sourceContexts(),
+		)
 	}
 
 	/** Wrap the already-selected components. Fresh Main metadata is diagnostic only. */
 	fun resolvedTrackingPoses(tick: MonakaResolvedTickSnapshot): Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose> {
 		val observations = pipeline.observations(tick.nowNanos, tick.assignment).associateBy { it.sourceId }
 		return (tick.constraints.keys + tick.assignment.targets.keys).associateWith { target ->
-			ResolvedTrackingPose.from(tick.constraints[target] ?: EffectiveConstraint(target), expectedSpace,
-				tick.assignment.targets[target]?.mainTracker?.observationId?.let(observations::get))
+			ResolvedTrackingPose.from(
+				tick.constraints[target] ?: EffectiveConstraint(target),
+				expectedSpace,
+				tick.assignment.targets[target]?.mainTracker?.observationId?.let(observations::get),
+			)
 		}
 	}
 
@@ -95,13 +124,20 @@ class MonakaRuntime(
 		val assignments = assignments.snapshot().targets
 		val observations = pipeline.observations(lastTickNanos).associateBy { it.sourceId }
 		return (constraints.keys + assignments.keys).associateWith { target ->
-			ResolvedTrackingPose.from(constraints[target] ?: EffectiveConstraint(target), expectedSpace,
-				assignments[target]?.mainTracker?.observationId?.let(observations::get))
+			ResolvedTrackingPose.from(
+				constraints[target] ?: EffectiveConstraint(target),
+				expectedSpace,
+				assignments[target]?.mainTracker?.observationId?.let(observations::get),
+			)
 		}
 	}
 	override fun close() {
 		if (closed) return
-		mtp.close(); runner.clear(); pipeline.clear(); profiles.clear(); closed = true
+		mtp.close()
+		runner.clear()
+		pipeline.clear()
+		profiles.clear()
+		closed = true
 	}
 	companion object {
 		fun monotonicClock(): () -> Long {
