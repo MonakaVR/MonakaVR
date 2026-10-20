@@ -57,7 +57,7 @@ class PicoMotionTrackerBridgeBodyAssignments(
 				if (entry.isEmpty()) continue
 
 				val separator = entry.indexOf('=')
-			require(separator > 0 && separator < entry.lastIndex) {
+				require(separator > 0 && separator < entry.lastIndex) {
 					"Invalid PICO body assignment '$entry'; expected SERIAL=body:position"
 				}
 
@@ -67,7 +67,7 @@ class PicoMotionTrackerBridgeBodyAssignments(
 					?: TrackerPosition.entries.firstOrNull { it.name.equals(targetText, ignoreCase = true) }
 					?: throw IllegalArgumentException("Unknown PICO body target '$targetText' for serial '$serial'")
 
-			require(serial !in parsed) {
+				require(serial !in parsed) {
 					"Duplicate PICO body assignment for serial '$serial'"
 				}
 				parsed[serial] = target
@@ -75,12 +75,11 @@ class PicoMotionTrackerBridgeBodyAssignments(
 			return parsed
 		}
 
-		private fun normalize(source: Map<String, TrackerPosition>): Map<String, TrackerPosition> =
-			linkedMapOf<String, TrackerPosition>().apply {
-				for ((serial, target) in source) {
-					this[requireSerial(serial)] = target
-				}
+		private fun normalize(source: Map<String, TrackerPosition>): Map<String, TrackerPosition> = linkedMapOf<String, TrackerPosition>().apply {
+			for ((serial, target) in source) {
+				this[requireSerial(serial)] = target
 			}
+		}
 
 		private fun requireSerial(serial: String): String {
 			val normalized = serial.trim()

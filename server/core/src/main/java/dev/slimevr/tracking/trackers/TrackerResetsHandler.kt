@@ -11,8 +11,8 @@ import io.github.axisangles.ktmath.EulerAngles
 import io.github.axisangles.ktmath.EulerOrder
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
-import kotlin.math.*
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.*
 
 private const val DRIFT_COOLDOWN_MS = 50000L
 
@@ -190,7 +190,12 @@ class TrackerResetsHandler(val tracker: Tracker) {
 
 	/** Exact inputs to the correction-only fixed mounting/reset transform. */
 	fun correctionCalibrationEpoch(): String = listOf(
-		mountingOrientation, gyroFix, attachmentFix, mountRotFix, tposeDownFix, yawFix,
+		mountingOrientation,
+		gyroFix,
+		attachmentFix,
+		mountRotFix,
+		tposeDownFix,
+		yawFix,
 	).joinToString(":", prefix = "${correctionResetGeneration.get()}:") { q ->
 		listOf(q.w, q.x, q.y, q.z).joinToString(",") { it.toRawBits().toString() }
 	}

@@ -31,7 +31,9 @@ object PicoMotionTrackerBridgeFeatureGate {
 		val normalized = value?.trim()?.lowercase()?.takeIf { it.isNotEmpty() } ?: return null
 		return when (normalized) {
 			"1", "true", "yes", "on" -> true
+
 			"0", "false", "no", "off" -> false
+
 			else -> throw IllegalArgumentException(
 				"$name must be one of true/false, 1/0, yes/no, or on/off; got '$value'",
 			)

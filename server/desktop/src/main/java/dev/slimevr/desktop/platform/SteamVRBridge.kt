@@ -115,7 +115,8 @@ abstract class SteamVRBridge(
 	private val outputTrackers: List<Tracker>
 		get() = shareableTrackers.filter { tracker ->
 			directOutputTrackers.none { it.trackerPosition?.trackerRole == tracker.trackerPosition?.trackerRole }
-		} + directOutputTrackers
+		} +
+			directOutputTrackers
 
 	@VRServerThread
 	override fun startBridge() {
