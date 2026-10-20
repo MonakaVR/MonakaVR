@@ -6,9 +6,9 @@ BASE_SHA: `a07d0c7b3c69edc61dfee5f0cae1e4756ea02589` (fetched origin/dev).
 Branch: `feature/monaka-body-rotation-guidance`.
 The final HEAD_SHA and publication status are recorded in the local post-commit
 receipt `build/rotation-guidance-final-receipt.json` (not a self-referential commit
-hash). Push was rejected by automatic approval review because trusted user content
-did not establish destination-specific authorization/ownership. Publication and
-the dev-targeted Draft PR await explicit user approval; no PR URL exists yet.
+hash). The user explicitly authorized pushing this branch to MonakaVR/MonakaVR
+and creating a Draft PR targeting dev on 2026-10-21. Merging is not authorized.
+The PR URL is recorded in the post-publication receipt and task response.
 
 ## Final executed validation
 
