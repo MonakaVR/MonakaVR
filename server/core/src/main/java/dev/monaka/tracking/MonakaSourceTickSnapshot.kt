@@ -18,5 +18,4 @@ internal class MonakaSourceTickSnapshot(
 	val mtpContexts = immutableCopy(mtpContexts)
 }
 
-private fun <K, V> immutableCopy(values: Map<K, V>): Map<K, V> =
-	Collections.unmodifiableMap(LinkedHashMap(values))
+private fun <K, V> immutableCopy(values: Map<K, V>): Map<K, V> = Collections.unmodifiableMap(LinkedHashMap(values))

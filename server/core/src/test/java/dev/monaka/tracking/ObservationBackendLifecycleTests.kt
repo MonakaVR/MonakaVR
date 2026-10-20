@@ -17,8 +17,7 @@ class ObservationBackendLifecycleTests {
 		override val sourceSetMode: ObservationSourceSetMode = ObservationSourceSetMode.INCREMENTAL,
 		private val observations: () -> List<PoseObservation>,
 	) : ObservationBackend {
-		override fun poll(observedAtNanos: Long): List<PoseObservation> =
-			observations().map { it.copy(observedAtNanos = observedAtNanos) }
+		override fun poll(observedAtNanos: Long): List<PoseObservation> = observations().map { it.copy(observedAtNanos = observedAtNanos) }
 	}
 
 	private fun registry(): ObservationSourceProfileRegistry = ObservationSourceProfileRegistry(

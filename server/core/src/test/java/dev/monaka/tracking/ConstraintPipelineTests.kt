@@ -45,7 +45,7 @@ class ConstraintPipelineTests {
 	@Test
 	fun pipelineResolvesExplicitRelationsAcrossTargets() {
 		val pipeline = ConstraintPipeline(resolver = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference("absolute:hip"), TrackerReference("imu:hip"))) })
-        pipeline.ingestAll(
+		pipeline.ingestAll(
 			listOf(
 				PoseObservation(
 					sourceId = "absolute:hip",
@@ -53,7 +53,7 @@ class ConstraintPipelineTests {
 					observedAtNanos = 100L,
 					priority = 100,
 					position = Vector3(0.1f, 1f, 0f),
-                    rotation = Quaternion.IDENTITY,
+					rotation = Quaternion.IDENTITY,
 					positionQuality = ObservationQuality.DEGRADED,
 				),
 				PoseObservation(
@@ -68,7 +68,7 @@ class ConstraintPipelineTests {
 					target = TrackerPosition.LEFT_FOOT,
 					observedAtNanos = 120L,
 					position = Vector3(-0.2f, 0f, 0f),
-                    rotation = Quaternion.IDENTITY,
+					rotation = Quaternion.IDENTITY,
 				),
 			),
 		)
@@ -108,11 +108,11 @@ class ConstraintPipelineTests {
 
 	@Test
 	fun removingPrimarySourceRevealsStoredFallback() {
-        val pipeline = ConstraintPipeline(resolver = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference("primary"), TrackerReference("fallback"))) })
+		val pipeline = ConstraintPipeline(resolver = ConstraintResolver { mapOf(TrackerPosition.HIP to MainTrackerAssignment(TrackerReference("primary"), TrackerReference("fallback"))) })
 		pipeline.ingest(
 			PoseObservation(
 				sourceId = "primary",
-                position = Vector3.NULL,
+				position = Vector3.NULL,
 				target = TrackerPosition.HIP,
 				observedAtNanos = 100L,
 				priority = 100,
