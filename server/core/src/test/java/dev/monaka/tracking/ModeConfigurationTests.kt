@@ -104,6 +104,26 @@ class ModeConfigurationTests {
    val s = snapshot(api); assertTrue(s["restartRequired"].asBoolean()); assertEquals("ik", s["assignments"][0]["activeMode"].asText())
   }
  }
+ @Test fun dataClassCopyLosesFileProvenanceAndCannotOverwriteCommittedMode(@TempDir dir: Path) {
+  val c = config(); val path = dir.resolve("config.json"); c.save(path)
+  val staleCopy = c.copy() // Kotlin data-class copy excludes private file provenance.
+  val diskCopy = MonakaConfiguration.load(path).copy()
+  withApi(c, path) { api ->
+   assertTrue(save(api, snapshot(api), "direct")["ok"].asBoolean())
+  }
+  val committed = Files.readAllBytes(path)
+  for (detached in listOf(staleCopy, diskCopy, config())) {
+   assertFailsWith<IllegalArgumentException> { detached.save(path) }
+   assertContentEquals(committed, Files.readAllBytes(path))
+  }
+  assertEquals(OutputMode.DIRECT, MonakaConfiguration.load(path).assignments.snapshot()
+   .targets.getValue(TrackerPosition.HIP).outputMode)
+  // A detached copy remains useful for creating a different, new file.
+  val independent = dir.resolve("independent.json")
+  staleCopy.save(independent)
+  assertEquals(OutputMode.IK, MonakaConfiguration.load(independent).assignments.snapshot()
+   .targets.getValue(TrackerPosition.HIP).outputMode)
+ }
  @Test fun secondApiWriterCannotOverwriteACommittedMode(@TempDir dir: Path) {
   val c = config(); val path = dir.resolve("config.json"); c.save(path)
   withApi(c, path) { first -> withApi(c, path) { second ->
