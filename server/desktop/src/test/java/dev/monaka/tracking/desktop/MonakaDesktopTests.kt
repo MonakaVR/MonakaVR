@@ -115,7 +115,7 @@ class MonakaDesktopTests {
 			fun publish(offset: Double, sequence: Long) {
 				val output = temporary.resolve("publisher-$sequence.log").toFile()
 				val process = ProcessBuilder(
-					File(System.getProperty("java.home"), "bin/java.exe").absolutePath,
+					testJvmExecutable(),
 					"-cp", System.getProperty("monaka.test.classpath"), "dev.monaka.tracking.desktop.MtpTestPublisher",
 					fixtureFile.absolutePath, integration.receiver.port.toString(), offset.toString(), sequence.toString(), senderPort.toString(),
 				).redirectErrorStream(true).redirectOutput(output).start()
