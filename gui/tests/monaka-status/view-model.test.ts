@@ -53,6 +53,35 @@ test('same-name sources remain distinct by full ID and tuple', () => {
   assert.equal(model.sources[0].tracker, model.sources[1].tracker);
   assert.notEqual(model.sources[0].publisher, model.sources[1].publisher);
 });
+test('known telemetry capabilities do not downgrade valid Pos+Q or Q-only sources', () => {
+  const telemetry = [
+    'linear_velocity',
+    'angular_velocity',
+    'linear_acceleration',
+    'battery_fraction',
+    'charging',
+  ];
+  const fullWithTelemetry = {
+    ...full,
+    capabilities: ['position', 'orientation', ...telemetry],
+  };
+  const qWithTelemetry = {
+    ...q,
+    capabilities: ['orientation', ...telemetry],
+  };
+  const model = buildTrackingStatusModel(
+    snapshot([fullWithTelemetry, qWithTelemetry]),
+    connected
+  );
+  assert.equal(model.status, 'snapshot');
+  const positionSource = model.sources.find((x) => x.id === full.id)!;
+  assert.equal(positionSource.capability, 'position-orientation');
+  assert.equal(positionSource.sixDofSelectable, true);
+  const orientationSource = model.sources.find((x) => x.id === q.id)!;
+  assert.equal(orientationSource.capability, 'orientation-only');
+  assert.equal(orientationSource.qSelectable, true);
+  assert.equal(orientationSource.sixDofSelectable, false);
+});
 test('Q-only has no synthetic 6DoF assignment; Slime never gains 6DoF', () => {
   assert.equal(buildTrackingStatusModel(snapshot(), connected).bodies[0].sixDof, null);
   const model = buildTrackingStatusModel(snapshot([slime, full]), connected);
