@@ -8,6 +8,8 @@ import io.github.axisangles.ktmath.Quaternion
 import java.nio.file.Path
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.nio.channels.FileChannel
+import java.nio.file.StandardOpenOption
 
 /** Versioned local composition settings, independent of wire codec and body-free identity. */
 data class MonakaConfiguration(
@@ -20,6 +22,9 @@ data class MonakaConfiguration(
  val rotationCorrection: RotationCorrectionConfig? = null,
  val positionCorrection: PositionCorrectionConfig? = null,
 ) {
+ // A loaded writer must not overwrite a newer API transaction with its old runtime state.
+ private var loadedPath: Path? = null
+ private var loadedBytes: ByteArray? = null
  init {
   require(space.id.isNotBlank() && space.convention == "rh_y_up_neg_z_forward" && space.revision in 0..4294967295L)
   require(port in 0..65535 && timeoutNanos >= 0)
@@ -49,6 +54,41 @@ data class MonakaConfiguration(
   }
  }
  fun save(path: Path) {
+  val absolute = path.toAbsolutePath().normalize()
+  Files.createDirectories(absolute.parent)
+  require(!Files.isSymbolicLink(absolute)) { "Configuration aliases require offline review" }
+  val preimage = if (loadedPath == absolute) loadedBytes else
+   if (Files.exists(absolute)) Files.readAllBytes(absolute) else null
+  withWriteLock(absolute) {
+   fun unchanged() = if (preimage == null) !Files.exists(absolute) else
+    Files.isRegularFile(absolute) && Files.readAllBytes(absolute).contentEquals(preimage)
+   require(unchanged()) { "Configuration file changed; reload/restart before saving" }
+   // Generate separately so preimage is checked again immediately before replacement.
+   val stage = absolute.resolveSibling(".monaka-config-${java.util.UUID.randomUUID()}.json")
+   try {
+    saveUnmanaged(stage)
+    require(unchanged()) { "Configuration changed before commit" }
+    if (assignments.snapshot().targets.values.any { it.sourceSelection != null } && preimage != null) {
+     val version = ObjectMapper().readTree(preimage)["version"]
+     require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 2..4) {
+      "Validate/migrate legacy configuration before saving capability selections"
+     }
+     if (version.asInt() < 4) Files.write(absolute.resolveSibling(absolute.fileName.toString() + ".pre-capability-selection-v4.bak"),
+      preimage, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
+    }
+    val written = Files.readAllBytes(stage)
+    FileChannel.open(stage, StandardOpenOption.WRITE).use { it.force(true) }
+    require(unchanged()) { "Configuration changed before commit" }
+    Files.move(stage, absolute, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+    loadedPath = absolute; loadedBytes = written
+   } finally {
+    runCatching { Files.deleteIfExists(stage) }
+    runCatching { Files.deleteIfExists(stage.resolveSibling(stage.fileName.toString() + ".pending")) }
+   }
+  }
+ }
+ /** Only for isolated staging files held by the shared transaction lock. */
+ internal fun saveUnmanaged(path: Path) {
   validateSixDofTeacherSelection()
   val assignmentSnapshot = assignments.snapshot()
   positionCorrection?.validateBinding(space, assignmentSnapshot.targets[TrackerPosition.HIP])
@@ -109,6 +149,18 @@ data class MonakaConfiguration(
   Files.move(temporary, absolute, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
  }
  companion object {
+  internal fun <T> withWriteLock(path: Path, block: () -> T): T {
+   val lockPath = path.resolveSibling(path.fileName.toString() + ".input-write.lock")
+   val channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+   var lock: java.nio.channels.FileLock? = null
+   try {
+    lock = channel.tryLock() ?: error("Configuration is being saved; reload and retry")
+    return block()
+   } finally {
+    // A cleanup failure after atomic replacement must not report a rolled-back save.
+    runCatching { lock?.release() }; runCatching { channel.close() }
+   }
+  }
   private fun text(node: JsonNode, name: String): String {
    val value = node[name]
    require(value?.isTextual == true && value.asText().isNotBlank()) { "Missing/invalid $name" }
@@ -122,7 +174,10 @@ data class MonakaConfiguration(
   /** v1 source_id was a collapsed Bridge namespace: require an explicit full-identity mapping. */
   fun load(path: Path, legacyMapping: Map<Pair<String, String>, LogicalTracker> = emptyMap()): MonakaConfiguration {
    require(Files.isRegularFile(path)) { "MTP requires explicit world/assignments in $path" }
-   val root = ObjectMapper().readTree(path.toFile())
+   return loadBytes(path, Files.readAllBytes(path), legacyMapping)
+  }
+  internal fun loadBytes(path: Path, bytes: ByteArray, legacyMapping: Map<Pair<String, String>, LogicalTracker> = emptyMap()): MonakaConfiguration {
+   val root = ObjectMapper().readTree(bytes)
    val version = root["version"]
    require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 1..4)
    require(version.asInt() >= 3 || !root.has("positionCorrection")) { "Position correction requires schema v3+" }
@@ -216,7 +271,9 @@ data class MonakaConfiguration(
     }
    }
    val positionCorrection = root["positionCorrection"]?.let(PositionCorrectionConfigJson::read)
-   return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction, positionCorrection)
+   return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction, positionCorrection).also {
+    it.loadedPath = path.toAbsolutePath().normalize(); it.loadedBytes = bytes
+   }
   }
   fun migrate(path: Path, legacyMapping: Map<Pair<String, String>, LogicalTracker>): MonakaConfiguration {
    val config = load(path, legacyMapping) // Validate everything before any write.
