@@ -1,0 +1,55 @@
+name: Monaka parallel component validation (temporary)
+
+on:
+  push:
+    branches:
+      - integration/monaka-parallel-software-smoke-20261021
+
+permissions:
+  contents: read
+
+jobs:
+  dedicated-component-tests:
+    name: Dedicated Core and GUI component regressions
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout fixed integration tree
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'microsoft'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v6
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+      - name: Install locked GUI dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build locked SolarXR protocol
+        run: pnpm --dir solarxr-protocol build
+      - name: Run all Core tests including new mode and guidance regressions
+        run: .\gradlew.bat :server:core:test --console=plain
+      - name: Type-check standalone tracking status fixture
+        run: pnpm --dir gui exec tsc --noEmit --project tests/monaka-status/tsconfig.json
+      - name: Run tracking status unit and React fixture tests
+        run: node gui/tests/monaka-status/run.mjs
+      - name: Compile standalone mode controller and integration tests
+        run: pnpm --dir gui exec tsc --project tests/monaka-mode/tsconfig.json
+      - name: Run mode controller and real Core-handler subprocess tests
+        working-directory: gui
+        run: node --test build/monaka-mode-tests/tests/monaka-mode/*.test.js
+      - name: Run tracking status browser tests in installed Edge
+        working-directory: gui
+        run: pnpm exec playwright test --config tests/monaka-status/playwright.config.ts
+      - name: Run mode editor browser tests in installed Edge
+        working-directory: gui
+        run: pnpm exec playwright test --config tests/monaka-mode/playwright.config.ts
