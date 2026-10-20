@@ -68,3 +68,5 @@ en/jaへ11キーを追加。能力は静的宣言、validityは現在値とし�
 製品tracker object/id/name/body roleの継続性はソフトウェア上で検証し、SteamVR role/serialの実登録はNOT RUN。OS hookの重複登録は新設suiteの検証対象外（solver同tick重複commit拒否と区別）。新設suiteの外部入力は固定kitのcodecを使い、製品メソッドの複製・補間の期待式の複製・mock-only成功判定は行わない。
 
 実機・HMD・SteamVR・PICO・VIVE・OS tray操作はすべて NOT RUN。
+
+evidence/sha256.jsonは各証跡のGit blobバイト列のSHA-256を記録する。Windows checkoutのCRLF変換後のファイルバイトとは区別する。ログにはツールが出力した末尾空白を保持しており、diffの空白検査はコード・翻訳・本台帳を対象としてPASSを確認した。

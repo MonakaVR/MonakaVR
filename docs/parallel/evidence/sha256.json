@@ -1,66 +1,69 @@
-[
-  {
-    "file": "baseline-counts.json",
-    "sha256": "d75aba036e752ae7f0efbe78326dd8464ec1ca9224d1d55b002e9e644b9cecde"
-  },
-  {
-    "file": "baseline-gui-build.log",
-    "sha256": "e370b3d03bfc24841a7ce625b11074972a6d40c324e181fa7dafea1a0b7e6303"
-  },
-  {
-    "file": "baseline-gui-lint.log",
-    "sha256": "ffccef8ede7f31f6c85eacb0b604966e3e81222ba77ce5aa1cdc066ac4fae2ee"
-  },
-  {
-    "file": "baseline-gui-test.log",
-    "sha256": "843c4179b0abd0822ac4666db46f61f739449307912357b279a4a985a4c87f83"
-  },
-  {
-    "file": "baseline-jvm.log",
-    "sha256": "7fa0041c1f2f659925ea8ad7678074cd7e96cacdadaa4e261e38b37d5640bbd7"
-  },
-  {
-    "file": "final-counts.json",
-    "sha256": "b4db0d102978e3f4959aed572fc9a6140f06c00efbdb3d004d309a01b9965b2e"
-  },
-  {
-    "file": "final-gui-build.log",
-    "sha256": "4e266922bd918a48d9fec18e9fc4cb11c0d116908f286e1e7af277085c179c36"
-  },
-  {
-    "file": "final-gui-lint.log",
-    "sha256": "ffccef8ede7f31f6c85eacb0b604966e3e81222ba77ce5aa1cdc066ac4fae2ee"
-  },
-  {
-    "file": "final-gui-test.log",
-    "sha256": "66550dc14bc2b1044b522f9f3fc0b1488ec4259e85b116b25791db9c00a1c399"
-  },
-  {
-    "file": "final-jvm-tests.log",
-    "sha256": "49754543a4054e0843a9c7987040aae791c82ef35890679e1a648cf8a860a446"
-  },
-  {
-    "file": "final-jvm.log",
-    "sha256": "79122103781e35f33289d5c963b2518560384951a61da9447a44423af4e1a14c"
-  },
-  {
-    "file": "gui-install.log",
-    "sha256": "878b159c38afb0839fa3284dc6ad0799ac7c02d5022a81583e722322781e1f20"
-  },
-  {
-    "file": "localization-test.log",
-    "sha256": "2bb10edaed804b0b8d88281e142bbb2d7faeeea89479a69eea530bbd84531043"
-  },
-  {
-    "file": "mtp-process-e2e.json",
-    "sha256": "939b0c47c371f88586b0b15e51c1cea34f2272e1f7e5655914bb8ab28efb587d"
-  },
-  {
-    "file": "new-suite.log",
-    "sha256": "81735e527e8c18b61afd2585d0734ba334bdcd560537f73e0c902f565bf7806f"
-  },
-  {
-    "file": "parallel-suite.xml",
-    "sha256": "f8c5aa310660edc1152ed15e837d753a9bd1c76f0711e3fa58b185f30d02a592"
-  }
-]
+{
+  "bytes": "Git blob bytes (LF-normalized by repository attributes)",
+  "files": [
+    {
+      "file": "baseline-counts.json",
+      "sha256": "334a1dd39a92964081fc9c95c002a02e34c72ded0ccc6973552dab061f227d08"
+    },
+    {
+      "file": "baseline-gui-build.log",
+      "sha256": "2cf41494f3c63c775813f983bc04e1233d8af13691e5aad01cf41510fe732661"
+    },
+    {
+      "file": "baseline-gui-lint.log",
+      "sha256": "264ad95da7b780363964c434a562ca75e93e7c276ed8a52dcb6cb69d52f5ce1d"
+    },
+    {
+      "file": "baseline-gui-test.log",
+      "sha256": "1873b3f1243bf0e618841dcc585207d5cf24b134a378aa87827df58a8406c7ad"
+    },
+    {
+      "file": "baseline-jvm.log",
+      "sha256": "ab9955ff9e6cfc0b6935a98b500736d4b2bbf3d8613dca3d5be643309ff87091"
+    },
+    {
+      "file": "final-counts.json",
+      "sha256": "9b0c096581c7e2aa5b1b6825d208e836ac2c04b497b58776c1b9ced15dbb4dbb"
+    },
+    {
+      "file": "final-gui-build.log",
+      "sha256": "445f7cbcfde5c75a81f73be53bdf66a8d35ad3deca6e91799842b296dcfbe6c7"
+    },
+    {
+      "file": "final-gui-lint.log",
+      "sha256": "264ad95da7b780363964c434a562ca75e93e7c276ed8a52dcb6cb69d52f5ce1d"
+    },
+    {
+      "file": "final-gui-test.log",
+      "sha256": "24dca4cba24fa7ec4ad48d44249cea68a371599b853ab92987a86761d3ee5213"
+    },
+    {
+      "file": "final-jvm-tests.log",
+      "sha256": "dd55999240a374e6f7f99712f44ab56344f7bc3e154e42b975d2ac86d26a56f0"
+    },
+    {
+      "file": "final-jvm.log",
+      "sha256": "9c58c783e0ac0bf35fd0b3c28a9ef11ed91a0719df2998e210208bcbbfb42413"
+    },
+    {
+      "file": "gui-install.log",
+      "sha256": "69e3feae0810ee4acbcddee53bcea014441fcf0b8573798b08275a890b6c9c4c"
+    },
+    {
+      "file": "localization-test.log",
+      "sha256": "a52f0d719ff1a6a8400402f629957c0f5712777233f7c9701013aa9677074f37"
+    },
+    {
+      "file": "mtp-process-e2e.json",
+      "sha256": "939b0c47c371f88586b0b15e51c1cea34f2272e1f7e5655914bb8ab28efb587d"
+    },
+    {
+      "file": "new-suite.log",
+      "sha256": "f3b4c86840ff9798d3203bcd8ea99f23db8103e85024df60032477e79649af82"
+    },
+    {
+      "file": "parallel-suite.xml",
+      "sha256": "375fa1ba41939af065b8df567262cefc6dbb456a87df2dfcbdf64d41dac2ed81"
+    }
+  ]
+}
