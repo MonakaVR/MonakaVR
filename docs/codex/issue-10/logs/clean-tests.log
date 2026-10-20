@@ -1,11 +1,11 @@
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
-Daemon will be stopped at the end of the build 
+Daemon will be stopped at the end of the build
 
 > Configure project :server:android
 i: Configured for SlimeVR Android version "a07d0c7b" (6).
 w: Android KeyStore file is not valid or not found, skipping signing.
 
-The Kotlin Gradle plugin was loaded multiple times in different subprojects, which is not supported and may break the build. 
+The Kotlin Gradle plugin was loaded multiple times in different subprojects, which is not supported and may break the build.
 This might happen in subprojects that apply the Kotlin plugins with the Gradle 'plugins { ... }' DSL if they specify explicit versions, even if the versions are equal.
 Please add the Kotlin plugin to the common parent project or the root project, then remove the versions in the subprojects.
 If the parent project does not need the plugin, add 'apply false' to the plugin line.
@@ -47,7 +47,7 @@ The generated 'copy()' will change its visibility in future releases.
 To suppress the warning do one of the following:
 - Annotate the data class with the '@ConsistentCopyVisibility' annotation.
 - Use the '-Xconsistent-data-class-copy-visibility' compiler flag.
-- Annotate the data class with the '@ExposedCopyVisibility' annotation 
+- Annotate the data class with the '@ExposedCopyVisibility' annotation
   (Discouraged, but can be used to keep binary compatibility).
 
 To learn more, see the documentation of the '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' annotations.
@@ -150,7 +150,7 @@ w: file:///<worktree>/server/core/src/test/java/dev/slimevr/unit/PositionalIKEff
 
 > Task :server:desktop:mtpProcessE2E
 RESULT=PASS mtp-process-e2e stopped_at=complete evidence=<worktree>\server\desktop\build\mtp-process-e2e\78479111-52cc-4047-b280-0debbae463d2
-w: Detected multiple Kotlin daemon sessions at 
+w: Detected multiple Kotlin daemon sessions at
 
 [Incubating] Problems report is available at: file:///<worktree>/build/reports/problems/problems-report.html
 
