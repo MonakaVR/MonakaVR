@@ -1,0 +1,29 @@
+{
+  "result": "PASS",
+  "failed_stage": null,
+  "error": null,
+  "passed": [
+    "feature-off-slime-equivalence",
+    "full-registration-existing-ik-protobuf",
+    "rotation-only-none-full-calibration",
+    "duplicate-reorder-age-unchanged",
+    "publisher-source-tracker-identity-isolation",
+    "active-session-and-peer-rejection",
+    "state-loss-timestamp-watermark-metadata-no-revival",
+    "stale-age-and-metadata-do-not-refresh",
+    "source-disappearance-timeout-loss",
+    "restart-session-recovery-and-retired-replay",
+    "receiver-close-unregister-and-port-release"
+  ],
+  "consumer_pid": 30000,
+  "publisher_pids": [
+    47160,
+    12196,
+    44516,
+    52332
+  ],
+  "wire": 2,
+  "steamvr_runtime": "NOT RUN",
+  "hardware": "NOT RUN",
+  "boundary": "Production intake/private IK input/computed tracker/ProtobufBridge bytes; synthetic external publisher and captured transport"
+}

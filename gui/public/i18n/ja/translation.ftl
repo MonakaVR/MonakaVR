@@ -801,3 +801,16 @@ unknown_device-modal-forget = 無視する
 
 # Desktop Bridge controls
 settings-sidebar-monaka-bridge = Monaka Bridge
+
+## Monakaのトラッキングモードと入力診断
+monaka-tracking-mode-ik = IK出力
+monaka-tracking-mode-direct = 6DoF直接出力
+monaka-tracking-mode-hybrid = ハイブリッド（Direct + IKフォールバック）
+monaka-tracking-restart-required = 保存済みモードの反映には再起動が必要
+monaka-tracking-capability = 静的対応能力
+monaka-tracking-validity = 現在の入力有効性
+monaka-tracking-offline = オフライン／利用不可
+monaka-tracking-assigned = 割当済みソース
+monaka-tracking-active = 稼働中のモード
+monaka-tracking-pending = 保存済み・未反映
+monaka-tracking-unknown = 未確認／不明
