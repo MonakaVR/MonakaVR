@@ -742,24 +742,24 @@
   },
   "logs": {
     "logs/baseline-spotless.log": {
-      "sha256": "f74b3672a4333a4552eeee6298081151b1df6bcf3e7a85db01c78661d0cb5df3",
-      "bytes": 6020
+      "sha256": "7d6fddddbea475a9f50035a8d54cb01b5d88f8c36473af378f6b01cb8f569a53",
+      "bytes": 5900
     },
     "logs/clean-tests.log": {
-      "sha256": "29cacb50900b94fa1c2494cceb7d0eb2f4a44fe0c18b5e44d26df9e756974b91",
-      "bytes": 19992
+      "sha256": "358b51cd75852ac4a09df33a06ef66c62dbe36658c443220e17ec73c956fa37b",
+      "bytes": 19824
     },
     "logs/final-spotless.log": {
-      "sha256": "17f0f208325d3efca8badf94d79c29ed2620633a259ba74fb2bef4c9e9d03fc5",
-      "bytes": 5011
+      "sha256": "cc9cb702a2c0f3bf9bea2e17205e63ff9777677e07fe7899baa2af077be7759f",
+      "bytes": 4912
     },
     "logs/gui-lint.log": {
-      "sha256": "032483734d92d7c9c89f07ca85bd2c4563568492427db1df6233911d2d7f6716",
-      "bytes": 270
+      "sha256": "b377108257a2b0dcb1166908879f02145934556710d1421150650d32a7c81ed5",
+      "bytes": 264
     },
     "logs/gui-build.log": {
-      "sha256": "204daa2bba2442abd4c6cc381d18b0f6c61557a5e7496fdb43e85305ef99ff2e",
-      "bytes": 15153
+      "sha256": "26e91e06d16de300d4f07b9c59016dbdc5e6dec4d40dc3c8930040ecac1bf04a",
+      "bytes": 14956
     }
   },
   "parallel_pr_path_overlap": {
@@ -774,5 +774,6 @@
       "server/desktop/src/test/java/dev/monaka/tracking/desktop/MonakaDesktopTests.kt",
       "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCaptureTests.kt"
     ]
-  }
+  },
+  "log_normalization": "Host-local worktree prefix redacted; LF newlines; trailing whitespace removed. Log SHA256 hashes describe published normalized bytes."
 }
