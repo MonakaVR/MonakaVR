@@ -80,7 +80,7 @@ data class MonakaConfiguration(
    try {
     saveUnmanaged(stage)
     require(unchanged()) { "Configuration changed before commit" }
-    if (assignments.snapshot().targets.values.any { it.sourceSelection != null } && preimage != null) {
+    if (assignments.snapshot().targets.values.any { it.sourceSelection != null } && preimage?.isNotEmpty() == true) {
      val version = ObjectMapper().readTree(preimage)["version"]
      require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 2..4) {
       "Validate/migrate legacy configuration before saving capability selections"
