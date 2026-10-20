@@ -1,0 +1,778 @@
+{
+  "base": "a07d0c7b3c69edc61dfee5f0cae1e4756ea02589",
+  "branch": "chore/issue-10-kotlin-spotless",
+  "environment": {
+    "os": "Windows x64",
+    "jdk": "Microsoft OpenJDK 17.0.20.1+1-LTS",
+    "node": "22.17.0",
+    "pnpm": "10.33.0"
+  },
+  "tested_source_manifest_sha256": "50c04370482c9012163cd8df0a088b4657240714d276c055a03570b3da0a15ca",
+  "test_results": {
+    "core": {
+      "result": "PASS",
+      "counts": {
+        "tests": 1940,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "name": "dev.monaka.tracking.ArchitectureRevisionTests",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.AssignedImuSampleFreshnessTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.BodyModelPredictorHandoffTests",
+          "tests": 34,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.CalibratedMainTeacherTemporalPairingTests",
+          "tests": 31,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.CommonWorldAuthorityFoundationTests",
+          "tests": 50,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.ConstraintPipelineTests",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.ConstraintResolverTests",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.CorePocHilStdioTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.CorePocHilTests",
+          "tests": 45,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.DirectConstraintOutputTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.HipBodyModelSnapshotTests",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.HipRotationCorrectionTests",
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.HybridDiagnosticStressTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.HybridFoundationTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.LiveHipBodyModelPublicationTests",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.MainTrackerMountCalibrationTests",
+          "tests": 42,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.MonakaResolvedTickSnapshotTests",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.MonakaRuntimeTests",
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.MonakaSolverCompositionTests",
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.MonakaSourceTickSnapshotTests",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.MtpCorrectionProvenanceTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.MtpObservationBackendTests",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.MtpRotationOnlyDownstreamTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.ObservationBackendLifecycleTests",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.ObservationBackendRunnerTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.ObservationBackendTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.ObservationFreshnessPolicyTests",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.ObservationSourceProfileRegistryTests",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.ObservationSourceProfileTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.OutputContinuityTests",
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PositionCorrectionApplicationTests",
+          "tests": 79,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PositionCorrectionConfigurationTests",
+          "tests": 284,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PositionCorrectionLearningLawTests",
+          "tests": 67,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PositionCorrectionNonHmdProductionAdapterTests",
+          "tests": 31,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PositionCorrectionRuntimeOrchestratorTests",
+          "tests": 46,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PositionCorrectionSolverContinuityTests",
+          "tests": 113,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PositionErrorMeasurementTests",
+          "tests": 39,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PositionPredictionContractTests",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PositionTemporalPairingTests",
+          "tests": 46,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PredictorFixedCalibrationTests",
+          "tests": 48,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.PureMainDecoupledHipPredictorTests",
+          "tests": 53,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.RecoveryAngularDynamicsTests",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.revision.LegacyAssignmentMigrationTests",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.revision.MainFallbackAssignmentSetTests",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.revision.MainFallbackCandidateValidatorTests",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.revision.MainFallbackPolicyTests",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.revision.MainFallbackSelectorTests",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.revision.PersistentTrackerIdentityTests",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.RotationCorrectionConfigurationTests",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.RotationSampleProvenanceTests",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.SlimeIndependentImuOrientationCaptureTests",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.SlimeRawImuProductionBoundaryTests",
+          "tests": 53,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.SlimeTrackerPoseObservationAdapterTests",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.SolverPositionReferenceSemanticsTests",
+          "tests": 41,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.StaticInputSelectionTests",
+          "tests": 13,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.TrustedHmdCommonWorldStreamTests",
+          "tests": 65,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.LegTweaksTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.MountingResetTests",
+          "tests": 65,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIK6DoFTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKCalibrationTargetDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKConvergenceDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKConvergenceTests",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKDynamicStabilityTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKEffectiveTargetDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKFixedReferenceIterationDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKFootGeometryDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKFootRotationDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKIntegrationTests",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKIterationBudgetDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKIterationCountDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKMultiConstraintTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKPauseTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKRotationCacheDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKSteadyStateDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKTrackerCorrectionDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKTrackerRotationLimitDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.PositionalIKZeroErrorDiagnosticsTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.ReferenceAdjustmentsTests",
+          "tests": 10,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.SkeletonResetTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.TrackingPauseTests",
+          "tests": 1,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.slimevr.unit.TwinExtendedBackTests",
+          "tests": 360,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "io.github.axisangles.ktmath.QuaternionTest",
+          "tests": 37,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "desktop": {
+      "result": "PASS",
+      "counts": {
+        "tests": 153,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        {
+          "name": "dev.monaka.tracking.desktop.DirectProtobufTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.desktop.HmdProviderEvidenceTransportTests",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.desktop.HybridServerIntegrationTests",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.desktop.InboundTransportSessionTests",
+          "tests": 20,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.desktop.MonakaDesktopTests",
+          "tests": 6,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.desktop.MtpHilCaptureTests",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.desktop.RawHmdPoseAdmissionTests",
+          "tests": 49,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.desktop.SolverCompositionIntegrationTests",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.desktop.StrongTrustedHmdPolicyTests",
+          "tests": 33,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "dev.monaka.tracking.desktop.TrustedHmdPositionProvenanceTests",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "mtp_process_e2e": {
+      "result": "PASS",
+      "failed_stage": null,
+      "error": null,
+      "passed": [
+        "feature-off-slime-equivalence",
+        "full-registration-existing-ik-protobuf",
+        "rotation-only-none-full-calibration",
+        "duplicate-reorder-age-unchanged",
+        "publisher-source-tracker-identity-isolation",
+        "active-session-and-peer-rejection",
+        "state-loss-timestamp-watermark-metadata-no-revival",
+        "stale-age-and-metadata-do-not-refresh",
+        "source-disappearance-timeout-loss",
+        "restart-session-recovery-and-retired-replay",
+        "receiver-close-unregister-and-port-release"
+      ],
+      "consumer_pid": 44948,
+      "publisher_pids": [
+        46012,
+        38204,
+        23836,
+        31076
+      ],
+      "wire": 2,
+      "steamvr_runtime": "NOT RUN",
+      "hardware": "NOT RUN",
+      "boundary": "Production intake/private IK input/computed tracker/ProtobufBridge bytes; synthetic external publisher and captured transport"
+    },
+    "shadow_jar": "PASS",
+    "gui_lint": "PASS",
+    "gui_build": "PASS",
+    "spotlessCheck": "FAIL: existing Java comment wraps and unchanged JNA C-ABI function naming",
+    "kotlin_formatting": "resolved all 78 baseline formatting files",
+    "kotlin_wildcard_imports": "resolved 127 wildcard imports in 68 baseline manual-debt files",
+    "hardware_steamvr_hmd": "NOT RUN"
+  },
+  "bytecode_comparison": {
+    "core": {
+      "baseline_class_count": 1023,
+      "final_class_count": 1023,
+      "normalized_identical_count": 1020,
+      "normalized_differences": [
+        "kotlin/test/dev/monaka/tracking/HybridDiagnosticStressTests.class",
+        "kotlin/test/dev/monaka/tracking/MainTrackerMountCalibrationTests.class",
+        "kotlin/test/dev/monaka/tracking/PositionCorrectionSolverContinuityTests.class"
+      ],
+      "api_comparison": "identical JVM fields, methods, descriptors, visibility and generic signatures",
+      "api_manifest_sha256": "5ef00873662958710bf2f95b7d2ed6bc3f3fd769a6c3b6e29f52550ee8975605"
+    },
+    "desktop": {
+      "baseline_class_count": 193,
+      "final_class_count": 193,
+      "normalized_identical_count": 188,
+      "normalized_differences": [
+        "kotlin/main/dev/slimevr/desktop/BuildConfigKt.class",
+        "kotlin/main/dev/slimevr/desktop/Main.class",
+        "kotlin/test/dev/monaka/tracking/desktop/HybridServerIntegrationTests.class",
+        "kotlin/test/dev/monaka/tracking/desktop/MtpHilCaptureSession.class",
+        "kotlin/test/dev/monaka/tracking/desktop/MtpHilCaptureTests.class"
+      ],
+      "api_comparison": "identical JVM fields, methods, descriptors, visibility and generic signatures",
+      "api_manifest_sha256": "2cd7b8460a9398bc08fca93e672e4a7b35e90db7c0e9489e97b1f2054a6b4952"
+    }
+  },
+  "logs": {
+    "logs/baseline-spotless.log": {
+      "sha256": "f74b3672a4333a4552eeee6298081151b1df6bcf3e7a85db01c78661d0cb5df3",
+      "bytes": 6020
+    },
+    "logs/clean-tests.log": {
+      "sha256": "29cacb50900b94fa1c2494cceb7d0eb2f4a44fe0c18b5e44d26df9e756974b91",
+      "bytes": 19992
+    },
+    "logs/final-spotless.log": {
+      "sha256": "17f0f208325d3efca8badf94d79c29ed2620633a259ba74fb2bef4c9e9d03fc5",
+      "bytes": 5011
+    },
+    "logs/gui-lint.log": {
+      "sha256": "032483734d92d7c9c89f07ca85bd2c4563568492427db1df6233911d2d7f6716",
+      "bytes": 270
+    },
+    "logs/gui-build.log": {
+      "sha256": "204daa2bba2442abd4c6cc381d18b0f6c61557a5e7496fdb43e85305ef99ff2e",
+      "bytes": 15153
+    }
+  },
+  "parallel_pr_path_overlap": {
+    "4": [],
+    "5": [],
+    "6": [],
+    "7": [
+      "server/core/src/main/java/dev/monaka/tracking/MonakaConfiguration.kt",
+      "server/core/src/main/java/dev/monaka/tracking/MonakaInputConfigurationApi.kt"
+    ],
+    "8": [
+      "server/desktop/src/test/java/dev/monaka/tracking/desktop/MonakaDesktopTests.kt",
+      "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCaptureTests.kt"
+    ]
+  }
+}

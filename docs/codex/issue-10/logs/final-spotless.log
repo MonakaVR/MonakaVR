@@ -1,0 +1,86 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :server:android
+i: Configured for SlimeVR Android version "a07d0c7b" (6).
+w: Android KeyStore file is not valid or not found, skipping signing.
+
+The Kotlin Gradle plugin was loaded multiple times in different subprojects, which is not supported and may break the build. 
+This might happen in subprojects that apply the Kotlin plugins with the Gradle 'plugins { ... }' DSL if they specify explicit versions, even if the versions are equal.
+Please add the Kotlin plugin to the common parent project or the root project, then remove the versions in the subprojects.
+If the parent project does not need the plugin, add 'apply false' to the plugin line.
+See: https://docs.gradle.org/current/userguide/plugins.html#sec:subprojects_plugins_dsl
+The Kotlin plugin was loaded in the following projects: ':server:android', ':server:core', ':server:desktop'
+
+> Task :spotlessInternalRegisterDependencies UP-TO-DATE
+> Task :server:spotlessJava UP-TO-DATE
+> Task :server:spotlessJavaCheck FAILED
+> Task :server:spotlessKotlin
+> Task :server:spotlessKotlinCheck FAILED
+> Task :server:spotlessKotlinGradle UP-TO-DATE
+> Task :server:spotlessKotlinGradleCheck UP-TO-DATE
+> Task :server:spotlessMisc UP-TO-DATE
+> Task :server:spotlessMiscCheck UP-TO-DATE
+
+[Incubating] Problems report is available at: file:///<worktree>/build/reports/problems/problems-report.html
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':server:spotlessJavaCheck'.
+> The following files had format violations:
+      desktop\src\main\java\dev\slimevr\desktop\platform\windows\WindowsNamedPipeBridge.java
+          @@ -23,7 +23,8 @@
+           \tprotected�Efinal�EString�EbridgeSettingsKey;
+           \tprotected�EWindowsNamedPipe�Epipe�E=�Enull;
+           \tprotected�EWindowsNamedPipe.PipeConnection�Econnection�E=�Enull;
+          -\t//�EBridge-thread�Eowned:�Echanges�Eon�Eeach�Esuccessful�Eaccept,�Eeven�Ewhen�Econnection�Eis�Ereused.
+          +\t//�EBridge-thread�Eowned:�Echanges�Eon�Eeach�Esuccessful�Eaccept,�Eeven�Ewhen
+          +\t//�Econnection�Eis�Ereused.
+           \tprivate�ETransportSessionHandle�EtransportSession�E=�Enull;
+           \tprivate�Efinal�Ebyte[]�Ebuf�E=�Enew�Ebyte[2048];
+           
+          @@ -56,7 +57,8 @@
+           \t\t\t\t\t//�EReport�Ethat�Eour�Epipe�Eis�Edisconnected�Eright�Enow
+           \t\t\t\t\treportDisconnected();
+           \t\t\t\t\tif�E((connection�E=�Epipe.tryAccept())�E!=�Enull)�E{
+          -\t\t\t\t\t\t//�EtryAccept's�ECREATED�E->�EOPEN�Etransition�Edoes�Enot�Edispatch�Emessages.
+          +\t\t\t\t\t\t//�EtryAccept's�ECREATED�E->�EOPEN�Etransition�Edoes�Enot
+          +\t\t\t\t\t\t//�Edispatch�Emessages.
+           \t\t\t\t\t\ttransportSession�E=�EopenInboundTransportSession();
+           \t\t\t\t\t\tVRServer.Companion.getInstance().queueTask(this::reconnected);
+           \t\t\t\t\t}
+  Run 'gradlew.bat spotlessApply' to fix all violations.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':server:spotlessKotlinCheck'.
+> There were 1 lint error(s), they must be fixed or suppressed.
+  desktop/src/main/java/dev/monaka/tracking/pico/desktop/PicoMotionTrackerBridgeNativeReceiver.kt:L134 ktlint(standard:function-naming) Function name should start with a lowercase letter (except factory methods) and use camel case
+  Resolve these lints or suppress with `suppressLintsFor`
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 18s
+9 actionable tasks: 3 executed, 6 up-to-date

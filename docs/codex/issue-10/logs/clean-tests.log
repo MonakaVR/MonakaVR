@@ -1,0 +1,164 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :server:android
+i: Configured for SlimeVR Android version "a07d0c7b" (6).
+w: Android KeyStore file is not valid or not found, skipping signing.
+
+The Kotlin Gradle plugin was loaded multiple times in different subprojects, which is not supported and may break the build. 
+This might happen in subprojects that apply the Kotlin plugins with the Gradle 'plugins { ... }' DSL if they specify explicit versions, even if the versions are equal.
+Please add the Kotlin plugin to the common parent project or the root project, then remove the versions in the subprojects.
+If the parent project does not need the plugin, add 'apply false' to the plugin line.
+See: https://docs.gradle.org/current/userguide/plugins.html#sec:subprojects_plugins_dsl
+The Kotlin plugin was loaded in the following projects: ':server:android', ':server:core', ':server:desktop'
+
+> Task :server:core:clean
+> Task :server:desktop:clean
+> Task :solarxr-protocol:compileJava UP-TO-DATE
+> Task :server:core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+
+> Task :server:core:verifyMonakaUpstream
+PASS exact protocol {'major': 2, 'minor': 1} artifact/manifest/lock/contracts/content tree
+
+> Task :server:core:processResources NO-SOURCE
+> Task :solarxr-protocol:processResources UP-TO-DATE
+> Task :solarxr-protocol:classes UP-TO-DATE
+> Task :solarxr-protocol:jar UP-TO-DATE
+> Task :server:core:processTestResources NO-SOURCE
+> Task :server:desktop:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :server:desktop:generateBuildConfigClasses
+> Task :server:desktop:processResources NO-SOURCE
+> Task :server:desktop:generateTestBuildConfigClasses SKIPPED
+> Task :server:desktop:processTestResources NO-SOURCE
+> Task :server:core:compileKotlin
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/OutputContinuityController.kt:215:42 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Quaternion>'.
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/PositionPredictionContract.kt:317:25 Unnecessary non-null assertion (!!) on a non-null receiver of type 'PositionPredictionProvenance'.
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt:282:54 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Quaternion'.
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt:371:39 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ObservationSampleProvenance'.
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt:382:54 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ObservationSampleProvenance'.
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt:389:51 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ObservationSampleProvenance'.
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt:391:50 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ObservationSampleProvenance'.
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt:503:24 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ObservationSampleProvenance'.
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt:504:26 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ObservationSampleProvenance'.
+w: file:///<worktree>/server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackAssignmentSet.kt:11:67 Non-public primary constructor is exposed via the generated 'copy()' method of the 'data' class.
+
+The generated 'copy()' will change its visibility in future releases.
+
+To suppress the warning do one of the following:
+- Annotate the data class with the '@ConsistentCopyVisibility' annotation.
+- Use the '-Xconsistent-data-class-copy-visibility' compiler flag.
+- Annotate the data class with the '@ExposedCopyVisibility' annotation 
+  (Discouraged, but can be used to keep binary compatibility).
+
+To learn more, see the documentation of the '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' annotations.
+
+This will become an error in language version 2.5. See https://youtrack.jetbrains.com/issue/KT-11914.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/autobone/AutoBone.kt:78:8 Condition is always 'true'.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/firmware/SerialRebootHandler.kt:34:40 The corresponding parameter in the supertype 'SerialListener' is named 'server'. This may cause problems when calling this function with named arguments.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/poseframeformat/trackerdata/TrackerFrameData.kt:18:2 Expected performance impact from inlining is insignificant. Inlining works best for functions with parameters of function types.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/poseframeformat/trackerdata/TrackerFrameData.kt:20:2 Expected performance impact from inlining is insignificant. Inlining works best for functions with parameters of function types.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/poseframeformat/trackerdata/TrackerFrameData.kt:22:2 Expected performance impact from inlining is insignificant. Inlining works best for functions with parameters of function types.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/HumanSkeleton.kt:1643:2 '@JvmOverloads' annotation has no effect for methods without default arguments.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/tracking/trackers/hid/HIDCommon.kt:335:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'BoardType'.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/tracking/trackers/hid/HIDCommon.kt:341:30 Unnecessary non-null assertion (!!) on a non-null receiver of type 'MCUType'.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/tracking/trackers/hid/HIDCommon.kt:374:29 Unnecessary non-null assertion (!!) on a non-null receiver of type 'TrackerStatus'.
+w: file:///<worktree>/server/core/src/main/java/dev/slimevr/tracking/trackers/udp/UDPDevice.kt:70:30 The corresponding parameter in the supertype 'Device' is named 'status'. This may cause problems when calling this function with named arguments.
+w: file:///<worktree>/server/core/src/main/java/io/eiren/math/FloatMath.kt:99:14 'fun clampRad(angle: Float): Float' is deprecated. use {@link #normalizeRad(float)}.
+w: file:///<worktree>/server/core/src/main/java/io/eiren/math/FloatMath.kt:104:14 'fun clampDegrees(angle: Float): Float' is deprecated. use {@link #normalizeDegrees(float)}.
+w: file:///<worktree>/server/core/src/main/java/io/eiren/util/logging/FileLogHandler.kt:38:26 The corresponding parameter in the supertype 'Comparable' is named 'other'. This may cause problems when calling this function with named arguments.
+
+> Task :server:core:compileJava
+
+> Task :server:core:classes
+�m�[�g:<worktree>\server\core\src\main\java\dev\slimevr\config\CurrentVRConfigConverter.java�͐�������Ȃ�API���g�p�܂��̓I�[�o�[���C�h���Ă��܂��B
+�m�[�g:�ڍׂ́A-Xlint:deprecation�I�v�V�������w�肵�čăR���p�C�����Ă��������B
+> Task :server:core:jar
+
+> Task :server:desktop:compileKotlin
+w: file:///<worktree>/server/desktop/src/main/java/dev/monaka/tracking/desktop/MonakaServerIntegration.kt:287:27 Unnecessary non-null assertion (!!) on a non-null receiver of type 'MonakaServerIntegration'.
+w: file:///<worktree>/server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdProviderPoseEvidence.kt:84:11 Unnecessary safe call on a non-null receiver of type 'RawHmdProviderPoseEvidence'.
+w: file:///<worktree>/server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdProviderPoseEvidence.kt:85:11 Unnecessary safe call on a non-null receiver of type 'RawHmdProviderPoseEvidence'.
+w: file:///<worktree>/server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdProviderPoseEvidence.kt:102:58 Unnecessary safe call on a non-null receiver of type 'RawHmdProviderPoseEvidence'.
+w: file:///<worktree>/server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdProviderPoseEvidence.kt:119:11 Unnecessary safe call on a non-null receiver of type 'RawHmdAppliedMapping'.
+w: file:///<worktree>/server/desktop/src/main/java/dev/slimevr/desktop/Main.kt:40:8 'class HelpFormatter : Any' is deprecated. Deprecated in Java.
+w: file:///<worktree>/server/desktop/src/main/java/dev/slimevr/desktop/Main.kt:68:18 'constructor(): HelpFormatter' is deprecated. Deprecated in Java.
+w: file:///<worktree>/server/desktop/src/main/java/dev/slimevr/desktop/Main.kt:239:4 Cannot access 'HotkeyListener' which is a supertype of 'Keybinding'. This may be forbidden soon. Check the module classpath for missing or conflicting dependencies.
+w: file:///<worktree>/server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt:350:90 Unnecessary safe call on a non-null receiver of type 'TransportSessionHandle'.
+w: file:///<worktree>/server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt:410:38 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Tracker'.
+w: file:///<worktree>/server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt:413:41 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Tracker'.
+w: file:///<worktree>/server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt:415:35 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Tracker'.
+�m�[�g:<worktree>\server\desktop\src\main\java\dev\slimevr\desktop\platform\windows\WindowsNamedPipeRpcBridge.java�̑���́A���`�F�b�N�܂��͈��S�ł͂���܂���B
+�m�[�g:�ڍׂ́A-Xlint:unchecked�I�v�V�������w�肵�čăR���p�C�����Ă��������B
+
+> Task :server:desktop:compileJava
+
+> Task :server:desktop:classes
+> Task :server:desktop:jar
+
+> Task :server:desktop:compileTestKotlin
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:140:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:147:81 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:152:58 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:157:81 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:166:50 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:167:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:172:48 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:173:52 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:178:60 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:179:59 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:185:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:194:55 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:195:54 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:196:52 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:198:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:199:62 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:200:63 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:216:62 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:222:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+w: file:///<worktree>/server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt:223:62 Unnecessary non-null assertion (!!) on a non-null receiver of type 'HipRotationCorrection'.
+
+> Task :server:desktop:compileTestJava NO-SOURCE
+
+> Task :server:core:compileTestKotlin
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/CorePocHilTests.kt:633:88 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ObservationSampleProvenance'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/DirectConstraintOutputTests.kt:102:32 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Quaternion>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/HipRotationCorrectionTests.kt:137:42 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Quaternion>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/HipRotationCorrectionTests.kt:142:38 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Quaternion>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/HipRotationCorrectionTests.kt:162:43 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Quaternion>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/HipRotationCorrectionTests.kt:319:41 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Quaternion>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/HybridFoundationTests.kt:200:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/HybridFoundationTests.kt:208:33 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Quaternion>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/MonakaRuntimeTests.kt:65:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/MtpRotationOnlyDownstreamTests.kt:89:31 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Quaternion>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt:86:29 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt:93:75 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt:96:36 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt:99:30 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt:146:30 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt:149:32 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt:192:38 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt:236:27 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///<worktree>/server/core/src/test/java/dev/slimevr/unit/PositionalIKEffectiveTargetDiagnosticsTests.kt:104:44 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Tracker'.
+w: file:///<worktree>/server/core/src/test/java/dev/slimevr/unit/PositionalIKEffectiveTargetDiagnosticsTests.kt:110:39 Unnecessary non-null assertion (!!) on a non-null receiver of type 'Tracker'.
+
+> Task :server:desktop:shadowJar
+> Task :server:core:compileTestJava NO-SOURCE
+> Task :server:core:testClasses UP-TO-DATE
+> Task :server:core:test
+> Task :server:desktop:testClasses UP-TO-DATE
+> Task :server:desktop:test
+
+> Task :server:desktop:mtpProcessE2E
+RESULT=PASS mtp-process-e2e stopped_at=complete evidence=<worktree>\server\desktop\build\mtp-process-e2e\78479111-52cc-4047-b280-0debbae463d2
+w: Detected multiple Kotlin daemon sessions at 
+
+[Incubating] Problems report is available at: file:///<worktree>/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 1m 20s
+19 actionable tasks: 16 executed, 3 up-to-date

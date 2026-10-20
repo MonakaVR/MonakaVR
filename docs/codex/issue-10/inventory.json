@@ -1,0 +1,4032 @@
+{
+  "base": "a07d0c7b3c69edc61dfee5f0cae1e4756ea02589",
+  "hash_convention": "Git-normalized LF bytes; baseline_sha256 retains Windows checkout bytes",
+  "baseline_formatting_files": 78,
+  "baseline_manual_files": 69,
+  "files": [
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/AssignedImuSampleFreshness.kt",
+      "baseline_sha256": "4b4f917d54a91172980174415ec5394823eddf236b2cfb77638c6265aa3921c9",
+      "baseline_git_blob": "2be9461def00535858e8fe777771c9141ef518ed",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "381c1f3dc5db43f834ea30a875701168564db73c67946f5f279612833cff7ed2",
+      "final_git_sha256": "d82f85a92d65595b0984aa7c5fdf72c150d302180a819d3100db700096185be1",
+      "baseline_git_bytes": 2443,
+      "final_git_bytes": 2524,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "=",
+        "return",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/BackgroundIkPose.kt",
+      "baseline_sha256": "6ccd7e06239176f77f5572037b40182578aebd491fd5326704832cd240bdfa33",
+      "baseline_git_blob": "13dfa40bb1a00aa8067905d4387632aa4797ec9f",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "6846dad2c4e3afeabcc0c4800aae3bc9f58025da63e05627f2259953f3a9717a",
+      "final_git_sha256": "b9a9be365f23bad69ca7b18c92f05a45caa429d3c24da26b26ac7f0e5e159aa8",
+      "baseline_git_bytes": 3061,
+      "final_git_bytes": 3124,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/CommonWorldAuthority.kt",
+      "baseline_sha256": "bdf989a6ba6c1400e5db83ce35f7c1a35eb58479eea72f8b2c9de92b1081d49d",
+      "baseline_git_blob": "d6e99d20dfb7c890fc83ec695d896775faed1c6a",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "40352a2776808950dabee8f3869820480d8517846dd60f9cfaae3b1cc9aff28c",
+      "final_git_sha256": "6aa4c35fae793b4cc251be846a25c9606ea6aefe15bc77a828d1e9db0f84b441",
+      "baseline_git_bytes": 11807,
+      "final_git_bytes": 11982,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ConstraintIkWriteback.kt",
+      "baseline_sha256": "c469ef8d02df001c8f9b6355f6c276f730a1b747119c595ab190100bcaf398aa",
+      "baseline_git_blob": "9b7dde10ecc041c7c9f56d2d8d2574fbebd3ac83",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "7cd0b1f87e5345c527cf4b6d09ce4022ed5b600472c5075b0208a49fff62a896",
+      "final_git_sha256": "8bf086075f373ffec771df3e58228a7f2881f33794a931032d6c6fb1f8b8c0ae",
+      "baseline_git_bytes": 6714,
+      "final_git_bytes": 6759,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ConstraintPipeline.kt",
+      "baseline_sha256": "59bbfca738db5548da12fa266a9a37e9d94d63bf01b2ac32de52c7dfdee149cc",
+      "baseline_git_blob": "bb0c1407f419a4c1365a455d36323453448302e1",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "004be69ff5512c75e6999a3b894340ffc87bfa78f02e51f0828e7a3f031b0a41",
+      "final_git_sha256": "7634baf278317e5ef39c7f6882e6dafe622ebc2d533bc612d16296fb64dc9bb1",
+      "baseline_git_bytes": 4367,
+      "final_git_bytes": 4353,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ConstraintResolver.kt",
+      "baseline_sha256": "d6b816b27de2811378fd97c89fea8d67f83576bb990059ab9f42d69ffeacfe06",
+      "baseline_git_blob": "2fafbc14ac601c49ef0a03a81f49c189a20523ef",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "1f1a5f4c9842ed6814508a61b5e5134140ad5ba0d561dac6f087f20c69363925",
+      "final_git_sha256": "4b4fd4fe43d5f33b7993847f60952f6d39300264475799bf798d3082fd3aaf60",
+      "baseline_git_bytes": 2642,
+      "final_git_bytes": 2675,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "=",
+        "return",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/DirectConstraintOutput.kt",
+      "baseline_sha256": "4d975ffd243e2d272a8d99384829feee2e0794c58659aa9517e21591c06931c4",
+      "baseline_git_blob": "c3e19aa6f85b9ac9bfd61ef1e9916e50401f8479",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "014115b3f7e871a678e002f0734d49c1d7facd02a55ab17df2f9e9000e92efbe",
+      "final_git_sha256": "a87d21019be12c00ba23902f9751fe8bfc2fb09559685e12a7d7b6fb7aa19923",
+      "baseline_git_bytes": 2138,
+      "final_git_bytes": 2141,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/FeedbackExclusion.kt",
+      "baseline_sha256": "19a936c2559608df9ad017ec7b07952716da597617a902b8e667012190e346f2",
+      "baseline_git_blob": "ec85fd9f87e59103fdc206c6e0c921a4a0d50758",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "1c8a2601d005096efeba3074cf29b1034a8605cc70fc275de6c899ae50654f9d",
+      "final_git_sha256": "9741906c52faef0b931682282876c2d3feee906276af593fca6e3b88c917d2c0",
+      "baseline_git_bytes": 460,
+      "final_git_bytes": 464,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/HipBodyModelSnapshot.kt",
+      "baseline_sha256": "0cea630f788f1d02e5fff7a595307f821d4c81733213c71cae726684064cfb96",
+      "baseline_git_blob": "b816ea70fb486c7c4b47066bdf4bbd6177c0f15c",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "9fe2f903b93670719e0ac305f6db4e2e42f923423400d8da2d663dfefb2c1ac0",
+      "final_git_sha256": "fbc83ec104f5bcf84bb0c3ffea4e07fff050bf721c04071bf3cbd3c878e4e530",
+      "baseline_git_bytes": 5964,
+      "final_git_bytes": 6055,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/HipRotationCorrection.kt",
+      "baseline_sha256": "9876e111eb41d6ebeca5cacfc04948a7ddfda56adb059f205d42a8e822691150",
+      "baseline_git_blob": "779482042673ab278835989e3019a0ec154b82bd",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "f37d4ae8e481f59479a3a99dd5f2018573e4b8ad01e5fc35d0607b78451da9ad",
+      "final_git_sha256": "f82b2ec4bb481b6740d2d6b087c2c050a333f41b842b788214d5a559715168a3",
+      "baseline_git_bytes": 13092,
+      "final_git_bytes": 13459,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/HybridTrackingDiagnostics.kt",
+      "baseline_sha256": "e0bb1b8353e1b85632e921e2b6a1e27b4e23f079ed51187c05fcde49b72495b6",
+      "baseline_git_blob": "bc8d55e3a63d04961363473f4265b862608cafd6",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "6823865eef9bf405b2ebfd9db56b2246b8755f2a65a66bf9024554ce50ffdb5b",
+      "final_git_sha256": "2c07a122bbb5dbd739d7473ea56fab93dfb9553b6c2ff3ce2d15a372ffbf1f2b",
+      "baseline_git_bytes": 3600,
+      "final_git_bytes": 3607,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MainDecoupledHipPredictor.kt",
+      "baseline_sha256": "29945699d6a6df025052eb6219b93e1da03c4d3096b72dbac8e3f6b73f5a3a02",
+      "baseline_git_blob": "03f325639e5d31b688d14ee9b56c63353284f19b",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "45cc57e05e1d918cbedd361901a4c0540c29cf04b90a627d9873971df8fc494c",
+      "final_git_sha256": "c0d1f440b3d29a1b437eedc8be8814be935bc17dd2a31a4c81d660c66ee0c185",
+      "baseline_git_bytes": 4207,
+      "final_git_bytes": 4250,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MainTrackerMountCalibration.kt",
+      "baseline_sha256": "fe838b5f553e93e408e68d148a7806c14e8ece9f8c3e7101e59e807e30a64cbe",
+      "baseline_git_blob": "d4e9066e700dd521ce96712f002d22201cb1bd0d",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "0fbb122d113ef7e1f5f42960b5fa37af41ca24b60ac5059402c514fcb789d1e3",
+      "final_git_sha256": "a61e427d8c861b1eb7a083623521e8fffe347cecfa519e82ceac8ab2fa9ba2ff",
+      "baseline_git_bytes": 7446,
+      "final_git_bytes": 7567,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaConfiguration.kt",
+      "baseline_sha256": "0bbb6658520392a238faca516551e4b545fa4384c148b482a364ec0e662f9bc0",
+      "baseline_git_blob": "bd333de2201090bf7902e43587d0bc0751a99781",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "193bcb5f4a8b02ca3043e1251115c607d30026d63ca98608e6170413039a0708",
+      "final_git_sha256": "95e1f95f1e51c4451fa177f48c1b48095c0f857656d42a25d84a7cc29ef9695a",
+      "baseline_git_bytes": 14880,
+      "final_git_bytes": 15416,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaInputConfigurationApi.kt",
+      "baseline_sha256": "a7d6d08b8af3ee45983d679ae35a2caa9d3b5c86ddabaa98c1f54a55906be0af",
+      "baseline_git_blob": "8dde3bb6c160fccfd549c44ac7b06e18a7c2d713",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "676c043a7e6ec02d6fe134099a1ca0f7d465299dadbd05a74ea9ef994d633649",
+      "final_git_sha256": "b6ada9387b592ab2e463de9f09db7030bbe707cd58b59b1035cc11fa1c0428f4",
+      "baseline_git_bytes": 11097,
+      "final_git_bytes": 11429,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaInputRpcDispatcher.kt",
+      "baseline_sha256": "bd26d3ec5ce0a5fc50d74f2c04797ffcc76bf6f864a26a6218a65d9e486c4226",
+      "baseline_git_blob": "92199636e98db72017b1e2acdc525157ddaa40f1",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "77f29f1c77902323ac83c648263e57b48babdcf24d907f852f6c1d21b0821832",
+      "final_git_sha256": "913751ac6e31e235dfbc91983abf8a1b83e2bba08c5e47db43f87b3d29e60274",
+      "baseline_git_bytes": 1574,
+      "final_git_bytes": 1624,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaRuntime.kt",
+      "baseline_sha256": "8975f47b82f5251355c46cefaa91288b082ac1b4172916a667175911ae2d2f8a",
+      "baseline_git_blob": "9dc893546af680c5d3dc59a02e666147834c9c7f",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "8bece05fdd22510168737e3099ee46464772589fa7523600e09b9e20cd556e6b",
+      "final_git_sha256": "35875ff430d167e88532cc51cea6d6079f500f2adb4ec37c142f3580584ae934",
+      "baseline_git_bytes": 5775,
+      "final_git_bytes": 5949,
+      "imports_removed": [
+        "dev.monaka.tracking.mtp.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.mtp.MtpInbox",
+        "dev.monaka.tracking.mtp.MtpObservationBackend"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaSolverComposition.kt",
+      "baseline_sha256": "8fb26abcb35c0b88b39a16f263c9796c43195c163f9d8624d9225eef36d22ac9",
+      "baseline_git_blob": "efbf62bd75ec887bddab89446ac6d0e64442dba5",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "6d13ea9cafe33a420f938ad3bf0398f48e55d7a5a914f7152e1ad329a5426cd5",
+      "final_git_sha256": "a36d1f9ba2ae4f1d353a587c9120b8162b828bd9f11de608bb9b27055c6ee89c",
+      "baseline_git_bytes": 6870,
+      "final_git_bytes": 6995,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaSourceTickSnapshot.kt",
+      "baseline_sha256": "76310d907ba2fa6d94ba477910dabd500d78620d0f66aeb781253842d116c7f7",
+      "baseline_git_blob": "c772040fef58fff691b535280b08fc72446d8c7f",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "fbc1d5a2ac5b21af67745ade602e6e8ed710c277b77fecd4d892ea703f9952f3",
+      "final_git_sha256": "c4e892555978ab6332ee301e21b150e4040551110338228eb06dc8f4e53c37cb",
+      "baseline_git_bytes": 857,
+      "final_git_bytes": 856,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ObservationBackendRunner.kt",
+      "baseline_sha256": "31151477cb5ba56055e4ae1df2616db0114448274e44b6ee67c24c2075dfc57c",
+      "baseline_git_blob": "170e9bc1ad6aab0698c38818346462181c5991fb",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "fb57a5f73e97ede5fde8ccb8faaa9a037b6b234fdf35b166219daecb42db50af",
+      "final_git_sha256": "dfdac0a1ca9d2c85c8e9d2e73c8f98b0699b28dc01b14ec11ae3884a3635162d",
+      "baseline_git_bytes": 5220,
+      "final_git_bytes": 5233,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ObservationSourceProfileRegistry.kt",
+      "baseline_sha256": "6e88a40e6c6e8882c4781530ff4753049d5c0c23c7532a53bd2a841c0ea50c64",
+      "baseline_git_blob": "5b8a1e326a46a723e1d052cea97951fd142e2452",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "7f026d7ebc0c6f7ea5951e40258be4f38726f6189223bab1a731292522935e4e",
+      "final_git_sha256": "8d8ea6dc2e8db00e49447291deeca35520fabc0097d4e30a0eeb4af1f300675f",
+      "baseline_git_bytes": 1506,
+      "final_git_bytes": 1501,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ObservationStore.kt",
+      "baseline_sha256": "5d4f43a131ab8f0ff60b8df53eea7b074451b7499a87a245b020ec56cfed87cf",
+      "baseline_git_blob": "3bef2fb4b797eaa5eb34a8bd07023023f0617c56",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "7aed048a471483646ef33f4455a0b145684c269d99528c3f9f6e829ae75de0f3",
+      "final_git_sha256": "7d51530c8e6c4203a1ab7a7ed0583669bfe34d6fea3ccc1c5d85e5882dd65e94",
+      "baseline_git_bytes": 1451,
+      "final_git_bytes": 1449,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/OutputContinuityController.kt",
+      "baseline_sha256": "1dff9fdc04a1aff8e5da5a201622262fd57719f43dedaacb2bc2befed135f4e4",
+      "baseline_git_blob": "cc5155765966af01c3a8b2f331a80b7deda07388",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "2c02897e354d10ecf8aa1713c59a975df82c46f7fc5114166b7fd38e03c52ef8",
+      "final_git_sha256": "5a2dceef497fe3bb91498eec7c31175e873aee91393dde68a01b7cac8033e903",
+      "baseline_git_bytes": 11493,
+      "final_git_bytes": 11872,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionApplication.kt",
+      "baseline_sha256": "92d7000f86dd60f85b7094a9dce3e5dfcfbf30cbba5ee48cd9c5c1e02b4c931a",
+      "baseline_git_blob": "3e5f03ece13a91132c5ae73286c17d5b600a4043",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "927ef4e605a8b4cefec1f30643decf5820c38583b23efd14873b4474a3c851c8",
+      "final_git_sha256": "4431e315c54c7920d962fdfb37de2c442421902d28524259dcf216c3caf95ead",
+      "baseline_git_bytes": 8542,
+      "final_git_bytes": 8689,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionConfig.kt",
+      "baseline_sha256": "632abc05174e180ae798ff7a355e3f803cb8ed3d13200b0b8a63c405853af7aa",
+      "baseline_git_blob": "afb228ec4dbd4368f7c6c3a7f9a03176c975ea3d",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "48c4094ee80d76ce9e028101092246b89a2dbca609bec2d2e49f741608abc3a8",
+      "final_git_sha256": "ff89be14b6416046dda809ca7a6902d56c66ca01d428b59561293a4be8069477",
+      "baseline_git_bytes": 7117,
+      "final_git_bytes": 6794,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionConfigJson.kt",
+      "baseline_sha256": "2e5799639a78b9efe2d578722aeb17b3e71e20b29e5a5b73ac6dc7cc00a9ab8f",
+      "baseline_git_blob": "fefa67db870f786372f66f04fe66fa01c24c4fb6",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "b12fe8d9e2b6898210b54b68a475947ad35240bde978977cd1ba157c68466e7d",
+      "final_git_sha256": "3f89cac05466430c522e12c1523387b50cb33c626ad22d80e734dd604af96d58",
+      "baseline_git_bytes": 10045,
+      "final_git_bytes": 9170,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionLearningLaw.kt",
+      "baseline_sha256": "76577353fee4aeb2963e1a48ff3f42cae77695425319d144a17bfa4bbc970048",
+      "baseline_git_blob": "ebe015b770f8550cb4516f42f52b85d5644b8b40",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "05d50dbfe816887e8e5b4a5a4ea85798997deffbea7447b0a2a07af438ff219d",
+      "final_git_sha256": "76f054122da4988aa20633b17ef152bb50b7fd30e0368bde2da14a5627e27563",
+      "baseline_git_bytes": 17083,
+      "final_git_bytes": 17252,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionNonHmdProductionAdapter.kt",
+      "baseline_sha256": "4532a497b05aab840c0079acda8fad16a77e4a00775f4581154dfeb10c3ca4e6",
+      "baseline_git_blob": "53cbf43663af984c4e231f3c91edd98a83b2ebf5",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "f0d4d2ee4b33745a75e193b99f281bc147e657a39b0987691b733a7bea581135",
+      "final_git_sha256": "5df8d333a25116e78685e519271c85131023261a7446820d31e710a239521eb4",
+      "baseline_git_bytes": 9367,
+      "final_git_bytes": 9561,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionRuntimeOrchestrator.kt",
+      "baseline_sha256": "f644fbf6391b171242b37a26cb5fdb30a3383bb173da1336dda7461d543522e5",
+      "baseline_git_blob": "2b9dbf3ff82392074ce0ccb42b77e05e863465ec",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "8f24f5693532ed3199d088683dc32f714659ad1d2149d5450a061bface7df433",
+      "final_git_sha256": "b34983a9c750ef9737ef3d8e7d9642b864008ce683e6be1c49f844c0f5956e55",
+      "baseline_git_bytes": 10738,
+      "final_git_bytes": 11015,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionSolverContinuity.kt",
+      "baseline_sha256": "8db9c5eecab6595a69af45c21474ae9e7a1c8da0f79c77867b8adfae17ac1887",
+      "baseline_git_blob": "984e836776c538b8c7c34c8381f563c86974e47d",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "3dfb800f85dc987d5f0107f3cd42c128ee64fdb90d8a4d4dfca616df16d2763d",
+      "final_git_sha256": "d7f0b6c9de82dcb95e30c6d0ab7f7b07b9d80a57e4d18b40ceb7f122a513acf9",
+      "baseline_git_bytes": 12237,
+      "final_git_bytes": 12664,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionErrorMeasurement.kt",
+      "baseline_sha256": "39fbf40bef2610f7c647c35ad1d4c46669c7ae98e087960cab9939625aba237a",
+      "baseline_git_blob": "c5806e48e90c28cd210aaeb8873e496718c06012",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "c0afa7351584bd44ae5d9e89b5dbc206e5daa48ee21c0b6a200f78e6a73ce12e",
+      "final_git_sha256": "86f6df7307c7985b5bfd6da7e165d4abeaaa98cc590097e2ca848a44adaa0f1e",
+      "baseline_git_bytes": 4715,
+      "final_git_bytes": 4746,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionPredictionContract.kt",
+      "baseline_sha256": "9dee7e053802201bbabf3aebb862add70f5939487b4fc5f1abe7042c11b03f68",
+      "baseline_git_blob": "28f468a480dbc7753134a79a887a97b8ccabda26",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "fb122408afbb3c741baaeb29eb5b9bea35c988b9190b3dd71e0db2c9e1b02ed6",
+      "final_git_sha256": "bcd4faaa2a56d3cf8086c3cb038e4d3ecdd1edad6995746b19a86d963bcbe9a5",
+      "baseline_git_bytes": 13367,
+      "final_git_bytes": 13547,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionTemporalPairing.kt",
+      "baseline_sha256": "97b3657730df2f219a3ae3304d9dea9efe153a0a7b5ce4b2daf1bf0da6538c49",
+      "baseline_git_blob": "0a5dff1d05a9d4ea7b0be12601b02256cb5d0caa",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "3c1da1339f5577f8fe8fe36ef1e98bc3004aec25d628fde52f16fd64291df915",
+      "final_git_sha256": "25a0492c648865487b27f5ce57bccbc6481cacce2adad1bde2fc5967f7f403c0",
+      "baseline_git_bytes": 6607,
+      "final_git_bytes": 6687,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PredictorFixedCalibration.kt",
+      "baseline_sha256": "63e56626eb936db94ed6b23333321fb5eadb90c5cfd4a74e7b741602ba16ee26",
+      "baseline_git_blob": "bb2c86f0d7210ec5e2ca7972f9c1037259d5fb96",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "e2432df56517506b15cdaf4db4945778fae48984e08c4ede05b4257cedb49418",
+      "final_git_sha256": "757dc380df7b37d5fa49a19810fbe98cb3dec9285c925f1eb6da651a5e857a9e",
+      "baseline_git_bytes": 4485,
+      "final_git_bytes": 4505,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ResolvedTrackingPose.kt",
+      "baseline_sha256": "741971258ec78cbed4ba1c841d50f5557d7abef7a3f767cae8452a1c6b1b922e",
+      "baseline_git_blob": "b85fc62850cd906bbdfe18859faeb4c02714c481",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "07b387a4944c1c4255d1600b85f161702a43965f589fdea38c094d6ed36887a1",
+      "final_git_sha256": "a5a022dacbf14f0d10525ad6d03bd53ff53a9d8fa6b04fbed01283b16e91fa34",
+      "baseline_git_bytes": 2692,
+      "final_git_bytes": 2692,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SlimeIndependentImuOrientationCapture.kt",
+      "baseline_sha256": "a6d64b70bab0af69b67eb4331a64a337405416575fbd360b97062c6e87a66a99",
+      "baseline_git_blob": "ad0fce8eb69660a1f8f263a69dd60708a2ef6c0b",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "92f9ac7ce6648317d143a35c2541f636983d9edb66c13dec710d638607042a85",
+      "final_git_sha256": "ba3b16f77c75a2a8cf8c830b664b59a1885d343563ee056aea564eea8a3b06db",
+      "baseline_git_bytes": 3951,
+      "final_git_bytes": 4020,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SlimeRawImuProductionBoundary.kt",
+      "baseline_sha256": "bc5919076abdc85ebc332a94988466c729f60a1f1621ff615338b3e39f15e6ed",
+      "baseline_git_blob": "fe05366435a62326af4f2f90c508fe4a1a6dcbb0",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "576b467a58218a6b766a9ea2263714e5c2691cd6adb323f188752de4d5860fb0",
+      "final_git_sha256": "74a110daa2f031499e0836ae0fb6783e5742be1a2988a80d3ec8dfb53f0c706f",
+      "baseline_git_bytes": 5546,
+      "final_git_bytes": 5699,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SlimeTrackerObservationBackend.kt",
+      "baseline_sha256": "6aa5ec42883012941e46834140c5131fbfa760d29f17d92e7525b28816602f41",
+      "baseline_git_blob": "6a55605bc9a2eda8e5eeabcce6f3f668972c8168",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "fb54b98756c0354b97e667e70fd33d41ef47ec7a641c073f31edd18323fd8c86",
+      "final_git_sha256": "0a33a8ccc18d6defec1b601490e1813227fd9c999b331bb6f6c6206351845419",
+      "baseline_git_bytes": 1880,
+      "final_git_bytes": 1871,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SlimeTrackerPoseObservationAdapter.kt",
+      "baseline_sha256": "0fad72ed122c1fc91bb38652a8b17853dbecc68090ff89dfc275417c67e7dd74",
+      "baseline_git_blob": "119aec0758721ab27a3399c960da6203969e23c1",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "381f6c27f349c2b822130e9b08188fcefb3b6be0da851ad7214baeac19dffc98",
+      "final_git_sha256": "9bb4adec47e4de7cb7a8b237d5ff3f8614d1ce1ff80415b9a0e08f0309d5bc9c",
+      "baseline_git_bytes": 2268,
+      "final_git_bytes": 2282,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SolverEffectiveConstraint.kt",
+      "baseline_sha256": "d25ff2b3f648e5c81c4681bffc1002f7a2bb5da86fa768d66864d42f7af735b8",
+      "baseline_git_blob": "9796b4fbf0bb93b2ffdd00fb386846df98492866",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "0cea84aa5fc9d82df536cb810de678283e5e0ec4c2e92245141af78774ee08d6",
+      "final_git_sha256": "f2ba0d9dc9711a10268f62eb66bc51cb964d6508069ed349f546733cde39d57b",
+      "baseline_git_bytes": 4887,
+      "final_git_bytes": 4969,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/TrackerBodyAssignments.kt",
+      "baseline_sha256": "a18e969ee5a60922d8106d567baec40bb18783abd53b08b05836859be1531e29",
+      "baseline_git_blob": "7bfaa37062496c361b0ddea93cc15f57c679ec53",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "e93c1bf31e8ddb2769bb0f01c573fd7d62968dee40bbda89017606c734968422",
+      "final_git_sha256": "2581f073bc6cf78a52cf7ae2472787bea7921ae9c23c58d8d9aebe0bd9cf8689",
+      "baseline_git_bytes": 9069,
+      "final_git_bytes": 9016,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/TrackerInputCapabilities.kt",
+      "baseline_sha256": "9b5e22b6d35aef5b73a1958ee859566fd1cfff9eff7f64f8e41f9058a7367a0b",
+      "baseline_git_blob": "73efe1f0e69aebefdcc1fc17487f0346734d2516",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "43afe2f707f4be2c71dbb71890c5c81cb6b72d4930030019cfcf1596ca5a7067",
+      "final_git_sha256": "9cc4d45b627b9a856d2668d7a4d27f35942006971f47cf753d6ce6f39b89993c",
+      "baseline_git_bytes": 1531,
+      "final_git_bytes": 1557,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/TrustedHmdCommonWorldStream.kt",
+      "baseline_sha256": "aa3314ffb8de8de2ed2703a694d96908e6000721da13844cb129e16de201f74f",
+      "baseline_git_blob": "0c000a651eb42eb11d00c43c4a20c0ac1fe1949b",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "6d84d0f937bb7c1fab73d3e683566ddce68bfd65940fac25b86ecf08a7cebc67",
+      "final_git_sha256": "879a6d80ef622a91b4e3924f40fa72c66ee07475705962ec9cf00a8516788f07",
+      "baseline_git_bytes": 15380,
+      "final_git_bytes": 16492,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.AuthorityHeader",
+        "dev.monaka.protocol.v2.CommonMappingReference",
+        "dev.monaka.protocol.v2.CommonWorldAuthorityPublication",
+        "dev.monaka.protocol.v2.CommonWorldMappingPublication",
+        "dev.monaka.protocol.v2.CommonWorldMappingRevocation",
+        "dev.monaka.protocol.v2.CommonWorldReference",
+        "dev.monaka.protocol.v2.CommonWorldRevocation",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.HmdValidityEvidence",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.SourceSpaceAuthority",
+        "dev.monaka.protocol.v2.TrustedHmdCommonPose",
+        "dev.monaka.protocol.v2.TrustedHmdCommonUnavailable"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilMain.kt",
+      "baseline_sha256": "9ea41b22d06ab56aeba31892a55e9f672749f48d5c419511c034909ccda12313",
+      "baseline_git_blob": "7eafee6d25a9d2e8d1f4da0377aca9807259275f",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "69eab82de324549845403761843135885893228c3f1d9c17afb5b4d782e0da57",
+      "final_git_sha256": "0c0e745947aefe6f7b0d4a9426c5420c0cd9f7ecb91a3f86441f6698ce5e4c06",
+      "baseline_git_bytes": 10483,
+      "final_git_bytes": 10998,
+      "imports_removed": [
+        "dev.monaka.tracking.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.ContinuityTuning",
+        "dev.monaka.tracking.ObservationQuality",
+        "dev.monaka.tracking.ObservationSampleProvenance",
+        "dev.monaka.tracking.PoseObservation",
+        "dev.monaka.tracking.RawHmdPoseInput",
+        "dev.monaka.tracking.RawSourceIdentity",
+        "dev.monaka.tracking.RawSourceKind",
+        "dev.monaka.tracking.TrackingModality"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt",
+      "baseline_sha256": "91944be1331c512acbe7518fbbc8e5fac5db3e3404a0cf23e71b55a5b41fdb50",
+      "baseline_git_blob": "8faeb5bb032dbc6c631a99557869ce9a7731898f",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "d4c77bb92c6fb1f08ebc2262d584f66c4748f66d2b8f83ec31093c407283ef59",
+      "final_git_sha256": "4909279d58f0055eac3bb50d263f5afc5f477e31134581a4d09f93c54f5246e4",
+      "baseline_git_bytes": 24776,
+      "final_git_bytes": 27923,
+      "imports_removed": [
+        "dev.monaka.tracking.*",
+        "dev.slimevr.tracking.trackers.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.BackgroundIkAlignment",
+        "dev.monaka.tracking.BackgroundIkPoseReader",
+        "dev.monaka.tracking.ConstraintIkWriteback",
+        "dev.monaka.tracking.ConstraintPipeline",
+        "dev.monaka.tracking.ConstraintResolver",
+        "dev.monaka.tracking.ContinuityPolicy",
+        "dev.monaka.tracking.ContinuityTuning",
+        "dev.monaka.tracking.EffectiveConstraint",
+        "dev.monaka.tracking.FeedbackExclusion",
+        "dev.monaka.tracking.HipBodyModelSnapshotResult",
+        "dev.monaka.tracking.HipRotationCorrection",
+        "dev.monaka.tracking.MainDecoupledHipInput",
+        "dev.monaka.tracking.MainDecoupledHipPredictorPolicy",
+        "dev.monaka.tracking.MainHipCenterTeacherResult",
+        "dev.monaka.tracking.MainTrackerMountCalibrationSnapshot",
+        "dev.monaka.tracking.MainTrackerMountCalibrationSnapshotResult",
+        "dev.monaka.tracking.MainTrackerMountToHipCenter",
+        "dev.monaka.tracking.ObservationFreshnessPolicy",
+        "dev.monaka.tracking.ObservationSampleProvenance",
+        "dev.monaka.tracking.OutputContinuityController",
+        "dev.monaka.tracking.OutputMode",
+        "dev.monaka.tracking.PoseObservation",
+        "dev.monaka.tracking.PositionBodyReference",
+        "dev.monaka.tracking.PositionCorrectionPredictorSources",
+        "dev.monaka.tracking.PositionCorrectionReacquisitionTuning",
+        "dev.monaka.tracking.PositionCorrectionRuntimeOrchestrator",
+        "dev.monaka.tracking.PositionCorrectionRuntimeTick",
+        "dev.monaka.tracking.PositionCorrectionRuntimeTickResult",
+        "dev.monaka.tracking.PositionCorrectionTeacherTickValue",
+        "dev.monaka.tracking.PositionCorrectionTuning",
+        "dev.monaka.tracking.PositionTeacherEpoch",
+        "dev.monaka.tracking.PositionTemporalPairingPolicy",
+        "dev.monaka.tracking.PredictorFixedCalibrationSnapshot",
+        "dev.monaka.tracking.PredictorFixedCalibrationSnapshotResult",
+        "dev.monaka.tracking.PureMainDecoupledHipPredictor",
+        "dev.monaka.tracking.RawHmdPoseInput",
+        "dev.monaka.tracking.RawImuOrientationInput",
+        "dev.monaka.tracking.RawSourceIdentity",
+        "dev.monaka.tracking.RawSourceKind",
+        "dev.monaka.tracking.ResolvedComponent",
+        "dev.monaka.tracking.ResolvedTrackingPose",
+        "dev.monaka.tracking.RotationCorrectionFrames",
+        "dev.monaka.tracking.RotationCorrectionTuning",
+        "dev.monaka.tracking.TrackerBodyAssignments",
+        "dev.monaka.tracking.TrackerReference",
+        "dev.monaka.tracking.TrackingModality",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilStdioMain.kt",
+      "baseline_sha256": "34c90768603e5f3189628237479886b2ac5f367caaa0ae296e9157dc3b2c0812",
+      "baseline_git_blob": "5e85f2963860cbdafa21dfab9654fdd725ec2eba",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "eb42f7cea732e5c6560ac30a8d4d44b67073c2cc24c32a360191566ca18b9d0c",
+      "final_git_sha256": "857edd0bdd29f4c4b9ff00d487a8623c04ff11f6e4d1f4a5ad69afb0a7d27e06",
+      "baseline_git_bytes": 2489,
+      "final_git_bytes": 2517,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/hil/HilValidityGate.kt",
+      "baseline_sha256": "c7e2377176756a31769e92821d5f55d759d7bda60af41098407c4f8e77fa3ded",
+      "baseline_git_blob": "e553b5c41b791a134388332c4dc567b1a9cb0016",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "a281a6558f386f27440aeefd4820479bccde688b9361e4566eb6bba7261fb875",
+      "final_git_sha256": "6f1f4c08829794d4793acf4bfb9ab1a323bf5c6a9ce3fc66469e67f019f68d0d",
+      "baseline_git_bytes": 688,
+      "final_git_bytes": 815,
+      "imports_removed": [
+        "dev.monaka.tracking.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.ObservationQuality",
+        "dev.monaka.tracking.PoseObservation",
+        "dev.monaka.tracking.TrackingModality"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/mtp/MtpInbox.kt",
+      "baseline_sha256": "ca8c494b17be75443c54363f6f78340b076ae14c2671466edbe8febfc2316c0e",
+      "baseline_git_blob": "db8b45d5690f62187c1d46b68df4b3ff662f2f57",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "0ebefbefed7e2eeaef863110ac2a9997ed90a00fab33ecc35836a39835a666d2",
+      "final_git_sha256": "51a20b4e843cc914fd9836c6d47f7fac7dc371d363b4625ca5a377dc20f3695a",
+      "baseline_git_bytes": 2201,
+      "final_git_bytes": 2412,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.MtpTrackerState"
+      ],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/mtp/MtpObservationBackend.kt",
+      "baseline_sha256": "ec1c21829aecbe0fb583dfc57c3bf5ba15897df5fdebd7047943b2015ffb27da",
+      "baseline_git_blob": "60184ef0ecb4963a9f32ea50f04ee6fc4abb3b55",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "33357aebf6280ef2446d96bccb8ce2384f100e6f9bffaee58496c9696142cac0",
+      "final_git_sha256": "d9c44f6a8969d978db2761b98ea7ce19d60260d60663b15ee75f5d4352c73e5f",
+      "baseline_git_bytes": 10449,
+      "final_git_bytes": 11134,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.CoordinateSpace",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.MtpTrackerState",
+        "dev.monaka.tracking.AssignmentSnapshotAwareObservationBackend",
+        "dev.monaka.tracking.DeclaredTrackerCapabilities",
+        "dev.monaka.tracking.FeedbackExclusion",
+        "dev.monaka.tracking.LogicalTracker",
+        "dev.monaka.tracking.ObservationBackend",
+        "dev.monaka.tracking.ObservationStore",
+        "dev.monaka.tracking.PoseObservation",
+        "dev.monaka.tracking.TrackerBodyAssignments"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/mtp/MtpPoseAdapter.kt",
+      "baseline_sha256": "a26a512d755193042232f097197fcba2806c2c79f5f3a19dda62579a25da2cf9",
+      "baseline_git_blob": "fed9a122f2fd47e442529169c5430c9b9a704ee2",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "ad9b9e929a7c02cf91c005c09109c133df11205594fbeb063e88bc9c6c4e4da5",
+      "final_git_sha256": "9260a4fc2b503243c03623de313b3141eb611da14587a64867fb0574e2f1dc2e",
+      "baseline_git_bytes": 1852,
+      "final_git_bytes": 2093,
+      "imports_removed": [
+        "dev.monaka.tracking.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.LogicalTracker",
+        "dev.monaka.tracking.ObservationQuality",
+        "dev.monaka.tracking.ObservationSampleProvenance",
+        "dev.monaka.tracking.PoseObservation",
+        "dev.monaka.tracking.TrackingModality"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/pico/PicoMotionTrackerBridgeBodyAssignments.kt",
+      "baseline_sha256": "93f712a17c98bb0aa613ac3894f0cab2fe6e40c93300ee8dffe3835bbe1858d3",
+      "baseline_git_blob": "27afd291745714a644dd8e20a6f6b958cbfa29bd",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "9b5aa35ff38f6dd07178bfb7036c56ae7d6d7c96c735de8bebf509eb000cbd0b",
+      "final_git_sha256": "c5fd6800fffe2ed0a1aab7c1bb33760c8596925a92efd8ba488b3f5c3ce93acc",
+      "baseline_git_bytes": 3045,
+      "final_git_bytes": 3040,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackAssignmentSet.kt",
+      "baseline_sha256": "58133b9034a7872b9c18c5845dbc5933d226c0fd4d2897b16effe4183ed6d714",
+      "baseline_git_blob": "a04d095647028aed41acef0323d88861d56d1c40",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "d268e0a4604ebfdd8b2731969573a0a83756efa487d0997bb85019b3dc145bbf",
+      "final_git_sha256": "9a7849c1f409b72ed9ab614b7c15e24af64ec62be33bd5828d889b585b607ab2",
+      "baseline_git_bytes": 1545,
+      "final_git_bytes": 1532,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackCandidateValidator.kt",
+      "baseline_sha256": "25216396acd158549e4bd50e7966371affb9bdfb1582dada58b9473b15b2d890",
+      "baseline_git_blob": "75ef72760453e1db471b9551776c02c3d0ce8231",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "9bafc067c4d1f00bbbeb1a8d4cd8ddeb6977de23ac147c60016239f807c27f63",
+      "final_git_sha256": "68a02cc50d957c16cc82925d05262e3d31fd2cb80a20729800d22d255c0284c0",
+      "baseline_git_bytes": 2782,
+      "final_git_bytes": 2720,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackSelector.kt",
+      "baseline_sha256": "9223a4e003efad72b9683976a46e6a8bf13b8c0e4c298d97c05fd65ea2d1e5aa",
+      "baseline_git_blob": "9b9903901680bef99ac3447ae8421b90aca0157c",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "dde3f679f07e0aa2bb649f182058bc11c7e986f801fbcd390dfd2a1d27809b07",
+      "final_git_sha256": "2ad227f519fa65e95fe517328f9431a59a60b2662a550e9ed42d56562658c53f",
+      "baseline_git_bytes": 1897,
+      "final_git_bytes": 1891,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/revision/PersistentTrackerIdentity.kt",
+      "baseline_sha256": "40df3923adbab09c4e22d75426b573437ec5cd6ef8b0f3645cd1e1fde877d309",
+      "baseline_git_blob": "cae42c2b0df688ae90b1e22309ec367e718663fc",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "99da511d89a4e31d553b7d773cff2678605bd8cb05cde5faaca5b35b6830c2c5",
+      "final_git_sha256": "8ac8e1ab3e0a506d8689847ece74c1d6f023d9ff1cf6257eddfbc3493cd942b3",
+      "baseline_git_bytes": 1430,
+      "final_git_bytes": 1428,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/VRServer.kt",
+      "baseline_sha256": "09812481bdac7f845baec8cae15678aff1c056b5942938cb8da94c88eb390126",
+      "baseline_git_blob": "42b761779ff4494b7c932f686cc31959ca45d3db",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "e09dfa31982ff57d9d498cdb53e755ae9402a52f6867a17bfeeff918f4405464",
+      "final_git_sha256": "dd6720fb3146f01a49d69e08f32875c6cd1783e1aafca727110c36c5ee9db90b",
+      "baseline_git_bytes": 15280,
+      "final_git_bytes": 15281,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/processor/HumanPoseManager.kt",
+      "baseline_sha256": "e7f5f8f3c5e57d2ecc5d1961c4ec4a3382760b4f02f5b8095970aff291a92662",
+      "baseline_git_blob": "2a6586f6da00c322169369f159cca88d8b007171",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "061eff214c8ae6f111113891277009b70207ed28dc8d5521a6826db79a5ec4d2",
+      "final_git_sha256": "28372f58b55821b4f27943402fe8f7ce4edf7abb247ee524416d6aa1a081bd51",
+      "baseline_git_bytes": 18862,
+      "final_git_bytes": 18860,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/HumanSkeleton.kt",
+      "baseline_sha256": "bbcbf10d283571081f5d51cefc555f736cc8ffd9185d2c64da31b9956b4e3839",
+      "baseline_git_blob": "a86bf29a7efc5082fa5d2f66e836c1ab92ec273e",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "589ff3bf6ea347e5f8122fcbde5f2d7a1b3dd0d71bbcef55739b2f9050ad1f59",
+      "final_git_sha256": "f13789c3de0a44c8c2d61ebdc7a495bcb5b88bd860f406591789246fb6d57646",
+      "baseline_git_bytes": 67149,
+      "final_git_bytes": 67188,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/IKConstraint.kt",
+      "baseline_sha256": "28dd73d4a40cb1a023e2ad51533c4fb5f8fd4c0af456d8d0a0c9bfccc1756a7e",
+      "baseline_git_blob": "5f5d851870458a2106909e91a8270c2c9fb596bc",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "6c43bae80d0d5e070e92290f380aec3d830b7e03194dee09fb75054e72607937",
+      "final_git_sha256": "3d911eec2e4625d729098612e71703af86bbcb3b831c22b34fb0e5199abb74e8",
+      "baseline_git_bytes": 984,
+      "final_git_bytes": 988,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/IKSolver.kt",
+      "baseline_sha256": "93a8979f35f79b632ba9786a4ce8c884ee66504c5ceca1695b1cf9acaf61b6b9",
+      "baseline_git_blob": "24c9ce8a505e665e274ea7bcc74dcab4ebbba357",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "ae12ffdc36cc3afb66b435d007f44249f7732117c21f1ac485c4ff12e19b545f",
+      "final_git_sha256": "d86d91ed06eb712538c3a38a12dc85bb1f491727073ae79c2c2f57e1f31c97ed",
+      "baseline_git_bytes": 7914,
+      "final_git_bytes": 7926,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/trackers/Tracker.kt",
+      "baseline_sha256": "525680162342300a1f85b400c00cb4c7ae7c98fed8647809d009f973a1e59f8b",
+      "baseline_git_blob": "ac806a0e5ccd61ad13fca52d87c3bfdfe0437775",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "f15fce4e96a7aef9a3651846bfcd89e1bd5fad3a2a458936583d30a591e06752",
+      "final_git_sha256": "353ad555cfd2361cc56d2762963984c0b96ec001a03b4f82d48ff7e06a90874e",
+      "baseline_git_bytes": 17224,
+      "final_git_bytes": 17232,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/trackers/TrackerResetsHandler.kt",
+      "baseline_sha256": "02a4ac596d63d0579e92c0094a95b9678f06616e16ae72c3b3c1186ad46e42a9",
+      "baseline_git_blob": "2bb1afb2c906582941e92518fcac5580c0eeef2a",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "fe1dc0ac58bea53c1d4d585a46d9fedd93f968b28135b030d59df71b90c19a9d",
+      "final_git_sha256": "7993272f15a2195cf9b0417133be86a1531311f63ccff60cf8f3fa0db3fe221a",
+      "baseline_git_bytes": 22201,
+      "final_git_bytes": 22211,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/websocketapi/WebSocketVRBridge.kt",
+      "baseline_sha256": "f29ad919284b30218949d4a45ab9bfcb0ec87d602db9f6c6448ca02c218510f3",
+      "baseline_git_blob": "f062f8270b7f73cd287aa98f6b709b0702f5622f",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "75487a9b244f0f7117bcf083bad868a5add5b677b1563408469d8ffb3c246d4d",
+      "final_git_sha256": "76270ef148518f014d402fffee9f6d4c58f3efcfc3d76bfc5ab67daac376d6e7",
+      "baseline_git_bytes": 7000,
+      "final_git_bytes": 7033,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ArchitectureRevisionTests.kt",
+      "baseline_sha256": "61301c1ee4dcfa3808a09c547ab9902b906cb35fc85291d7afcfd3bb00517042",
+      "baseline_git_blob": "2f0dab87a3a3f567556c9a2985ac67995db07f92",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "d8645f61df191b1a09cda65621adbc7a0fed59c8f330784d576b0aa184e0fc69",
+      "final_git_sha256": "0991f8913cbc738192c497f6a8a47dcf576ac1555f5ac18e12bbff1e1779ca4c",
+      "baseline_git_bytes": 6567,
+      "final_git_bytes": 7186,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.Validity",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/AssignedImuSampleFreshnessTests.kt",
+      "baseline_sha256": "abbe4cb3636153013582b4e87b552e2453c4efe3397c49ac00949401962f6a57",
+      "baseline_git_blob": "c14bfe2bef4b5ba002a560d2ea74db4a468d22d7",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "66390ab9d737cfc2af83d4525d1e1dc535d47b10942ab9819f6c38e8260cf6af",
+      "final_git_sha256": "9caf3f71481dc3d144bed8eece7ef387d5fbe5d7923e6271a0c4536b1f221016",
+      "baseline_git_bytes": 3443,
+      "final_git_bytes": 3496,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertNull"
+      ],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/BodyModelPredictorHandoffTests.kt",
+      "baseline_sha256": "f595b0e60e1fccde8a844d2c08fb9db406209d6ce83da16dec6e88fefc312de5",
+      "baseline_git_blob": "905dab4cd4ff92057b4f14dcb1b2362e54e2739c",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "d0b346e176b6883802f789ff99526a7fef2ec00304c67cc67642b41e476031b7",
+      "final_git_sha256": "339b91152cda7e63f0a9863c6e202f13b66b92ba4d8c3dec35deb3d8c3cede96",
+      "baseline_git_bytes": 11966,
+      "final_git_bytes": 12327,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotSame",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/CalibratedMainTeacherTemporalPairingTests.kt",
+      "baseline_sha256": "a212024483b1052855cd48c61c141631beaee34a54373db31f151df22f26cc9d",
+      "baseline_git_blob": "7c64a298aeda05bced52ea7fb8a809b2038ba077",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "ae765f6ed7786bc5d00ada1ad112712a158b1a9804a9bbd5469b96c79b4734d5",
+      "final_git_sha256": "90b994e1eefb32871dc6d33dc3ac01749923b0185346296957a17cdcdfa01cdc",
+      "baseline_git_bytes": 16337,
+      "final_git_bytes": 16728,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/CommonWorldAuthorityFoundationTests.kt",
+      "baseline_sha256": "24dc20b2b9aac6ea2fb45cf1eb069edc88d48e843401824fc319ec9412770779",
+      "baseline_git_blob": "8b37f89a61331e8e1fc792cf07caa7a421226a11",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "70037acab25f2751677319323b90e2f7c8c54c759325df60ebe0898cb6106d3c",
+      "final_git_sha256": "63b26e55fb4f4fe03d28e81d945ae079642fd6d413470f6b857e65ba3a61d20b",
+      "baseline_git_bytes": 17463,
+      "final_git_bytes": 17897,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ConstraintPipelineTests.kt",
+      "baseline_sha256": "7b9a67fe450f05bcacc1d0a71d51480536188592130253b6556d836a862d8384",
+      "baseline_git_blob": "897478e095fd9468a11ebb9110687f637d2deee3",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "e651157431b287a1bf3d391e8dadaa03539b4933f8c0afd962f9b153f3670028",
+      "final_git_sha256": "6a5e47f0cb606a7b94070d224b8578267b5918dac99f762de52c15b01a902a8a",
+      "baseline_git_bytes": 4304,
+      "final_git_bytes": 4250,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ConstraintResolverTests.kt",
+      "baseline_sha256": "69800fec52475faed56154d881b936c1daabdeb94a0ac23b660e70717a995342",
+      "baseline_git_blob": "13fda29e7c56055a46d223c7fcde4d8db4699868",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "3d431e8a40fe94eb98384d7c7af0b8bb4fe8abb167a4c897db566a3857548fdd",
+      "final_git_sha256": "2673649c2b4edd92b1cb4a18951eb728d3c77b4b76e538e67fba44e7b60db4fc",
+      "baseline_git_bytes": 3628,
+      "final_git_bytes": 3767,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertNull"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/CorePocHilStdioTests.kt",
+      "baseline_sha256": "88e6bae46e6be0000ab2c2598ca6d8c8554168ec1b8b8cd57cae11f8133193a3",
+      "baseline_git_blob": "09b17cb20a779b9bad8d7452be8c84d228de5d8a",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "7091c1bf715a7c2036288a0126425fd3035b98a10ea87185b656696c3a2358ca",
+      "final_git_sha256": "72789a651689ae6035471c0abcc6176ef54abc94f0a48315bead565f8709de47",
+      "baseline_git_bytes": 1818,
+      "final_git_bytes": 1955,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.Test",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFails",
+        "kotlin.test.assertFalse"
+      ],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/CorePocHilTests.kt",
+      "baseline_sha256": "df3676fd8687dfec0df9e9b1075c38099b817b2a3a1f668188738e09a2d6eca2",
+      "baseline_git_blob": "1c5b096b76836a651f1297cbb08f6719b8905e1e",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "4c5b42b57aded7274276a543c8b2fd36317675ace18ce2c7a777ec48a70b30a3",
+      "final_git_sha256": "cb841d8f4d596d471e2cd60f6daeb830e41b1ed7b2f01a3b07feeaa3fbed7203",
+      "baseline_git_bytes": 24584,
+      "final_git_bytes": 25834,
+      "imports_removed": [
+        "dev.monaka.tracking.hil.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.hil.CorePocHilConfig",
+        "dev.monaka.tracking.hil.CorePocHilControl",
+        "dev.monaka.tracking.hil.CorePocHilJson",
+        "dev.monaka.tracking.hil.CorePocHilSession",
+        "dev.monaka.tracking.hil.CorePocInputFrame",
+        "dev.monaka.tracking.hil.SameTrackerInputIdentity",
+        "kotlin.test.assertContentEquals",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFails",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/DirectConstraintOutputTests.kt",
+      "baseline_sha256": "e74af909ad803623f9d4650bbe4cde179c4a5291a29a4db2184727c8a02179a0",
+      "baseline_git_blob": "2193d5908691c349a9851cf39b657e439673b712",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "74093e699cf1cb5021898245f3b7f872595d8b093a61e095a721555a62e36d62",
+      "final_git_sha256": "819630c3eaf600baafe0508b273b9157d7a3fbf6b950dade10eb25c38508dab3",
+      "baseline_git_bytes": 7751,
+      "final_git_bytes": 8428,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.Validity",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFails",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/DynamicGateComparisonProbe.kt",
+      "baseline_sha256": "5e7e70e58d6ffcbd3f9b88d3aac75708cf1c2c9dddebd2e60bd0c68dad0f5f2e",
+      "baseline_git_blob": "254bc2cf8112a70cf32cf3206eefe6301ec04bda",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "dd6042032ca391930c93f2c72ed2b007d90759953119f647c5185cad05c3abb2",
+      "final_git_sha256": "ba51a8108c3373e19299e1c3e96b382bdc2849c73029fcd50686419f0a8b651b",
+      "baseline_git_bytes": 1533,
+      "final_git_bytes": 1778,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "java.nio.file.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "java.nio.file.Files",
+        "java.nio.file.Path",
+        "java.nio.file.StandardOpenOption"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/HipBodyModelSnapshotTests.kt",
+      "baseline_sha256": "0d263c40e096d02dc94384ef08233352146b2433437690efeacbe1f8818c9cd0",
+      "baseline_git_blob": "81b866c44181e106adfb26343c5114fcfdbe33c4",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "6bab5adf0c3c98f1f7daa3e71f4e6b0a6165bd494dce145d11343ca1d0076b7f",
+      "final_git_sha256": "1d1fe1abe26454b6900274472f1f1be7eff04d933ab911f9b69098be01900835",
+      "baseline_git_bytes": 9251,
+      "final_git_bytes": 9499,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/HipRotationCorrectionTests.kt",
+      "baseline_sha256": "5160c0f5d6d592ed12fbb2db9e37faca6e82ce9d898f9eecaed19e5b88f628c6",
+      "baseline_git_blob": "ba2d47bdae721566f3f8b9eee69c6024a4620107",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "dbbc527ec95c1b2b2a7e2e9bb9778b5ba47dd4b5425d92b4e407d8f27b6c8bfa",
+      "final_git_sha256": "93c8f054719546ffa8c479941ef9f5e2529649285e762d13db5525f6760e2e73",
+      "baseline_git_bytes": 15857,
+      "final_git_bytes": 16573,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/HybridDiagnosticStressTests.kt",
+      "baseline_sha256": "9a302d37f502835c471ca510cc3919687928d6770829f6e1b209b4c6894ad217",
+      "baseline_git_blob": "53e48f690c230e786b58d47e105e14349b3557bb",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "ab2e4096a8310b95815e62ffb587642308388e9206c1448a3257979c760cf32f",
+      "final_git_sha256": "3d38f7608ad211c7511e88960ba768f6259684b6ac213176fd154b58e26f6446",
+      "baseline_git_bytes": 7594,
+      "final_git_bytes": 8245,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/HybridFoundationTests.kt",
+      "baseline_sha256": "d8bcb05323e89df625ff8a32fceee66b882a0c95ba18cc7ce0fd8fa5f1e5d432",
+      "baseline_git_blob": "b60da632ca48623207274a5a013e77d3ed165c95",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "76b7930ae81f53354563d336b5bd61488caa0633fcf80ed5d21640722301a710",
+      "final_git_sha256": "521647481847707952c60106ae0aa73737cf0523d839b8322e2c30bd181605da",
+      "baseline_git_bytes": 15182,
+      "final_git_bytes": 15913,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.Validity",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFails",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/LiveHipBodyModelPublicationTests.kt",
+      "baseline_sha256": "369aa545ad2b0e079bc940e25bb986e9469ab9e7b7ccbcc4ab68e353be6426c4",
+      "baseline_git_blob": "44caf01e85e489b23796d6974ad4fa0a5f65a561",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "75fb14663bdb0b431192a485f9b94b9596e327c3080c223b531b4cbe8d2b5c16",
+      "final_git_sha256": "2713ec224b786b38ab61bb8b8dc7d5a9aa38823443723143c1133eab717a0127",
+      "baseline_git_bytes": 14777,
+      "final_git_bytes": 15183,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MainTrackerMountCalibrationTests.kt",
+      "baseline_sha256": "e3667cd87c86f561a9da9db73625fe8edac10c986790b627869727d57608c45a",
+      "baseline_git_blob": "f9236762f77fb8fcf2f5b0a60326fc91c91c23cb",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "6baa07f6041a614cc6d159dbc400901e0369736fc637f684d6fcb3a37d980c97",
+      "final_git_sha256": "d66de2c09fd1234a80c5b2ef3c16b75a447bc01a37d310d65f7981de8a4279b9",
+      "baseline_git_bytes": 15307,
+      "final_git_bytes": 15828,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MonakaResolvedTickSnapshotTests.kt",
+      "baseline_sha256": "8fcfa90493b238eba1234d64c6a68ffbf30fb6b6c5c18388c8001b9b9c090e0d",
+      "baseline_git_blob": "d3b8f64d0b70361754b34f1c9df130ac25817598",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "8178b382aee5f60575ff05c60eafad7ce57939e6c8d8b5c764e88bf07ad75193",
+      "final_git_sha256": "2216b00f77487f1c9fbfbe211326b340bc89d71d370d1ca55355887060699de1",
+      "baseline_git_bytes": 17241,
+      "final_git_bytes": 17955,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue",
+        "kotlin.test.fail"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MonakaRuntimeTests.kt",
+      "baseline_sha256": "ff004a02ba3a60c5ee5d3615e5999881ffb77568a6c5de17025e9785a4c291bc",
+      "baseline_git_blob": "76b5926dedfcfc1d59fd53d99d50b3461ab5a85a",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "a2fb7d4c49803bae5746373d7a07a0a63680c657e33ea833479153a57c0b85ad",
+      "final_git_sha256": "18c7acf88be51713b4809a67aabbc58941c3ae3d541b791f80890afe650ef7f8",
+      "baseline_git_bytes": 19515,
+      "final_git_bytes": 20122,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.mtp.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.MtpTrackerState",
+        "dev.monaka.protocol.v2.Validity",
+        "dev.monaka.tracking.mtp.MtpInbox",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MonakaSolverCompositionTests.kt",
+      "baseline_sha256": "46c394aa4e16eb7431f4c39a5fd741966eaea4f3061ba575116069c09fcaf799",
+      "baseline_git_blob": "68ac3b40571c1252aea5a3581569452dc7d25eed",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "a398067403843c7edef156a8cb029987e66d2e80d7b3343695e022fa0f3e1ee2",
+      "final_git_sha256": "87f707991bb585e4111928f1befc3c6dad515045999b5dd56721e94f641d05b2",
+      "baseline_git_bytes": 17818,
+      "final_git_bytes": 18442,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNotSame",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MonakaSourceTickSnapshotTests.kt",
+      "baseline_sha256": "dfe2c252e3f2c0c090803b5f0d44b86d217403fc3c53cb9de322d0c11e3a0000",
+      "baseline_git_blob": "e801b34d12a01f398832958be789d11ebdfa32f4",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "8347b70b96d1b00e8d2ce33d820a54d0bfa2b7973848f158849f827366ec0cdd",
+      "final_git_sha256": "281be7770e41f9e10837a1352b8f018ea14b57b01501cd1d3c68cee798e8118c",
+      "baseline_git_bytes": 6650,
+      "final_git_bytes": 6998,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue",
+        "kotlin.test.fail"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MtpCorrectionProvenanceTests.kt",
+      "baseline_sha256": "478c6195ee5daf43d5c427b62d5f2e9eab3d29594cfcab9bc735f491b214d629",
+      "baseline_git_blob": "923e425a1a7aa5e9fc09f3088d4a5f629377658b",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "1e7bd6d6958d137a1c908177566b61111f4ca2ce7e59df760f39afcbf84d8f28",
+      "final_git_sha256": "cc65c5a575e02da534cfffd3bf429e039fe4a5786c98aac1c193fa1eea5a6fff",
+      "baseline_git_bytes": 1897,
+      "final_git_bytes": 2027,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MtpObservationBackendTests.kt",
+      "baseline_sha256": "147879b896bdd0d4d616c8e20331a8786831a051fbfb8c2c6531999629df9d7b",
+      "baseline_git_blob": "c8419bfdd5627501e3949b1d89bf868e1dd10b2e",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "6fecc48bc0b836d08d4e152b61e60a7bca8eac275459bc65dd5d5f2e2b523313",
+      "final_git_sha256": "e7b9672b026e5de827ce8007a498ce98dab0c3eea867f4352aaf091dbd28e6c3",
+      "baseline_git_bytes": 6729,
+      "final_git_bytes": 7210,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.mtp.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.MtpTrackerState",
+        "dev.monaka.tracking.mtp.MtpInbox",
+        "dev.monaka.tracking.mtp.MtpObservationBackend",
+        "dev.monaka.tracking.mtp.MtpSourceContextSnapshot",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MtpRotationOnlyDownstreamTests.kt",
+      "baseline_sha256": "4947fced9fc627a7bbf135cb0b6073b3b97b54f3045d8d3b2f46eadde2423a8a",
+      "baseline_git_blob": "feab43795eaa692299975550abde8a10934244aa",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "0ac91c5ce4d57420c970c271a50e479de577efd458677e3ae858c4981a3a0d5a",
+      "final_git_sha256": "388fad1914ec4832aa998fd9c745b0964a05549189ba2703085303e1b6173f42",
+      "baseline_git_bytes": 6107,
+      "final_git_bytes": 6593,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.MtpTrackerState",
+        "dev.monaka.protocol.v2.Validity",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ObservationBackendLifecycleTests.kt",
+      "baseline_sha256": "73ad995cdbf9810367a7fb8e310c418ee3ab68674dd15fc2e5d71da424eaec37",
+      "baseline_git_blob": "2216166a2c4b31ccd0e87b32ee47ffadf6514078",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "395143711c81ce9f0f406d0cf2c4977a03267555fb42c4d3871c72ecf1e5f22a",
+      "final_git_sha256": "c5b6774a943f49a8546fd02e2b0bf9acc312a6c87c0f5e8e524a509e2a90fc75",
+      "baseline_git_bytes": 7021,
+      "final_git_bytes": 7018,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ObservationBackendRunnerTests.kt",
+      "baseline_sha256": "0785a5eedc179fe64e7e730665f620bc645c19c1116a36c3b32cbb43c392cedb",
+      "baseline_git_blob": "9504ae1a63c63e5ecbe914ce0552eb6034a620a4",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "96f8a7e0eab3404d31486313fa404826e83f6e47f6d56c4152767f51eff771be",
+      "final_git_sha256": "0c08f2d2a22674b263c93b66ca7c8517d19891f56d8f8db4070c5fa8d422e889",
+      "baseline_git_bytes": 2092,
+      "final_git_bytes": 2171,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ObservationFreshnessPolicyTests.kt",
+      "baseline_sha256": "a2150bcd974479f639154b7722d1a4f934a08cf3899dcbc357f0af47bf95678a",
+      "baseline_git_blob": "a4dfdf277b8920d7dd912adeb3b6b5ba511ad3a7",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "089c455a3986d897489708ee9b04cdfeae4b5a4ad12807abd8db6abdeb13ccc0",
+      "final_git_sha256": "43e36185d5684dabbb7239c860845f4af0d585b5891bdd956af4036694f106e6",
+      "baseline_git_bytes": 4018,
+      "final_git_bytes": 3985,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ObservationSourceProfileRegistryTests.kt",
+      "baseline_sha256": "314f15defe8527d0d10e6aee12bac9a201688d69cf5a5db67628600b1067895b",
+      "baseline_git_blob": "6ea7579b36fd0101c17873af28596a47c00312fa",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "d2f08f10cf4e30aef2285ed1f4b148b1a379a4ce3888ebf57d4ca96897a7b2c4",
+      "final_git_sha256": "05526a0f875ff4d79751eaa6e0f27630830387014764f936af5dd4dc1ef33095",
+      "baseline_git_bytes": 4441,
+      "final_git_bytes": 4429,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt",
+      "baseline_sha256": "52f90df478125f69a45d86baffb40fca7b94833fd4f01ed4b2df68c63215b43e",
+      "baseline_git_blob": "bb682303a284d5524831bf69fd4d3cac78638208",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "6fd7b428db57bf1f7a9739917825976010fb973d04f1e2086faef4c89993d4d1",
+      "final_git_sha256": "89c5b767c0c0472a9660c926a0a5640c8dbedd3ef7a69a4ca95f54998ac3874b",
+      "baseline_git_bytes": 15427,
+      "final_git_bytes": 15666,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFails",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionApplicationTests.kt",
+      "baseline_sha256": "1870b408ff9b5f834e91ca53dad53bd4882ea1c0c3b7af1db01eeee9a2d19eab",
+      "baseline_git_blob": "f9b79baac5b2ba1895cca166aca06241d36cc3b9",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "dab3e35368de0fb5fde47aeff83f5a963a1362e1eb5202250695b4a62e09ca01",
+      "final_git_sha256": "ca02fb45d884ab3ad3bbec6dfbceeb9717dba8488b7df9f49378f9310dd14224",
+      "baseline_git_bytes": 24163,
+      "final_git_bytes": 24953,
+      "imports_removed": [
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNotSame",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionConfigurationTests.kt",
+      "baseline_sha256": "a586ba8e6fdd73aaf41794a1fc87642dd5f58148230cf6a61023d8b7413bf94d",
+      "baseline_git_blob": "a5919a1b827417b1af3268a7d4d0e70d2cde8038",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "518e0aa0ea5a460dd25c8ea114d2156cf8e177d05abf0e42542bf995a6c34e81",
+      "final_git_sha256": "428b7261fdf30157429610c6dcb23c08b32e6dfabf23c3864e5b6c44db77b978",
+      "baseline_git_bytes": 26603,
+      "final_git_bytes": 24774,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertContentEquals",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFails",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionLearningLawTests.kt",
+      "baseline_sha256": "7fdee9569b55278bd2988c25677be61d998ae38d334d87d6e7b30f67d33eccaa",
+      "baseline_git_blob": "3b2a0f0f9f8968f72666ceeff7357a00a29a0ab2",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "db793d452dfa8b15e6c1963a99730efcc8bde34187ed3f2449e61ae61d390906",
+      "final_git_sha256": "d43666382c460ecf2942522e21b349e62a9582de8c68b475b162b87050cf46d5",
+      "baseline_git_bytes": 24193,
+      "final_git_bytes": 25650,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionNonHmdProductionAdapterTests.kt",
+      "baseline_sha256": "77aabb8e876f35fe864558b8f6c02f07bee6ca58d5ec16ce1f80c8a7de287e5c",
+      "baseline_git_blob": "bd2e9beeb0873b26e821e696c64790ffe9b52db0",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "66a18ac58f883f0f78a6a5aef4bfca66522d95760901fafa6b4a5590fa5376b8",
+      "final_git_sha256": "4b6774999a6c902d43e391d400993a0bb97f494bd9aab3a1f8cb70b810099c8a",
+      "baseline_git_bytes": 17657,
+      "final_git_bytes": 18385,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionRuntimeOrchestratorTests.kt",
+      "baseline_sha256": "38e8a05df23a686eab147a18c41976e900639c66db9f9a5c88d3cb131e3f8d94",
+      "baseline_git_blob": "737c45c1b6a8985d1a1fafea04197fa730f8e52c",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "d0a6343a99d1c7328c2c7f10c2d941261519b5aa95dbc0d3eb3894d5cc538b5e",
+      "final_git_sha256": "33ea52ae7afa811317147338bf6497c1e0663ac141eaa7b80258aa2e0bad095c",
+      "baseline_git_bytes": 28612,
+      "final_git_bytes": 29576,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionSolverContinuityTests.kt",
+      "baseline_sha256": "784a5fc4202e1fdcf50189d2da31115113cf600453acbfb25bf1ffe0dda7299d",
+      "baseline_git_blob": "11ac21d51ef19226904a503d11062a87875387db",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "a99e13d696583d0f16f321140e55d913a3b013ed2daee6eb2953cab7d56b1148",
+      "final_git_sha256": "7e0bf3281105b6bc0bbcd7c5c4928a6b14f786aad8d92b9f02922784016c8106",
+      "baseline_git_bytes": 30713,
+      "final_git_bytes": 31663,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotSame",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionErrorMeasurementTests.kt",
+      "baseline_sha256": "7107f2004290b5ed03e76baeb67f7fe0adec403e6eba8980c2a45484de644989",
+      "baseline_git_blob": "b70bf325de108221ea32844068948edd89cec85f",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "359f9033c012393a8684d91c58bd982191303b48be68c5fda0d44cc6943ea543",
+      "final_git_sha256": "2953ff1b442ac461a8ce932ab6dcd9dbdfd7d7c96c57bf4f4adb8a6dc5f61dc6",
+      "baseline_git_bytes": 21546,
+      "final_git_bytes": 22386,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNotSame",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionPredictionContractTests.kt",
+      "baseline_sha256": "7a1e2c8ae4a755df69a6295e7cdd2727c88d397b8d90b28a739915ddf734c8d0",
+      "baseline_git_blob": "c8ec70a6e50bf126026cb8255d49826605a57ebb",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "b76de38ee4eded8f791f66843da6b24eae0c7d127128fd1341e2f5313a438f10",
+      "final_git_sha256": "69e836905634118561bbbc46331c18e3bd420858f47533b9806810d148060af8",
+      "baseline_git_bytes": 17355,
+      "final_git_bytes": 17961,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionTemporalPairingTests.kt",
+      "baseline_sha256": "3edbd961a59bb88e8e39a2789e37957281838aea3994af6cfbe705e1c84b53f3",
+      "baseline_git_blob": "81828897c4c8337b5ec2587b1402ddde786770ee",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "fdf3f7d090ea2c0a8cd71375ddb70a8d777d540b40f261b44ce76a2a82b68cac",
+      "final_git_sha256": "c612d0711b75989d73800ccc6bc913dd8256315ead9e37ee515466b601482879",
+      "baseline_git_bytes": 22110,
+      "final_git_bytes": 22967,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PredictorFixedCalibrationTestFixtures.kt",
+      "baseline_sha256": "cd44e47db1ebc567f81c01c99e0b4f91cd580c4e113c8436914fb2484cc226f5",
+      "baseline_git_blob": "c31db47fa2d246585987916af04f4cab7bcf1652",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "a7065103577ee50a7e4eac7f8af1e98df57c35561006db79cca8bd0432fedc09",
+      "final_git_sha256": "42f0634b8694bb82ddfde12efd2f7267af85364778ea3ff73a8653c672b60958",
+      "baseline_git_bytes": 704,
+      "final_git_bytes": 707,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PredictorFixedCalibrationTests.kt",
+      "baseline_sha256": "2739b4defb91d49715c75407c5298d5236027907db3261799fa52d86b57b6974",
+      "baseline_git_blob": "bcdde2601efadcd8b4eb0b9a9d149ef00b35153c",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "d78a254886460b3c3aec7d6f8cab91a21851746823ea4195bc238bd54db6bba5",
+      "final_git_sha256": "9cd27ae5ab5d2dc0fd27ce08487ff17f14f840416a51b8f82559524a5c0d69e0",
+      "baseline_git_bytes": 18252,
+      "final_git_bytes": 18914,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PureMainDecoupledHipPredictorTests.kt",
+      "baseline_sha256": "73d3bfc5e5b18965ab88a9e8a0150d9acdd60e04a48ed5beabff75b34b013f99",
+      "baseline_git_blob": "ca3522b43a1e671ba88efcdbc8581bc584f23763",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "9048a08e38ab181dfcc1b5d9f27e8a811582cb7ae17e98a4203b48243381b9a5",
+      "final_git_sha256": "10d772c730702c91e926b6cc7855f25bbef3b59e71b8d47eb89d0b612348b6ed",
+      "baseline_git_bytes": 21490,
+      "final_git_bytes": 22148,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/RecoveryAngularDynamicsTests.kt",
+      "baseline_sha256": "e3ef3122ba1cb557122256d051d294fe8817169611122f4fef57c2714d149407",
+      "baseline_git_blob": "b0b3ad37e8fc6fdab58f0d535b8f75483a9c9425",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "40b5c0ac5640077d8e93aa263e3177cfb1fae89077b629a0b0dbbf3e3d76c033",
+      "final_git_sha256": "d083e508ae7a20bb2de7b247442c868cf01ac9cf9f69290b22f041a15d9fe4a6",
+      "baseline_git_bytes": 5264,
+      "final_git_bytes": 5377,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/RotationCorrectionConfigurationTests.kt",
+      "baseline_sha256": "ab2e6ef2d0601360af0f647b9d471c3ee338f3e769ed02768b3077754669e909",
+      "baseline_git_blob": "818f2140730759e9f3fb148e88a04f1d1ac2c291",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "9e91ec1542d0bc520bd52d687d2e0fb60588ab3181d0194448b4f0404523f15f",
+      "final_git_sha256": "9bedf1fa692f65e06d3e9723a1dd28fb5b4eae42747516b97cee4762945b179e",
+      "baseline_git_bytes": 4125,
+      "final_git_bytes": 4297,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFails",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertNull"
+      ],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/RotationSampleProvenanceTests.kt",
+      "baseline_sha256": "0ab533f8c7918836893cb2304c09a5e0d0043566a474a48cc87c0951a28498f6",
+      "baseline_git_blob": "f42b9359c40c9ab81874f00b90eae011c1862911",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "8843d855e31d81b922b57aff417358d134bf644f54ec9d13c85e8e33e89cc783",
+      "final_git_sha256": "4456d0e1c97e109a242257f45778e18ed676030cb19509b57dfe1e5799407176",
+      "baseline_git_bytes": 3584,
+      "final_git_bytes": 3691,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNull"
+      ],
+      "changed_non_import_tokens": [
+        ","
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/SlimeIndependentImuOrientationCaptureTests.kt",
+      "baseline_sha256": "35f6ae6d6d73e2505ec1b43461350baa07aba32b6a53d2a430a93b953ee6743d",
+      "baseline_git_blob": "6a14e2d5af71dd20a6e091398104324678826577",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "7ce8b7fe221c7dda549c5fe8ed26711c6b4b787b9fc7004a7d8286f50b9da9fd",
+      "final_git_sha256": "18ab482efc6c99e5345fbb320d48aedf24440ec2f3ed0917b6c1752e5ad2b892",
+      "baseline_git_bytes": 2866,
+      "final_git_bytes": 2946,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertIs"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/SlimeRawImuProductionBoundaryTests.kt",
+      "baseline_sha256": "8e53e616e9b98671204a17aa904b957d8aa4e3fc908fb1a24746ef582d10e6f1",
+      "baseline_git_blob": "1e136d9d0ee3acb2876ffd299fc3559297b4af8a",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "b835927cf339cbd66dfcabaf371a54c19e9479bcc685f4de0b86d21cdf6dc295",
+      "final_git_sha256": "7b8c741a77bcf155e5305ffc0341a862bcca556feabf1e2df722016618f6e151",
+      "baseline_git_bytes": 17087,
+      "final_git_bytes": 17497,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/SolverPositionReferenceSemanticsTests.kt",
+      "baseline_sha256": "c2033cec9a84990bd775be421866f5615b0e57c81dd0c0d91effd7a3f550209f",
+      "baseline_git_blob": "57a403a91939ee4402c10f2115e4ae59ac703906",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "ec7ac34ab548a9212acfa4fbc05dda764ff8837873546bc01175e72f7f3b2d01",
+      "final_git_sha256": "9813c4c44b16e8ca7878cb1b6caa6b302f0dc8ee099ba9b8b25dd05137b0e654",
+      "baseline_git_bytes": 20547,
+      "final_git_bytes": 20985,
+      "imports_removed": [
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/StaticInputSelectionTests.kt",
+      "baseline_sha256": "83f98d7198cbf4f31e462f249861575d7a3ff992976814db204726fb8fe261d8",
+      "baseline_git_blob": "a9e935649fb6034197c55f2dc79c496b1b628b93",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "3d2a24cbe413c4f2bdd0a2273c4f659b69f081c7bbdcc0b2531cf9204d8c603d",
+      "final_git_sha256": "b66b1d4df12ed7c3754cc8253d640a3fc25e32fc3ee89103030f5027be2f379d",
+      "baseline_git_bytes": 14170,
+      "final_git_bytes": 14968,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.MtpTrackerState",
+        "dev.monaka.protocol.v2.Validity",
+        "kotlin.test.assertContentEquals",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFails",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/TrustedHmdCommonWorldStreamTests.kt",
+      "baseline_sha256": "37c40fc95c68612a08ecbdc2d60d392d5e39d4d489aeab900b7af041a2448612",
+      "baseline_git_blob": "bda5b1dcae31e7f6b31c4eb3b7edd3302ba7bf35",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "ca9cad1c22ad0d6b38b51c739b5f5442da71b096432553a744f275ebeea7f099",
+      "final_git_sha256": "fda40fb3d1f4d08ceed19052ba581f7426a1b8dead91df750d46539f6bb59440",
+      "baseline_git_bytes": 22413,
+      "final_git_bytes": 23351,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.CommonWorldAuthorityPublication",
+        "dev.monaka.protocol.v2.CommonWorldMappingPublication",
+        "dev.monaka.protocol.v2.CommonWorldMappingRevocation",
+        "dev.monaka.protocol.v2.CommonWorldRevocation",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.RigidTransform",
+        "dev.monaka.protocol.v2.TrustedHmdCommonPose",
+        "dev.monaka.protocol.v2.TrustedHmdCommonUnavailable",
+        "dev.monaka.protocol.v2.Version",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/pico/PicoMotionTrackerBridgeReceiverProviderTests.kt",
+      "baseline_sha256": "887c016258b8c3e226d508bf844e2203a96f19ecf734ea31515cb401c4da1129",
+      "baseline_git_blob": "2f127ec7515dacbd0d8bb9f4fc3cf7d944242269",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "ef8039658328144162d0cc07e2b6d1b68cc2bda3635feee3df41e4574c97f369",
+      "final_git_sha256": "2908edf4f9ad26cc2c46accef15f083832d0448285a4180f7a23310f2c5b41fc",
+      "baseline_git_bytes": 5361,
+      "final_git_bytes": 5349,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ":",
+        "=",
+        "Unit",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKCalibrationTargetDiagnosticsTests.kt",
+      "baseline_sha256": "0ad24fed825e2290526614cbd30c5b0fc428f1b619816c4ef71653f09466a3c3",
+      "baseline_git_blob": "85c2102d4625e05e1fc203b985bf2e618243d824",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "fe38ca547de9d96604dde260a4cf7b9fcaf3ed83d3dae52ce452ee17e6850d17",
+      "final_git_sha256": "97ca29d5db875edb5dc3c938ca392d102b85ec5f10fe6e29d34e916470af819b",
+      "baseline_git_bytes": 4416,
+      "final_git_bytes": 4414,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKConvergenceDiagnosticsTests.kt",
+      "baseline_sha256": "ec380de8ca2388e8a5c7b04266c7116ab898f9845d44cc482868521f6cf0d07a",
+      "baseline_git_blob": "39f88a70a2aa4d3c038cc412120acfbd4a68408e",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "4dea2ba0615cc33a50f86991d8d6c1862ac43e6dc4a0f770d792d24dc413c950",
+      "final_git_sha256": "176109668b07face687051f050e6930df014f2107b623354ee8532ce063939bf",
+      "baseline_git_bytes": 3704,
+      "final_git_bytes": 3700,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKEffectiveTargetDiagnosticsTests.kt",
+      "baseline_sha256": "fe9149135576c4455a677f5f2a8c7af79abb264d7d36385d8fb7192ad895d170",
+      "baseline_git_blob": "4d749e7253a7050576a1f62d3f4cb76a1d50a1a7",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "8d677d6d43aaa41e65fefd0a4df571792dac6949a4fca439eb78e4498fcc302b",
+      "final_git_sha256": "ddb6dcc6c501b07b494621398decd960da3312eb8dd0542de6fe66c42c3fe276",
+      "baseline_git_bytes": 5144,
+      "final_git_bytes": 5142,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKFootGeometryDiagnosticsTests.kt",
+      "baseline_sha256": "b440a89496ebede191c4b3e9386a8c5422fcb22f8a364ca46c2e53525272adb7",
+      "baseline_git_blob": "24ddcb08b09a7832a51c29faaa46a8f2df2300e0",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "5ed744615ac42684510a7500c40438fcff275da345351e897c819b3b4c692be7",
+      "final_git_sha256": "e5ce6041a0a331cfb187c3789dd760344f33273bdfe12d048b6342340917dbcf",
+      "baseline_git_bytes": 4211,
+      "final_git_bytes": 4214,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKFootRotationDiagnosticsTests.kt",
+      "baseline_sha256": "900dae1dc323ba4fb666e421d8067e9b6bf41e73faa982ef9305c7aa7a4807a1",
+      "baseline_git_blob": "a25e4cc2bf7f8acd2024adf2ffb9fe6ba1d0b1f8",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "7805383caa386df5ec8e59b0986987d87f78bfc60802bfa12a41f43e73aff100",
+      "final_git_sha256": "19abb0cc2ad1e11a7e27bbdc47d4a768de3685e4fa08b00f080840ad91573dc8",
+      "baseline_git_bytes": 4519,
+      "final_git_bytes": 4522,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKRotationCacheDiagnosticsTests.kt",
+      "baseline_sha256": "17dd4a62bdb5f6ae2f30448d39a50f8fd88a523590a906be479c971245486c80",
+      "baseline_git_blob": "6c4a8bcb68113e74f6fd00888440350e4701c6f9",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "3098bd6d74554b5d57ea0c9acf34eb356f0dbe17331d74b74313bc55baf6603a",
+      "final_git_sha256": "24bab13e182fed0425b246d3161dc59c296eaaf168040ec7ebf8f11c9dbc438a",
+      "baseline_git_bytes": 4238,
+      "final_git_bytes": 4246,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKSteadyStateDiagnosticsTests.kt",
+      "baseline_sha256": "89bbfdb5f383e52c3fcff760ac002a7a927e9497d6e0998e51ce0e1e4b179cb2",
+      "baseline_git_blob": "bbe2569ae334e5874ff831ff1f7e6f59fa55479a",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "8f1fb9e73f722d4198b394c45889f178c1de3b4dc9677def715f77f036ca297e",
+      "final_git_sha256": "31139a4468e9fb8e0a19e78000f69b58db1e702b406e3e2387f3baec4757a51b",
+      "baseline_git_bytes": 5080,
+      "final_git_bytes": 5063,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        "=",
+        "return",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKZeroErrorDiagnosticsTests.kt",
+      "baseline_sha256": "975ab323ac1c758a4def83b685aeef1c02f238274aaf86af3c7e321f1eff628e",
+      "baseline_git_blob": "5a858a5b775537f64462e69e4e15258a8f14f64c",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "9d1c0537a9e8427787e99587ce3b5a1efa89daebb0fdcb5170c5012fe35ef400",
+      "final_git_sha256": "e9479309117e2e2ea918e6dccaa7e391208c275bbe9eb9ee88425861c780c1a9",
+      "baseline_git_bytes": 4888,
+      "final_git_bytes": 4886,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/FixedCodecProbe.kt",
+      "baseline_sha256": "c9298b7f9f604641e403e9d4fb1b48db57459256dcaa3d2c06f00bc220b9519a",
+      "baseline_git_blob": "e06abf801eccce2d5f91b4b660e8f4413d3e31d3",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "b76f2949afa0917caaeca56482b9241004a6e09334f29f37813c7d12b4bb9baf",
+      "final_git_sha256": "501b75621f20c545f228b9d977da21fadfe427e3e901f0945b0ead73998e7a0b",
+      "baseline_git_bytes": 680,
+      "final_git_bytes": 777,
+      "imports_removed": [
+        "dev.monaka.protocol.v1.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v1.DecodeResult",
+        "dev.monaka.protocol.v1.EncodeResult",
+        "dev.monaka.protocol.v1.MonakaCodec"
+      ],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/HmdProviderSampleTransport.kt",
+      "baseline_sha256": "891c943cb04f198d704aa49ff3778d89bb070e59d11c8841fc63fe2f42f2e847",
+      "baseline_git_blob": "c2d5f35768cbdace1bd2a61a67a9c5f601004caf",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "b044f734764f59555c29440f7d777782daeea2652f06e50fa98e89f261064376",
+      "final_git_sha256": "01f8fc514f17f2cd5c668491bc915a2eb38b6e83618282eafc367d28672167e3",
+      "baseline_git_bytes": 3109,
+      "final_git_bytes": 3223,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/MonakaServerIntegration.kt",
+      "baseline_sha256": "bfe1ea3719051d23d09b8eac7357f945beb8fbfac113bf596ff1ec65c4b19cbd",
+      "baseline_git_blob": "2b5873d683eb96368edb7163828147648da8417f",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "d7d6352922c236675b0a1e1ccbb9253bd5feef5adace8f1cddc23838151caf1c",
+      "final_git_sha256": "c04ae247a988c94ca2a03d68a688d9a5b7d625f17642d2f32a03f6e722163b5e",
+      "baseline_git_bytes": 10785,
+      "final_git_bytes": 12185,
+      "imports_removed": [
+        "dev.monaka.tracking.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.BackgroundIkAlignment",
+        "dev.monaka.tracking.BackgroundIkPoseReader",
+        "dev.monaka.tracking.BackgroundIkResult",
+        "dev.monaka.tracking.ContinuityTuning",
+        "dev.monaka.tracking.DirectConstraintOutput",
+        "dev.monaka.tracking.HipRotationCorrection",
+        "dev.monaka.tracking.HybridTrackingDiagnosticEvent",
+        "dev.monaka.tracking.HybridTrackingDiagnosticRecorder",
+        "dev.monaka.tracking.HybridTrackingDiagnosticSnapshot",
+        "dev.monaka.tracking.MainSampleState",
+        "dev.monaka.tracking.MonakaConfiguration",
+        "dev.monaka.tracking.MonakaInputConfigurationApi",
+        "dev.monaka.tracking.MonakaResolvedTickSnapshot",
+        "dev.monaka.tracking.MonakaRuntime",
+        "dev.monaka.tracking.MonakaSolverCommitResult",
+        "dev.monaka.tracking.MonakaSolverComposition",
+        "dev.monaka.tracking.OutputContinuityController",
+        "dev.monaka.tracking.OutputMode",
+        "dev.monaka.tracking.OutputTransition",
+        "dev.monaka.tracking.PoseObservation",
+        "dev.monaka.tracking.ResolvedTrackingPose"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/MtpUdpReceiver.kt",
+      "baseline_sha256": "f56348c2643291052252e290b2140dfe4261dbf5f630387164e54d3db6190d83",
+      "baseline_git_blob": "6bcdb8e865252cd2a07ba957fd55fdde647a123d",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "54d86bff67e241d5cce4bc4848ba7c6bcf9c4bc53dbe2506786a00d2f0d7c9ba",
+      "final_git_sha256": "5e823ae177ba7b368851e9890c86a1e27d8c682afe2535fce10c021d9852df09",
+      "baseline_git_bytes": 1643,
+      "final_git_bytes": 1680,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdPoseAdmission.kt",
+      "baseline_sha256": "8bbdf7c7c5c4995d88730aecf84663884f0f29be9277c4e547f9c1b5539bd1de",
+      "baseline_git_blob": "c336d0f045991b05e918517dd3a6de93bb21e9ca",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "4c38a6a734c3cf6223fea84a86c84ec146de7144b718d770f8668489266d6a21",
+      "final_git_sha256": "3368c8bb333c1779c9d2a9db66eae72299078926b6d64b55e12657b0e0c0b064",
+      "baseline_git_bytes": 10339,
+      "final_git_bytes": 10488,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdProviderPoseEvidence.kt",
+      "baseline_sha256": "3780eaa5bccd23c582ed4552abcab7f63b628b03fef6ba634f7033fb3b1e282b",
+      "baseline_git_blob": "2889d2d92ac719a775823df2491bdf7f0fd49891",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "10538fb6231b252948aa1164f84eab7af8e1362a068773feea399baf1860ff49",
+      "final_git_sha256": "0648c36e5566b52b29d78c498da6efbd4dd082c122a02c604fd199d6a3f67880",
+      "baseline_git_bytes": 10067,
+      "final_git_bytes": 11633,
+      "imports_removed": [
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_EPOCH_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_REFERENCE_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_SPACE_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_SPACE_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRESHNESS_POLICY_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.MAPPING_REVISION_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.OBSERVATION_ID_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_MODALITY_NOT_FULL",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.PROVIDER_EVIDENCE_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.PROVIDER_SESSION_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.RAW_SPACE_GENERATION_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SAMPLE_PROVENANCE_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SESSION_EPOCH_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SOURCE_IDENTITY_MISMATCH"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/TrustedRawHmdPositionSource.kt",
+      "baseline_sha256": "6dc400c58b393d8422cdb40dfc92461c01eca5bdb020239f8fca125c3203e6d7",
+      "baseline_git_blob": "132bbd7cf33a99fb8154815eef96e733edd255f6",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "84ab4612e9771e03917b531306751fa98c9aa55f5d2e80d7c2a00324ba3b0836",
+      "final_git_sha256": "fde446e15381ff4942aa6054402253bfe462982ccd13bc513f2e8504594903ab",
+      "baseline_git_bytes": 11537,
+      "final_git_bytes": 11694,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/pico/desktop/PicoMotionTrackerBridgeNativeReceiver.kt",
+      "baseline_sha256": "24548066a93aadcd39a55cd27bda886ea3a63f7b3b25e87e60d9277bf9dc6b27",
+      "baseline_git_blob": "e11dd4ffe13030ef1f123c72fe69d5c631ee86a2",
+      "category": "manual",
+      "rules": [
+        "standard:function-naming"
+      ],
+      "baseline_git_sha256": "2fa4da3c815dad75a088c903ec2a34796b8698a10c1fac7aef37a4b9cccf1462",
+      "final_git_sha256": "2fa4da3c815dad75a088c903ec2a34796b8698a10c1fac7aef37a4b9cccf1462",
+      "baseline_git_bytes": 12541,
+      "final_git_bytes": 12541,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "unchanged-ABI-naming-debt"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/pico/desktop/PicoMotionTrackerBridgeServerIntegration.kt",
+      "baseline_sha256": "e18fcd55401cbe7ceab33a9c0ff2f03c17ca53161df1a028d6f49e4cb75c22cd",
+      "baseline_git_blob": "c763c8d109bae5853a898271cabf0585dbafb7ce",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "99f6a3f03699d5f8436a0aa17ec038cbee467984cf54e2cea1123fa470accd5b",
+      "final_git_sha256": "67c6b978e701f6434e1136f90ecc2332e289949e1e87518d62e0b589a6bc2438",
+      "baseline_git_bytes": 3654,
+      "final_git_bytes": 3656,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/slimevr/desktop/Main.kt",
+      "baseline_sha256": "6d4bb32719b68d483a378b92ac312ed1747f9fa6d167434fe63eca1691dc4d0d",
+      "baseline_git_blob": "397674683b81d39c7455192cfaab37247ab9c70a",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "a958232e35b5da631c2f41b2d9cea8884e4c8cf98251918d588d8e0cc147f22f",
+      "final_git_sha256": "5863c14de498e0ca5fbd771cfbf3f3f3c46b706239ad372c821247a2d9045365",
+      "baseline_git_bytes": 12475,
+      "final_git_bytes": 12496,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/slimevr/desktop/platform/InboundProtobufEnvelope.kt",
+      "baseline_sha256": "9ccb0b16a1a24c26671c7de9a962f323c75f2d67fae5ad729f6f927e8295693a",
+      "baseline_git_blob": "05cdd21a05cdad0ba861708b70172d26e4604fe0",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "6ac3a173cb149868e6ceb1d3b3eb09ff7908a6dc3b67a65b04ad890ec5be6bf8",
+      "final_git_sha256": "47caa9a260c975055b18aaffd65329684d2cef0c98aa451d780f819a4ef21b67",
+      "baseline_git_bytes": 643,
+      "final_git_bytes": 646,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt",
+      "baseline_sha256": "5741d6e48e78085571fe3849c5fa1c683b85439efe66d8c21f52742acb0ed9ee",
+      "baseline_git_blob": "122353d1e7fcc6a85123441b645b30db59618ce9",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "08d165d59bc8ab7a7f45ca8ed5c91b31d36d1e35551469f46f627075bc91e896",
+      "final_git_sha256": "7166f8a6a9b080569a3acfe5e08c5fdedaa712016c59f1879068e7f23fd30bcd",
+      "baseline_git_bytes": 19137,
+      "final_git_bytes": 19287,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [
+        ",",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/slimevr/desktop/platform/SteamVRBridge.kt",
+      "baseline_sha256": "dcc4d638fd643609b70c467273b90dfcf98c16732ab77d6ba35c099a1e0130bc",
+      "baseline_git_blob": "c025c2e441bf306e8ef899a2374ebaafd0ed797e",
+      "category": "formatting",
+      "rules": [
+        "autocorrectable-formatting"
+      ],
+      "baseline_git_sha256": "22c186c2db70a18b04892d044979c6d589741b86b7e834c689fa6fe7ce1d38dc",
+      "final_git_sha256": "a81d4a40f95b03f574cdc6846556cf21db5377e5dc7bb57ccf55d63878398508",
+      "baseline_git_bytes": 15469,
+      "final_git_bytes": 15472,
+      "imports_removed": [],
+      "imports_added": [],
+      "changed_non_import_tokens": [],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/DirectProtobufTests.kt",
+      "baseline_sha256": "3dd533be3bff11c6cae944b8ce0bf624727c9fecaa7f7f851c832024c9024a24",
+      "baseline_git_blob": "9ddb9d1eba23ae1611ac32f9eae1fca854401597",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "b70cdd6e5cc75030526072042173b3e4f00090032636ec8b39b3fa6c0b452e8e",
+      "final_git_sha256": "4dd367a41376a12ce50a82675e8edbeb296460a65686023c843f14e14c9d7faf",
+      "baseline_git_bytes": 9435,
+      "final_git_bytes": 10678,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.*",
+        "dev.slimevr.desktop.platform.ProtobufMessages.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.CoordinateSpace",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.Validity",
+        "dev.monaka.tracking.DirectConstraintOutput",
+        "dev.monaka.tracking.EffectiveConstraint",
+        "dev.monaka.tracking.LogicalTracker",
+        "dev.monaka.tracking.MonakaConfiguration",
+        "dev.monaka.tracking.ObservationQuality",
+        "dev.monaka.tracking.OutputMode",
+        "dev.monaka.tracking.ResolvedComponent",
+        "dev.monaka.tracking.TrackerBodyAssignments",
+        "dev.monaka.tracking.TrackerReference",
+        "dev.slimevr.desktop.platform.ProtobufMessages.Position",
+        "dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage",
+        "dev.slimevr.desktop.platform.ProtobufMessages.TrackerAdded",
+        "dev.slimevr.desktop.platform.ProtobufMessages.UserAction",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/HmdProviderEvidenceTransportTests.kt",
+      "baseline_sha256": "cfb11fc815aea669539f0cb10dd80e820fc507891bf2efd89efcb40e272309d0",
+      "baseline_git_blob": "cdd63705a93f6cded90d0c113a30385e8e68bd25",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "d06406bf33439e286313b182df7d8942de4e1344d47a9e0ffc0159024dd7a5f1",
+      "final_git_sha256": "2240acdde8a50ec0bf33ffd6955b8171851933522d2233f9f38f8cd9460ca5eb",
+      "baseline_git_bytes": 14127,
+      "final_git_bytes": 15100,
+      "imports_removed": [
+        "dev.monaka.tracking.*",
+        "dev.slimevr.desktop.platform.ProtobufMessages.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.DirectConstraintOutput",
+        "dev.monaka.tracking.OutputMode",
+        "dev.monaka.tracking.TrackerBodyAssignments",
+        "dev.monaka.tracking.TrackerReference",
+        "dev.slimevr.desktop.platform.ProtobufMessages.HmdProviderSampleEvidenceV1",
+        "dev.slimevr.desktop.platform.ProtobufMessages.Position",
+        "dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage",
+        "dev.slimevr.desktop.platform.ProtobufMessages.TrackerAdded",
+        "dev.slimevr.desktop.platform.ProtobufMessages.UserAction",
+        "dev.slimevr.tracking.trackers.Device",
+        "dev.slimevr.tracking.trackers.DeviceOrigin",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerRole",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt",
+      "baseline_sha256": "ebf4b7f1c044efc23078cb71581b575e564fc33ad59422d28f9ea3204a4b3c5d",
+      "baseline_git_blob": "7f871676e73a876177ec55017553bb008b14a0f0",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "9cb369a75443b6a3232dab933c01a16b0d83e86b6d2a7c5cf49fec879542d3be",
+      "final_git_sha256": "1cf85b9c3ceb77d9bc454e9d0103d4daae8211541a4fc967afc88815fe433c40",
+      "baseline_git_bytes": 21965,
+      "final_git_bytes": 23938,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.Validity",
+        "dev.monaka.tracking.ApplicationDecision",
+        "dev.monaka.tracking.BackgroundIkAlignment",
+        "dev.monaka.tracking.BackgroundIkPoseReader",
+        "dev.monaka.tracking.ContinuityState",
+        "dev.monaka.tracking.ContinuityTuning",
+        "dev.monaka.tracking.HybridTrackingDiagnosticEvent",
+        "dev.monaka.tracking.LogicalTracker",
+        "dev.monaka.tracking.MonakaConfiguration",
+        "dev.monaka.tracking.OutputMode",
+        "dev.monaka.tracking.OutputPose",
+        "dev.monaka.tracking.OutputPositionSource",
+        "dev.monaka.tracking.OutputTransition",
+        "dev.monaka.tracking.RotationCorrectionConfig",
+        "dev.monaka.tracking.RotationCorrectionFrames",
+        "dev.monaka.tracking.RotationCorrectionState",
+        "dev.monaka.tracking.RotationCorrectionTuning",
+        "dev.monaka.tracking.TrackerBodyAssignments",
+        "dev.monaka.tracking.TrackerReference",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/InboundTransportSessionTests.kt",
+      "baseline_sha256": "3fb5e364c44004a64f1a60d4f75c75650f0d53e17cfb26d14d2a09117bdbba3d",
+      "baseline_git_blob": "f148ccf51d3acfd5571cbc04b1b003d8c5f119e0",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "55e6f93f7b62ae95cbc75fc9e6255b92eabe26305669a27c6f154bfd1ac5dc0a",
+      "final_git_sha256": "a9b97e89f8d9a8e2311f7727b0305ba0036b36b4f8f0910201c3cf2ccc3206aa",
+      "baseline_git_bytes": 23344,
+      "final_git_bytes": 24571,
+      "imports_removed": [
+        "dev.monaka.tracking.*",
+        "dev.slimevr.desktop.platform.ProtobufMessages.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.DirectConstraintOutput",
+        "dev.monaka.tracking.OutputMode",
+        "dev.monaka.tracking.TrackerBodyAssignments",
+        "dev.monaka.tracking.TrackerReference",
+        "dev.monaka.tracking.TrackingModality",
+        "dev.slimevr.desktop.platform.ProtobufMessages.Battery",
+        "dev.slimevr.desktop.platform.ProtobufMessages.Position",
+        "dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage",
+        "dev.slimevr.desktop.platform.ProtobufMessages.TrackerAdded",
+        "dev.slimevr.desktop.platform.ProtobufMessages.UserAction",
+        "dev.slimevr.desktop.platform.ProtobufMessages.Version",
+        "dev.slimevr.tracking.trackers.Device",
+        "dev.slimevr.tracking.trackers.DeviceOrigin",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerRole",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotSame",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MonakaDesktopTests.kt",
+      "baseline_sha256": "9a302d923d6403b66e4f66f36d641c87d00c987304669047423317bb83836a5c",
+      "baseline_git_blob": "f54bac2bc90cb9c50a507211720d90748da879d2",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "960a7078dacf5077c782f089f2092ce567db7da82402d5598b1a78eb5cc49a95",
+      "final_git_sha256": "42bd9f95444e3dd8ab087066d2d9ee55c6d6da92bcb351db1f8875fbddfd99b4",
+      "baseline_git_bytes": 9930,
+      "final_git_bytes": 10478,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.tracking.LogicalTracker",
+        "dev.monaka.tracking.MonakaConfiguration",
+        "dev.monaka.tracking.TrackerBodyAssignments",
+        "dev.monaka.tracking.TrackerReference",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MonakaInputProcessProbe.kt",
+      "baseline_sha256": "a62396bd5cd7740244513f50701f30c29110ae345550daf2a7d7110338228e65",
+      "baseline_git_blob": "8f7140d0f3790f69534053b512308de250cb0127",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "ce61f2f596e4bfd0ff00fd01db32548dd40e56ef4d15466bb65ee98c1c83ca0d",
+      "final_git_sha256": "26b6c4c2cc7103cace9901c81bc34fccedd153e9e9ed7cd51cbc992a2597b53a",
+      "baseline_git_bytes": 5901,
+      "final_git_bytes": 6634,
+      "imports_removed": [
+        "dev.monaka.tracking.*",
+        "java.net.*",
+        "java.nio.file.*",
+        "java.util.concurrent.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.EffectiveConstraint",
+        "dev.monaka.tracking.MonakaConfiguration",
+        "dev.monaka.tracking.MonakaInputConfigurationApi",
+        "dev.monaka.tracking.MonakaInputRpcDispatcher",
+        "dev.monaka.tracking.MonakaRuntime",
+        "java.net.DatagramPacket",
+        "java.net.DatagramSocket",
+        "java.net.InetAddress",
+        "java.net.InetSocketAddress",
+        "java.nio.file.Files",
+        "java.nio.file.Path",
+        "java.nio.file.StandardOpenOption",
+        "java.util.concurrent.ConcurrentLinkedQueue",
+        "java.util.concurrent.Executors",
+        "java.util.concurrent.TimeUnit"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCapture.kt",
+      "baseline_sha256": "bc35eaed968c1ad61ee1fb8c8cfa0c88071371bf1f325a41991252d7ec90e1bb",
+      "baseline_git_blob": "fd03ad8e4b1582d56b4245c749c2f02ccba14553",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "fb66083452f8c47da132bf83737d7bf2c573d28435e4f878742bebcce36f98db",
+      "final_git_sha256": "2b274db6bd5964e218b195aa61ca9d6d0f637257664e3eacf8dd046ffa505118",
+      "baseline_git_bytes": 6014,
+      "final_git_bytes": 6413,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.ObservationDeviceState",
+        "dev.monaka.protocol.v2.TrackerObservation",
+        "dev.monaka.tracking.MonakaConfiguration",
+        "dev.monaka.tracking.MonakaRuntime"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCaptureTests.kt",
+      "baseline_sha256": "907966a3309713421e24a701e5f42b6cbf030d80765e20b157f72d760a4fb7ee",
+      "baseline_git_blob": "9f475f18f3c160b151543027bae2fe69950d3458",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "07bacfcd8184c02e1c20729439d25f9006243621312a9c20b55778261a719d10",
+      "final_git_sha256": "30092dbf1b741a7833634dfd7ddf364ed5926e9617589a63639255a35a3b0d5b",
+      "baseline_git_bytes": 5724,
+      "final_git_bytes": 6336,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.Validity",
+        "dev.monaka.tracking.LogicalTracker",
+        "dev.monaka.tracking.MonakaConfiguration",
+        "dev.monaka.tracking.TrackerBodyAssignments",
+        "kotlin.test.assertContentEquals",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpProcessE2E.kt",
+      "baseline_sha256": "1400a32c174827a7599ac1afea5e567c2765e15001fa3e0f17d6fc7b6b6ca1dc",
+      "baseline_git_blob": "659a770958c86d35feb8fbe575e99c9c862ceb7d",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "05da80395c72317350b6ba963c21ba1c011b6be14a2ab42f498f20e863fe474a",
+      "final_git_sha256": "d31b2ffe907b6b6e0188fa686ef03f620402f4271a00b8661b6289e9117f82c7",
+      "baseline_git_bytes": 19360,
+      "final_git_bytes": 20283,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.*",
+        "dev.slimevr.desktop.platform.ProtobufMessages.*",
+        "dev.slimevr.tracking.trackers.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.Confidence",
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.Envelope",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.protocol.v2.MtpTrackerState",
+        "dev.monaka.protocol.v2.Validity",
+        "dev.monaka.tracking.LogicalTracker",
+        "dev.monaka.tracking.MonakaConfiguration",
+        "dev.monaka.tracking.TrackerBodyAssignments",
+        "dev.slimevr.desktop.platform.ProtobufMessages.Position",
+        "dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage",
+        "dev.slimevr.desktop.platform.ProtobufMessages.TrackerAdded",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerRole",
+        "dev.slimevr.tracking.trackers.TrackerStatus"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/RawHmdPoseAdmissionTests.kt",
+      "baseline_sha256": "fddd541f02eddd9a81f5b50e470054ba1f8b1bf9b0dbb459702bec02071c4dbb",
+      "baseline_git_blob": "fbcb21a1699372e4d5e94e8cb3b932c1bc0c9611",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "14dbfb6a1301f73a4b416e7dac121018e00d034f27f9bad6a3dc7bb171639ca1",
+      "final_git_sha256": "74ae65c4e9e65612efc5ff2ce2abad3d9ac70638cff10ac89c9d9c81d8408083",
+      "baseline_git_bytes": 32231,
+      "final_git_bytes": 36084,
+      "imports_removed": [
+        "dev.monaka.tracking.*",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.*",
+        "dev.slimevr.desktop.platform.ProtobufMessages.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.ObservationSampleProvenance",
+        "dev.monaka.tracking.RawSourceIdentity",
+        "dev.monaka.tracking.RawSourceKind",
+        "dev.monaka.tracking.TrackingModality",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.CAPABILITY_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.CURRENT_SESSION_CHANGED",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.DATA_SOURCE_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.DATA_SOURCE_UNSUPPORTED",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_EPOCH_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_REFERENCE_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_SPACE_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_SPACE_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRESHNESS_POLICY_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FUTURE_RECEIPT_TIME",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.MAPPING_REVISION_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.OBSERVATION_ID_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.ORIENTATION_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_COMPONENTS_INCOMPLETE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_MODALITY_NOT_FULL",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_NONFINITE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.PROVIDER_SESSION_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.RAW_SPACE_GENERATION_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.RECEIPT_TIME_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SAMPLE_PROVENANCE_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SAMPLE_SEQUENCE_MISMATCH",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SAMPLE_STALE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SESSION_EPOCH_MISMATCH",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SESSION_EPOCH_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SOURCE_EPOCH_MISMATCH",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SOURCE_IDENTITY_MISMATCH",
+        "dev.slimevr.desktop.platform.ProtobufMessages.Position",
+        "dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage",
+        "dev.slimevr.desktop.platform.ProtobufMessages.TrackerAdded",
+        "dev.slimevr.tracking.trackers.Device",
+        "dev.slimevr.tracking.trackers.DeviceOrigin",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerRole",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/SolverCompositionIntegrationTests.kt",
+      "baseline_sha256": "2ee3dcd5c95197e13bebb46694b2118ca16bcad5a0862e349e6ad0f6a93f7df7",
+      "baseline_git_blob": "cff21bfa41650be1e725313f1ea6e6e074f9879d",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "04623c5424606278df58a8ea96dd7e1dfab46466192c398a7fc211e4e78646f4",
+      "final_git_sha256": "1c48db7b357f6d6c385be90e4ccf17f5761b4688a4de9ab67b98a1ba79478d4e",
+      "baseline_git_bytes": 11305,
+      "final_git_bytes": 13156,
+      "imports_removed": [
+        "dev.monaka.protocol.v2.*",
+        "dev.monaka.tracking.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.protocol.v2.DecodeResult",
+        "dev.monaka.protocol.v2.EncodeResult",
+        "dev.monaka.protocol.v2.MonakaCodec",
+        "dev.monaka.protocol.v2.MtpPose",
+        "dev.monaka.tracking.ConstraintIkWriteback",
+        "dev.monaka.tracking.LogicalTracker",
+        "dev.monaka.tracking.MonakaConfiguration",
+        "dev.monaka.tracking.MonakaSolverComposition",
+        "dev.monaka.tracking.OutputMode",
+        "dev.monaka.tracking.PositionCorrectionConfig",
+        "dev.monaka.tracking.PositionCorrectionFixedCalibrationConfig",
+        "dev.monaka.tracking.PositionCorrectionLearningTuningConfig",
+        "dev.monaka.tracking.PositionCorrectionMainMountCalibrationConfig",
+        "dev.monaka.tracking.PositionCorrectionPairingPolicyConfig",
+        "dev.monaka.tracking.PositionCorrectionPredictorPolicyConfig",
+        "dev.monaka.tracking.PositionCorrectionRawImuSpaceConfig",
+        "dev.monaka.tracking.PositionCorrectionReacquisitionTuningConfig",
+        "dev.monaka.tracking.ProductionPositionCorrectionGate",
+        "dev.monaka.tracking.RotationCorrectionConfig",
+        "dev.monaka.tracking.RotationCorrectionFrames",
+        "dev.monaka.tracking.RotationCorrectionTuning",
+        "dev.monaka.tracking.TrackerBodyAssignments",
+        "dev.monaka.tracking.TrackerReference",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFailsWith",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/StrongTrustedHmdPolicyTests.kt",
+      "baseline_sha256": "061d176034dc645b48700b54540b6df49a3363ec19d8d0f29eb8618185114cfc",
+      "baseline_git_blob": "bd576ce1d073479c91f4c11a0427b8de9a1ceecd",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "befe9deb0e7bf2d2d5c53dbe424b50384bdbc04589eead6817662cd9e87a3a0f",
+      "final_git_sha256": "0a0d9f78de88544987061eec334db3ac821dd80a6bed091077316562cc398a85",
+      "baseline_git_bytes": 23576,
+      "final_git_bytes": 25632,
+      "imports_removed": [
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.CAPABILITY_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.CURRENT_SESSION_CHANGED",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_REFERENCE_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_SPACE_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.OBSERVATION_ID_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.PROVIDER_EVIDENCE_INVALID",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.PROVIDER_SESSION_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.RAW_SPACE_GENERATION_UNAVAILABLE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SAMPLE_SEQUENCE_MISMATCH",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SAMPLE_STALE",
+        "dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SOURCE_IDENTITY_MISMATCH",
+        "dev.slimevr.tracking.trackers.Device",
+        "dev.slimevr.tracking.trackers.DeviceOrigin",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerRole",
+        "dev.slimevr.tracking.trackers.TrackerStatus",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/TrustedHmdPositionProvenanceTests.kt",
+      "baseline_sha256": "15c9f59b38887819c8d00a07761ded8f35103eaec2e7047179a1b612dc2f167a",
+      "baseline_git_blob": "556217aee4cbe9169fc3f893c78aa5c691e6a3ef",
+      "category": "manual",
+      "rules": [
+        "standard:no-wildcard-imports"
+      ],
+      "baseline_git_sha256": "cf773578e34196cb80bef43be8e67e0cadb1b28d94e2263a3aaa25dbfb1f43cd",
+      "final_git_sha256": "7b699d83e2e9b8de18ad1f2a13be0f685af54d709ee35f9033d17f61f86dc772",
+      "baseline_git_bytes": 18987,
+      "final_git_bytes": 19943,
+      "imports_removed": [
+        "dev.slimevr.desktop.platform.ProtobufMessages.*",
+        "dev.slimevr.tracking.trackers.*",
+        "kotlin.test.*"
+      ],
+      "imports_added": [
+        "dev.slimevr.desktop.platform.ProtobufMessages.Battery",
+        "dev.slimevr.desktop.platform.ProtobufMessages.Position",
+        "dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage",
+        "dev.slimevr.desktop.platform.ProtobufMessages.TrackerAdded",
+        "dev.slimevr.tracking.trackers.Device",
+        "dev.slimevr.tracking.trackers.DeviceOrigin",
+        "dev.slimevr.tracking.trackers.Tracker",
+        "dev.slimevr.tracking.trackers.TrackerPosition",
+        "dev.slimevr.tracking.trackers.TrackerRole",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertFalse",
+        "kotlin.test.assertIs",
+        "kotlin.test.assertNotEquals",
+        "kotlin.test.assertNotNull",
+        "kotlin.test.assertNull",
+        "kotlin.test.assertSame",
+        "kotlin.test.assertTrue"
+      ],
+      "changed_non_import_tokens": [
+        ",",
+        ";",
+        "{",
+        "}"
+      ],
+      "status": "reviewed-formatting-and-explicit-imports"
+    }
+  ]
+}
