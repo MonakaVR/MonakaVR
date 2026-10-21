@@ -1,11 +1,5 @@
-import {
-  useEffect,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
-} from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
-import { MonakaInputSettings } from './MonakaInputSettings';
 import { Button } from '@/components/commons/Button';
 import { BridgeController } from '@/bridge/controller';
 import {
@@ -262,10 +256,8 @@ export function BridgeControlPanel({ model }: { model: BridgeController }) {
 
 export function MonakaBridgeSettings({
   api = window.electronAPI?.bridge,
-  inputControls = <MonakaInputSettings />,
 }: {
   api?: BridgeDesktopApi;
-  inputControls?: ReactNode;
 }) {
   const [model, setModel] = useState<BridgeController | null>(null);
   useEffect(() => {
@@ -288,14 +280,8 @@ export function MonakaBridgeSettings({
           state: unknown.
         </p>
         <Link to="/">Return to MonakaVR</Link>
-        {inputControls}
       </main>
     );
   if (!model) return <p>Loading Bridge controls...</p>;
-  return (
-    <>
-      <BridgeControlPanel model={model} />
-      <div className="p-6">{inputControls}</div>
-    </>
-  );
+  return <BridgeControlPanel model={model} />;
 }
