@@ -2,8 +2,16 @@ package dev.monaka.tracking.desktop
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
-import dev.monaka.protocol.v2.*
-import dev.monaka.tracking.*
+import dev.monaka.protocol.v2.Confidence
+import dev.monaka.protocol.v2.DecodeResult
+import dev.monaka.protocol.v2.EncodeResult
+import dev.monaka.protocol.v2.Envelope
+import dev.monaka.protocol.v2.MonakaCodec
+import dev.monaka.protocol.v2.MtpPose
+import dev.monaka.protocol.v2.Validity
+import dev.monaka.tracking.LogicalTracker
+import dev.monaka.tracking.MonakaConfiguration
+import dev.monaka.tracking.TrackerBodyAssignments
 import dev.slimevr.tracking.trackers.TrackerPosition
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -14,7 +22,12 @@ import java.net.InetAddress
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.test.*
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 class MtpHilCaptureTests {
 	@TempDir lateinit var temporary: Path
@@ -38,8 +51,14 @@ class MtpHilCaptureTests {
 			capture.observation(bytes(fixture("observation")))
 			capture.mtp(bytes(p), "peer")
 			now += 10_000_000
-			val rotation = p.copy(sequence = 1, modality = "rotation_only", position = null,
-				validity = Validity(false, true), confidence = Confidence(0.0, 1.0), tracking_state = "degraded")
+			val rotation = p.copy(
+				sequence = 1,
+				modality = "rotation_only",
+				position = null,
+				validity = Validity(false, true),
+				confidence = Confidence(0.0, 1.0),
+				tracking_state = "degraded",
+			)
 			capture.mtp(bytes(rotation), "peer")
 			now += 400_000_000
 			capture.mtp(bytes(rotation), "peer")
@@ -61,13 +80,19 @@ class MtpHilCaptureTests {
 
 	@Test fun diagnosticProcessCapturesTwoUdpPortsAndRefusesExistingOutputDirectory() {
 		val p = assertIs<MtpPose>(fixture("mtp-pose"))
-		val cfg = temporary.resolve("config.json"); config(p).save(cfg)
+		val cfg = temporary.resolve("config.json")
+		config(p).save(cfg)
 		val original = Files.readAllBytes(cfg)
 		val output = temporary.resolve("capture")
 		fun process(log: String) = ProcessBuilder(
 			testJvmExecutable(),
-			"-cp", System.getProperty("monaka.test.classpath"), "dev.monaka.tracking.desktop.MtpHilCapture",
-			cfg.toString(), output.toString(), "2", "0",
+			"-cp",
+			System.getProperty("monaka.test.classpath"),
+			"dev.monaka.tracking.desktop.MtpHilCapture",
+			cfg.toString(),
+			output.toString(),
+			"2",
+			"0",
 		).redirectErrorStream(true).redirectOutput(temporary.resolve(log).toFile()).start()
 		val child = process("capture.log")
 		try {
@@ -76,7 +101,11 @@ class MtpHilCaptureTests {
 			var ports: JsonElement? = null
 			while (ports == null) {
 				assertTrue(child.isAlive && System.nanoTime() < deadline, "Capture failed: ${temporary.resolve("capture.log").toFile().readText()}")
-				ports = try { parse(Files.readString(manifest)).takeIf { it.isJsonObject && it.asJsonObject.has("mtp_port") } } catch (_: Exception) { null }
+				ports = try {
+					parse(Files.readString(manifest)).takeIf { it.isJsonObject && it.asJsonObject.has("mtp_port") }
+				} catch (_: Exception) {
+					null
+				}
 				Thread.sleep(5)
 			}
 			DatagramSocket().use { sender ->
@@ -93,10 +122,15 @@ class MtpHilCaptureTests {
 			val before = Files.readAllBytes(output.resolve("mtp.jsonl"))
 			val duplicate = process("duplicate.log")
 			try {
-				assertTrue(duplicate.waitFor(10, TimeUnit.SECONDS)); assertNotEquals(0, duplicate.exitValue())
-			} finally { if (duplicate.isAlive) duplicate.destroyForcibly().waitFor() }
+				assertTrue(duplicate.waitFor(10, TimeUnit.SECONDS))
+				assertNotEquals(0, duplicate.exitValue())
+			} finally {
+				if (duplicate.isAlive) duplicate.destroyForcibly().waitFor()
+			}
 			assertContentEquals(before, Files.readAllBytes(output.resolve("mtp.jsonl")))
-		} finally { if (child.isAlive) child.destroyForcibly().waitFor() }
+		} finally {
+			if (child.isAlive) child.destroyForcibly().waitFor()
+		}
 	}
 
 	@Test fun mismatchedLogicalTrackerIsDiagnosticOnlyAndCannotDriveHip() {
