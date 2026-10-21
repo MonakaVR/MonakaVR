@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": [
+    "../../src/monaka-status/**/*.ts",
+    "../../src/components/monaka-status/**/*.tsx",
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "references": []
+}
