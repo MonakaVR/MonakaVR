@@ -3,7 +3,7 @@
 ## 対象と確度
 
 - **Source of Truth**: `MonakaVR/MonakaVR` `dev` `f02f43e935f9ec42387b38a71483583ef8bc2837` とルート `AGENTS.md`。
-- 主Issue: [#2](https://github.com/MonakaVR/MonakaVR/issues/2)。分割作業: [#15](https://github.com/MonakaVR/MonakaVR/issues/15)（通常Tracker割当）と [#16](https://github.com/MonakaVR/MonakaVR/issues/16)（Bridge固有GUI/IPC/設定の撤去）。表示不具合の扱い: [#3](https://github.com/MonakaVR/MonakaVR/issues/3) の **B: Bridge画面撤去**。
+- 主Issue: [#2](https://github.com/MonakaVR/MonakaVR/issues/2)。分割作業: [#15](https://github.com/MonakaVR/MonakaVR/issues/15)（既存MVIP割当UIの独立配置）と [#16](https://github.com/MonakaVR/MonakaVR/issues/16)（Bridge固有GUI/IPC/設定の撤去）。表示不具合の扱い: [#3](https://github.com/MonakaVR/MonakaVR/issues/3) の **B: Bridge画面撤去**。
 - Bridge所有側の確認基準: `MonakaVR/MonakaBridge` `dev` `3473624a451ac172c36ea46cc5d897d84eadad43`。
 - **この文書はコード経路の一次監査と移行計画**。全行静的解析、実機/HIL、通常OSでのGUI操作、配布検証を実施したものではない。Stage実装時に全参照・CI/packageの再走査を要する。
 
@@ -15,18 +15,18 @@
 | Electron IPC / Preload | `monaka-bridge-ipc.ts`、`bridge-types.ts`、`bridge-health.ts`、`shared.ts`、`preload/index.ts`、`preload/interface.d.ts` | `BRIDGE_CONTROL`、`BRIDGE_OPEN`、`window.electronAPI.bridge` | Stage 2でBridge固有API/IPC撤去。一般IPCは保持 |
 | Electron app / tray | `gui/electron/main/index.ts`、`monaka-bridge-tray.ts` | `monakaBridge` paths prefs、ファイル選択、Bridgeサービス生成/破棄、Bridgeメニュー | Stage 2。既存ユーザー設定ファイルやBridge自身のconfigは破壊しない |
 | Renderer | `gui/src/App.tsx`、`MonakaBridgeSettings.tsx`、`gui/src/bridge/controller.ts`、`SettingsLayout.tsx` | 共通Providerを迂回する専用`/bridge`ルート、Bridge policy/health編集、専用設定リンク | Stage 2。残留リンク、深いURL、ショートカット、ブラウザ表示を回帰検証 |
-| **Consumerとして保持すべきUI** | `gui/src/components/settings/pages/MonakaInputSettings.tsx` | Core汎用ソース/Q/6DoF選択 | **現在はMonakaBridgeSettings内の子**。Stage 1で先に通常Tracker画面へ移す |
+| **Consumerとして保持すべきUI** | `gui/src/components/settings/pages/MonakaInputSettings.tsx` | Core汎用ソース/Q/6DoF選択 | **現在はMonakaBridgeSettings内の子**。Stage 1でUIを保持し、通常設定レイアウトの独立ルートへ移す |
 | Consumer input adapter | `gui/src/monaka-input/controller.ts`、`socket.ts`、`server/core/.../MonakaInputConfigurationApi.kt`、`MonakaInputRpcDispatcher.kt` | `monaka_inputs_v1`、静的capabilitiesと現在validity、保存/実行中の状態、Q/6DoF選択 | **Monaka所有として保持**。可能な限り再利用 |
-| 普通のTracker割当 | `gui/src/components/onboarding/pages/trackers-assign/TrackerAssignment.tsx`、`gui/src/components/tracker/SingleTrackerBodyAssignmentMenu.tsx` | SolarXR `AssignTrackerRequest`、Slimeトラッカー割当 | **Stage 1のUI結線先**。既存Slime動作を壊さずMVIPと合流 |
+| 普通のTracker割当 | `gui/src/components/onboarding/pages/trackers-assign/TrackerAssignment.tsx`、`gui/src/components/tracker/SingleTrackerBodyAssignmentMenu.tsx` | SolarXR `AssignTrackerRequest`、Slimeトラッカー割当 | **Stage 1では変更しない**。将来の共通割当UXはMVIP仕様確定後に別途設計 |
 | 旧PICO専用Core/Desktop | `server/core/src/main/java/dev/monaka/tracking/pico/**`、`server/desktop/src/main/java/dev/monaka/tracking/pico/**` | ベンダ固有受信/ネイティブJNAの旧参照実装 | Core/Desktopの**Kotlin・Java両sourceSetsで現在除外済み**。アーカイブは後続のmigration/HIL承認まで無断削除しない |
 | 正当なSlimeVR output Bridge | `server/desktop/.../SteamVRBridge.kt`、`ProtobufBridge.kt`、`server/core/.../dev/slimevr/bridge/**` | 主として既存VR出力/SlimeVR由来の内部接続 | **名前だけでProducer扱いしない**。既存SteamVR出力はMonaka consumer側で保持 |
 | Protocol/build/historical | `scripts/monaka_bridge_protocol_overlay.py`、`dependencies/task4/monaka-bridge-handoff.*`、`docs/gui-desktop-20261015`、`gui/tests/bridge*` | 過去の連携・smoke・評価資材 | 実行パス、package、依存を先に判定。必要な履歴/fixture/一般ローカライズ検証は保持・再配置 |
 
 ### 重大な順序依存
 
-`MonakaBridgeSettings`には、`inputControls = <MonakaInputSettings />` がデフォルトで入っている。`App.tsx`の`/bridge`ルートは通常の `ConfigContextProvider` / `WebSocketApiContext` / `AppLayout` 外の専用UIである。**単純にBridge画面を削除すると汎用Q/6DoF選択も消え、通常Slime割当への統合前に機能退行する。**
+`MonakaBridgeSettings`には、`inputControls = <MonakaInputSettings />` がデフォルトで入っている。`App.tsx`の`/bridge`ルートは通常の `ConfigContextProvider` / `WebSocketApiContext` / `AppLayout` 外の専用UIである。**単純にBridge画面を削除すると汎用Q/6DoF選択も消える。**
 
-**Stage 1を先に実施し、通常Tracker画面で汎用入力が実際に使用可能なことを確認してからStage 2の撤去を行う。** 単に別の専用「Monaka割当画面」を追加して対応済みとはしない。
+**Stage 1で現行MVIP入力割当UIを保持したまま、Bridgeとは独立した通常設定ルートで使えるようにし、Stage 2でBridge固有画面を撤去する。** SlimeVR Tracker割当UIとの統合は、MVIP仕様が固まった後の別フェーズとし、今回の責務分離条件にはしない。
 
 ## 責務の確定
 
@@ -38,11 +38,11 @@
 
 ## 実装フェーズとゲート
 
-### Stage 1 — [#15](https://github.com/MonakaVR/MonakaVR/issues/15): 汎用MVIP割当を通常Tracker UIへ統合
-- 独立した`monaka_inputs_v1`候補/世代制御を活用する。現行Slime `AssignTrackerRequest`とのモデル差を明示してUIアダプタ化し、IDの文字列近似で接続しない。
-- Pos+Qなら初回Q指定から6DoFも自動割当、Q-onlyはQのみ、Slime Q+別6DoFを明示指定。手動選択/解除を勝手に上書きしない。
-- producerなしでも通常Tracker画面がロードし、保存済みソース/無効状態/restartRequiredを表現。独立した二つの準拠Producer実装からの同一MVIP動作を試験。
-- 旧`/bridge`のGUIと設定Writerはこの段階では先走って削除しない。
+### Stage 1 — [#15](https://github.com/MonakaVR/MonakaVR/issues/15): 現行MVIP割当UIを保持してBridgeページから独立
+- `MonakaInputSettings`、`InputSelectionController`、`MonakaInputSocket`、Core `monaka_inputs_v1`/`MonakaConfiguration`の仕様を維持。Bridge専用サービスと設定Writerに依存しない通常設定ルートを確保する。
+- Q/6DoF選択、Pos+Q初回補完、Q-only、Slime Q+MVIP 6DoF、manualSix、saved/active/restartRequiredを既存どおり保持する。Slime `AssignTrackerRequest`への統合は実施しない。
+- producer/Bridge不在でも通常GUIと独立MVIP割当UIが機能すること、静的capabilitiesと現在validityを混同しないことを検証。独立した二つの準拠Producer実装のテストが未実施ならNOT RUNとして明記する。
+- 旧`/bridge`のBridge設定GUI・IPC・設定WriterはStage 2の担当であり、ここでは削除しない。
 
 ### Stage 2 — [#16](https://github.com/MonakaVR/MonakaVR/issues/16): Bridge固有の管理経路撤去
 - MonakaBridge owner GUI/CLIの設定・診断・復旧・配布導線を検証してから、MonakaVR側`/bridge`、Electron Bridge IPC/tray/service、preload、旧設定Writerを撤去。
