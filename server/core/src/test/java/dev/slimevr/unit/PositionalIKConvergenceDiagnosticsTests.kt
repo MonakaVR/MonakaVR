@@ -63,9 +63,8 @@ class PositionalIKConvergenceDiagnosticsTests {
 		val max: Float
 			get() = maxOf(hip, left, right)
 
-		fun mmString(tick: Int): String =
-			"$tick: hip=${hip * 1000f} mm, left=${left * 1000f} mm, " +
-				"right=${right * 1000f} mm, max=${max * 1000f} mm"
+		fun mmString(tick: Int): String = "$tick: hip=${hip * 1000f} mm, left=${left * 1000f} mm, " +
+			"right=${right * 1000f} mm, max=${max * 1000f} mm"
 	}
 
 	private fun boneResiduals(fixture: Fixture): Residuals {

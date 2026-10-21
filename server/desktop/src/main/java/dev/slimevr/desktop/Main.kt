@@ -10,8 +10,8 @@ import com.sun.jna.platform.win32.WinBase
 import com.sun.jna.platform.win32.WinDef
 import com.sun.jna.platform.win32.WinUser
 import dev.monaka.tracking.MonakaConfiguration
-import dev.monaka.tracking.desktop.MtpFeatureGate
 import dev.monaka.tracking.desktop.MonakaServerIntegration
+import dev.monaka.tracking.desktop.MtpFeatureGate
 import dev.slimevr.FeatureFlags
 import dev.slimevr.Keybinding
 import dev.slimevr.SLIMEVR_IDENTIFIER
@@ -133,7 +133,8 @@ fun main(args: Array<String>) {
 		return
 	}
 
-	if (cmd.hasOption("pico") || System.getProperties().stringPropertyNames().any { it.startsWith("monaka.pico.") } ||
+	if (cmd.hasOption("pico") ||
+		System.getProperties().stringPropertyNames().any { it.startsWith("monaka.pico.") } ||
 		System.getenv().keys.any { it.startsWith("MONAKA_PICO_") }
 	) {
 		LogManager.warning("Legacy PICO receiver settings are inactive. Configure monaka-mtp.json and opt in with --monaka-mtp; see docs/codex/task5/migration.md.")
@@ -189,8 +190,12 @@ fun main(args: Array<String>) {
 			configManager = configManager,
 		)
 
-		val monakaInputPath = if (mtpEnabled) System.getProperty("monaka.mtp.config")?.let { Path(it) }
-			?: File(configDir).absoluteFile.toPath().resolveSibling("monaka-mtp.json") else null
+		val monakaInputPath = if (mtpEnabled) {
+			System.getProperty("monaka.mtp.config")?.let { Path(it) }
+				?: File(configDir).absoluteFile.toPath().resolveSibling("monaka-mtp.json")
+		} else {
+			null
+		}
 		val mtpIntegration = try {
 			MonakaServerIntegration.startIfEnabled(
 				enabled = mtpEnabled,

@@ -1,11 +1,11 @@
 package dev.slimevr.desktop.platform
 
-import dev.slimevr.VRServer.Companion.instance
-import dev.monaka.tracking.desktop.RawHmdPoseInputCapability
-import dev.monaka.tracking.desktop.admitRawHmdPoseInput
 import dev.monaka.tracking.desktop.HmdProviderTransportAssociation
 import dev.monaka.tracking.desktop.REVIEWED_HMD_SAMPLE_TRANSPORT_V1
+import dev.monaka.tracking.desktop.RawHmdPoseInputCapability
+import dev.monaka.tracking.desktop.admitRawHmdPoseInput
 import dev.monaka.tracking.desktop.decodeHmdProviderSampleTransport
+import dev.slimevr.VRServer.Companion.instance
 import dev.slimevr.bridge.BridgeThread
 import dev.slimevr.bridge.ISteamVRBridge
 import dev.slimevr.desktop.platform.ProtobufMessages.*
@@ -37,8 +37,10 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 
 	/** Read-only historical ingress record; no coordinate-space or frame proof is implied. */
 	fun acceptedHmdPositionSample() = rawHmdPositions.snapshot()
+
 	/** Historical same-decoded-message copy; structural completeness does not establish tracking usability. */
 	fun acceptedHmdPoseMessageSample() = rawHmdPositions.poseMessageSnapshot()
+
 	/** Active-session acceptance candidate only; does not establish structural usability or freshness. */
 	fun acceptedCurrentSessionHmdPositionSample() = currentSessionHmdSample(rawHmdPositions::currentPositionSnapshot)
 	fun acceptedCurrentSessionHmdPoseMessageSample() = currentSessionHmdSample(rawHmdPositions::currentPoseMessageSnapshot)
@@ -53,8 +55,11 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	/** Future internal evidence producer seam; Ready must be scoped to one exact accepted pose. */
 	@VRServerThread
 	internal fun admitCurrentRawHmdPoseInput(capability: RawHmdPoseInputCapability) = admitRawHmdPoseInput(
-		capability, ::currentInboundTransportSession, rawHmdPositions::currentTrustedPoseSnapshot,
-		hmdPositionReceiptClock, rawHmdPositions::currentProviderSession,
+		capability,
+		::currentInboundTransportSession,
+		rawHmdPositions::currentTrustedPoseSnapshot,
+		hmdPositionReceiptClock,
+		rawHmdPositions::currentProviderSession,
 	)
 
 	private fun <T> currentSessionHmdSample(read: (String) -> T?): T? {
@@ -63,6 +68,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 		// A transition during this read fails closed. A later disconnect can still follow any read.
 		return if (currentInboundTransportSession() === before) sample else null
 	}
+
 	@JvmField
 	@VRServerThread
 	protected val sharedTrackers: MutableList<Tracker> = FastList()
@@ -93,8 +99,12 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 			val challenge = java.util.UUID.randomUUID().toString()
 			hmdTransportChallenge = challenge
 			outputQueue.removeIf { queued -> queued.hasUserAction() && queued.userAction.name == "$HMD_PROVIDER_CAPABILITY?" }
-			sendMessage(ProtobufMessage.newBuilder().setUserAction(UserAction.newBuilder()
-				.setName("$HMD_PROVIDER_CAPABILITY?").putActionArguments("connection", challenge)).build())
+			sendMessage(
+				ProtobufMessage.newBuilder().setUserAction(
+					UserAction.newBuilder()
+						.setName("$HMD_PROVIDER_CAPABILITY?").putActionArguments("connection", challenge),
+				).build(),
+			)
 		}
 	}
 
@@ -122,7 +132,9 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@Synchronize("self")
 	private val remoteTrackersByTrackerId: MutableMap<Int, Tracker> = HashMap()
 	private var hadNewData = false
+
 	@Volatile private var directOutputSupported = false
+
 	@Volatile private var directCapabilityToken: String? = null
 	private val directCapabilityLock = Any()
 	protected var directOutputTrackers: List<Tracker> = emptyList()
@@ -169,9 +181,8 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 		}
 	}
 
-	private fun isDirectMessage(message: ProtobufMessage): Boolean =
-		(message.hasPosition() && directOutputTrackers.any { it.id == message.position.trackerId }) ||
-			(message.hasTrackerAdded() && directOutputTrackers.any { it.id == message.trackerAdded.trackerId })
+	private fun isDirectMessage(message: ProtobufMessage): Boolean = (message.hasPosition() && directOutputTrackers.any { it.id == message.position.trackerId }) ||
+		(message.hasTrackerAdded() && directOutputTrackers.any { it.id == message.trackerAdded.trackerId })
 
 	@VRServerThread
 	override fun dataRead() {
@@ -270,7 +281,8 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@VRServerThread
 	@JvmOverloads
 	protected open fun processMessageReceived(
-		message: ProtobufMessage?, transportSession: TransportSessionHandle? = null,
+		message: ProtobufMessage?,
+		transportSession: TransportSessionHandle? = null,
 		receivedAtSystemNanos: Long? = null,
 	) {
 		// if(!message.hasPosition())
@@ -280,12 +292,17 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 		} else if (message.hasUserAction()) {
 			if (message.userAction.name == HMD_PROVIDER_CAPABILITY) {
 				synchronized(inboundTransportSession) {
-					if (transportSession != null && transportSession === currentInboundTransportSession() &&
-						hmdTransportChallenge != null && message.userAction.actionArgumentsMap["connection"] == hmdTransportChallenge) {
+					if (transportSession != null &&
+						transportSession === currentInboundTransportSession() &&
+						hmdTransportChallenge != null &&
+						message.userAction.actionArgumentsMap["connection"] == hmdTransportChallenge
+					) {
 						hmdTransportAssociation = HmdProviderTransportAssociation(transportSession.epoch, REVIEWED_HMD_SAMPLE_TRANSPORT_V1)
 					}
 				}
-			} else userActionReceived(message.userAction)
+			} else {
+				userActionReceived(message.userAction)
+			}
 		} else if (message.hasTrackerStatus()) {
 			trackerStatusReceived(message.trackerStatus, transportSession)
 		} else if (message.hasTrackerAdded()) {
@@ -300,7 +317,8 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@VRServerThread
 	@JvmOverloads
 	protected open fun positionReceived(
-		positionMessage: ProtobufMessages.Position, transportSession: TransportSessionHandle? = null,
+		positionMessage: ProtobufMessages.Position,
+		transportSession: TransportSessionHandle? = null,
 		receivedAtSystemNanos: Long? = null,
 	) {
 		val tracker = getInternalRemoteTrackerById(positionMessage.trackerId)
@@ -321,11 +339,20 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 				)
 				tracker.position = acceptedPosition
 				rawHmdPositions.positionMessageAccepted(
-					tracker, acceptedPosition, positionMessage, modality, transportSession?.epoch, isCurrentSession,
+					tracker,
+					acceptedPosition,
+					positionMessage,
+					modality,
+					transportSession?.epoch,
+					isCurrentSession,
 					receivedAtSystemNanos,
 					providerTransportEvidence = if (isCurrentSession &&
-						currentHmdProviderTransportAssociation()?.transportSessionEpoch == transportSession?.epoch)
-						decodeHmdProviderSampleTransport(positionMessage) else null,
+						currentHmdProviderTransportAssociation()?.transportSessionEpoch == transportSession?.epoch
+					) {
+						decodeHmdProviderSampleTransport(positionMessage)
+					} else {
+						null
+					},
 				)
 			}
 
@@ -392,12 +419,16 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	protected fun userActionReceived(userAction: ProtobufMessages.UserAction) {
 		if (userAction.name == DIRECT_CAPABILITY) {
 			val accepted = synchronized(directCapabilityLock) {
-				if (!directOutputSupported && directOutputTrackers.isNotEmpty() &&
-					directCapabilityToken != null && userAction.actionArgumentsMap["connection"] == directCapabilityToken
+				if (!directOutputSupported &&
+					directOutputTrackers.isNotEmpty() &&
+					directCapabilityToken != null &&
+					userAction.actionArgumentsMap["connection"] == directCapabilityToken
 				) {
 					directOutputSupported = true
 					true
-				} else false
+				} else {
+					false
+				}
 			}
 			if (accepted) {
 				LogManager.info("[$bridgeName] Compatible Direct output driver confirmed")
@@ -431,8 +462,9 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 		val tracker = getInternalRemoteTrackerById(trackerStatus.trackerId)
 		if (tracker != null) {
 			tracker.status = getById(trackerStatus.statusValue)!!
-			if (transportSession != null && transportSession === currentInboundTransportSession())
+			if (transportSession != null && transportSession === currentInboundTransportSession()) {
 				rawHmdPositions.trackingStatusChanged(tracker)
+			}
 		}
 	}
 

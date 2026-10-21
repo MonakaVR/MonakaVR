@@ -65,8 +65,7 @@ class ConstraintPipeline(
 		return ingestAll(observations, profile)
 	}
 
-	fun resolve(target: TrackerPosition): EffectiveConstraint =
-		resolver.resolve(target, store.observationsFor(target))
+	fun resolve(target: TrackerPosition): EffectiveConstraint = resolver.resolve(target, store.observationsFor(target))
 
 	fun resolve(
 		target: TrackerPosition,
@@ -76,17 +75,13 @@ class ConstraintPipeline(
 		store.observationsFor(target).map { applyFreshness(it, nowNanos) },
 	)
 
-	fun resolveAll(): Map<TrackerPosition, EffectiveConstraint> =
-		store.targets().associateWith { resolve(it) }
+	fun resolveAll(): Map<TrackerPosition, EffectiveConstraint> = store.targets().associateWith { resolve(it) }
 
-	fun resolveAll(nowNanos: Long): Map<TrackerPosition, EffectiveConstraint> =
-		store.targets().associateWith { resolve(it, nowNanos) }
+	fun resolveAll(nowNanos: Long): Map<TrackerPosition, EffectiveConstraint> = store.targets().associateWith { resolve(it, nowNanos) }
 
-	fun resolve(target: TrackerPosition, nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): EffectiveConstraint =
-		resolver.resolve(target, store.observationsFor(target).map { applyFreshness(it, nowNanos, assignment) }, assignment.targets)
+	fun resolve(target: TrackerPosition, nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): EffectiveConstraint = resolver.resolve(target, store.observationsFor(target).map { applyFreshness(it, nowNanos, assignment) }, assignment.targets)
 
-	fun resolveAll(nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): Map<TrackerPosition, EffectiveConstraint> =
-		store.targets().associateWith { resolve(it, nowNanos, assignment) }
+	fun resolveAll(nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): Map<TrackerPosition, EffectiveConstraint> = store.targets().associateWith { resolve(it, nowNanos, assignment) }
 
 	fun removeSource(sourceId: String): PoseObservation? {
 		sourceProfiles.remove(sourceId)
@@ -95,11 +90,9 @@ class ConstraintPipeline(
 
 	fun observations(): List<PoseObservation> = store.snapshot()
 
-	fun observations(nowNanos: Long): List<PoseObservation> =
-		store.snapshot().map { applyFreshness(it, nowNanos) }
+	fun observations(nowNanos: Long): List<PoseObservation> = store.snapshot().map { applyFreshness(it, nowNanos) }
 
-	fun observations(nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): List<PoseObservation> =
-		store.snapshot().map { applyFreshness(it, nowNanos, assignment) }
+	fun observations(nowNanos: Long, assignment: TrackerBodyAssignments.Snapshot): List<PoseObservation> = store.snapshot().map { applyFreshness(it, nowNanos, assignment) }
 
 	fun clear() {
 		store.clear()

@@ -19,9 +19,12 @@ data class RawSourceIdentity(
 	val isInternal: Boolean = false,
 	val isHmd: Boolean = false,
 ) {
-	init { require(sourceId.isNotBlank()) }
+	init {
+		require(sourceId.isNotBlank())
+	}
 	private val excluded get() = FeedbackExclusion.isOutput(sourceId) || isInternal
 	fun isRawHmd() = !excluded && kind == RawSourceKind.RAW_HMD && isHmd
+
 	// SteamVR's external HMD Tracker may carry isComputed=true; kind must come from ingress, not role alone.
 	fun isRawImu() = !excluded && kind == RawSourceKind.RAW_IMU && !isComputed && !isHmd
 	fun isRawBackend() = !excluded && kind == RawSourceKind.RAW_BACKEND && !isComputed && !isHmd
@@ -60,11 +63,16 @@ data class RawImuOrientationInput(
 
 /** Complete content identity owned by the immutable body-model snapshot factory. */
 data class BodyModelIdentity(val modelId: String, val epoch: String) {
-	init { require(modelId.isNotBlank() && epoch.isNotBlank()) }
+	init {
+		require(modelId.isNotBlank() && epoch.isNotBlank())
+	}
 }
+
 /** Complete identity; effective content/session epoch is owned by the numerical snapshot factory. */
 data class FixedCalibrationIdentity(val calibrationId: String, val epoch: String) {
-	init { require(calibrationId.isNotBlank() && epoch.isNotBlank()) }
+	init {
+		require(calibrationId.isNotBlank() && epoch.isNotBlank())
+	}
 }
 
 /** Assignment changes alter the input relation, even when all numeric values happen to match. */
@@ -86,8 +94,12 @@ data class PositionPredictionEpoch(
 	val commonWorldEpoch: String? = null,
 ) {
 	init {
-		require(listOf(hmdSourceId, hmdSourceEpoch, hmdCalibrationEpoch, imuSourceId, imuSourceEpoch,
-			imuCalibrationEpoch, bodyModelId, bodyModelEpoch, fixedCalibrationId, fixedCalibrationEpoch).all(String::isNotBlank))
+		require(
+			listOf(
+				hmdSourceId, hmdSourceEpoch, hmdCalibrationEpoch, imuSourceId, imuSourceEpoch,
+				imuCalibrationEpoch, bodyModelId, bodyModelEpoch, fixedCalibrationId, fixedCalibrationEpoch,
+			).all(String::isNotBlank),
+		)
 		require(assignmentGeneration >= 0)
 		require(commonWorldEpoch == null || commonWorldEpoch.isNotBlank())
 	}
@@ -120,9 +132,18 @@ data class PositionPredictionProvenance(
 
 /** A model prediction is derived data, never an independent absolute measurement. */
 enum class PositionPredictionDependency {
-	RAW_HMD, RAW_IMU, BODY_MODEL, FIXED_CALIBRATION, ROTATION_CORRECTION,
-	MAIN_OBSERVATION, RESOLVED_MAIN, IK_CONSTRAINT, COMPUTED_TRACKER,
-	BACKGROUND_IK, VISIBLE_OUTPUT, DIRECT_OUTPUT,
+	RAW_HMD,
+	RAW_IMU,
+	BODY_MODEL,
+	FIXED_CALIBRATION,
+	ROTATION_CORRECTION,
+	MAIN_OBSERVATION,
+	RESOLVED_MAIN,
+	IK_CONSTRAINT,
+	COMPUTED_TRACKER,
+	BACKGROUND_IK,
+	VISIBLE_OUTPUT,
+	DIRECT_OUTPUT,
 }
 
 /** Dormant value boundary. Future assembly reads one available live body snapshot once;
@@ -186,16 +207,27 @@ class PositionPrediction private constructor(
 	val dependencies: Set<PositionPredictionDependency>,
 ) {
 	companion object {
-		fun available(target: TrackerPosition, position: Vector3, space: CoordinateSpace?,
-			bodyReference: PositionBodyReference?, provenance: PositionPredictionProvenance?,
-			dependencies: Set<PositionPredictionDependency>): PositionPrediction {
+		fun available(
+			target: TrackerPosition,
+			position: Vector3,
+			space: CoordinateSpace?,
+			bodyReference: PositionBodyReference?,
+			provenance: PositionPredictionProvenance?,
+			dependencies: Set<PositionPredictionDependency>,
+		): PositionPrediction {
 			require(finite(position) && space != null && bodyReference != null && bodyReference != PositionBodyReference.UNKNOWN)
 			require(provenance != null && dependencies.isNotEmpty())
-			return PositionPrediction(target, position, space, bodyReference, PredictionValidity.AVAILABLE,
-				provenance, Collections.unmodifiableSet(dependencies.toSet()))
+			return PositionPrediction(
+				target,
+				position,
+				space,
+				bodyReference,
+				PredictionValidity.AVAILABLE,
+				provenance,
+				Collections.unmodifiableSet(dependencies.toSet()),
+			)
 		}
-		fun unavailable(target: TrackerPosition, space: CoordinateSpace? = null) = PositionPrediction(
-			target, null, space, null, PredictionValidity.UNAVAILABLE, null, emptySet())
+		fun unavailable(target: TrackerPosition, space: CoordinateSpace? = null) = PositionPrediction(target, null, space, null, PredictionValidity.UNAVAILABLE, null, emptySet())
 	}
 }
 
@@ -214,25 +246,33 @@ data class PositionTeacherEligibility(val eligibleForPairing: Boolean, val reaso
 /** Structural preflight only. Phase 2B must still define temporal pairing before learning. */
 object PositionCorrectionTeacherEligibility {
 	val forbiddenDependencies: Set<PositionPredictionDependency> = setOf(
-		PositionPredictionDependency.MAIN_OBSERVATION, PositionPredictionDependency.RESOLVED_MAIN,
-		PositionPredictionDependency.IK_CONSTRAINT, PositionPredictionDependency.COMPUTED_TRACKER,
-		PositionPredictionDependency.BACKGROUND_IK, PositionPredictionDependency.VISIBLE_OUTPUT,
-		PositionPredictionDependency.DIRECT_OUTPUT, PositionPredictionDependency.ROTATION_CORRECTION,
+		PositionPredictionDependency.MAIN_OBSERVATION,
+		PositionPredictionDependency.RESOLVED_MAIN,
+		PositionPredictionDependency.IK_CONSTRAINT,
+		PositionPredictionDependency.COMPUTED_TRACKER,
+		PositionPredictionDependency.BACKGROUND_IK,
+		PositionPredictionDependency.VISIBLE_OUTPUT,
+		PositionPredictionDependency.DIRECT_OUTPUT,
+		PositionPredictionDependency.ROTATION_CORRECTION,
 	)
-	private val requiredDependencies = setOf(PositionPredictionDependency.RAW_HMD,
-		PositionPredictionDependency.RAW_IMU, PositionPredictionDependency.BODY_MODEL,
-		PositionPredictionDependency.FIXED_CALIBRATION)
+	private val requiredDependencies = setOf(
+		PositionPredictionDependency.RAW_HMD,
+		PositionPredictionDependency.RAW_IMU,
+		PositionPredictionDependency.BODY_MODEL,
+		PositionPredictionDependency.FIXED_CALIBRATION,
+	)
 	private fun reject(reason: String) = PositionTeacherEligibility(false, reason)
+
 	// Equal TRACKER_MOUNT tags do not identify the same physical mounting point.
-	private fun directlyComparable(main: PositionBodyReference?, prediction: PositionBodyReference?) =
-		main == PositionBodyReference.HIP_CENTER && prediction == PositionBodyReference.HIP_CENTER
+	private fun directlyComparable(main: PositionBodyReference?, prediction: PositionBodyReference?) = main == PositionBodyReference.HIP_CENTER && prediction == PositionBodyReference.HIP_CENTER
 
 	fun check(prediction: PositionPrediction): PositionTeacherEligibility {
 		if (prediction.validity != PredictionValidity.AVAILABLE || prediction.position == null) return reject("prediction_unavailable")
 		if (!finite(prediction.position)) return reject("prediction_nonfinite")
 		if (prediction.space == null) return reject("prediction_space_unknown")
-		if (prediction.bodyReference == null || prediction.bodyReference == PositionBodyReference.UNKNOWN)
+		if (prediction.bodyReference == null || prediction.bodyReference == PositionBodyReference.UNKNOWN) {
 			return reject("prediction_body_reference_unknown")
+		}
 		if (prediction.provenance == null) return reject("prediction_provenance_missing")
 		if (prediction.provenance.epoch.coordinateSpace != prediction.space) return reject("prediction_space_epoch_mismatch")
 		if (prediction.dependencies.any { it in forbiddenDependencies }) return reject("feedback_dependency")
@@ -245,31 +285,51 @@ object PositionCorrectionTeacherEligibility {
 		val base = check(prediction)
 		if (!base.eligibleForPairing) return base
 		val main = input.mainTeacher
-		if (!main.rawOrigin.isRawBackend() || main.rawOrigin.sourceId != main.sourceId)
+		if (!main.rawOrigin.isRawBackend() || main.rawOrigin.sourceId != main.sourceId) {
 			return reject("main_not_raw_backend")
-		if (main.target != TrackerPosition.HIP || main.target != prediction.target ||
-			!main.positionQuality.usable || !finite(main.position))
+		}
+		if (main.target != TrackerPosition.HIP ||
+			main.target != prediction.target ||
+			!main.positionQuality.usable ||
+			!finite(main.position)
+		) {
 			return reject("main_position_invalid")
+		}
 		val mainProvenance = main.provenance
 		// Check nullable raw space before reading teacher.space, including malformed internal fixtures.
 		if (mainProvenance.space == null) return reject("main_space_unknown")
-		if (main.space != input.expectedSpace || mainProvenance.space != input.expectedSpace ||
-			prediction.space != input.expectedSpace)
+		if (main.space != input.expectedSpace ||
+			mainProvenance.space != input.expectedSpace ||
+			prediction.space != input.expectedSpace
+		) {
 			return reject("space_mismatch")
-		if (mainProvenance.commonWorldEpoch != prediction.provenance!!.epoch.commonWorldEpoch)
+		}
+		if (mainProvenance.commonWorldEpoch != prediction.provenance!!.epoch.commonWorldEpoch) {
 			return reject("common_world_epoch_mismatch")
+		}
 		if (main.bodyReference != prediction.bodyReference) return reject("body_reference_mismatch")
-		if (!directlyComparable(main.bodyReference, prediction.bodyReference))
+		if (!directlyComparable(main.bodyReference, prediction.bodyReference)) {
 			return reject("body_reference_not_comparable")
-		if (input.assignmentGeneration < 0 || input.expectedPredictionEpoch.coordinateSpace != input.expectedSpace ||
+		}
+		if (input.assignmentGeneration < 0 ||
+			input.expectedPredictionEpoch.coordinateSpace != input.expectedSpace ||
 			input.assignmentGeneration != input.expectedPredictionEpoch.assignmentGeneration ||
-			prediction.provenance!!.epoch != input.expectedPredictionEpoch) return reject("prediction_epoch_mismatch")
-		if (input.nowNanos < 0 || mainProvenance.sampleAtNanos > input.nowNanos ||
-			prediction.provenance.generatedAtNanos > input.nowNanos) return reject("future_sample")
+			prediction.provenance!!.epoch != input.expectedPredictionEpoch
+		) {
+			return reject("prediction_epoch_mismatch")
+		}
+		if (input.nowNanos < 0 ||
+			mainProvenance.sampleAtNanos > input.nowNanos ||
+			prediction.provenance.generatedAtNanos > input.nowNanos
+		) {
+			return reject("future_sample")
+		}
 		return base
 	}
 }
 
 private fun finite(position: Vector3) = listOf(position.x, position.y, position.z).all(Float::isFinite)
 private fun valid(orientation: Quaternion) = listOf(orientation.w, orientation.x, orientation.y, orientation.z)
-	.all(Float::isFinite) && orientation.lenSq().isFinite() && orientation.lenSq() > 1e-10f
+	.all(Float::isFinite) &&
+	orientation.lenSq().isFinite() &&
+	orientation.lenSq() > 1e-10f

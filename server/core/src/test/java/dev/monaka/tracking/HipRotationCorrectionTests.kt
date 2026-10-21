@@ -6,7 +6,11 @@ import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class HipRotationCorrectionTests {
 	private val space = CoordinateSpace("test-world", "rh_y_up_neg_z_forward", 2)
@@ -14,31 +18,53 @@ class HipRotationCorrectionTests {
 	private val imuId = "slime:imu"
 	private val identity = Quaternion.IDENTITY
 	private val halfYaw = Quaternion.rotationAroundYAxis(.5f)
-	private fun tuning(maxResidual: Double = 3.2, maxRate: Double = 1000.0, maxDt: Long = 100_000_000) =
-		RotationCorrectionTuning(2_000_000, 1_000_000, .0001, .0001, maxResidual, .1, maxRate, 1, maxDt, 100_000_000)
-	private fun controller(t: RotationCorrectionTuning = tuning(), mainMount: Quaternion = identity,
-		imuMount: Quaternion = identity) = HipRotationCorrection(RotationCorrectionFrames(mainMount, imuMount, space, true), t)
-	private fun sample(id: String, seq: Long, at: Long, q: Quaternion?, full: Boolean = false,
-		sourceEpoch: String = "session", calibrationEpoch: String = "mount", mapping: Long = 1,
-		spaceValue: CoordinateSpace = space, quality: ObservationQuality = ObservationQuality.TRACKED) = PoseObservation(
+	private fun tuning(maxResidual: Double = 3.2, maxRate: Double = 1000.0, maxDt: Long = 100_000_000) = RotationCorrectionTuning(2_000_000, 1_000_000, .0001, .0001, maxResidual, .1, maxRate, 1, maxDt, 100_000_000)
+	private fun controller(
+		t: RotationCorrectionTuning = tuning(),
+		mainMount: Quaternion = identity,
+		imuMount: Quaternion = identity,
+	) = HipRotationCorrection(RotationCorrectionFrames(mainMount, imuMount, space, true), t)
+	private fun sample(
+		id: String,
+		seq: Long,
+		at: Long,
+		q: Quaternion?,
+		full: Boolean = false,
+		sourceEpoch: String = "session",
+		calibrationEpoch: String = "mount",
+		mapping: Long = 1,
+		spaceValue: CoordinateSpace = space,
+		quality: ObservationQuality = ObservationQuality.TRACKED,
+	) = PoseObservation(
 		id, TrackerPosition.HIP, at, position = if (full) Vector3(1f, 2f, 3f) else null,
 		rotation = q, positionQuality = if (full) quality else ObservationQuality.UNAVAILABLE,
 		rotationQuality = if (q == null) ObservationQuality.UNAVAILABLE else quality,
-		modality = if (full) TrackingModality.FULL else if (q != null) TrackingModality.ROTATION_ONLY else TrackingModality.NONE,
+		modality = if (full) {
+			TrackingModality.FULL
+		} else if (q != null) {
+			TrackingModality.ROTATION_ONLY
+		} else {
+			TrackingModality.NONE
+		},
 		provenance = ObservationSampleProvenance(seq, at, sourceEpoch, calibrationEpoch, mapping, spaceValue),
 		correctionRotation = q,
 	)
-	private fun step(c: HipRotationCorrection, seq: Long, at: Long, qMain: Quaternion = halfYaw,
-		qImu: Quaternion = identity, full: Boolean = true, owner: String = mainId): EffectiveConstraint? =
-		c.update(sample(mainId, seq, at, qMain, full), sample(imuId, seq, at, qImu), owner, at, 1, space)
+	private fun step(
+		c: HipRotationCorrection,
+		seq: Long,
+		at: Long,
+		qMain: Quaternion = halfYaw,
+		qImu: Quaternion = identity,
+		full: Boolean = true,
+		owner: String = mainId,
+	): EffectiveConstraint? = c.update(sample(mainId, seq, at, qMain, full), sample(imuId, seq, at, qImu), owner, at, 1, space)
 	private fun ready(c: HipRotationCorrection) {
 		step(c, 1, 1_000_000)
 		step(c, 2, 4_000_000)
 		assertTrue(c.ready)
 		assertEquals(RotationCorrectionState.TRACKING, c.state)
 	}
-	private fun sameRotation(a: Quaternion, b: Quaternion) =
-		assertTrue(abs(a.unit().dot(b.unit())) > .9999f, "expected equivalent orientations: $a and $b")
+	private fun sameRotation(a: Quaternion, b: Quaternion) = assertTrue(abs(a.unit().dot(b.unit())) > .9999f, "expected equivalent orientations: $a and $b")
 
 	@Test fun fullLearningIsIndependentOfResolverOwnerAndMainIsNeverCorrected() {
 		val c = controller()
@@ -52,8 +78,16 @@ class HipRotationCorrectionTests {
 	@Test fun sameAcceptedSampleAndServerTicksNeverAdvanceLearningOrRecovery() {
 		val c = controller()
 		step(c, 1, 1_000_000)
-		repeat(10) { c.update(sample(mainId, 1, 1_000_000, halfYaw, true),
-			sample(imuId, 1, 1_000_000, identity), mainId, 50_000_000L + it, 1, space) }
+		repeat(10) {
+			c.update(
+				sample(mainId, 1, 1_000_000, halfYaw, true),
+				sample(imuId, 1, 1_000_000, identity),
+				mainId,
+				50_000_000L + it,
+				1,
+				space,
+			)
+		}
 		assertFalse(c.ready)
 		assertEquals(identity, c.correction)
 		step(c, 2, 4_000_000)
@@ -64,14 +98,32 @@ class HipRotationCorrectionTests {
 	@Test fun bothSourcesMustAdvanceAndRollbackIsRejected() {
 		val c = controller()
 		step(c, 1, 1_000_000)
-		c.update(sample(mainId, 2, 2_000_000, halfYaw, true), sample(imuId, 1, 1_000_000, identity),
-			mainId, 2_000_000, 1, space)
+		c.update(
+			sample(mainId, 2, 2_000_000, halfYaw, true),
+			sample(imuId, 1, 1_000_000, identity),
+			mainId,
+			2_000_000,
+			1,
+			space,
+		)
 		assertFalse(c.ready)
-		c.update(sample(mainId, 3, 4_000_000, halfYaw, true), sample(imuId, 2, 4_000_000, identity),
-			mainId, 4_000_000, 1, space)
+		c.update(
+			sample(mainId, 3, 4_000_000, halfYaw, true),
+			sample(imuId, 2, 4_000_000, identity),
+			mainId,
+			4_000_000,
+			1,
+			space,
+		)
 		assertTrue(c.ready)
-		c.update(sample(mainId, 1, 5_000_000, halfYaw, true), sample(imuId, 1, 5_000_000, identity),
-			mainId, 5_000_000, 1, space)
+		c.update(
+			sample(mainId, 1, 5_000_000, halfYaw, true),
+			sample(imuId, 1, 5_000_000, identity),
+			mainId,
+			5_000_000,
+			1,
+			space,
+		)
 		assertEquals(1, c.rejections["imu_sequence_rollback"])
 		assertEquals(4_000_000, c.lastLearnedAtNanos)
 	}
@@ -89,8 +141,16 @@ class HipRotationCorrectionTests {
 		assertNotNull(none?.rotation)
 		sameRotation(halfYaw, none.rotation!!.value)
 		assertEquals(halfYaw, c.correction) // loss did not reset to identity
-		assertNull(c.update(null, sample(imuId, 3, 5_000_000, identity, quality = ObservationQuality.STALE),
-			imuId, 6_000_000, 1, space))
+		assertNull(
+			c.update(
+				null,
+				sample(imuId, 3, 5_000_000, identity, quality = ObservationQuality.STALE),
+				imuId,
+				6_000_000,
+				1,
+				space,
+			),
+		)
 	}
 
 	@Test fun rawMainRemainsTeacherWhenResolverSelectedFallback() {
@@ -136,11 +196,20 @@ class HipRotationCorrectionTests {
 	}
 
 	@Test fun invalidQuaternionOutlierAndRateLimitFailClosed() {
-		for (bad in listOf(Quaternion(0f, 0f, 0f, 0f), Quaternion(Float.NaN, 0f, 0f, 0f),
-			Quaternion(Float.POSITIVE_INFINITY, 0f, 0f, 0f))) {
+		for (bad in listOf(
+			Quaternion(0f, 0f, 0f, 0f),
+			Quaternion(Float.NaN, 0f, 0f, 0f),
+			Quaternion(Float.POSITIVE_INFINITY, 0f, 0f, 0f),
+		)) {
 			val c = controller()
-			c.update(sample(mainId, 1, 1_000_000, bad, true), sample(imuId, 1, 1_000_000, identity),
-				mainId, 1_000_000, 1, space)
+			c.update(
+				sample(mainId, 1, 1_000_000, bad, true),
+				sample(imuId, 1, 1_000_000, identity),
+				mainId,
+				1_000_000,
+				1,
+				space,
+			)
 			assertFalse(c.ready)
 			assertEquals(1, c.rejections["main_rotation_invalid"])
 		}
@@ -190,8 +259,16 @@ class HipRotationCorrectionTests {
 		assertNull(c.update(main, imu, imuId, 1_800_000, 1, space))
 		assertEquals(1, c.rejections["main_timestamp_rollback"])
 		assertNull(c.lastLearnedAtNanos)
-		assertNull(c.update(sample("monaka-direct:hip", 2, 2_000_000, halfYaw, true), imu,
-			imuId, 2_000_000, 1, space))
+		assertNull(
+			c.update(
+				sample("monaka-direct:hip", 2, 2_000_000, halfYaw, true),
+				imu,
+				imuId,
+				2_000_000,
+				1,
+				space,
+			),
+		)
 		assertEquals(1, c.rejections["feedback_excluded"])
 	}
 
@@ -221,8 +298,16 @@ class HipRotationCorrectionTests {
 		ready(c)
 		val learned = c.correction
 		val learnedAt = c.lastLearnedAtNanos
-		assertNull(c.update(sample(mainId, 3, 200_000_000, halfYaw, true),
-			sample(imuId, 2, 4_000_000, identity), imuId, 200_000_000, 1, space))
+		assertNull(
+			c.update(
+				sample(mainId, 3, 200_000_000, halfYaw, true),
+				sample(imuId, 2, 4_000_000, identity),
+				imuId,
+				200_000_000,
+				1,
+				space,
+			),
+		)
 		assertEquals(learnedAt, c.lastLearnedAtNanos)
 		assertEquals(learned, c.correction)
 		assertTrue(c.ready)
@@ -237,9 +322,16 @@ class HipRotationCorrectionTests {
 	@Test fun pairWindowFailureDoesNotBlockHeldCorrectionApplication() {
 		val c = controller()
 		ready(c)
-		val held = c.correction; val learnedAt = c.lastLearnedAtNanos
-		val applied = c.update(sample(mainId, 3, 10_000_000, halfYaw, full = false),
-			sample(imuId, 3, 12_000_000, identity), imuId, 12_000_000, 1, space)
+		val held = c.correction
+		val learnedAt = c.lastLearnedAtNanos
+		val applied = c.update(
+			sample(mainId, 3, 10_000_000, halfYaw, full = false),
+			sample(imuId, 3, 12_000_000, identity),
+			imuId,
+			12_000_000,
+			1,
+			space,
+		)
 		sameRotation(held, applied!!.rotation!!.value)
 		assertEquals(1, c.rejections["pair_time_invalid"])
 		assertEquals(learnedAt, c.lastLearnedAtNanos)
@@ -253,9 +345,16 @@ class HipRotationCorrectionTests {
 	@Test fun repeatedAcceptedPairDoesNotLearnButCanStillApplyWhileFresh() {
 		val c = controller()
 		ready(c)
-		val held = c.correction; val learnedAt = c.lastLearnedAtNanos
-		val applied = c.update(sample(mainId, 2, 4_000_000, halfYaw, full = false),
-			sample(imuId, 2, 4_000_000, identity), imuId, 5_000_000, 1, space)
+		val held = c.correction
+		val learnedAt = c.lastLearnedAtNanos
+		val applied = c.update(
+			sample(mainId, 2, 4_000_000, halfYaw, full = false),
+			sample(imuId, 2, 4_000_000, identity),
+			imuId,
+			5_000_000,
+			1,
+			space,
+		)
 		sameRotation(held, applied!!.rotation!!.value)
 		assertEquals(1, c.rejections["same_sample"])
 		assertEquals(learnedAt, c.lastLearnedAtNanos)
@@ -269,9 +368,13 @@ class HipRotationCorrectionTests {
 		for (rollback in listOf("sequence", "timestamp")) {
 			val c = controller()
 			ready(c)
-			val held = c.correction; val learnedAt = c.lastLearnedAtNanos
-			val main = if (rollback == "sequence") sample(mainId, 1, 5_000_000, halfYaw, full = false)
-				else sample(mainId, 3, 3_000_000, halfYaw, full = false)
+			val held = c.correction
+			val learnedAt = c.lastLearnedAtNanos
+			val main = if (rollback == "sequence") {
+				sample(mainId, 1, 5_000_000, halfYaw, full = false)
+			} else {
+				sample(mainId, 3, 3_000_000, halfYaw, full = false)
+			}
 			val imu = sample(imuId, 3, 5_000_000, identity)
 			val applied = c.update(main, imu, imuId, 5_000_000, 1, space)
 			sameRotation(held, applied!!.rotation!!.value)
@@ -285,12 +388,24 @@ class HipRotationCorrectionTests {
 		val c = controller()
 		ready(c)
 		val held = c.correction
-		val unpaired = c.update(sample(mainId, 5, 10_000_000, halfYaw, full = false),
-			sample(imuId, 3, 12_000_000, identity), imuId, 12_000_000, 1, space)
+		val unpaired = c.update(
+			sample(mainId, 5, 10_000_000, halfYaw, full = false),
+			sample(imuId, 3, 12_000_000, identity),
+			imuId,
+			12_000_000,
+			1,
+			space,
+		)
 		sameRotation(held, unpaired!!.rotation!!.value)
 		assertEquals(1, c.rejections["pair_time_invalid"])
-		val rollback = c.update(sample(mainId, 4, 13_000_000, halfYaw, full = false),
-			sample(imuId, 4, 13_000_000, identity), imuId, 13_000_000, 1, space)
+		val rollback = c.update(
+			sample(mainId, 4, 13_000_000, halfYaw, full = false),
+			sample(imuId, 4, 13_000_000, identity),
+			imuId,
+			13_000_000,
+			1,
+			space,
+		)
 		sameRotation(held, rollback!!.rotation!!.value)
 		assertEquals(1, c.rejections["main_sequence_rollback"])
 		assertEquals(4_000_000, c.lastLearnedAtNanos)
@@ -300,10 +415,21 @@ class HipRotationCorrectionTests {
 		for (rollback in listOf("sequence", "timestamp")) {
 			val c = controller()
 			ready(c)
-			val imu = if (rollback == "sequence") sample(imuId, 1, 5_000_000, identity)
-				else sample(imuId, 3, 3_000_000, identity)
-			assertNull(c.update(sample(mainId, 3, 5_000_000, halfYaw, full = false), imu,
-				imuId, 5_000_000, 1, space))
+			val imu = if (rollback == "sequence") {
+				sample(imuId, 1, 5_000_000, identity)
+			} else {
+				sample(imuId, 3, 3_000_000, identity)
+			}
+			assertNull(
+				c.update(
+					sample(mainId, 3, 5_000_000, halfYaw, full = false),
+					imu,
+					imuId,
+					5_000_000,
+					1,
+					space,
+				),
+			)
 			assertEquals(1, c.rejections["imu_${rollback}_rollback"])
 			assertTrue(c.ready)
 			assertEquals(ApplicationDecision.BLOCKED, c.applicationDecision)
@@ -314,9 +440,16 @@ class HipRotationCorrectionTests {
 	@Test fun outlierAndLargeDtRejectLearningButRetainReadyFallbackApplication() {
 		val outlier = controller(tuning(maxResidual = .6))
 		ready(outlier)
-		val held = outlier.correction; val learnedAt = outlier.lastLearnedAtNanos
-		val applied = step(outlier, 3, 5_000_000, qMain = Quaternion.rotationAroundYAxis(2f),
-			full = false, owner = imuId)
+		val held = outlier.correction
+		val learnedAt = outlier.lastLearnedAtNanos
+		val applied = step(
+			outlier,
+			3,
+			5_000_000,
+			qMain = Quaternion.rotationAroundYAxis(2f),
+			full = false,
+			owner = imuId,
+		)
 		sameRotation(held, applied!!.rotation!!.value)
 		assertEquals(1, outlier.rejections["residual_outlier"])
 		assertEquals(learnedAt, outlier.lastLearnedAtNanos)
@@ -324,7 +457,8 @@ class HipRotationCorrectionTests {
 
 		val gap = controller(tuning(maxDt = 5_000_000))
 		ready(gap)
-		val gapHeld = gap.correction; val gapLearnedAt = gap.lastLearnedAtNanos
+		val gapHeld = gap.correction
+		val gapLearnedAt = gap.lastLearnedAtNanos
 		val gapApplied = step(gap, 3, 20_000_000, full = false, owner = imuId)
 		sameRotation(gapHeld, gapApplied!!.rotation!!.value)
 		assertEquals(1, gap.rejections["large_dt"])
@@ -336,16 +470,37 @@ class HipRotationCorrectionTests {
 		val c = controller()
 		ready(c)
 		assertNull(step(c, 3, 5_000_000, owner = mainId))
-		assertNull(c.update(null, sample(imuId, 3, 5_000_000,
-			Quaternion(Float.NaN, 0f, 0f, 0f)), imuId, 5_000_000, 1, space))
+		assertNull(
+			c.update(
+				null,
+				sample(
+					imuId,
+					3,
+					5_000_000,
+					Quaternion(Float.NaN, 0f, 0f, 0f),
+				),
+				imuId,
+				5_000_000,
+				1,
+				space,
+			),
+		)
 		assertEquals(1, c.rejections["imu_rotation_invalid"])
 	}
 
 	@Test fun fullMainOwnerDoesNotReportFallbackApplicationAsRequested() {
 		val c = controller()
 		ready(c)
-		assertNull(c.update(sample(mainId, 3, 200_000_000, halfYaw, true),
-			sample(imuId, 2, 4_000_000, identity), mainId, 200_000_000, 1, space))
+		assertNull(
+			c.update(
+				sample(mainId, 3, 200_000_000, halfYaw, true),
+				sample(imuId, 2, 4_000_000, identity),
+				mainId,
+				200_000_000,
+				1,
+				space,
+			),
+		)
 		assertEquals(ApplicationDecision.NOT_REQUESTED, c.applicationDecision)
 		assertEquals("owner_not_fallback", c.applicationReason)
 	}
