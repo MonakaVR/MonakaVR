@@ -129,13 +129,9 @@ class PicoMotionTrackerBridgeReceiverProviderTests {
 	@Test
 	fun pumpFailurePropagatesInsteadOfPublishingLastSnapshotAsFresh() {
 		val receiver = object : PicoMotionTrackerBridgeReceiverClient {
-			override fun pump() {
-				throw IllegalStateException("receiver failed")
-			}
+			override fun pump(): Unit = throw IllegalStateException("receiver failed")
 
-			override fun readSnapshot(): PicoMotionTrackerBridgeReceiverSnapshot {
-				throw AssertionError("snapshot must not be read after pump failure")
-			}
+			override fun readSnapshot(): PicoMotionTrackerBridgeReceiverSnapshot = throw AssertionError("snapshot must not be read after pump failure")
 		}
 
 		val exception = assertFailsWith<IllegalStateException> {

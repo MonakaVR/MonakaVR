@@ -71,17 +71,24 @@ class OutputContinuityController(
 
 	val fusionPhase: FusionPhase get() = when (state) {
 		ContinuityState.MAIN_DIRECT -> FusionPhase.FULL_6DOF
+
 		ContinuityState.REACQUIRING -> FusionPhase.RECOVERY_BLEND
+
 		ContinuityState.FALLBACK_ACTIVE -> when {
 			fullSince != null -> FusionPhase.RECOVERY_DWELL
 			lastOutput?.positionValid == true && lastOutput?.rotationValid == true -> FusionPhase.FALLBACK_IK
 			else -> FusionPhase.UNAVAILABLE
 		}
+
 		ContinuityState.UNAVAILABLE -> FusionPhase.UNAVAILABLE
 	}
+
 	/** Physical sample span, never wall time accumulated by repeated server ticks. */
-	val recoveryDwellElapsedNanos: Long get() = if (fullSince == null) 0 else
+	val recoveryDwellElapsedNanos: Long get() = if (fullSince == null) {
+		0
+	} else {
 		(latestFullSampleAt - firstFullSampleAt).coerceAtLeast(0)
+	}
 	val recoveryDwellThresholdNanos: Long get() = tuning.stableFullDwellNs
 	val hysteresisState: String get() = when (fusionPhase) {
 		FusionPhase.RECOVERY_DWELL -> "waiting_for_advancing_full_samples"
@@ -91,17 +98,22 @@ class OutputContinuityController(
 		FusionPhase.UNAVAILABLE -> "unavailable"
 	}
 
-	private fun fraction(now: Long, start: Long, duration: Long) =
-		((now - start).toDouble() / duration).coerceIn(0.0, 1.0).toFloat()
+	private fun fraction(now: Long, start: Long, duration: Long) = ((now - start).toDouble() / duration).coerceIn(0.0, 1.0).toFloat()
 	private fun interpolate(a: Vector3, b: Vector3, t: Float) = a * (1f - t) + b * t
 	private fun interpolate(a: Quaternion, b: Quaternion, t: Float) = a.unit().interpR(b.unit(), t).unit()
 	private fun blend(start: OutputPose, end: OutputPose, t: Float, source: OutputPositionSource, now: Long): OutputPose {
-		val position = ResolvedComponent(interpolate(start.position!!.value, end.position!!.value, t),
+		val position = ResolvedComponent(
+			interpolate(start.position!!.value, end.position!!.value, t),
 			if (source == OutputPositionSource.CONVERGENCE) "monaka-solver:convergence:${target.name}" else end.position.sourceId,
-			end.position.quality, now)
-		val rotation = ResolvedComponent(interpolate(start.rotation!!.value, end.rotation!!.value, t),
+			end.position.quality,
+			now,
+		)
+		val rotation = ResolvedComponent(
+			interpolate(start.rotation!!.value, end.rotation!!.value, t),
 			if (source == OutputPositionSource.CONVERGENCE) "monaka-solver:convergence:${target.name}" else end.rotation.sourceId,
-			end.rotation.quality, now)
+			end.rotation.quality,
+			now,
+		)
 		return OutputPose(target, end.space, position, rotation, source)
 	}
 
@@ -112,16 +124,24 @@ class OutputContinuityController(
 		mainPose = main
 		// A prior solver frame or unaligned pose is never eligible, even for reacquisition.
 		val fallback = background.pose?.takeIf {
-			!paused && it.target == target && it.space == main.space && it.positionValid && it.rotationValid &&
+			!paused &&
+				it.target == target &&
+				it.space == main.space &&
+				it.positionValid &&
+				it.rotationValid &&
 				it.positionSource == OutputPositionSource.BACKGROUND_IK &&
-				it.position!!.observedAtNanos == now && it.rotation!!.observedAtNanos == now
+				it.position!!.observedAtNanos == now &&
+				it.rotation!!.observedAtNanos == now
 		}
 		fallbackPose = fallback
 		positionResidual = if (main.position != null && fallback?.position != null) (main.position.value - fallback.position.value).len() else null
 		rotationResidual = if (main.rotation != null && fallback?.rotation != null) {
-			val a = main.rotation.value; val b = fallback.rotation.value
-			2f * kotlin.math.acos(kotlin.math.abs(a.w*b.w + a.x*b.x + a.y*b.y + a.z*b.z).coerceIn(0f, 1f))
-		} else null
+			val a = main.rotation.value
+			val b = fallback.rotation.value
+			2f * kotlin.math.acos(kotlin.math.abs(a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z).coerceIn(0f, 1f))
+		} else {
+			null
+		}
 		val full = main.positionValid && main.rotationValid
 		var next: ContinuityState
 		var reason: String
@@ -129,21 +149,40 @@ class OutputContinuityController(
 		blendProgress = null
 		when {
 			paused -> {
-				next = ContinuityState.UNAVAILABLE; reason = "paused"
-				lossSeen = false; fullSince = null; firstFullSampleAt = -1L; latestFullSampleAt = -1L
-				fallbackStart = null; reacquireStart = null
+				next = ContinuityState.UNAVAILABLE
+				reason = "paused"
+				lossSeen = false
+				fullSince = null
+				firstFullSampleAt = -1L
+				latestFullSampleAt = -1L
+				fallbackStart = null
+				reacquireStart = null
 				output = OutputPose(target, main.space)
 			}
+
 			policy == ContinuityPolicy.NONE -> {
-				next = if (full) ContinuityState.MAIN_DIRECT else if (main.rotationValid) ContinuityState.FALLBACK_ACTIVE else ContinuityState.UNAVAILABLE
+				next = if (full) {
+					ContinuityState.MAIN_DIRECT
+				} else if (main.rotationValid) {
+					ContinuityState.FALLBACK_ACTIVE
+				} else {
+					ContinuityState.UNAVAILABLE
+				}
 				reason = "resolved_components_only"
 			}
-			full && !lossSeen -> { next = ContinuityState.MAIN_DIRECT; reason = "main_full" }
+
+			full && !lossSeen -> {
+				next = ContinuityState.MAIN_DIRECT
+				reason = "main_full"
+			}
+
 			full -> {
 				// Both selected components must have been observed for this FULL sample.
 				val sampleAt = minOf(main.position!!.observedAtNanos, main.rotation!!.observedAtNanos)
 				if (fullSince == null) {
-					fullSince = now; firstFullSampleAt = sampleAt; latestFullSampleAt = sampleAt
+					fullSince = now
+					firstFullSampleAt = sampleAt
+					latestFullSampleAt = sampleAt
 				}
 				latestFullSampleAt = maxOf(latestFullSampleAt, sampleAt)
 				val previous = lastOutput?.takeIf { it.positionValid && it.rotationValid && it.space == main.space } ?: fallback
@@ -151,12 +190,17 @@ class OutputContinuityController(
 					// With no valid output or aligned IK pose there is nothing to blend from.
 					// Keep observing FULL while unavailable; never turn server ticks into dwell time.
 					if (latestFullSampleAt - firstFullSampleAt < tuning.stableFullDwellNs) {
-						next = ContinuityState.UNAVAILABLE; reason = "reacquisition_background_unavailable:${background.reason}"
+						next = ContinuityState.UNAVAILABLE
+						reason = "reacquisition_background_unavailable:${background.reason}"
 						output = OutputPose(target, main.space)
 					} else {
-						next = ContinuityState.MAIN_DIRECT; reason = "main_full_stable_without_anchor"
+						next = ContinuityState.MAIN_DIRECT
+						reason = "main_full_stable_without_anchor"
 						output = main.directOutput()
-						lossSeen = false; fullSince = null; firstFullSampleAt = -1L; latestFullSampleAt = -1L
+						lossSeen = false
+						fullSince = null
+						firstFullSampleAt = -1L
+						latestFullSampleAt = -1L
 					}
 					reacquireStart = null
 				} else if (reacquireStart == null && latestFullSampleAt - firstFullSampleAt < tuning.stableFullDwellNs) {
@@ -172,12 +216,28 @@ class OutputContinuityController(
 					// Dwell qualifies physical FULL samples; it must not accelerate angular
 					// correction beyond the configured recovery time scale. Keep position
 					// following and the dwell/blend deadlines unchanged.
-					val rotationProgress = if (now == fullSince) 0f else fraction(now, previousTick,
-						maxOf(tuning.stableFullDwellNs, tuning.reacquireDurationNs))
-					val rotation = ResolvedComponent(interpolate(previous.rotation!!.value, selectedRotation.value, rotationProgress),
-						selectedRotation.sourceId, selectedRotation.quality, now)
-					output = OutputPose(target, main.space, position, rotation,
-						if (fallback == null) previous.positionSource else OutputPositionSource.BACKGROUND_IK)
+					val rotationProgress = if (now == fullSince) {
+						0f
+					} else {
+						fraction(
+							now,
+							previousTick,
+							maxOf(tuning.stableFullDwellNs, tuning.reacquireDurationNs),
+						)
+					}
+					val rotation = ResolvedComponent(
+						interpolate(previous.rotation!!.value, selectedRotation.value, rotationProgress),
+						selectedRotation.sourceId,
+						selectedRotation.quality,
+						now,
+					)
+					output = OutputPose(
+						target,
+						main.space,
+						position,
+						rotation,
+						if (fallback == null) previous.positionSource else OutputPositionSource.BACKGROUND_IK,
+					)
 				} else {
 					if (reacquireStart == null) {
 						reacquireStart = previous
@@ -186,9 +246,14 @@ class OutputContinuityController(
 					val progress = fraction(now, transitionStartedAt, tuning.reacquireDurationNs)
 					blendProgress = progress
 					if (progress == 1f) {
-						next = ContinuityState.MAIN_DIRECT; reason = "convergence_complete"
-						output = main.directOutput(); lossSeen = false; fullSince = null; firstFullSampleAt = -1L
-						latestFullSampleAt = -1L; reacquireStart = null
+						next = ContinuityState.MAIN_DIRECT
+						reason = "convergence_complete"
+						output = main.directOutput()
+						lossSeen = false
+						fullSince = null
+						firstFullSampleAt = -1L
+						latestFullSampleAt = -1L
+						reacquireStart = null
 					} else {
 						next = ContinuityState.REACQUIRING
 						reason = if (fallback == null) "main_full_stable_background_missing" else "main_full_stable"
@@ -196,33 +261,49 @@ class OutputContinuityController(
 					}
 				}
 			}
+
 			else -> {
 				// Dwell shares FALLBACK_ACTIVE's native name, but its selected pose can
 				// already differ from current IK. A cancelled dwell is a fresh loss edge.
 				val cancelledDwell = fullSince != null
-				fullSince = null; firstFullSampleAt = -1L; latestFullSampleAt = -1L
+				fullSince = null
+				firstFullSampleAt = -1L
+				latestFullSampleAt = -1L
 				reacquireStart = null
 				val position = if (main.rotationValid) fallback?.position else null
 				lossSeen = lossSeen || lastOutput?.positionValid == true || position != null
-				val selected = OutputPose(target, main.space, position, main.rotation,
-					if (position == null) OutputPositionSource.NONE else OutputPositionSource.BACKGROUND_IK)
+				val selected = OutputPose(
+					target,
+					main.space,
+					position,
+					main.rotation,
+					if (position == null) OutputPositionSource.NONE else OutputPositionSource.BACKGROUND_IK,
+				)
 				if (position != null && (state != ContinuityState.FALLBACK_ACTIVE || cancelledDwell)) {
 					fallbackStart = lastOutput?.takeIf { it.positionValid && it.rotationValid && it.space == main.space }
 					fallbackStartedAt = now
 				}
-				output = if (position != null && fallbackStart != null)
+				output = if (position != null && fallbackStart != null) {
 					blend(fallbackStart!!, selected, fraction(now, fallbackStartedAt, tuning.fallbackBlendNs), OutputPositionSource.BACKGROUND_IK, now)
-				else selected
+				} else {
+					selected
+				}
 				if (position == null || now - fallbackStartedAt >= tuning.fallbackBlendNs) fallbackStart = null
 				next = if (main.rotationValid) ContinuityState.FALLBACK_ACTIVE else ContinuityState.UNAVAILABLE
 				reason = if (position != null) "main_loss_current_background" else "main_loss_no_pose_fallback:${background.reason}"
 			}
 		}
 		if (next != state) transitionStartedAt = now
-		state = next; lastOutput = output
-		val event = OutputTransition(target, state, main.main, main.position?.sourceId, main.rotation?.sourceId,
-			output.positionSource, output.rotation?.sourceId, fallback != null, reason)
-		if (event != previousEvent) { previousEvent = event; onTransition(event) }
+		state = next
+		lastOutput = output
+		val event = OutputTransition(
+			target, state, main.main, main.position?.sourceId, main.rotation?.sourceId,
+			output.positionSource, output.rotation?.sourceId, fallback != null, reason,
+		)
+		if (event != previousEvent) {
+			previousEvent = event
+			onTransition(event)
+		}
 		return output
 	}
 }

@@ -1,6 +1,5 @@
 package dev.monaka.tracking.pico.desktop
 
-import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
@@ -130,27 +129,6 @@ open class NativeClockEstimate : Structure() {
 	@JvmField var networkRoundTripNanos: Long = 0L
 }
 
-interface PicoMotionTrackerBridgeNativeLibrary : Library {
-	fun pico_ot_bridge_c_api_version(): Int
-	fun pico_ot_bridge_receiver_config_size(): Int
-	fun pico_ot_bridge_tracker_state_size(): Int
-	fun pico_ot_bridge_clock_estimate_size(): Int
-
-	fun pico_ot_bridge_receiver_default_config(config: NativeReceiverConfig)
-	fun pico_ot_bridge_receiver_create(): Pointer?
-	fun pico_ot_bridge_receiver_destroy(receiver: Pointer?)
-	fun pico_ot_bridge_receiver_start(receiver: Pointer?, config: NativeReceiverConfig): Int
-	fun pico_ot_bridge_receiver_stop(receiver: Pointer?)
-	fun pico_ot_bridge_receiver_pump(receiver: Pointer?): Int
-	fun pico_ot_bridge_receiver_is_running(receiver: Pointer?): Byte
-	fun pico_ot_bridge_receiver_listen_port(receiver: Pointer?): Short
-	fun pico_ot_bridge_receiver_active_sender_session_id(receiver: Pointer?): Long
-	fun pico_ot_bridge_receiver_tracker_count(receiver: Pointer?): Int
-	fun pico_ot_bridge_receiver_get_tracker(receiver: Pointer?, index: Int, out: NativeTrackerState): Int
-	fun pico_ot_bridge_receiver_get_clock_estimate(receiver: Pointer?, out: NativeClockEstimate): Byte
-	fun pico_ot_bridge_receiver_last_error(receiver: Pointer?): String?
-	fun pico_ot_bridge_status_string(status: Int): String?
-}
 
 /**
  * JNA client for the existing native PicoMotionTrackerBridge PC Receiver.

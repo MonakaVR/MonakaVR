@@ -1,0 +1,16 @@
+[
+  {
+    "module": "core",
+    "suites": 83,
+    "tests": 1951.0,
+    "failures": 0.0,
+    "skipped": 0.0
+  },
+  {
+    "module": "desktop",
+    "suites": 10,
+    "tests": 153.0,
+    "failures": 0.0,
+    "skipped": 0.0
+  }
+]

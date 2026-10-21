@@ -13,12 +13,11 @@ data class CandidateTrackerState(
 	val positionUsable: Boolean,
 	val rotationUsable: Boolean,
 ) {
-	fun fallbackRotationUsable(): Boolean =
-		when (modality) {
-			CandidateTrackingModality.FULL -> positionUsable && rotationUsable
-			CandidateTrackingModality.ROTATION_ONLY -> rotationUsable
-			CandidateTrackingModality.NONE -> false
-		}
+	fun fallbackRotationUsable(): Boolean = when (modality) {
+		CandidateTrackingModality.FULL -> positionUsable && rotationUsable
+		CandidateTrackingModality.ROTATION_ONLY -> rotationUsable
+		CandidateTrackingModality.NONE -> false
+	}
 }
 
 data class MainFallbackSelection(

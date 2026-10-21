@@ -34,8 +34,11 @@ class SlimeTrackerPoseObservationAdapter(
 		val position = if (tracker.hasPosition && modality == TrackingModality.FULL) tracker.position else null
 		val rotation = if (tracker.hasRotation && modality != TrackingModality.NONE) tracker.getRotation() else null
 		// Both observation and raw predictor boundaries use the same physical capture contract.
-		val sample = if (tracker.device != null && tracker.isImu() && rotation != null)
-			(independentImuCapture.capture(tracker, observedAtNanos) as? SlimeImuCaptureResult.Available)?.sample else null
+		val sample = if (tracker.device != null && tracker.isImu() && rotation != null) {
+			(independentImuCapture.capture(tracker, observedAtNanos) as? SlimeImuCaptureResult.Available)?.sample
+		} else {
+			null
+		}
 		val provenance = sample?.provenance
 
 		return PoseObservation(
@@ -52,5 +55,4 @@ class SlimeTrackerPoseObservationAdapter(
 			correctionRotation = sample?.orientation,
 		)
 	}
-
 }

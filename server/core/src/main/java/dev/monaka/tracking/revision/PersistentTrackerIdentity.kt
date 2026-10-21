@@ -23,8 +23,7 @@ data class PersistentTrackerIdentity(
 		require(trackerId.isNotBlank()) { "trackerId must not be blank" }
 	}
 
-	fun sourceLifetime(): SourceLifetimeIdentity =
-		SourceLifetimeIdentity(publisherId = publisherId, sourceId = sourceId)
+	fun sourceLifetime(): SourceLifetimeIdentity = SourceLifetimeIdentity(publisherId = publisherId, sourceId = sourceId)
 }
 
 /** Runtime lifetime namespace for one backend source as published by one Bridge. */

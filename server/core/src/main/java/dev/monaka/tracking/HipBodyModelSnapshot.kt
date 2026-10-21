@@ -39,12 +39,20 @@ class HipBodyModelSnapshot private constructor(
 			val invalid = fields.firstOrNull { !it.second.isFinite() }
 			if (invalid != null) return HipBodyModelSnapshotResult.Unavailable("nonfinite_${invalid.first}")
 			// Fixed schema/order, lowercase 8-digit IEEE-754 raw hex. Signed zero is distinct.
-			val epoch = EPOCH_SCHEMA + fields.joinToString(separator = "", prefix = ";") {
-				"${it.first}=${it.second.toRawBits().toUInt().toString(16).padStart(8, '0')};"
-			}
+			val epoch = EPOCH_SCHEMA +
+				fields.joinToString(separator = "", prefix = ";") {
+					"${it.first}=${it.second.toRawBits().toUInt().toString(16).padStart(8, '0')};"
+				}
 			return HipBodyModelSnapshotResult.Available(
-				HipBodyModelSnapshot(headShift, neckLength, upperChestLength, chestLength,
-					waistLength, hipLength, BodyModelIdentity(MODEL_ID, epoch)),
+				HipBodyModelSnapshot(
+					headShift,
+					neckLength,
+					upperChestLength,
+					chestLength,
+					waistLength,
+					hipLength,
+					BodyModelIdentity(MODEL_ID, epoch),
+				),
 			)
 		}
 	}
@@ -94,6 +102,7 @@ internal class HipBodyModelPublication {
 		for (offset in CENTER_CHAIN) it[offset] = offset.defaultValue
 	}
 	private var requiresCompleteRevalidation = false
+
 	@Volatile private var published = Published(0, snapshot())
 
 	fun current(): HipBodyModelSnapshotResult = published.result
@@ -136,11 +145,16 @@ internal class HipBodyModelPublication {
 		if (pending.offsets.isEmpty()) return
 		synchronized(commitLock) {
 			committed.putAll(pending.offsets)
-			if (!completed) requiresCompleteRevalidation = true
-			else if (pending.offsets.keys.containsAll(CENTER_CHAIN)) requiresCompleteRevalidation = false
+			if (!completed) {
+				requiresCompleteRevalidation = true
+			} else if (pending.offsets.keys.containsAll(CENTER_CHAIN)) {
+				requiresCompleteRevalidation = false
+			}
 			val result = if (requiresCompleteRevalidation) {
 				HipBodyModelSnapshotResult.Unavailable("offset_mutation_incomplete")
-			} else snapshot()
+			} else {
+				snapshot()
+			}
 			published = Published(published.sequence + 1, result)
 		}
 	}
@@ -155,8 +169,13 @@ internal class HipBodyModelPublication {
 	)
 
 	companion object {
-		private val CENTER_CHAIN = setOf(SkeletonConfigOffsets.HEAD, SkeletonConfigOffsets.NECK,
-			SkeletonConfigOffsets.UPPER_CHEST, SkeletonConfigOffsets.CHEST,
-			SkeletonConfigOffsets.WAIST, SkeletonConfigOffsets.HIP)
+		private val CENTER_CHAIN = setOf(
+			SkeletonConfigOffsets.HEAD,
+			SkeletonConfigOffsets.NECK,
+			SkeletonConfigOffsets.UPPER_CHEST,
+			SkeletonConfigOffsets.CHEST,
+			SkeletonConfigOffsets.WAIST,
+			SkeletonConfigOffsets.HIP,
+		)
 	}
 }

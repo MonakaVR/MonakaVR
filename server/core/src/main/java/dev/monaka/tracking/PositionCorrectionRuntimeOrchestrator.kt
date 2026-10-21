@@ -33,8 +33,13 @@ internal class PositionCorrectionRuntimeTick(
 }
 
 internal enum class PositionCorrectionAssemblyFailure {
-	SOURCES_ABSENT, HMD_SPACE_MISMATCH, IMU_SPACE_MISMATCH, FUTURE_HMD_SAMPLE,
-	FUTURE_IMU_SAMPLE, FIXED_HMD_SOURCE_MISMATCH, FIXED_BODY_MODEL_MISMATCH,
+	SOURCES_ABSENT,
+	HMD_SPACE_MISMATCH,
+	IMU_SPACE_MISMATCH,
+	FUTURE_HMD_SAMPLE,
+	FUTURE_IMU_SAMPLE,
+	FIXED_HMD_SOURCE_MISMATCH,
+	FIXED_BODY_MODEL_MISMATCH,
 	COMMON_WORLD_EPOCH_MISMATCH,
 }
 
@@ -44,13 +49,24 @@ internal sealed interface PositionCorrectionPredictorAssemblyResult {
 }
 
 internal enum class PositionCorrectionRuntimeRejectionReason {
-	TICK_SEQUENCE_INVALID, DUPLICATE_TICK, TICK_SEQUENCE_ROLLBACK, TIME_INVALID,
-	TIME_ROLLBACK, RESOLVED_TIME_MISMATCH, ASSIGNMENT_GENERATION_INVALID,
+	TICK_SEQUENCE_INVALID,
+	DUPLICATE_TICK,
+	TICK_SEQUENCE_ROLLBACK,
+	TIME_INVALID,
+	TIME_ROLLBACK,
+	RESOLVED_TIME_MISMATCH,
+	ASSIGNMENT_GENERATION_INVALID,
 }
 
 internal data class PositionCorrectionRuntimeCallCounts(
-	val predict: Int, val measure: Int, val observe: Int, val gap: Int,
-	val application: Int, val mainProjection: Int, val continuity: Int, val writeback: Int,
+	val predict: Int,
+	val measure: Int,
+	val observe: Int,
+	val gap: Int,
+	val application: Int,
+	val mainProjection: Int,
+	val continuity: Int,
+	val writeback: Int,
 )
 
 /** Evidence only; never an input acquisition or prediction/teacher authority. */
@@ -76,17 +92,27 @@ internal sealed interface PositionCorrectionRuntimeTickResult {
  * Implementations must preserve synchronous projection-to-commit calibration ownership.
  */
 internal interface PositionCorrectionRuntimeSolverSink {
-	fun projectMainEffectiveHipTarget(base: EffectiveConstraint, assignment: TrackerBodyAssignments.Snapshot,
-		nowNanos: Long): MainEffectiveHipTargetResult
-	fun applySolver(constraints: Map<TrackerPosition, SolverEffectiveConstraint>,
-		assignment: TrackerBodyAssignments.Snapshot): Map<TrackerPosition, ConstraintIkWriteback.ApplyResult>
+	fun projectMainEffectiveHipTarget(
+		base: EffectiveConstraint,
+		assignment: TrackerBodyAssignments.Snapshot,
+		nowNanos: Long,
+	): MainEffectiveHipTargetResult
+	fun applySolver(
+		constraints: Map<TrackerPosition, SolverEffectiveConstraint>,
+		assignment: TrackerBodyAssignments.Snapshot,
+	): Map<TrackerPosition, ConstraintIkWriteback.ApplyResult>
 }
 
 private class ConstraintPositionCorrectionSink(private val writeback: ConstraintIkWriteback) : PositionCorrectionRuntimeSolverSink {
-	override fun projectMainEffectiveHipTarget(base: EffectiveConstraint, assignment: TrackerBodyAssignments.Snapshot,
-		nowNanos: Long) = writeback.projectMainEffectiveHipTarget(base, assignment, nowNanos)
-	override fun applySolver(constraints: Map<TrackerPosition, SolverEffectiveConstraint>,
-		assignment: TrackerBodyAssignments.Snapshot) = writeback.applySolver(constraints, assignment)
+	override fun projectMainEffectiveHipTarget(
+		base: EffectiveConstraint,
+		assignment: TrackerBodyAssignments.Snapshot,
+		nowNanos: Long,
+	) = writeback.projectMainEffectiveHipTarget(base, assignment, nowNanos)
+	override fun applySolver(
+		constraints: Map<TrackerPosition, SolverEffectiveConstraint>,
+		assignment: TrackerBodyAssignments.Snapshot,
+	) = writeback.applySolver(constraints, assignment)
 }
 
 /** Explicit opt-in, dormant, synchronous active-tick pipeline. Each instance exclusively
@@ -101,10 +127,19 @@ internal class PositionCorrectionRuntimeOrchestrator(
 	reacquisitionTuning: PositionCorrectionReacquisitionTuning,
 	private val sink: PositionCorrectionRuntimeSolverSink,
 ) {
-	constructor(predictorPolicy: MainDecoupledHipPredictorPolicy, pairingPolicy: PositionTemporalPairingPolicy,
-		learningTuning: PositionCorrectionTuning, reacquisitionTuning: PositionCorrectionReacquisitionTuning,
-		writeback: ConstraintIkWriteback) : this(PureMainDecoupledHipPredictor(predictorPolicy), pairingPolicy,
-		learningTuning, reacquisitionTuning, ConstraintPositionCorrectionSink(writeback))
+	constructor(
+		predictorPolicy: MainDecoupledHipPredictorPolicy,
+		pairingPolicy: PositionTemporalPairingPolicy,
+		learningTuning: PositionCorrectionTuning,
+		reacquisitionTuning: PositionCorrectionReacquisitionTuning,
+		writeback: ConstraintIkWriteback,
+	) : this(
+		PureMainDecoupledHipPredictor(predictorPolicy),
+		pairingPolicy,
+		learningTuning,
+		reacquisitionTuning,
+		ConstraintPositionCorrectionSink(writeback),
+	)
 
 	private val learningLaw = PositionCorrectionLearningLaw(learningTuning)
 	private val continuity = PositionCorrectionSolverContinuity(reacquisitionTuning)
@@ -125,31 +160,66 @@ internal class PositionCorrectionRuntimeOrchestrator(
 		}
 		val epoch = prediction?.takeIf { it.validity == PredictionValidity.AVAILABLE }?.provenance?.epoch
 		val measurement = if (tick.teacher != null && epoch != null) {
-			PositionErrorMeasurement.evaluate(PositionCorrectionInput(tick.teacher.teacher, prediction,
-				tick.expectedSpace, epoch, assignment.generation, now), tick.teacher.expectedEpoch, pairingPolicy)
-		} else null
+			PositionErrorMeasurement.evaluate(
+				PositionCorrectionInput(
+					tick.teacher.teacher,
+					prediction,
+					tick.expectedSpace,
+					epoch,
+					assignment.generation,
+					now,
+				),
+				tick.teacher.expectedEpoch,
+				pairingPolicy,
+			)
+		} else {
+			null
+		}
 		// Exclusive branch: observe already advances its own reject/duplicate/outlier path.
 		val measured = measurement as? PositionErrorMeasurementResult.Measured
-		val learning = if (measured != null) learningLaw.observe(measured.sample)
-			else learningLaw.advanceWithoutMeasurement(now, epoch)
+		val learning = if (measured != null) {
+			learningLaw.observe(measured.sample)
+		} else {
+			learningLaw.advanceWithoutMeasurement(now, epoch)
+		}
 		val state = learning.state
 		check(state.lineage == null || state.lastStateAdvanceAtNanos == now)
 		val application = if (baseHip.position == null && epoch != null) {
 			PositionCorrectionApplication.prepare(prediction, state, baseHip, assignment, tick.expectedSpace, now)
-		} else null
+		} else {
+			null
+		}
 		// No callback, reset, rebuild or handoff between this projection and final commit.
 		val projection = if (baseHip.position != null) sink.projectMainEffectiveHipTarget(baseHip, assignment, now) else null
-		val selected = continuity.select(PositionCorrectionSolverContinuityInput(now, tick.resolvedAtNanos,
-			tick.expectedSpace, assignment, baseHip, state, application as? PositionCorrectionApplicationResult.Ready,
-			(projection as? MainEffectiveHipTargetResult.Available)?.target))
+		val selected = continuity.select(
+			PositionCorrectionSolverContinuityInput(
+				now,
+				tick.resolvedAtNanos,
+				tick.expectedSpace,
+				assignment,
+				baseHip,
+				state,
+				application as? PositionCorrectionApplicationResult.Ready,
+				(projection as? MainEffectiveHipTargetResult.Available)?.target,
+			),
+		)
 		val finalMap = immutableMap(resolved.mapValues { it.value.solverConstraint() } + (TrackerPosition.HIP to selected.constraint))
 		// Last side-effect operation. Partial receipts are diagnostics, never a second-write trigger.
 		val receipt = immutableMap(sink.applySolver(finalMap, assignment))
-		return PositionCorrectionRuntimeTickResult.Processed(tick.tickSequence, now, assembly, prediction,
+		return PositionCorrectionRuntimeTickResult.Processed(
+			tick.tickSequence, now, assembly, prediction,
 			measurement, learning, application, projection, selected, finalMap, receipt,
-			PositionCorrectionRuntimeCallCounts(if (prediction != null) 1 else 0, if (measurement != null) 1 else 0,
-				if (measured != null) 1 else 0, if (measured == null) 1 else 0, if (application != null) 1 else 0,
-				if (projection != null) 1 else 0, 1, 1))
+			PositionCorrectionRuntimeCallCounts(
+				if (prediction != null) 1 else 0,
+				if (measurement != null) 1 else 0,
+				if (measured != null) 1 else 0,
+				if (measured == null) 1 else 0,
+				if (application != null) 1 else 0,
+				if (projection != null) 1 else 0,
+				1,
+				1,
+			),
+		)
 	}
 
 	private fun preflight(t: PositionCorrectionRuntimeTick): PositionCorrectionRuntimeRejectionReason? = when {
@@ -168,14 +238,25 @@ internal class PositionCorrectionRuntimeOrchestrator(
 		val s = t.predictorSources ?: return unavailable(PositionCorrectionAssemblyFailure.SOURCES_ABSENT)
 		if (s.rawHmd.space != t.expectedSpace) return unavailable(PositionCorrectionAssemblyFailure.HMD_SPACE_MISMATCH)
 		if (s.rawImu.space != t.expectedSpace) return unavailable(PositionCorrectionAssemblyFailure.IMU_SPACE_MISMATCH)
-		if (s.rawHmd.provenance.commonWorldEpoch != s.rawImu.provenance.commonWorldEpoch)
+		if (s.rawHmd.provenance.commonWorldEpoch != s.rawImu.provenance.commonWorldEpoch) {
 			return unavailable(PositionCorrectionAssemblyFailure.COMMON_WORLD_EPOCH_MISMATCH)
+		}
 		if (s.rawHmd.provenance.sampleAtNanos > t.nowNanos) return unavailable(PositionCorrectionAssemblyFailure.FUTURE_HMD_SAMPLE)
 		if (s.rawImu.provenance.sampleAtNanos > t.nowNanos) return unavailable(PositionCorrectionAssemblyFailure.FUTURE_IMU_SAMPLE)
 		if (s.fixedCalibration.hmdSourceId != s.rawHmd.source.sourceId) return unavailable(PositionCorrectionAssemblyFailure.FIXED_HMD_SOURCE_MISMATCH)
 		if (s.fixedCalibration.bodyModelId != s.bodyModel.identity.modelId) return unavailable(PositionCorrectionAssemblyFailure.FIXED_BODY_MODEL_MISMATCH)
-		return PositionCorrectionPredictorAssemblyResult.Available(MainDecoupledHipInput(s.rawHmd, s.rawImu,
-			s.bodyModel, s.fixedCalibration, t.expectedSpace, t.assignment.generation, t.nowNanos, t.tickSequence))
+		return PositionCorrectionPredictorAssemblyResult.Available(
+			MainDecoupledHipInput(
+				s.rawHmd,
+				s.rawImu,
+				s.bodyModel,
+				s.fixedCalibration,
+				t.expectedSpace,
+				t.assignment.generation,
+				t.nowNanos,
+				t.tickSequence,
+			),
+		)
 	}
 }
 

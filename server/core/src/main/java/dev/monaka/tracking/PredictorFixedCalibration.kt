@@ -26,16 +26,22 @@ class PredictorFixedCalibrationSnapshot private constructor(
 		 * sessionEpoch identifies physical fit/recalibration or loaded calibration session, not samples.
 		 * Effective epoch is factory-owned; body content and world/provider epochs are independent.
 		 */
-		fun create(calibrationId: String, sessionEpoch: String, hmdSourceId: String, bodyModelId: String,
+		fun create(
+			calibrationId: String,
+			sessionEpoch: String,
+			hmdSourceId: String,
+			bodyModelId: String,
 			hmdToHeadAnchorLocalOffset: Vector3,
-			hmdToHeadAnchorOrientation: Quaternion): PredictorFixedCalibrationSnapshotResult {
+			hmdToHeadAnchorOrientation: Quaternion,
+		): PredictorFixedCalibrationSnapshotResult {
 			if (calibrationId.isBlank()) return reject(PredictorFixedCalibrationRejectionReason.CALIBRATION_ID_BLANK)
 			if (sessionEpoch.isBlank()) return reject(PredictorFixedCalibrationRejectionReason.SESSION_EPOCH_BLANK)
 			if (hmdSourceId.isBlank()) return reject(PredictorFixedCalibrationRejectionReason.HMD_SOURCE_ID_BLANK)
 			if (bodyModelId.isBlank()) return reject(PredictorFixedCalibrationRejectionReason.BODY_MODEL_ID_BLANK)
 			val offset = hmdToHeadAnchorLocalOffset
-			if (!listOf(offset.x, offset.y, offset.z).all(Float::isFinite))
+			if (!listOf(offset.x, offset.y, offset.z).all(Float::isFinite)) {
 				return reject(PredictorFixedCalibrationRejectionReason.OFFSET_NONFINITE)
+			}
 			val q = canonicalOrientation(hmdToHeadAnchorOrientation)
 				?: return reject(PredictorFixedCalibrationRejectionReason.ORIENTATION_INVALID)
 			// Length-prefixed opaque strings; fixed order and exact 8-digit Float raw bits.
@@ -44,12 +50,10 @@ class PredictorFixedCalibrationSnapshot private constructor(
 				"model=${bodyModelId.length}:$bodyModelId;session=${sessionEpoch.length}:$sessionEpoch;" +
 				listOf(offset.x, offset.y, offset.z, q.w, q.x, q.y, q.z)
 					.joinToString(";") { it.toRawBits().toUInt().toString(16).padStart(8, '0') }
-			return PredictorFixedCalibrationSnapshotResult.Available(PredictorFixedCalibrationSnapshot(
-				FixedCalibrationIdentity(calibrationId, epoch), hmdSourceId, bodyModelId, sessionEpoch, offset, q))
+			return PredictorFixedCalibrationSnapshotResult.Available(PredictorFixedCalibrationSnapshot(FixedCalibrationIdentity(calibrationId, epoch), hmdSourceId, bodyModelId, sessionEpoch, offset, q))
 		}
 
-		private fun reject(reason: PredictorFixedCalibrationRejectionReason) =
-			PredictorFixedCalibrationSnapshotResult.Unavailable(reason)
+		private fun reject(reason: PredictorFixedCalibrationRejectionReason) = PredictorFixedCalibrationSnapshotResult.Unavailable(reason)
 
 		private fun canonicalOrientation(q: Quaternion): Quaternion? {
 			val components = listOf(q.w, q.x, q.y, q.z)
@@ -69,8 +73,12 @@ class PredictorFixedCalibrationSnapshot private constructor(
 }
 
 enum class PredictorFixedCalibrationRejectionReason {
-	CALIBRATION_ID_BLANK, SESSION_EPOCH_BLANK, HMD_SOURCE_ID_BLANK, BODY_MODEL_ID_BLANK,
-	OFFSET_NONFINITE, ORIENTATION_INVALID,
+	CALIBRATION_ID_BLANK,
+	SESSION_EPOCH_BLANK,
+	HMD_SOURCE_ID_BLANK,
+	BODY_MODEL_ID_BLANK,
+	OFFSET_NONFINITE,
+	ORIENTATION_INVALID,
 }
 
 sealed interface PredictorFixedCalibrationSnapshotResult {

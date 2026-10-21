@@ -790,13 +790,19 @@ class HumanSkeleton(
 		var headRot = IDENTITY
 		headTracker?.let { head ->
 			// Set head position
-			if (head.hasPosition) headBone.setPosition(head.position)
-			else if (constraintInputView != null && !localizer.getEnabled()) headBone.setPosition(NULL)
+			if (head.hasPosition) {
+				headBone.setPosition(head.position)
+			} else if (constraintInputView != null && !localizer.getEnabled()) {
+				headBone.setPosition(NULL)
+			}
 
 			// Get head rotation
-			headRot = if (constraintInputView == null || head.hasRotation) head.getRotation()
-			else getFirstAvailableTracker(neckTracker, upperChestTracker, chestTracker, waistTracker, hipTracker)
-				?.getRotation() ?: IDENTITY
+			headRot = if (constraintInputView == null || head.hasRotation) {
+				head.getRotation()
+			} else {
+				getFirstAvailableTracker(neckTracker, upperChestTracker, chestTracker, waistTracker, hipTracker)
+					?.getRotation() ?: IDENTITY
+			}
 
 			// Set head rotation
 			headBone.setRotation(headRot)
