@@ -11,13 +11,13 @@ import dev.slimevr.util.InterpolationHandler
 import io.eiren.util.BufferedTimer
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.properties.Delegates
 import kotlin.time.Duration.Companion.microseconds
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.TimeSource
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicLong
 
 const val TIMEOUT_MS = 2_000L
 const val DISCONNECT_MS = 3_000L + TIMEOUT_MS
@@ -118,16 +118,21 @@ class Tracker @JvmOverloads constructor(
 	private var timeAtLastUpdate: Long = System.currentTimeMillis()
 	private var timeScheduledSleep: Long = Long.MAX_VALUE
 	private var _rotation = Quaternion.IDENTITY
+
 	/** Incremented only by an accepted orientation write, never by tick, heartbeat or poll. */
 	data class OrientationSample(val sequence: Long, val receivedAtSystemNanos: Long)
 	private val orientationSequence = AtomicLong()
+
 	@Volatile private var orientationSample: OrientationSample? = null
 	private val observationInstance = UUID.randomUUID().toString()
 	private val reconnectGeneration = AtomicLong()
 	val correctionSourceEpoch: String get() = "$observationInstance:${reconnectGeneration.get()}"
 	fun correctionOrientationSample(): OrientationSample? = orientationSample
+
 	/** A UDP handshake can reuse this Tracker without an intervening status change. */
-	fun markObservationReconnect() { reconnectGeneration.incrementAndGet() }
+	fun markObservationReconnect() {
+		reconnectGeneration.incrementAndGet()
+	}
 
 	// IMU: +z forward, +x left, +y up
 	// SlimeVR: +z backward, +x right, +y up
@@ -146,8 +151,10 @@ class Tracker @JvmOverloads constructor(
 	private val velocityState = VelocityState()
 
 	var position = Vector3.NULL
+
 	/** Optional upstream sample capability. Only the opt-in Monaka adapter reads it. */
 	var sampleModality: dev.monaka.tracking.TrackingModality? = null
+
 	/** Non-null only on explicit Direct/Hybrid output objects. Null preserves legacy serialization. */
 	var monakaOutputPose: dev.monaka.tracking.OutputPose? = null
 		internal set

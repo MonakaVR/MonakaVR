@@ -4,7 +4,8 @@ import dev.slimevr.tracking.trackers.TrackerPosition
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class AssignedImuSampleFreshnessTests {
 	private val mainId = "mtp:main"
@@ -13,16 +14,23 @@ class AssignedImuSampleFreshnessTests {
 		it.configure(TrackerPosition.HIP, TrackerReference(mainId), TrackerReference(imuId))
 	}
 	private val filter = AssignedImuSampleFreshness(assignments, 10)
-	private fun pipeline() = ConstraintPipeline(
-		resolver = ConstraintResolver { assignments.snapshot().targets }, eligibility = filter::apply)
-	private fun main(modality: TrackingModality, at: Long) = PoseObservation(mainId, TrackerPosition.HIP, at,
+	private fun pipeline() = ConstraintPipeline(resolver = ConstraintResolver { assignments.snapshot().targets }, eligibility = filter::apply)
+	private fun main(modality: TrackingModality, at: Long) = PoseObservation(
+		mainId,
+		TrackerPosition.HIP,
+		at,
 		position = if (modality == TrackingModality.FULL) Vector3(1f, 2f, 3f) else null,
 		rotation = if (modality == TrackingModality.NONE) null else Quaternion.rotationAroundYAxis(.5f),
-		modality = modality)
+		modality = modality,
+	)
 	private fun imu(polledAt: Long, sampleAt: Long?, sequence: Long = 1) = PoseObservation(
-		imuId, TrackerPosition.HIP, polledAt, rotation = Quaternion.IDENTITY,
+		imuId,
+		TrackerPosition.HIP,
+		polledAt,
+		rotation = Quaternion.IDENTITY,
 		provenance = sampleAt?.let { ObservationSampleProvenance(sequence, it, "session", "mount") },
-		correctionRotation = Quaternion.IDENTITY)
+		correctionRotation = Quaternion.IDENTITY,
+	)
 
 	@Test fun physicalAgeChangesEligibilityBeforePolicyWithoutChangingOtherSources() {
 		val p = pipeline()
@@ -44,8 +52,7 @@ class AssignedImuSampleFreshnessTests {
 	@Test fun futureOrUnknownPhysicalSampleFailsClosedButLegacyUnassignedIsUnchanged() {
 		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, 21), 20).rotationQuality)
 		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, null), 20).rotationQuality)
-		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, 20).copy(
-			correctionRotation = Quaternion(Float.NaN, 0f, 0f, 0f)), 20).rotationQuality)
+		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, 20).copy(correctionRotation = Quaternion(Float.NaN, 0f, 0f, 0f)), 20).rotationQuality)
 		val unrelated = imu(20, null).copy(target = TrackerPosition.LEFT_FOOT)
 		assertEquals(ObservationQuality.TRACKED, filter.apply(unrelated, 100).rotationQuality)
 	}

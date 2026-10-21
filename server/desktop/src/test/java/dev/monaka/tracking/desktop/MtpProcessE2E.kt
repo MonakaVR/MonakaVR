@@ -1,12 +1,26 @@
 package dev.monaka.tracking.desktop
 
 import com.google.gson.GsonBuilder
-import dev.monaka.protocol.v2.*
-import dev.monaka.tracking.*
+import dev.monaka.protocol.v2.Confidence
+import dev.monaka.protocol.v2.DecodeResult
+import dev.monaka.protocol.v2.EncodeResult
+import dev.monaka.protocol.v2.Envelope
+import dev.monaka.protocol.v2.MonakaCodec
+import dev.monaka.protocol.v2.MtpPose
+import dev.monaka.protocol.v2.MtpTrackerState
+import dev.monaka.protocol.v2.Validity
+import dev.monaka.tracking.LogicalTracker
+import dev.monaka.tracking.MonakaConfiguration
+import dev.monaka.tracking.TrackerBodyAssignments
 import dev.slimevr.desktop.platform.ProtobufBridge
-import dev.slimevr.desktop.platform.ProtobufMessages.*
+import dev.slimevr.desktop.platform.ProtobufMessages.Position
+import dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage
+import dev.slimevr.desktop.platform.ProtobufMessages.TrackerAdded
 import dev.slimevr.tracking.processor.HumanPoseManager
-import dev.slimevr.tracking.trackers.*
+import dev.slimevr.tracking.trackers.Tracker
+import dev.slimevr.tracking.trackers.TrackerPosition
+import dev.slimevr.tracking.trackers.TrackerRole
+import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import java.io.File
@@ -30,18 +44,30 @@ object MtpProcessE2E {
 		var failed: Throwable? = null
 		val run = Scenario(directory)
 		PrintStream(File(directory, "e2e.log"), Charsets.UTF_8).use { log ->
-			System.setOut(log); System.setErr(log)
-			try { run.execute() } catch (t: Throwable) { failed = t; t.printStackTrace() }
-			finally { System.setOut(console); System.setErr(errors) }
+			System.setOut(log)
+			System.setErr(log)
+			try {
+				run.execute()
+			} catch (t: Throwable) {
+				failed = t
+				t.printStackTrace()
+			} finally {
+				System.setOut(console)
+				System.setErr(errors)
+			}
 		}
-		File(directory, "result.json").writeText(GsonBuilder().setPrettyPrinting().serializeNulls().create().toJson(mapOf(
-			"result" to if (failed == null) "PASS" else "FAIL",
-			"failed_stage" to if (failed == null) null else run.stage,
-			"error" to failed?.toString(), "passed" to run.passed,
-			"consumer_pid" to ProcessHandle.current().pid(), "publisher_pids" to run.publisherPids,
-			"wire" to 2, "steamvr_runtime" to "NOT RUN", "hardware" to "NOT RUN",
-			"boundary" to "Production intake/private IK input/computed tracker/ProtobufBridge bytes; synthetic external publisher and captured transport",
-		)))
+		File(directory, "result.json").writeText(
+			GsonBuilder().setPrettyPrinting().serializeNulls().create().toJson(
+				mapOf(
+					"result" to if (failed == null) "PASS" else "FAIL",
+					"failed_stage" to if (failed == null) null else run.stage,
+					"error" to failed?.toString(), "passed" to run.passed,
+					"consumer_pid" to ProcessHandle.current().pid(), "publisher_pids" to run.publisherPids,
+					"wire" to 2, "steamvr_runtime" to "NOT RUN", "hardware" to "NOT RUN",
+					"boundary" to "Production intake/private IK input/computed tracker/ProtobufBridge bytes; synthetic external publisher and captured transport",
+				),
+			),
+		)
 		console.println("RESULT=${if (failed == null) "PASS" else "FAIL"} mtp-process-e2e stopped_at=${if (failed == null) "complete" else run.stage} evidence=$directory")
 		if (failed != null) exitProcess(1)
 	}
@@ -64,12 +90,19 @@ private class Scenario(private val directory: File) {
 	private var command = 0
 
 	private fun step(name: String, body: () -> Unit) {
-		stage = name; println("START $name")
-		body(); passed += name; println("PASS $name")
+		stage = name
+		println("START $name")
+		body()
+		passed += name
+		println("PASS $name")
 	}
 	private fun tick() {
 		// Same relevant order as VRServer: bridge read -> beforePoseUpdate -> existing pose update -> bridge write.
-		output.readHeartbeat(); hook!!.run(); hpm.update(); output.dataWrite(); output.flush()
+		output.readHeartbeat()
+		hook!!.run()
+		hpm.update()
+		output.dataWrite()
+		output.flush()
 		check(integration.receiver.failure == null && integration.receiver.isAlive)
 	}
 	private fun await(description: String, condition: () -> Boolean) {
@@ -86,12 +119,17 @@ private class Scenario(private val directory: File) {
 	private fun count(name: String) = runtime.inbox.diagnostics()[name] ?: 0L
 	private fun pose(sequence: Long, x: Double = 0.0, modality: String = "full", session: String = base.session_id): MtpPose {
 		timestamp += 1_000_000
-		return base.copy(sequence = sequence, session_id = session, timestamp_ns = timestamp, sent_at_ns = timestamp,
+		return base.copy(
+			sequence = sequence, session_id = session, timestamp_ns = timestamp, sent_at_ns = timestamp,
 			position = listOf(origin.x + x, origin.y.toDouble(), origin.z.toDouble()),
 			orientation = listOf(0.0, kotlin.math.sin(x), 0.0, kotlin.math.cos(x)),
 			modality = modality, validity = Validity(modality == "full", modality != "none"),
 			confidence = Confidence(if (modality == "full") 1.0 else 0.0, if (modality == "none") 0.0 else 1.0),
-			tracking_state = when (modality) { "none" -> "lost"; "rotation_only" -> "degraded"; else -> "tracked" },
+			tracking_state = when (modality) {
+				"none" -> "lost"
+				"rotation_only" -> "degraded"
+				else -> "tracked"
+			},
 			input = base.input.copy(sequence = sequence),
 		)
 	}
@@ -125,11 +163,16 @@ private class Scenario(private val directory: File) {
 
 	fun execute() {
 		step("feature-off-slime-equivalence") { featureOff() }
-		hpm.skeleton.ikSolver.enabled = false; hpm.update()
+		hpm.skeleton.ikSolver.enabled = false
+		hpm.update()
 		origin = hpm.skeleton.computedHipTracker!!.position
 		integration = MonakaServerIntegration.startIfEnabled(
-			true, { MonakaConfiguration(base.coordinate_space, TrackerBodyAssignments(mapOf(key to TrackerPosition.HIP)), port = 0) },
-			{ raw }, hpm.skeleton, { hook = it }, { throw it },
+			true,
+			{ MonakaConfiguration(base.coordinate_space, TrackerBodyAssignments(mapOf(key to TrackerPosition.HIP)), port = 0) },
+			{ raw },
+			hpm.skeleton,
+			{ hook = it },
+			{ throw it },
 		)!!
 		val port = integration.receiver.port
 		println("consumer=${ProcessHandle.current().pid()} loopback_port=$port key=$key")
@@ -145,7 +188,9 @@ private class Scenario(private val directory: File) {
 					check(hpm.skeleton.hipTracker!!.name == "monaka-private:HIP:${key.observationId}")
 					check(hpm.skeleton.hipTracker!!.hasPosition && hpm.skeleton.hipTracker!!.hasRotation)
 					check(raw.none { it.name.startsWith("monaka-private:") })
-					hpm.skeleton.ikSolver.resetOffsets(); hpm.skeleton.ikSolver.enabled = true; tick()
+					hpm.skeleton.ikSolver.resetOffsets()
+					hpm.skeleton.ikSolver.enabled = true
+					tick()
 					val initial = hpm.skeleton.computedHipTracker!!.position
 					val registration = output.registrations.toMap()
 					for (seq in 1L..30L) {
@@ -170,8 +215,10 @@ private class Scenario(private val directory: File) {
 					check(hpm.skeleton.hipTracker!!.getRotation() == constraint().rotation!!.value)
 					check(hpm.skeleton.computedHipTracker!!.getRotation() != fullRotation)
 					output.verify(hpm.computedTrackers)
-					accept(primary, pose(32, 99.0, "none")); check(absent())
-					accept(primary, pose(33, 0.05)); check(constraint().position != null)
+					accept(primary, pose(32, 99.0, "none"))
+					check(absent())
+					accept(primary, pose(33, 0.05))
+					check(constraint().position != null)
 					verifyCalibration()
 					output.verify(hpm.computedTrackers)
 				}
@@ -203,21 +250,26 @@ private class Scenario(private val directory: File) {
 					send(primary, state(lost, 0, "absent"))
 					await("absent state") { count("Validated") > validated && key !in runtime.mtp.samples() && absent() }
 					val next = count("Validated")
-					send(primary, state(lost, 1, "present")); send(primary, lost)
+					send(primary, state(lost, 1, "present"))
+					send(primary, lost)
 					await("metadata and pre-loss pose drained") { count("Validated") >= next + 2 }
 					// Validated is worker-owned; observe the sequence rejection to ensure server admission finished.
-					reject(primary, lost, "DuplicateOrOldSequence"); check(absent())
-					accept(primary, pose(37)); check(constraint().position != null)
+					reject(primary, lost, "DuplicateOrOldSequence")
+					check(absent())
+					accept(primary, pose(37))
+					check(constraint().position != null)
 				}
 				step("stale-age-and-metadata-do-not-refresh") {
 					await("local clock age range") { runtime.clock() > 900_000_000 }
 					val stale = pose(38).let { it.copy(sent_at_ns = it.timestamp_ns + 800_000_000) }
-					accept(primary, stale); check(absent()) // Stored diagnostic sample is NOT a usable constraint.
+					accept(primary, stale)
+					check(absent()) // Stored diagnostic sample is NOT a usable constraint.
 					val sample = runtime.mtp.samples().getValue(key)
 					send(primary, state(stale, 2, "present"))
 					reject(primary, stale, "DuplicateOrOldSequence")
 					check(runtime.mtp.samples().getValue(key) == sample && absent())
-					accept(primary, pose(39)); check(constraint().position != null)
+					accept(primary, pose(39))
+					check(constraint().position != null)
 				}
 				step("source-disappearance-timeout-loss") {
 					primary.close() // Real process exits. No fabricated lost packet.
@@ -252,10 +304,19 @@ private class Scenario(private val directory: File) {
 	private fun featureOff() {
 		val a = listOf(tracker(10, TrackerPosition.HEAD, true), tracker(11, TrackerPosition.HIP))
 		val b = listOf(tracker(10, TrackerPosition.HEAD, true), tracker(11, TrackerPosition.HIP))
-		val expected = HumanPoseManager(a); val actual = HumanPoseManager(b)
-		expected.setLegTweaksEnabled(false); actual.setLegTweaksEnabled(false)
-		check(MonakaServerIntegration.startIfEnabled(false, { error("OFF read config/opened UDP") }, { b }, actual.skeleton,
-			{ error("OFF registered a hook") }) == null)
+		val expected = HumanPoseManager(a)
+		val actual = HumanPoseManager(b)
+		expected.setLegTweaksEnabled(false)
+		actual.setLegTweaksEnabled(false)
+		check(
+			MonakaServerIntegration.startIfEnabled(
+				false,
+				{ error("OFF read config/opened UDP") },
+				{ b },
+				actual.skeleton,
+				{ error("OFF registered a hook") },
+			) == null,
+		)
 		// Reserve an isolated sink while a real publisher sends. OFF never consumes MTP or opens its own socket.
 		DatagramSocket(0, InetAddress.getLoopbackAddress()).use { sink ->
 			publisher(sink.localPort).use { publisher ->
@@ -265,7 +326,8 @@ private class Scenario(private val directory: File) {
 						trackers[0].position = Vector3(frame * 0.001f, 1.7f, 0f)
 						trackers[1].setRotation(Quaternion(kotlin.math.cos(frame * 0.01f), 0f, kotlin.math.sin(frame * 0.01f), 0f))
 					}
-					expected.update(); actual.update()
+					expected.update()
+					actual.update()
 					check(expected.computedTrackers.size == actual.computedTrackers.size)
 					for ((left, right) in expected.computedTrackers.zip(actual.computedTrackers)) {
 						check(left.position == right.position && left.getRotation() == right.getRotation())
@@ -297,11 +359,16 @@ private class CapturedOutput : ProtobufBridge("mtp-process-e2e-capture") {
 		if (decoded.hasPosition()) positions[decoded.position.trackerId] = decoded.position
 		return true
 	}
-	fun readHeartbeat() { positions.clear(); messageReceived(ProtobufMessage.getDefaultInstance()); dataRead() }
+	fun readHeartbeat() {
+		positions.clear()
+		messageReceived(ProtobufMessage.getDefaultInstance())
+		dataRead()
+	}
 	fun flush() = updateMessageQueue()
 	fun verify(trackers: List<Tracker>) {
 		for (tracker in trackers) {
-			val p = positions.getValue(tracker.id); val q = tracker.getRotation()
+			val p = positions.getValue(tracker.id)
+			val q = tracker.getRotation()
 			check(p.hasX())
 			check(Vector3(p.x, p.y, p.z) == tracker.position)
 			check(Quaternion(p.qw, p.qx, p.qy, p.qz) == q)
@@ -324,22 +391,34 @@ private class Publisher(directory: File, port: Int, index: Int) : AutoCloseable 
 	private val acknowledgements = LinkedBlockingQueue<String>()
 	private val process = ProcessBuilder(
 		File(System.getProperty("java.home"), "bin/" + if (System.getProperty("os.name").startsWith("Windows")) "java.exe" else "java").absolutePath,
-		"-cp", System.getProperty("java.class.path"), MtpScenarioPublisher::class.java.name, port.toString(),
+		"-cp",
+		System.getProperty("java.class.path"),
+		MtpScenarioPublisher::class.java.name,
+		port.toString(),
 	).redirectError(File(directory, "publisher-$index.stderr.log")).start()
 	val pid = process.pid()
 	private val writer = process.outputStream.bufferedWriter()
 	private val reader = thread(name = "publisher-$index-stdout", isDaemon = true) {
 		process.inputStream.bufferedReader().useLines { lines ->
-			lines.forEach { println("publisher[$pid] $it"); acknowledgements.put(it) }
+			lines.forEach {
+				println("publisher[$pid] $it")
+				acknowledgements.put(it)
+			}
 		}
 	}
 	private var closed = false
 	init {
-		try { check(acknowledgements.poll(10, TimeUnit.SECONDS) == "READY $pid") { "Publisher startup failed; pid=$pid" } }
-		catch (t: Throwable) { close(); throw t }
+		try {
+			check(acknowledgements.poll(10, TimeUnit.SECONDS) == "READY $pid") { "Publisher startup failed; pid=$pid" }
+		} catch (t: Throwable) {
+			close()
+			throw t
+		}
 	}
 	fun send(file: File) {
-		writer.write(file.absolutePath); writer.newLine(); writer.flush()
+		writer.write(file.absolutePath)
+		writer.newLine()
+		writer.flush()
 		check(acknowledgements.poll(5, TimeUnit.SECONDS) == "SENT ${file.name}") { "Publisher failed/stalled pid=$pid file=$file" }
 	}
 	override fun close() {
@@ -350,7 +429,10 @@ private class Publisher(directory: File, port: Int, index: Int) : AutoCloseable 
 			check(process.waitFor(5, TimeUnit.SECONDS)) { "Publisher did not exit pid=$pid" }
 			check(process.exitValue() == 0) { "Publisher exit=${process.exitValue()} pid=$pid" }
 		} finally {
-			if (process.isAlive) { process.destroyForcibly(); process.waitFor(5, TimeUnit.SECONDS) }
+			if (process.isAlive) {
+				process.destroyForcibly()
+				process.waitFor(5, TimeUnit.SECONDS)
+			}
 			reader.join(2000)
 		}
 	}

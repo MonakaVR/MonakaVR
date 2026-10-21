@@ -50,7 +50,9 @@ enum class RawHmdPoseInputRejectionReason(val code: String) {
 sealed interface RawHmdPoseInputCapability {
 	class Unavailable(reasons: Set<RawHmdPoseInputRejectionReason>) : RawHmdPoseInputCapability {
 		val reasons = immutableReasons(reasons)
-		init { require(reasons.isNotEmpty()) }
+		init {
+			require(reasons.isNotEmpty())
+		}
 	}
 
 	/** Internal producers must supply authoritative pose-bound facts. Current production has none. */
@@ -77,12 +79,13 @@ sealed interface RawHmdPoseInputAdmission {
 
 	class Rejected internal constructor(reasons: Set<RawHmdPoseInputRejectionReason>) : RawHmdPoseInputAdmission {
 		val reasons = immutableReasons(reasons)
-		init { require(reasons.isNotEmpty()) }
+		init {
+			require(reasons.isNotEmpty())
+		}
 	}
 }
 
-private fun immutableReasons(reasons: Set<RawHmdPoseInputRejectionReason>): Set<RawHmdPoseInputRejectionReason> =
-	Collections.unmodifiableSet(EnumSet.noneOf(RawHmdPoseInputRejectionReason::class.java).also { it.addAll(reasons) })
+private fun immutableReasons(reasons: Set<RawHmdPoseInputRejectionReason>): Set<RawHmdPoseInputRejectionReason> = Collections.unmodifiableSet(EnumSet.noneOf(RawHmdPoseInputRejectionReason::class.java).also { it.addAll(reasons) })
 
 /**
  * One read-side boundary. Readers are supplied by ProtobufBridge, not by public callers.
@@ -106,38 +109,49 @@ internal fun admitRawHmdPoseInput(
 			reasons += capability.reasons
 			null
 		}
+
 		is RawHmdPoseInputCapability.Ready -> capability
 	}
 	if (before == null) reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_UNAVAILABLE
 	if (sample == null) reasons += RawHmdPoseInputRejectionReason.POSITION_UNAVAILABLE
 	if (ready != null) {
 		if (providerBefore != ready.providerSession) reasons += RawHmdPoseInputRejectionReason.PROVIDER_EVIDENCE_INVALID
-		if (ready.proofKind != RawHmdFrameProofKind.EXPLICIT_POSE_BOUND_FRAME_PROOF || ready.proofSource.isNullOrBlank())
+		if (ready.proofKind != RawHmdFrameProofKind.EXPLICIT_POSE_BOUND_FRAME_PROOF || ready.proofSource.isNullOrBlank()) {
 			reasons += RawHmdPoseInputRejectionReason.FRAME_REFERENCE_UNAVAILABLE
-		if (ready.space == null) reasons += RawHmdPoseInputRejectionReason.FRAME_SPACE_UNAVAILABLE
-		else if (ready.space.id.isBlank() || ready.space.convention.isBlank() || ready.space.revision < 0)
+		}
+		if (ready.space == null) {
+			reasons += RawHmdPoseInputRejectionReason.FRAME_SPACE_UNAVAILABLE
+		} else if (ready.space.id.isBlank() || ready.space.convention.isBlank() || ready.space.revision < 0) {
 			reasons += RawHmdPoseInputRejectionReason.FRAME_SPACE_INVALID
+		}
 		if (ready.frameCalibrationEpoch.isNullOrBlank()) reasons += RawHmdPoseInputRejectionReason.FRAME_EPOCH_UNAVAILABLE
 		if (ready.freshnessPolicy.maxReceiptAgeNanos <= 0) reasons += RawHmdPoseInputRejectionReason.FRESHNESS_POLICY_INVALID
 		if (ready.mappingRevision != null && ready.mappingRevision < 0) reasons += RawHmdPoseInputRejectionReason.MAPPING_REVISION_INVALID
 		if (ready.expectedTransportSessionEpoch.isBlank()) reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_UNAVAILABLE
-		if (before != null && before.epoch != ready.expectedTransportSessionEpoch)
+		if (before != null && before.epoch != ready.expectedTransportSessionEpoch) {
 			reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_MISMATCH
+		}
 	}
 	if (sample != null) {
 		if (ready != null) {
 			reasons += providerEvidenceRejections(sample, providerBefore)
 			// Full immutable P/Q + evidence snapshot binding, not just equal host sequence numbers.
-			if (sample != ready.expectedPose || ready.space != sample.providerEvidence?.appliedMapping?.outputSpace ||
+			if (sample != ready.expectedPose ||
+				ready.space != sample.providerEvidence?.appliedMapping?.outputSpace ||
 				ready.frameCalibrationEpoch != sample.providerEvidence?.appliedMapping?.calibrationEpoch ||
 				ready.mappingRevision != sample.providerEvidence?.appliedMapping?.revision ||
-				ready.proofSource != providerBefore?.backend?.proofSource)
+				ready.proofSource != providerBefore?.backend?.proofSource
+			) {
 				reasons += RawHmdPoseInputRejectionReason.PROVIDER_EVIDENCE_INVALID
+			}
 		}
 		if (!sample.ingressIdentity.isRawHmd()) reasons += RawHmdPoseInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED
 		if (sample.sequence < 0 || sample.sourceEpoch.isBlank()) reasons += RawHmdPoseInputRejectionReason.SAMPLE_PROVENANCE_INVALID
-		if (sample.transportSessionEpoch == null) reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_UNAVAILABLE
-		else if (sample.transportSessionEpoch != before.epoch) reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_MISMATCH
+		if (sample.transportSessionEpoch == null) {
+			reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_UNAVAILABLE
+		} else if (sample.transportSessionEpoch != before.epoch) {
+			reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_MISMATCH
+		}
 		for (reason in sample.structuralRejectionReasons) {
 			reasons += when (reason) {
 				"hmd_position_components_incomplete" -> RawHmdPoseInputRejectionReason.POSITION_COMPONENTS_INCOMPLETE
@@ -146,24 +160,31 @@ internal fun admitRawHmdPoseInput(
 				else -> RawHmdPoseInputRejectionReason.SAMPLE_PROVENANCE_INVALID
 			}
 		}
-		if (!sample.dataSourcePresent) reasons += RawHmdPoseInputRejectionReason.DATA_SOURCE_UNAVAILABLE
-		else if (Position.DataSource.forNumber(sample.dataSourceValue) == null)
+		if (!sample.dataSourcePresent) {
+			reasons += RawHmdPoseInputRejectionReason.DATA_SOURCE_UNAVAILABLE
+		} else if (Position.DataSource.forNumber(sample.dataSourceValue) == null) {
 			reasons += RawHmdPoseInputRejectionReason.DATA_SOURCE_UNSUPPORTED
-		if (sample.modality != TrackingModality.FULL || sample.dataSourceValue != Position.DataSource.FULL.number)
+		}
+		if (sample.modality != TrackingModality.FULL || sample.dataSourceValue != Position.DataSource.FULL.number) {
 			reasons += RawHmdPoseInputRejectionReason.POSITION_MODALITY_NOT_FULL
+		}
 		if (ready != null) {
 			if (sample.ingressIdentity.sourceId != ready.expectedSourceId) reasons += RawHmdPoseInputRejectionReason.SOURCE_IDENTITY_MISMATCH
 			if (sample.sourceEpoch != ready.expectedSourceEpoch) reasons += RawHmdPoseInputRejectionReason.SOURCE_EPOCH_MISMATCH
-			if (sample.transportSessionEpoch != null && sample.transportSessionEpoch != ready.expectedTransportSessionEpoch)
+			if (sample.transportSessionEpoch != null && sample.transportSessionEpoch != ready.expectedTransportSessionEpoch) {
 				reasons += RawHmdPoseInputRejectionReason.SESSION_EPOCH_MISMATCH
+			}
 			if (sample.sequence != ready.expectedSampleSequence) reasons += RawHmdPoseInputRejectionReason.SAMPLE_SEQUENCE_MISMATCH
 			val now = nowSystemNanos()
 			val receipt = sample.receivedAtSystemNanos
 			// The existing core provenance requires nonnegative local time. Check before subtraction.
-			if (now < 0 || receipt < 0) reasons += RawHmdPoseInputRejectionReason.RECEIPT_TIME_INVALID
-			else if (now < receipt) reasons += RawHmdPoseInputRejectionReason.FUTURE_RECEIPT_TIME
-			else if (ready.freshnessPolicy.maxReceiptAgeNanos > 0 && now - receipt > ready.freshnessPolicy.maxReceiptAgeNanos)
+			if (now < 0 || receipt < 0) {
+				reasons += RawHmdPoseInputRejectionReason.RECEIPT_TIME_INVALID
+			} else if (now < receipt) {
+				reasons += RawHmdPoseInputRejectionReason.FUTURE_RECEIPT_TIME
+			} else if (ready.freshnessPolicy.maxReceiptAgeNanos > 0 && now - receipt > ready.freshnessPolicy.maxReceiptAgeNanos) {
 				reasons += RawHmdPoseInputRejectionReason.SAMPLE_STALE
+			}
 		}
 	}
 	if (readActiveSession() !== before) reasons += RawHmdPoseInputRejectionReason.CURRENT_SESSION_CHANGED
@@ -173,9 +194,21 @@ internal fun admitRawHmdPoseInput(
 	checkNotNull(ready)
 	checkNotNull(sample)
 	val space = checkNotNull(ready.space)
-	val provenance = ObservationSampleProvenance(sample.sequence, sample.receivedAtSystemNanos,
-		sample.sourceEpoch, checkNotNull(ready.frameCalibrationEpoch), ready.mappingRevision, space)
-	return RawHmdPoseInputAdmission.Accepted(RawHmdPoseInput(
-		sample.ingressIdentity, sample.position, sample.orientation, space, provenance,
-	))
+	val provenance = ObservationSampleProvenance(
+		sample.sequence,
+		sample.receivedAtSystemNanos,
+		sample.sourceEpoch,
+		checkNotNull(ready.frameCalibrationEpoch),
+		ready.mappingRevision,
+		space,
+	)
+	return RawHmdPoseInputAdmission.Accepted(
+		RawHmdPoseInput(
+			sample.ingressIdentity,
+			sample.position,
+			sample.orientation,
+			space,
+			provenance,
+		),
+	)
 }

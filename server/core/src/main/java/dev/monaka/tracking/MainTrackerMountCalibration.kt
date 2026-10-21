@@ -8,7 +8,9 @@ import kotlin.math.abs
 
 /** Teacher-side identity only; never a predictor FixedCalibrationIdentity. */
 internal data class MainTrackerMountCalibrationIdentity(val calibrationId: String, val epoch: String) {
-	init { require(calibrationId.isNotBlank() && epoch.isNotBlank()) }
+	init {
+		require(calibrationId.isNotBlank() && epoch.isNotBlank())
+	}
 }
 
 /** Immutable metres from tracker origin to HIP_CENTER, expressed in the raw tracker's local axes.
@@ -23,19 +25,35 @@ internal class MainTrackerMountCalibrationSnapshot private constructor(
 	companion object {
 		const val EPOCH_SCHEMA = "main-mount-v1"
 
-		fun create(calibrationId: String, sessionEpoch: String, sourceId: String,
-			trackerToHipCenterLocalOffset: Vector3): MainTrackerMountCalibrationSnapshotResult {
-			if (calibrationId.isBlank() || sessionEpoch.isBlank() || sourceId.isBlank() ||
-				!finiteMountVector(trackerToHipCenterLocalOffset))
+		fun create(
+			calibrationId: String,
+			sessionEpoch: String,
+			sourceId: String,
+			trackerToHipCenterLocalOffset: Vector3,
+		): MainTrackerMountCalibrationSnapshotResult {
+			if (calibrationId.isBlank() ||
+				sessionEpoch.isBlank() ||
+				sourceId.isBlank() ||
+				!finiteMountVector(trackerToHipCenterLocalOffset)
+			) {
 				return MainTrackerMountCalibrationSnapshotResult.Unavailable(MainHipCenterTeacherRejectionReason.CALIBRATION_INVALID)
+			}
 			// Length-prefixed opaque strings and fixed-width raw bits: deterministic and unambiguous.
 			// Physical remount/recalibration changes sessionEpoch even if the numeric offset is identical.
 			val epoch = "$EPOCH_SCHEMA;source=${sourceId.length}:$sourceId;session=${sessionEpoch.length}:$sessionEpoch;" +
-				listOf(trackerToHipCenterLocalOffset.x, trackerToHipCenterLocalOffset.y,
-					trackerToHipCenterLocalOffset.z).joinToString(";") { it.toRawBits().toUInt().toString(16).padStart(8, '0') }
-			return MainTrackerMountCalibrationSnapshotResult.Available(MainTrackerMountCalibrationSnapshot(
-				MainTrackerMountCalibrationIdentity(calibrationId, epoch), sourceId, sessionEpoch,
-				trackerToHipCenterLocalOffset))
+				listOf(
+					trackerToHipCenterLocalOffset.x,
+					trackerToHipCenterLocalOffset.y,
+					trackerToHipCenterLocalOffset.z,
+				).joinToString(";") { it.toRawBits().toUInt().toString(16).padStart(8, '0') }
+			return MainTrackerMountCalibrationSnapshotResult.Available(
+				MainTrackerMountCalibrationSnapshot(
+					MainTrackerMountCalibrationIdentity(calibrationId, epoch),
+					sourceId,
+					sessionEpoch,
+					trackerToHipCenterLocalOffset,
+				),
+			)
 		}
 	}
 }
@@ -62,11 +80,23 @@ internal data class MainHipCenterPositionTeacher(
 }
 
 internal enum class MainHipCenterTeacherRejectionReason {
-	FEEDBACK_SOURCE_NOT_ALLOWED, SOURCE_NOT_RAW_BACKEND, SOURCE_IDENTITY_MISMATCH,
-	CALIBRATION_SOURCE_MISMATCH, CALIBRATION_INVALID, TARGET_NOT_HIP, MODALITY_NOT_FULL,
-	POSITION_UNAVAILABLE, ROTATION_UNAVAILABLE, POSITION_QUALITY_UNUSABLE, ROTATION_QUALITY_UNUSABLE,
-	POSITION_NONFINITE, ORIENTATION_INVALID, PROVENANCE_UNAVAILABLE, SPACE_UNAVAILABLE,
-	SPACE_UNSUPPORTED, TRANSFORM_NONFINITE,
+	FEEDBACK_SOURCE_NOT_ALLOWED,
+	SOURCE_NOT_RAW_BACKEND,
+	SOURCE_IDENTITY_MISMATCH,
+	CALIBRATION_SOURCE_MISMATCH,
+	CALIBRATION_INVALID,
+	TARGET_NOT_HIP,
+	MODALITY_NOT_FULL,
+	POSITION_UNAVAILABLE,
+	ROTATION_UNAVAILABLE,
+	POSITION_QUALITY_UNUSABLE,
+	ROTATION_QUALITY_UNUSABLE,
+	POSITION_NONFINITE,
+	ORIENTATION_INVALID,
+	PROVENANCE_UNAVAILABLE,
+	SPACE_UNAVAILABLE,
+	SPACE_UNSUPPORTED,
+	TRANSFORM_NONFINITE,
 }
 
 internal sealed interface MainHipCenterTeacherResult {
@@ -80,12 +110,20 @@ internal sealed interface MainHipCenterTeacherResult {
 internal object MainTrackerMountToHipCenter {
 	private fun reject(reason: MainHipCenterTeacherRejectionReason) = MainHipCenterTeacherResult.Unavailable(reason)
 
-	fun normalize(observation: PoseObservation, rawOrigin: RawSourceIdentity,
-		calibration: MainTrackerMountCalibrationSnapshot): MainHipCenterTeacherResult {
-		if (FeedbackExclusion.isOutput(observation.sourceId) || FeedbackExclusion.isOutput(rawOrigin.sourceId) ||
-			rawOrigin.isInternal || rawOrigin.isComputed || rawOrigin.kind in
-			setOf(RawSourceKind.COMPUTED_TRACKER, RawSourceKind.DERIVED_OUTPUT))
+	fun normalize(
+		observation: PoseObservation,
+		rawOrigin: RawSourceIdentity,
+		calibration: MainTrackerMountCalibrationSnapshot,
+	): MainHipCenterTeacherResult {
+		if (FeedbackExclusion.isOutput(observation.sourceId) ||
+			FeedbackExclusion.isOutput(rawOrigin.sourceId) ||
+			rawOrigin.isInternal ||
+			rawOrigin.isComputed ||
+			rawOrigin.kind in
+			setOf(RawSourceKind.COMPUTED_TRACKER, RawSourceKind.DERIVED_OUTPUT)
+		) {
 			return reject(MainHipCenterTeacherRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED)
+		}
 		if (!rawOrigin.isRawBackend()) return reject(MainHipCenterTeacherRejectionReason.SOURCE_NOT_RAW_BACKEND)
 		if (rawOrigin.sourceId != observation.sourceId) return reject(MainHipCenterTeacherRejectionReason.SOURCE_IDENTITY_MISMATCH)
 		if (calibration.sourceId != observation.sourceId) return reject(MainHipCenterTeacherRejectionReason.CALIBRATION_SOURCE_MISMATCH)
@@ -99,13 +137,13 @@ internal object MainTrackerMountToHipCenter {
 		val orientation = normalizedOrientation(rotation) ?: return reject(MainHipCenterTeacherRejectionReason.ORIENTATION_INVALID)
 		val provenance = observation.provenance ?: return reject(MainHipCenterTeacherRejectionReason.PROVENANCE_UNAVAILABLE)
 		val space = provenance.space ?: return reject(MainHipCenterTeacherRejectionReason.SPACE_UNAVAILABLE)
-		if (space.id.isBlank() || space.revision < 0 || space.convention != "rh_y_up_neg_z_forward")
+		if (space.id.isBlank() || space.revision < 0 || space.convention != "rh_y_up_neg_z_forward") {
 			return reject(MainHipCenterTeacherRejectionReason.SPACE_UNSUPPORTED)
+		}
 		// Hamilton q * (0, offset) * q^-1, using this exact sample's tracker-to-space rotation.
 		val hipCenter = position + orientation.sandwich(calibration.trackerToHipCenterLocalOffset)
 		if (!finiteMountVector(hipCenter)) return reject(MainHipCenterTeacherRejectionReason.TRANSFORM_NONFINITE)
-		return MainHipCenterTeacherResult.Available(MainHipCenterPositionTeacher(
-			observation.sourceId, hipCenter, observation.positionQuality, provenance, rawOrigin, calibration.identity))
+		return MainHipCenterTeacherResult.Available(MainHipCenterPositionTeacher(observation.sourceId, hipCenter, observation.positionQuality, provenance, rawOrigin, calibration.identity))
 	}
 
 	private fun normalizedOrientation(q: Quaternion): Quaternion? {

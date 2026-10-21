@@ -13,39 +13,77 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.lang.reflect.Modifier
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotSame
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /** Synthetic raw inputs and test-only predictors; no HIP calculation or runtime assembly. */
 class BodyModelPredictorHandoffTests {
 	private val space = CoordinateSpace("canonical", "rh_y_up_neg_z_forward", 2)
 	private val geometry = listOf(.1f, .2f, .25f, .3f, .35f, .15f)
-	private val chain = listOf(SkeletonConfigOffsets.HEAD, SkeletonConfigOffsets.NECK,
-		SkeletonConfigOffsets.UPPER_CHEST, SkeletonConfigOffsets.CHEST,
-		SkeletonConfigOffsets.WAIST, SkeletonConfigOffsets.HIP)
-	private val safe = setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
-		PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION)
-	private fun snapshot(values: List<Float> = geometry) =
-		assertIs<HipBodyModelSnapshotResult.Available>(HipBodyModelSnapshot.create(
-			values[0], values[1], values[2], values[3], values[4], values[5])).snapshot
-	private fun fields(body: HipBodyModelSnapshot) = listOf(body.headShift, body.neckLength,
-		body.upperChestLength, body.chestLength, body.waistLength, body.hipLength)
-	private fun current(config: SkeletonConfigManager) =
-		assertIs<HipBodyModelSnapshotResult.Available>(config.currentHipBodyModelSnapshot()).snapshot
+	private val chain = listOf(
+		SkeletonConfigOffsets.HEAD,
+		SkeletonConfigOffsets.NECK,
+		SkeletonConfigOffsets.UPPER_CHEST,
+		SkeletonConfigOffsets.CHEST,
+		SkeletonConfigOffsets.WAIST,
+		SkeletonConfigOffsets.HIP,
+	)
+	private val safe = setOf(
+		PositionPredictionDependency.RAW_HMD,
+		PositionPredictionDependency.RAW_IMU,
+		PositionPredictionDependency.BODY_MODEL,
+		PositionPredictionDependency.FIXED_CALIBRATION,
+	)
+	private fun snapshot(values: List<Float> = geometry) = assertIs<HipBodyModelSnapshotResult.Available>(HipBodyModelSnapshot.create(values[0], values[1], values[2], values[3], values[4], values[5])).snapshot
+	private fun fields(body: HipBodyModelSnapshot) = listOf(
+		body.headShift,
+		body.neckLength,
+		body.upperChestLength,
+		body.chestLength,
+		body.waistLength,
+		body.hipLength,
+	)
+	private fun current(config: SkeletonConfigManager) = assertIs<HipBodyModelSnapshotResult.Available>(config.currentHipBodyModelSnapshot()).snapshot
 	private fun attached() = SkeletonConfigManager(false, HumanPoseManager(emptyList())).also {
 		it.setOffsets(chain.zip(geometry).toMap(), false)
 	}
 	private fun input(body: HipBodyModelSnapshot = snapshot()) = MainDecoupledHipInput(
-		RawHmdPoseInput(RawSourceIdentity("synthetic:hmd", RawSourceKind.RAW_HMD, isHmd = true),
-			Vector3(0f, 1.7f, 0f), Quaternion.IDENTITY, space,
-			ObservationSampleProvenance(4, 80, "hmd:1", "hmd-cal:1", null, space)),
-		RawImuOrientationInput(RawSourceIdentity("synthetic:imu", RawSourceKind.RAW_IMU),
-			Quaternion.IDENTITY, space,
-			ObservationSampleProvenance(4, 90, "imu:1", "imu-cal:1", 1, space)),
-		body, syntheticHeadAnchorCalibration("synthetic:hmd", body.identity.modelId), space, 3, 100, predictionSequence = 7)
+		RawHmdPoseInput(
+			RawSourceIdentity("synthetic:hmd", RawSourceKind.RAW_HMD, isHmd = true),
+			Vector3(0f, 1.7f, 0f),
+			Quaternion.IDENTITY,
+			space,
+			ObservationSampleProvenance(4, 80, "hmd:1", "hmd-cal:1", null, space),
+		),
+		RawImuOrientationInput(
+			RawSourceIdentity("synthetic:imu", RawSourceKind.RAW_IMU),
+			Quaternion.IDENTITY,
+			space,
+			ObservationSampleProvenance(4, 90, "imu:1", "imu-cal:1", 1, space),
+		),
+		body,
+		syntheticHeadAnchorCalibration("synthetic:hmd", body.identity.modelId),
+		space,
+		3,
+		100,
+		predictionSequence = 7,
+	)
 	private fun prediction(source: MainDecoupledHipInput, position: Vector3) = PositionPrediction.available(
-		TrackerPosition.HIP, position, space, PositionBodyReference.HIP_CENTER,
-		PositionPredictionProvenance(7, source.nowNanos, source.rawHmd.provenance.sampleAtNanos,
-			source.rawImu.provenance.sampleAtNanos, source.epoch(), source.rawHmd.provenance.sequence, source.rawHmd.provenance.sampleAtNanos, source.rawImu.provenance.sequence, source.rawImu.provenance.sampleAtNanos), safe)
+		TrackerPosition.HIP,
+		position,
+		space,
+		PositionBodyReference.HIP_CENTER,
+		PositionPredictionProvenance(
+			7, source.nowNanos, source.rawHmd.provenance.sampleAtNanos,
+			source.rawImu.provenance.sampleAtNanos, source.epoch(), source.rawHmd.provenance.sequence, source.rawHmd.provenance.sampleAtNanos, source.rawImu.provenance.sequence, source.rawImu.provenance.sampleAtNanos,
+		),
+		safe,
+	)
 
 	@Test fun inputCarriesAllGeometryAndExactlyTheFactoryIdentity() {
 		val body = snapshot()
@@ -100,10 +138,8 @@ class BodyModelPredictorHandoffTests {
 	@Test fun repeatedOfflineCaptureAndLivePublicationHaveSameLineage() {
 		val offline = SkeletonConfigManager(false)
 		offline.setOffsets(chain.zip(geometry).toMap(), false)
-		val a = assertIs<HipBodyModelSnapshotResult.Available>(
-			SlimeHipBodyModelSnapshotSource.captureOffline(offline)).snapshot
-		val b = assertIs<HipBodyModelSnapshotResult.Available>(
-			SlimeHipBodyModelSnapshotSource.captureOffline(offline)).snapshot
+		val a = assertIs<HipBodyModelSnapshotResult.Available>(SlimeHipBodyModelSnapshotSource.captureOffline(offline)).snapshot
+		val b = assertIs<HipBodyModelSnapshotResult.Available>(SlimeHipBodyModelSnapshotSource.captureOffline(offline)).snapshot
 		val live = current(attached())
 		assertNotSame(a, b)
 		assertEquals(fields(a), fields(live))
@@ -195,7 +231,8 @@ class BodyModelPredictorHandoffTests {
 		val after = before.copy(
 			rawHmd = before.rawHmd.copy(provenance = before.rawHmd.provenance.copy(sequence = 5, sampleAtNanos = 81)),
 			rawImu = before.rawImu.copy(provenance = before.rawImu.provenance.copy(sequence = 5, sampleAtNanos = 91)),
-			nowNanos = 101)
+			nowNanos = 101,
+		)
 		val p = prediction(before, Vector3(0f, 0f, 0f)).provenance!!
 		val progressed = prediction(after, Vector3(0f, 0f, 0f)).provenance!!.copy(predictionSequence = 8)
 		assertNotEquals(p.predictionSequence, progressed.predictionSequence)
@@ -208,25 +245,39 @@ class BodyModelPredictorHandoffTests {
 	}
 
 	@Test fun inputHasOnlySnapshotBodyPathAndNoMutableOrTeacherReferences() {
-		val forbidden = setOf(SkeletonConfigManager::class.java, HumanPoseManager::class.java,
+		val forbidden = setOf(
+			SkeletonConfigManager::class.java, HumanPoseManager::class.java,
 			HumanSkeleton::class.java, Tracker::class.java, PoseObservation::class.java,
 			EffectiveConstraint::class.java, ResolvedTrackingPose::class.java, OutputPose::class.java,
 			BackgroundIkResult::class.java, BodyModelIdentity::class.java, HipBodyModelSnapshotResult::class.java,
-			MainHipCenterPositionTeacher::class.java, MainTrackerMountCalibrationSnapshot::class.java)
+			MainHipCenterPositionTeacher::class.java, MainTrackerMountCalibrationSnapshot::class.java,
+		)
 		val inputClass = MainDecoupledHipInput::class.java
 		assertTrue(inputClass.declaredFields.none { it.type in forbidden })
 		assertTrue(inputClass.constructors.all { it.parameterTypes.none { type -> type in forbidden } })
 		assertEquals(HipBodyModelSnapshot::class.java, inputClass.getDeclaredField("bodyModel").type)
 		assertTrue(inputClass.declaredFields.none { it.name.contains("publication", ignoreCase = true) })
-		assertTrue(PositionPredictionEpoch::class.java.declaredFields.none {
-			it.name.contains("publication", ignoreCase = true) || it.type == MainTrackerMountCalibrationIdentity::class.java
-		})
-		assertTrue(PositionTeacherEpoch::class.java.declaredFields.none {
-			it.type == HipBodyModelSnapshot::class.java || it.type == BodyModelIdentity::class.java ||
-				it.name.contains("bodyModel", ignoreCase = true)
-		})
-		assertTrue(HipBodyModelSnapshot::class.java.declaredFields.filterNot { Modifier.isStatic(it.modifiers) }
-			.all { Modifier.isFinal(it.modifiers) && (it.type == Float::class.javaPrimitiveType ||
-				it.type == BodyModelIdentity::class.java) })
+		assertTrue(
+			PositionPredictionEpoch::class.java.declaredFields.none {
+				it.name.contains("publication", ignoreCase = true) || it.type == MainTrackerMountCalibrationIdentity::class.java
+			},
+		)
+		assertTrue(
+			PositionTeacherEpoch::class.java.declaredFields.none {
+				it.type == HipBodyModelSnapshot::class.java ||
+					it.type == BodyModelIdentity::class.java ||
+					it.name.contains("bodyModel", ignoreCase = true)
+			},
+		)
+		assertTrue(
+			HipBodyModelSnapshot::class.java.declaredFields.filterNot { Modifier.isStatic(it.modifiers) }
+				.all {
+					Modifier.isFinal(it.modifiers) &&
+						(
+							it.type == Float::class.javaPrimitiveType ||
+								it.type == BodyModelIdentity::class.java
+							)
+				},
+		)
 	}
 }

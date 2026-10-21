@@ -2,16 +2,39 @@ package dev.monaka.tracking.desktop
 
 import dev.monaka.protocol.v2.CoordinateSpace
 import dev.monaka.tracking.TrackingModality
-import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.*
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.CAPABILITY_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.CURRENT_SESSION_CHANGED
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_REFERENCE_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_SPACE_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.OBSERVATION_ID_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.PROVIDER_EVIDENCE_INVALID
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.PROVIDER_SESSION_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.RAW_SPACE_GENERATION_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SAMPLE_SEQUENCE_MISMATCH
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SAMPLE_STALE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SOURCE_IDENTITY_MISMATCH
 import dev.slimevr.desktop.platform.ProtobufBridge
 import dev.slimevr.desktop.platform.ProtobufMessages
 import dev.slimevr.desktop.platform.ProtobufMessages.Position
 import dev.slimevr.desktop.platform.TransportSessionHandle
-import dev.slimevr.tracking.trackers.*
+import dev.slimevr.tracking.trackers.Device
+import dev.slimevr.tracking.trackers.DeviceOrigin
+import dev.slimevr.tracking.trackers.Tracker
+import dev.slimevr.tracking.trackers.TrackerPosition
+import dev.slimevr.tracking.trackers.TrackerRole
+import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /** SYNTHETIC TEST EVIDENCE at the internal atomic-message boundary. No provider transport exists. */
 class StrongTrustedHmdPolicyTests {
@@ -20,16 +43,20 @@ class StrongTrustedHmdPolicyTests {
 	private val mapping = RawHmdAppliedMapping(space, "synthetic-output", "synthetic-calibration", 23, false)
 
 	private class ReceiptClock(var now: Long = 1_000_000L)
-	private inner class Fixture(private val receiptClock: ReceiptClock = ReceiptClock()) :
-		ProtobufBridge("synthetic-policy-test", { receiptClock.now }) {
+	private inner class Fixture(private val receiptClock: ReceiptClock = ReceiptClock()) : ProtobufBridge("synthetic-policy-test", { receiptClock.now }) {
 		var now: Long
 			get() = receiptClock.now
-			set(value) { receiptClock.now = value }
-		val hmd = Tracker(Device(DeviceOrigin.STEAMVR), 901, "external-hmd", trackerPosition = TrackerPosition.HEAD,
+			set(value) {
+				receiptClock.now = value
+			}
+		val hmd = Tracker(
+			Device(DeviceOrigin.STEAMVR), 901, "external-hmd", trackerPosition = TrackerPosition.HEAD,
 			trackerNum = 0, hasPosition = true, hasRotation = true, isHmd = true, isComputed = true,
-			allowVelocity = true, trackRotDirection = false).also { it.status = TrackerStatus.OK }
+			allowVelocity = true, trackRotDirection = false,
+		).also { it.status = TrackerStatus.OK }
 		val raw = ProtobufBridge::class.java.getDeclaredField("rawHmdPositions").let {
-			it.isAccessible = true; it.get(this) as TrustedRawHmdPositionSource
+			it.isAccessible = true
+			it.get(this) as TrustedRawHmdPositionSource
 		}
 		val full = Position.newBuilder().setTrackerId(0).setX(1f).setY(2f).setZ(3f).setQw(1f)
 			.setVx(.1f).setVy(.2f).setVz(.3f).setDataSource(Position.DataSource.FULL).build()
@@ -39,35 +66,69 @@ class StrongTrustedHmdPolicyTests {
 			val field = ProtobufBridge::class.java.getDeclaredField("remoteTrackersByTrackerId").apply { isAccessible = true }
 			@Suppress("UNCHECKED_CAST")
 			(field.get(this) as MutableMap<Int, Tracker>)[0] = hmd
-			registerTrustedSteamVrHmd(hmd); handle = openInboundTransportSession()
+			registerTrustedSteamVrHmd(hmd)
+			handle = openInboundTransportSession()
 			receive(full)
-			context = RawHmdProviderSession(ReviewedHmdBackendContract("SYNTHETIC TEST EVIDENCE",
-				acceptedHmdPoseMessageSample()!!.ingressIdentity.sourceId, "synthetic-owner", space,
-				"synthetic-reviewed-acquisition-contract"), "provider-a", "raw-incarnation-a", "generation-a", mapping)
+			context = RawHmdProviderSession(
+				ReviewedHmdBackendContract(
+					"SYNTHETIC TEST EVIDENCE",
+					acceptedHmdPoseMessageSample()!!.ingressIdentity.sourceId,
+					"synthetic-owner",
+					space,
+					"synthetic-reviewed-acquisition-contract",
+				),
+				"provider-a",
+				"raw-incarnation-a",
+				"generation-a",
+				mapping,
+			)
 			assertTrue(raw.establishProviderSession(context, policy))
 			seed()
 		}
 		fun evidence(id: Long = 1, session: RawHmdProviderSession = context) = RawHmdProviderPoseEvidence(
-			session.backend.sourceIdentity, session.providerSessionEpoch, id, session.backend.rawSpaceOwner,
-			session.rawSpaceIncarnation, session.rawSpaceGeneration, session.appliedMapping, true)
-		fun seed(id: Long = 1, message: Position = full, proof: RawHmdProviderPoseEvidence? = evidence(id),
-			transport: TransportSessionHandle = handle, current: Boolean = true) {
+			session.backend.sourceIdentity,
+			session.providerSessionEpoch,
+			id,
+			session.backend.rawSpaceOwner,
+			session.rawSpaceIncarnation,
+			session.rawSpaceGeneration,
+			session.appliedMapping,
+			true,
+		)
+		fun seed(
+			id: Long = 1,
+			message: Position = full,
+			proof: RawHmdProviderPoseEvidence? = evidence(id),
+			transport: TransportSessionHandle = handle,
+			current: Boolean = true,
+		) {
 			// Exact same immutable decoded message supplies P/Q and its explicit synthetic provider proof.
-			raw.positionMessageAccepted(hmd, Vector3(message.x, message.y, message.z), message,
+			raw.positionMessageAccepted(
+				hmd,
+				Vector3(message.x, message.y, message.z),
+				message,
 				if (message.dataSource == Position.DataSource.FULL) TrackingModality.FULL else TrackingModality.ROTATION_ONLY,
-				transport.epoch, current, now, proof)
+				transport.epoch,
+				current,
+				now,
+				proof,
+			)
 		}
 		fun pose() = raw.currentTrustedPoseSnapshot(handle.epoch)
 		fun capability() = deriveRawHmdPoseInputCapability(pose(), raw.currentProviderSession(), policy)
 		fun admission(capability: RawHmdPoseInputCapability = capability()) = admitCurrentRawHmdPoseInput(capability)
 		fun receive(message: Position, transport: TransportSessionHandle? = handle) {
-			messageReceived(ProtobufMessages.ProtobufMessage.newBuilder().setPosition(message).build(), transport); dataRead()
+			messageReceived(ProtobufMessages.ProtobufMessage.newBuilder().setPosition(message).build(), transport)
+			dataRead()
 		}
 		fun status(status: TrackerStatus, transport: TransportSessionHandle? = handle) {
-			messageReceived(ProtobufMessages.ProtobufMessage.newBuilder().setTrackerStatus(
-				ProtobufMessages.TrackerStatus.newBuilder().setTrackerId(0).setStatusValue(status.id)).build(), transport); dataRead()
+			messageReceived(ProtobufMessages.ProtobufMessage.newBuilder().setTrackerStatus(ProtobufMessages.TrackerStatus.newBuilder().setTrackerId(0).setStatusValue(status.id)).build(), transport)
+			dataRead()
 		}
-		fun rollover(): TransportSessionHandle { handle = openInboundTransportSession(); return handle }
+		fun rollover(): TransportSessionHandle {
+			handle = openInboundTransportSession()
+			return handle
+		}
 		fun close(old: TransportSessionHandle = handle) = closeInboundTransportSession(old)
 		fun reconnect() = reconnected()
 		fun disconnect() = disconnected()
@@ -85,20 +146,28 @@ class StrongTrustedHmdPolicyTests {
 		override fun getBridgeConfigKey() = "synthetic-policy-test"
 	}
 
-	private fun rejected(reason: RawHmdPoseInputRejectionReason, result: RawHmdPoseInputAdmission) =
-		assertTrue(reason in assertIs<RawHmdPoseInputAdmission.Rejected>(result).reasons)
+	private fun rejected(reason: RawHmdPoseInputRejectionReason, result: RawHmdPoseInputAdmission) = assertTrue(reason in assertIs<RawHmdPoseInputAdmission.Rejected>(result).reasons)
 
 	@Test fun completeSyntheticContractAcceptsAndPollingDoesNotRenewReceipt() {
-		val f = Fixture(); val pose = assertNotNull(f.pose()); val ready = f.capability()
-		repeat(3) { assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission(ready)); assertSame(pose, f.pose()) }
-		for (age in listOf(499L, 500L)) {
-			f.now = pose.receivedAtSystemNanos + age; assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission(ready))
+		val f = Fixture()
+		val pose = assertNotNull(f.pose())
+		val ready = f.capability()
+		repeat(3) {
+			assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission(ready))
+			assertSame(pose, f.pose())
 		}
-		f.now++; rejected(SAMPLE_STALE, f.admission(ready))
+		for (age in listOf(499L, 500L)) {
+			f.now = pose.receivedAtSystemNanos + age
+			assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission(ready))
+		}
+		f.now++
+		rejected(SAMPLE_STALE, f.admission(ready))
 	}
 
 	@Test fun eachMissingProviderFactProducesUnavailableWithoutHostSubstitutions() {
-		val f = Fixture(); val pose = f.pose()!!; val e = pose.providerEvidence!!
+		val f = Fixture()
+		val pose = f.pose()!!
+		val e = pose.providerEvidence!!
 		val cases = listOf(
 			e.copy(providerSessionEpoch = null) to PROVIDER_SESSION_UNAVAILABLE,
 			e.copy(providerSessionEpoch = " ") to PROVIDER_SESSION_UNAVAILABLE,
@@ -108,208 +177,331 @@ class StrongTrustedHmdPolicyTests {
 			e.copy(rawSpaceGeneration = null) to RAW_SPACE_GENERATION_UNAVAILABLE,
 			e.copy(appliedMapping = null) to FRAME_SPACE_UNAVAILABLE,
 			e.copy(sourceValid = null) to PROVIDER_EVIDENCE_INVALID,
-			e.copy(sourceValid = false) to PROVIDER_EVIDENCE_INVALID)
+			e.copy(sourceValid = false) to PROVIDER_EVIDENCE_INVALID,
+		)
 		for ((proof, reason) in cases) {
 			val bad = pose.copy(providerEvidence = proof)
-			assertTrue(reason in assertIs<RawHmdPoseInputCapability.Unavailable>(
-				deriveRawHmdPoseInputCapability(bad, f.context, policy)).reasons)
+			assertTrue(reason in assertIs<RawHmdPoseInputCapability.Unavailable>(deriveRawHmdPoseInputCapability(bad, f.context, policy)).reasons)
 			rejected(reason, admitRawHmdPoseInput(f.capability(), { f.handle }, { bad }, { f.now }, { f.context }))
 		}
-		assertTrue(pose.sequence >= 0); assertNotNull(pose.transportSessionEpoch); assertEquals(23, mapping.revision)
+		assertTrue(pose.sequence >= 0)
+		assertNotNull(pose.transportSessionEpoch)
+		assertEquals(23, mapping.revision)
 	}
 
 	@Test fun providerEvidenceCannotBeAddedToReadyForAProductionOpenVrSample() {
-		val f = Fixture(); val old = f.capability(); f.receive(f.full)
-		assertNull(f.acceptedHmdPoseMessageSample()!!.providerEvidence); assertNull(f.pose())
+		val f = Fixture()
+		val old = f.capability()
+		f.receive(f.full)
+		assertNull(f.acceptedHmdPoseMessageSample()!!.providerEvidence)
+		assertNull(f.pose())
 		rejected(POSITION_UNAVAILABLE, f.admission(old))
 		val production = assertIs<RawHmdPoseInputCapability.Unavailable>(f.rawHmdPoseInputCapability())
-		assertEquals(setOf(FRAME_REFERENCE_UNAVAILABLE, PROVIDER_SESSION_UNAVAILABLE,
-			OBSERVATION_ID_UNAVAILABLE, RAW_SPACE_GENERATION_UNAVAILABLE), production.reasons)
-		assertEquals(Vector3(1f, 2f, 3f), f.hmd.position); assertEquals(Quaternion.IDENTITY, f.hmd.getRawRotation())
-		assertEquals(Vector3(.1f, .2f, .3f), f.hmd.getVelocity()); assertEquals(TrackerStatus.OK, f.hmd.status)
+		assertEquals(
+			setOf(
+				FRAME_REFERENCE_UNAVAILABLE,
+				PROVIDER_SESSION_UNAVAILABLE,
+				OBSERVATION_ID_UNAVAILABLE,
+				RAW_SPACE_GENERATION_UNAVAILABLE,
+			),
+			production.reasons,
+		)
+		assertEquals(Vector3(1f, 2f, 3f), f.hmd.position)
+		assertEquals(Quaternion.IDENTITY, f.hmd.getRawRotation())
+		assertEquals(Vector3(.1f, .2f, .3f), f.hmd.getVelocity())
+		assertEquals(TrackerStatus.OK, f.hmd.status)
 		rejected(CAPABILITY_UNAVAILABLE, f.currentRawHmdPoseAdmission())
 	}
 
 	@Test fun providerMismatchAndEveryRawOrOutputMismatchRejectIndependently() {
-		val f = Fixture(); val pose = f.pose()!!; val e = pose.providerEvidence!!
-		for (proof in listOf(e.copy(providerSessionEpoch = "provider-b"), e.copy(rawSpaceOwner = "another-owner"),
-			e.copy(rawSpaceIncarnation = "another-incarnation"), e.copy(rawSpaceGeneration = "another-generation"),
+		val f = Fixture()
+		val pose = f.pose()!!
+		val e = pose.providerEvidence!!
+		for (proof in listOf(
+			e.copy(providerSessionEpoch = "provider-b"),
+			e.copy(rawSpaceOwner = "another-owner"),
+			e.copy(rawSpaceIncarnation = "another-incarnation"),
+			e.copy(rawSpaceGeneration = "another-generation"),
 			e.copy(appliedMapping = mapping.copy(outputSpaceEpoch = "another-output")),
-			e.copy(appliedMapping = mapping.copy(revision = 24)), e.copy(observationId = 2))) {
+			e.copy(appliedMapping = mapping.copy(revision = 24)),
+			e.copy(observationId = 2),
+		)) {
 			val bad = pose.copy(providerEvidence = proof)
 			rejected(PROVIDER_EVIDENCE_INVALID, admitRawHmdPoseInput(f.capability(), { f.handle }, { bad }, { f.now }, { f.context }))
 		}
 	}
 
 	@Test fun unreviewedContractAndWrongSourceDoNotGrantAuthority() {
-		val f = Fixture(); val pose = f.pose()!!
-		for (context in listOf(null, f.context.copy(backend = f.context.backend.copy(contractId = "")),
-			f.context.copy(backend = f.context.backend.copy(proofSource = ""))))
-			assertTrue(FRAME_REFERENCE_UNAVAILABLE in assertIs<RawHmdPoseInputCapability.Unavailable>(
-				deriveRawHmdPoseInputCapability(pose, context, policy)).reasons)
+		val f = Fixture()
+		val pose = f.pose()!!
+		for (context in listOf(
+			null,
+			f.context.copy(backend = f.context.backend.copy(contractId = "")),
+			f.context.copy(backend = f.context.backend.copy(proofSource = "")),
+		)) {
+			assertTrue(FRAME_REFERENCE_UNAVAILABLE in assertIs<RawHmdPoseInputCapability.Unavailable>(deriveRawHmdPoseInputCapability(pose, context, policy)).reasons)
+		}
 		val bad = pose.copy(providerEvidence = pose.providerEvidence!!.copy(sourceIdentity = "output-source"))
-		assertTrue(SOURCE_IDENTITY_MISMATCH in assertIs<RawHmdPoseInputCapability.Unavailable>(
-			deriveRawHmdPoseInputCapability(bad, f.context, policy)).reasons)
+		assertTrue(SOURCE_IDENTITY_MISMATCH in assertIs<RawHmdPoseInputCapability.Unavailable>(deriveRawHmdPoseInputCapability(bad, f.context, policy)).reasons)
 	}
 
 	@Test fun missingInvalidOrUnresolvedMappingCannotBeRetaggedByReceiver() {
-		val f = Fixture(); val pose = f.pose()!!
-		for (bad in listOf(mapping.copy(outputSpaceEpoch = ""), mapping.copy(calibrationEpoch = " "),
-			mapping.copy(outputSpace = space.copy(id = "")), mapping.copy(outputSpace = space.copy(convention = "")),
-			mapping.copy(outputSpace = space.copy(revision = -1)), mapping.copy(revision = null), mapping.copy(revision = -1)))
-			assertIs<RawHmdPoseInputCapability.Unavailable>(deriveRawHmdPoseInputCapability(
-				pose.copy(providerEvidence = pose.providerEvidence!!.copy(appliedMapping = bad)), f.context, policy))
+		val f = Fixture()
+		val pose = f.pose()!!
+		for (bad in listOf(
+			mapping.copy(outputSpaceEpoch = ""),
+			mapping.copy(calibrationEpoch = " "),
+			mapping.copy(outputSpace = space.copy(id = "")),
+			mapping.copy(outputSpace = space.copy(convention = "")),
+			mapping.copy(outputSpace = space.copy(revision = -1)),
+			mapping.copy(revision = null),
+			mapping.copy(revision = -1),
+		)) {
+			assertIs<RawHmdPoseInputCapability.Unavailable>(deriveRawHmdPoseInputCapability(pose.copy(providerEvidence = pose.providerEvidence!!.copy(appliedMapping = bad)), f.context, policy))
+		}
 	}
 
 	@Test fun exactPayloadCannotChangeUnderSameHostSequenceAndObservation() {
-		val f = Fixture(); val ready = f.capability(); val pose = f.pose()!!
-		for (bad in listOf(pose.copy(position = Vector3(4f, 5f, 6f)), pose.copy(orientation = Quaternion(2f, 0f, 0f, 0f))))
+		val f = Fixture()
+		val ready = f.capability()
+		val pose = f.pose()!!
+		for (bad in listOf(pose.copy(position = Vector3(4f, 5f, 6f)), pose.copy(orientation = Quaternion(2f, 0f, 0f, 0f)))) {
 			rejected(PROVIDER_EVIDENCE_INVALID, admitRawHmdPoseInput(ready, { f.handle }, { bad }, { f.now }, { f.context }))
+		}
 	}
 
 	@Test fun fullToRotationOnlyClearsTrustedButKeepsLegacyRotationAndVelocity() {
-		val f = Fixture(); val ready = f.capability(); val historical = f.acceptedHmdPoseMessageSample()
-		f.receive(Position.newBuilder().setTrackerId(0).setQx(1f).setVx(4f).setVy(5f).setVz(6f)
-			.setDataSource(Position.DataSource.IMU).build())
-		assertNull(f.pose()); rejected(POSITION_UNAVAILABLE, f.admission(ready))
+		val f = Fixture()
+		val ready = f.capability()
+		val historical = f.acceptedHmdPoseMessageSample()
+		f.receive(
+			Position.newBuilder().setTrackerId(0).setQx(1f).setVx(4f).setVy(5f).setVz(6f)
+				.setDataSource(Position.DataSource.IMU).build(),
+		)
+		assertNull(f.pose())
+		rejected(POSITION_UNAVAILABLE, f.admission(ready))
 		assertSame(historical, f.acceptedHmdPoseMessageSample())
 		assertEquals(Quaternion(0f, 1f, 0f, 0f), f.hmd.getRawRotation())
-		assertEquals(Vector3(4f, 5f, 6f), f.hmd.getVelocity()); assertEquals(TrackingModality.ROTATION_ONLY, f.hmd.sampleModality)
+		assertEquals(Vector3(4f, 5f, 6f), f.hmd.getVelocity())
+		assertEquals(TrackingModality.ROTATION_ONLY, f.hmd.sampleModality)
 	}
 
 	@Test fun imuWithCompleteXyzAndValidProofStillInvalidates() {
-		val f = Fixture(); f.seed(2, f.full.toBuilder().setDataSource(Position.DataSource.IMU).build())
-		assertNull(f.pose()); assertIs<RawHmdPoseInputAdmission.Rejected>(f.admission())
+		val f = Fixture()
+		f.seed(2, f.full.toBuilder().setDataSource(Position.DataSource.IMU).build())
+		assertNull(f.pose())
+		assertIs<RawHmdPoseInputAdmission.Rejected>(f.admission())
 	}
 
 	@Test fun incompleteNonfiniteAndInvalidQuaternionNeverFallBackToLastGoodCandidate() {
-		val messages = listOf(Position.newBuilder().setTrackerId(0).setX(1f).setQw(1f).setDataSource(Position.DataSource.FULL).build(),
-			Fixture().full.toBuilder().setX(Float.NaN).build(), Fixture().full.toBuilder().setQw(0f).build(),
-			Fixture().full.toBuilder().setQw(Float.POSITIVE_INFINITY).build())
+		val messages = listOf(
+			Position.newBuilder().setTrackerId(0).setX(1f).setQw(1f).setDataSource(Position.DataSource.FULL).build(),
+			Fixture().full.toBuilder().setX(Float.NaN).build(),
+			Fixture().full.toBuilder().setQw(0f).build(),
+			Fixture().full.toBuilder().setQw(Float.POSITIVE_INFINITY).build(),
+		)
 		for (message in messages) {
-			val f = Fixture(); val ready = f.capability(); f.seed(2, message)
-			assertNull(f.pose()); rejected(POSITION_UNAVAILABLE, f.admission(ready))
+			val f = Fixture()
+			val ready = f.capability()
+			f.seed(2, message)
+			assertNull(f.pose())
+			rejected(POSITION_UNAVAILABLE, f.admission(ready))
 			assertNotNull(f.acceptedHmdPoseMessageSample())
 		}
 	}
 
 	@Test fun validityFalseAndMissingEvidenceClearImmediately() {
 		for (proofMissing in listOf(false, true)) {
-			val f = Fixture(); val ready = f.capability()
+			val f = Fixture()
+			val ready = f.capability()
 			f.seed(2, proof = if (proofMissing) null else f.evidence(2).copy(sourceValid = false))
-			assertNull(f.pose()); rejected(POSITION_UNAVAILABLE, f.admission(ready))
+			assertNull(f.pose())
+			rejected(POSITION_UNAVAILABLE, f.admission(ready))
 		}
 	}
 
 	@Test fun everyUnusableTrackerStatusInvalidatesAndOkDoesNotRevive() {
 		for (status in TrackerStatus.entries.filter { !it.sendData }) {
-			val f = Fixture(); val old = f.capability(); f.status(status)
-			assertEquals(status, f.hmd.status); assertNull(f.pose()); rejected(POSITION_UNAVAILABLE, f.admission(old))
-			f.status(TrackerStatus.OK); assertNull(f.pose())
-			f.seed(2); assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
+			val f = Fixture()
+			val old = f.capability()
+			f.status(status)
+			assertEquals(status, f.hmd.status)
+			assertNull(f.pose())
+			rejected(POSITION_UNAVAILABLE, f.admission(old))
+			f.status(TrackerStatus.OK)
+			assertNull(f.pose())
+			f.seed(2)
+			assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
 		}
 	}
 
 	@Test fun busyPreservesCandidateAccordingToExistingSendDataSemantics() {
-		val f = Fixture(); val pose = f.pose(); f.status(TrackerStatus.BUSY)
-		assertSame(pose, f.pose()); assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
+		val f = Fixture()
+		val pose = f.pose()
+		f.status(TrackerStatus.BUSY)
+		assertSame(pose, f.pose())
+		assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
 	}
 
 	@Test fun transportRolloverRequiresFreshProviderSessionAndNeverReusesOldReady() {
-		val f = Fixture(); val old = f.capability(); val a = f.handle; f.rollover()
-		assertNull(f.pose()); assertNull(f.raw.currentProviderSession()); rejected(POSITION_UNAVAILABLE, f.admission(old))
+		val f = Fixture()
+		val old = f.capability()
+		val a = f.handle
+		f.rollover()
+		assertNull(f.pose())
+		assertNull(f.raw.currentProviderSession())
+		rejected(POSITION_UNAVAILABLE, f.admission(old))
 		assertFalse(f.close(a))
-		f.seed(2); assertNull(f.pose())
+		f.seed(2)
+		assertNull(f.pose())
 		assertFalse(f.raw.establishProviderSession(f.context, policy))
 		val fresh = f.context.copy(providerSessionEpoch = "provider-b", rawSpaceIncarnation = "raw-incarnation-b")
-		assertTrue(f.raw.establishProviderSession(fresh, policy)); f.seed(proof = f.evidence(session = fresh))
+		assertTrue(f.raw.establishProviderSession(fresh, policy))
+		f.seed(proof = f.evidence(session = fresh))
 		assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
 	}
 
 	@Test fun closedSessionAndDisconnectCallbackClearAuthorityButKeepTrackerObjectAndHistory() {
 		for (closeTransport in listOf(true, false)) {
-			val f = Fixture(); val history = f.acceptedHmdPoseMessageSample(); val ready = f.capability()
+			val f = Fixture()
+			val history = f.acceptedHmdPoseMessageSample()
+			val ready = f.capability()
 			if (closeTransport) assertTrue(f.close()) else f.disconnect()
-			assertNull(f.pose()); assertSame(history, f.acceptedHmdPoseMessageSample())
+			assertNull(f.pose())
+			assertSame(history, f.acceptedHmdPoseMessageSample())
 			assertIs<RawHmdPoseInputAdmission.Rejected>(f.admission(ready))
 			if (!closeTransport) assertEquals(TrackerStatus.DISCONNECTED, f.hmd.status)
 		}
 	}
 
 	@Test fun reconnectCallbackRetiresProviderAndOldEvidenceCannotResume() {
-		val f = Fixture(); f.reconnect(); assertNull(f.pose()); assertNull(f.raw.currentProviderSession())
-		assertFalse(f.raw.establishProviderSession(f.context, policy)); f.seed(2); assertNull(f.pose())
+		val f = Fixture()
+		f.reconnect()
+		assertNull(f.pose())
+		assertNull(f.raw.currentProviderSession())
+		assertFalse(f.raw.establishProviderSession(f.context, policy))
+		f.seed(2)
+		assertNull(f.pose())
 	}
 
 	@Test fun lateOldTransportAndSessionlessValidityLossDoNotClearCurrentCandidate() {
-		val f = Fixture(); val old = f.handle; f.rollover()
+		val f = Fixture()
+		val old = f.handle
+		f.rollover()
 		val next = f.context.copy(providerSessionEpoch = "provider-b")
-		assertTrue(f.raw.establishProviderSession(next, policy)); f.seed(proof = f.evidence(session = next))
-		val pose = f.pose(); val imu = Position.newBuilder().setTrackerId(0).setQw(1f).setDataSource(Position.DataSource.IMU).build()
-		f.receive(imu, old); f.receive(imu, null); f.status(TrackerStatus.DISCONNECTED, old)
-		assertSame(pose, f.pose()); assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
+		assertTrue(f.raw.establishProviderSession(next, policy))
+		f.seed(proof = f.evidence(session = next))
+		val pose = f.pose()
+		val imu = Position.newBuilder().setTrackerId(0).setQw(1f).setDataSource(Position.DataSource.IMU).build()
+		f.receive(imu, old)
+		f.receive(imu, null)
+		f.status(TrackerStatus.DISCONNECTED, old)
+		assertSame(pose, f.pose())
+		assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
 	}
 
 	@Test fun providerSessionSwitchWithinSameTransportRejectsOldScopeAndCannotReactivateIt() {
-		val f = Fixture(); val old = f.capability(); val next = f.context.copy(providerSessionEpoch = "provider-b")
-		assertTrue(f.raw.establishProviderSession(next, policy)); f.seed(proof = f.evidence(session = next))
-		rejected(PROVIDER_EVIDENCE_INVALID, f.admission(old)); val pose = f.pose()
-		f.seed(2); assertSame(pose, f.pose()); assertFalse(f.raw.establishProviderSession(f.context, policy))
+		val f = Fixture()
+		val old = f.capability()
+		val next = f.context.copy(providerSessionEpoch = "provider-b")
+		assertTrue(f.raw.establishProviderSession(next, policy))
+		f.seed(proof = f.evidence(session = next))
+		rejected(PROVIDER_EVIDENCE_INVALID, f.admission(old))
+		val pose = f.pose()
+		f.seed(2)
+		assertSame(pose, f.pose())
+		assertFalse(f.raw.establishProviderSession(f.context, policy))
 	}
 
 	@Test fun duplicateSamePayloadIgnoresNewHostSampleAndCannotRenewFirstReceipt() {
-		val f = Fixture(); val old = f.pose()!!; f.now += 501; f.seed()
-		assertSame(old, f.pose()); assertTrue(f.acceptedHmdPoseMessageSample()!!.sequence > old.sequence)
+		val f = Fixture()
+		val old = f.pose()!!
+		f.now += 501
+		f.seed()
+		assertSame(old, f.pose())
+		assertTrue(f.acceptedHmdPoseMessageSample()!!.sequence > old.sequence)
 		rejected(SAMPLE_STALE, f.admission())
 		val freshHostSample = f.acceptedHmdPoseMessageSample()!!
 		rejected(SAMPLE_SEQUENCE_MISMATCH, f.admission(deriveRawHmdPoseInputCapability(freshHostSample, f.context, policy)))
 	}
 
 	@Test fun conflictingDuplicateRetiresScopeAndRequiresNewProviderSession() {
-		val f = Fixture(); val ready = f.capability(); f.seed(message = f.full.toBuilder().setX(9f).build())
-		assertNull(f.pose()); rejected(PROVIDER_EVIDENCE_INVALID, f.admission(ready))
-		assertFalse(f.raw.establishProviderSession(f.context, policy)); f.seed(2); assertNull(f.pose())
+		val f = Fixture()
+		val ready = f.capability()
+		f.seed(message = f.full.toBuilder().setX(9f).build())
+		assertNull(f.pose())
+		rejected(PROVIDER_EVIDENCE_INVALID, f.admission(ready))
+		assertFalse(f.raw.establishProviderSession(f.context, policy))
+		f.seed(2)
+		assertNull(f.pose())
 	}
 
 	@Test fun olderObservationDoesNotReplaceOrRenewCurrentCandidate() {
-		val f = Fixture(); f.seed(5); val pose = f.pose(); f.now += 100; f.seed(1)
-		assertSame(pose, f.pose()); assertEquals(5, f.pose()!!.providerEvidence!!.observationId)
+		val f = Fixture()
+		f.seed(5)
+		val pose = f.pose()
+		f.now += 100
+		f.seed(1)
+		assertSame(pose, f.pose())
+		assertEquals(5, f.pose()!!.providerEvidence!!.observationId)
 	}
 
 	@Test fun lossFollowedByDuplicateCannotReviveButNewObservationCan() {
-		val f = Fixture(); f.raw.invalidateCurrentCandidate(f.hmd); f.seed(); assertNull(f.pose())
-		f.seed(2); assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
+		val f = Fixture()
+		f.raw.invalidateCurrentCandidate(f.hmd)
+		f.seed()
+		assertNull(f.pose())
+		f.seed(2)
+		assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
 	}
 
 	@Test fun rawOrOutputContextChangeClearsCandidateAndRetainsObservationHighWater() {
-		val f = Fixture(); f.seed(10)
+		val f = Fixture()
+		f.seed(10)
 		val changed = f.context.copy(rawSpaceGeneration = "generation-b", appliedMapping = mapping.copy(outputSpaceEpoch = "output-b"))
-		assertTrue(f.raw.establishProviderSession(changed, policy)); assertNull(f.pose())
-		f.seed(9, proof = f.evidence(9, changed)); assertNull(f.pose())
-		f.seed(11, proof = f.evidence(11, changed)); assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
+		assertTrue(f.raw.establishProviderSession(changed, policy))
+		assertNull(f.pose())
+		f.seed(9, proof = f.evidence(9, changed))
+		assertNull(f.pose())
+		f.seed(11, proof = f.evidence(11, changed))
+		assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
 	}
 
 	@Test fun counterExhaustionCannotWrapAndNewProviderSessionRestartsLocalCounter() {
-		val f = Fixture(); f.seed(Long.MAX_VALUE); assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
-		f.seed(Long.MIN_VALUE); assertNull(f.pose()); f.seed(0); assertNull(f.pose())
+		val f = Fixture()
+		f.seed(Long.MAX_VALUE)
+		assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
+		f.seed(Long.MIN_VALUE)
+		assertNull(f.pose())
+		f.seed(0)
+		assertNull(f.pose())
 		val next = f.context.copy(providerSessionEpoch = "provider-b")
-		assertTrue(f.raw.establishProviderSession(next, policy)); f.seed(0, proof = f.evidence(0, next))
+		assertTrue(f.raw.establishProviderSession(next, policy))
+		f.seed(0, proof = f.evidence(0, next))
 		assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
 	}
 
 	@Test fun providerOrCurrentSampleChangeDuringAdmissionFailsFinalStabilityCheck() {
 		for (changeProvider in listOf(true, false)) {
-			val f = Fixture(); val ready = f.capability()
-			rejected(CURRENT_SESSION_CHANGED, admitRawHmdPoseInput(ready, { f.handle }, { f.pose() }, {
-				if (changeProvider) f.raw.establishProviderSession(f.context.copy(providerSessionEpoch = "provider-b"), policy)
-				else f.raw.invalidateCurrentCandidate(f.hmd)
-				f.now
-			}, f.raw::currentProviderSession))
+			val f = Fixture()
+			val ready = f.capability()
+			rejected(
+				CURRENT_SESSION_CHANGED,
+				admitRawHmdPoseInput(ready, { f.handle }, { f.pose() }, {
+					if (changeProvider) {
+						f.raw.establishProviderSession(f.context.copy(providerSessionEpoch = "provider-b"), policy)
+					} else {
+						f.raw.invalidateCurrentCandidate(f.hmd)
+					}
+					f.now
+				}, f.raw::currentProviderSession),
+			)
 		}
 	}
 
 	@Test fun invalidReceiptOrFreshnessPolicyCannotProduceReady() {
-		val f = Fixture(); val pose = f.pose()!!
+		val f = Fixture()
+		val pose = f.pose()!!
 		assertIs<RawHmdPoseInputCapability.Unavailable>(deriveRawHmdPoseInputCapability(pose.copy(receivedAtSystemNanos = -1), f.context, policy))
 		assertIs<RawHmdPoseInputCapability.Unavailable>(deriveRawHmdPoseInputCapability(pose, f.context, RawHmdPoseFreshnessPolicy(0)))
 	}
@@ -317,80 +509,112 @@ class StrongTrustedHmdPolicyTests {
 	@Test fun retiredRawAndOutputEpochsCannotReturnAfterContextChange() {
 		for (restoreRaw in listOf(true, false)) {
 			val f = Fixture()
-			val next = f.context.copy(rawSpaceGeneration = "generation-b",
-				appliedMapping = mapping.copy(outputSpaceEpoch = "output-b"))
-			assertTrue(f.raw.establishProviderSession(next, policy)); f.seed(2, proof = f.evidence(2, next))
-			val aba = if (restoreRaw) next.copy(rawSpaceGeneration = f.context.rawSpaceGeneration)
-				else next.copy(appliedMapping = mapping)
-			assertFalse(f.raw.establishProviderSession(aba, policy)); assertNull(f.pose())
+			val next = f.context.copy(
+				rawSpaceGeneration = "generation-b",
+				appliedMapping = mapping.copy(outputSpaceEpoch = "output-b"),
+			)
+			assertTrue(f.raw.establishProviderSession(next, policy))
+			f.seed(2, proof = f.evidence(2, next))
+			val aba = if (restoreRaw) {
+				next.copy(rawSpaceGeneration = f.context.rawSpaceGeneration)
+			} else {
+				next.copy(appliedMapping = mapping)
+			}
+			assertFalse(f.raw.establishProviderSession(aba, policy))
+			assertNull(f.pose())
 		}
 	}
 
 	@Test fun newerMappingWithinSameOutputEpochClearsCandidateButKeepsObservationHighWater() {
 		for (calibration in listOf(mapping.calibrationEpoch, "fresh-calibration")) {
-			val f = Fixture(); f.seed(10)
+			val f = Fixture()
+			f.seed(10)
 			val old = f.capability()
 			val next = f.context.copy(appliedMapping = mapping.copy(revision = 24, calibrationEpoch = calibration))
-			assertTrue(f.raw.establishProviderSession(next, policy)); assertNull(f.pose())
+			assertTrue(f.raw.establishProviderSession(next, policy))
+			assertNull(f.pose())
 			assertEquals(mapping.outputSpaceEpoch, f.raw.currentProviderSession()!!.appliedMapping.outputSpaceEpoch)
-			f.seed(9, proof = f.evidence(9, next)); assertNull(f.pose())
+			f.seed(9, proof = f.evidence(9, next))
+			assertNull(f.pose())
 			f.seed(11, proof = f.evidence(11, next))
 			val input = assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission()).input
-			assertEquals(24, input.provenance.mappingRevision); assertEquals(calibration, input.provenance.calibrationEpoch)
+			assertEquals(24, input.provenance.mappingRevision)
+			assertEquals(calibration, input.provenance.calibrationEpoch)
 			rejected(PROVIDER_EVIDENCE_INVALID, f.admission(old))
 		}
 	}
 
 	@Test fun mappingConflictsNullMutableMappingAndOutputDescriptorChangesFailClosed() {
-		for (changed in listOf(mapping.copy(calibrationEpoch = "different"), mapping.copy(identity = true),
-			mapping.copy(revision = null, identity = true), mapping.copy(revision = 24, outputSpace = space.copy(revision = 18)))) {
+		for (changed in listOf(
+			mapping.copy(calibrationEpoch = "different"),
+			mapping.copy(identity = true),
+			mapping.copy(revision = null, identity = true),
+			mapping.copy(revision = 24, outputSpace = space.copy(revision = 18)),
+		)) {
 			val f = Fixture()
 			assertFalse(f.raw.establishProviderSession(f.context.copy(appliedMapping = changed), policy))
-			assertNull(f.pose()); assertNull(f.raw.currentProviderSession())
+			assertNull(f.pose())
+			assertNull(f.raw.currentProviderSession())
 		}
-		val f = Fixture(); val initial = f.context.copy(appliedMapping = mapping.copy(revision = null, identity = true,
-			outputSpaceEpoch = "fresh-output", calibrationEpoch = "fresh-calibration"))
+		val f = Fixture()
+		val initial = f.context.copy(
+			appliedMapping = mapping.copy(
+				revision = null,
+				identity = true,
+				outputSpaceEpoch = "fresh-output",
+				calibrationEpoch = "fresh-calibration",
+			),
+		)
 		assertTrue(f.raw.establishProviderSession(initial, policy))
-		assertFalse(f.raw.establishProviderSession(initial.copy(appliedMapping = initial.appliedMapping.copy(
-			calibrationEpoch = "changed-without-revision")), policy))
-		assertNull(f.pose()); assertNull(f.raw.currentProviderSession())
+		assertFalse(f.raw.establishProviderSession(initial.copy(appliedMapping = initial.appliedMapping.copy(calibrationEpoch = "changed-without-revision")), policy))
+		assertNull(f.pose())
+		assertNull(f.raw.currentProviderSession())
 	}
 
 	@Test fun mappingRollbackIsRejectedWithoutReplacingCurrentContextOrResettingHighWater() {
-		val f = Fixture(); f.seed(10)
+		val f = Fixture()
+		f.seed(10)
 		assertFalse(f.raw.establishProviderSession(f.context.copy(appliedMapping = mapping.copy(revision = 22)), policy))
-		assertNull(f.pose()); assertEquals(f.context, f.raw.currentProviderSession())
-		f.seed(9); assertNull(f.pose()); f.seed(11)
+		assertNull(f.pose())
+		assertEquals(f.context, f.raw.currentProviderSession())
+		f.seed(9)
+		assertNull(f.pose())
+		f.seed(11)
 		assertIs<RawHmdPoseInputAdmission.Accepted>(f.admission())
 	}
 
 	@Test fun calibrationAbaAndRetiredOutputEpochAcrossProviderSessionsAreRejected() {
-		val f = Fixture(); val next = f.context.copy(appliedMapping = mapping.copy(revision = 24, calibrationEpoch = "C2"))
+		val f = Fixture()
+		val next = f.context.copy(appliedMapping = mapping.copy(revision = 24, calibrationEpoch = "C2"))
 		assertTrue(f.raw.establishProviderSession(next, policy))
-		assertFalse(f.raw.establishProviderSession(next.copy(appliedMapping = next.appliedMapping.copy(
-			revision = 25, calibrationEpoch = mapping.calibrationEpoch)), policy))
+		assertFalse(f.raw.establishProviderSession(next.copy(appliedMapping = next.appliedMapping.copy(revision = 25, calibrationEpoch = mapping.calibrationEpoch)), policy))
 		assertNull(f.pose())
-		val g = Fixture(); val other = g.context.copy(appliedMapping = mapping.copy(outputSpaceEpoch = "W2", revision = 24))
+		val g = Fixture()
+		val other = g.context.copy(appliedMapping = mapping.copy(outputSpaceEpoch = "W2", revision = 24))
 		assertTrue(g.raw.establishProviderSession(other, policy))
 		assertFalse(g.raw.establishProviderSession(other.copy(providerSessionEpoch = "fresh-provider", appliedMapping = mapping), policy))
 		assertNull(g.pose())
 	}
 
 	@Test fun retiredSessionBoundExhaustionFailsClosedWithoutEvictingOldTokens() {
-		val f = Fixture(); val state = HmdProviderObservationState()
+		val f = Fixture()
+		val state = HmdProviderObservationState()
 		assertTrue(state.establish(f.context))
 		for (i in 1..128) assertTrue(state.establish(f.context.copy(providerSessionEpoch = "synthetic-provider-$i")))
 		assertFalse(state.establish(f.context.copy(providerSessionEpoch = "synthetic-provider-129")))
-		assertNull(state.session); assertNull(state.candidate)
+		assertNull(state.session)
+		assertNull(state.candidate)
 		assertFalse(state.establish(f.context.copy(providerSessionEpoch = "synthetic-provider-fresh")))
 	}
 
 	@Test fun completeEvidenceStillCannotAdmitFeedbackIdentity() {
-		val f = Fixture(); val pose = f.pose()!!
-		val output = pose.copy(ingressIdentity = pose.ingressIdentity.copy(sourceId = "monaka-direct:head"),
-			providerEvidence = pose.providerEvidence!!.copy(sourceIdentity = "monaka-direct:head"))
-		assertTrue(FEEDBACK_SOURCE_NOT_ALLOWED in assertIs<RawHmdPoseInputCapability.Unavailable>(
-			deriveRawHmdPoseInputCapability(output, f.context, policy)).reasons)
+		val f = Fixture()
+		val pose = f.pose()!!
+		val output = pose.copy(
+			ingressIdentity = pose.ingressIdentity.copy(sourceId = "monaka-direct:head"),
+			providerEvidence = pose.providerEvidence!!.copy(sourceIdentity = "monaka-direct:head"),
+		)
+		assertTrue(FEEDBACK_SOURCE_NOT_ALLOWED in assertIs<RawHmdPoseInputCapability.Unavailable>(deriveRawHmdPoseInputCapability(output, f.context, policy)).reasons)
 		rejected(FEEDBACK_SOURCE_NOT_ALLOWED, admitRawHmdPoseInput(f.capability(), { f.handle }, { output }, { f.now }, { f.context }))
 	}
 }

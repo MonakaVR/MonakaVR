@@ -93,7 +93,8 @@ class PositionalIKFootGeometryDiagnosticsTests {
 		return maxOf(
 			(computedLeft.position - fixture.leftFoot.position).len(),
 			(computedRight.position - fixture.rightFoot.position).len(),
-		) * 1000f
+		) *
+			1000f
 	}
 
 	@Test

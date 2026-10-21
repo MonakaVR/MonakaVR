@@ -16,14 +16,19 @@ sealed interface MonakaSolverCommitResult {
 		override val owner = MonakaSolverCommitOwner.GENERIC_EXISTING
 		override val writebackAttempted = true
 	}
-	data class Rejected(override val tickSequence: Long, override val owner: MonakaSolverCommitOwner,
-		val reason: MonakaSolverCommitRejection) : MonakaSolverCommitResult {
+	data class Rejected(
+		override val tickSequence: Long,
+		override val owner: MonakaSolverCommitOwner,
+		val reason: MonakaSolverCommitRejection,
+	) : MonakaSolverCommitResult {
 		override val writebackAttempted = false
 	}
 }
 
-internal data class PositionCorrectionCommitted(override val tickSequence: Long,
-	val result: PositionCorrectionRuntimeTickResult) : MonakaSolverCommitResult {
+internal data class PositionCorrectionCommitted(
+	override val tickSequence: Long,
+	val result: PositionCorrectionRuntimeTickResult,
+) : MonakaSolverCommitResult {
 	override val owner = MonakaSolverCommitOwner.POSITION_CORRECTION
 	override val writebackAttempted = result is PositionCorrectionRuntimeTickResult.Processed
 }
@@ -43,20 +48,31 @@ class MonakaSolverComposition internal constructor(
 	private val sessionFactory: ((ConstraintIkWriteback) -> MonakaPositionCorrectionSession)? = null,
 	@Suppress("unused") private val nonHmdAdapter: PositionCorrectionNonHmdProductionAdapter? = null,
 ) : AutoCloseable {
-	constructor(skeleton: HumanSkeleton, positionCorrection: PositionCorrectionConfig?,
-		trackers: () -> Iterable<Tracker>, bodyModelSource: () -> HipBodyModelSnapshotResult) :
+	constructor(
+		skeleton: HumanSkeleton,
+		positionCorrection: PositionCorrectionConfig?,
+		trackers: () -> Iterable<Tracker>,
+		bodyModelSource: () -> HipBodyModelSnapshotResult,
+	) :
 		this(skeleton, prepare(positionCorrection, trackers, bodyModelSource))
 
-	private constructor(skeleton: HumanSkeleton, prepared: Prepared) : this(ConstraintIkWriteback(skeleton),
-		prepared.gate, prepared.factory, prepared.adapter)
+	private constructor(skeleton: HumanSkeleton, prepared: Prepared) : this(
+		ConstraintIkWriteback(skeleton),
+		prepared.gate,
+		prepared.factory,
+		prepared.adapter,
+	)
 
 	private var closed = false
 	private var lastReservedTickSequence: Long? = null
 	private var wasPaused = false
 	private var session: MonakaPositionCorrectionSession? = null
 
-	fun commitGeneric(tick: MonakaResolvedTickSnapshot, constraints: Map<TrackerPosition, EffectiveConstraint>,
-		historyRevision: Long = 0): MonakaSolverCommitResult {
+	fun commitGeneric(
+		tick: MonakaResolvedTickSnapshot,
+		constraints: Map<TrackerPosition, EffectiveConstraint>,
+		historyRevision: Long = 0,
+	): MonakaSolverCommitResult {
 		reserve(tick, MonakaSolverCommitOwner.GENERIC_EXISTING)?.let { return it }
 		// Keep the original adapter and numerical behavior, including paused skeleton semantics.
 		writeback.apply(constraints, tick.assignment, historyRevision)
@@ -66,14 +82,20 @@ class MonakaSolverComposition internal constructor(
 	/** Future/test only: caller supplies coherent 6G fixture semantics, never production HMD trust.
 	 * Owner selection consumes this sequence even if process rejects, throws, or partially applies.
 	 */
-	internal fun commitPositionCorrection(productionTick: MonakaResolvedTickSnapshot,
-		runtimeTick: PositionCorrectionRuntimeTick): MonakaSolverCommitResult {
+	internal fun commitPositionCorrection(
+		productionTick: MonakaResolvedTickSnapshot,
+		runtimeTick: PositionCorrectionRuntimeTick,
+	): MonakaSolverCommitResult {
 		val owner = MonakaSolverCommitOwner.POSITION_CORRECTION
 		preflight(productionTick, owner)?.let { return it }
-		if (runtimeTick.tickSequence != productionTick.tickSequence || runtimeTick.nowNanos != productionTick.nowNanos ||
-			runtimeTick.resolvedAtNanos != productionTick.resolvedAtNanos || runtimeTick.assignment != productionTick.assignment ||
-			runtimeTick.resolvedConstraints != productionTick.constraints)
+		if (runtimeTick.tickSequence != productionTick.tickSequence ||
+			runtimeTick.nowNanos != productionTick.nowNanos ||
+			runtimeTick.resolvedAtNanos != productionTick.resolvedAtNanos ||
+			runtimeTick.assignment != productionTick.assignment ||
+			runtimeTick.resolvedConstraints != productionTick.constraints
+		) {
 			return MonakaSolverCommitResult.Rejected(productionTick.tickSequence, owner, MonakaSolverCommitRejection.INCOHERENT_TICK)
+		}
 		reserve(productionTick, owner)?.let { return it }
 		if (productionTick.paused) return MonakaSolverCommitResult.Rejected(productionTick.tickSequence, owner, MonakaSolverCommitRejection.PAUSED)
 		val factory = sessionFactory ?: return MonakaSolverCommitResult.Rejected(productionTick.tickSequence, owner, MonakaSolverCommitRejection.NOT_CONFIGURED)
@@ -109,21 +131,37 @@ class MonakaSolverComposition internal constructor(
 	override fun close() {
 		if (closed) return
 		closed = true
-		try { dropSession() } finally { writeback.close() }
+		try {
+			dropSession()
+		} finally {
+			writeback.close()
+		}
 	}
 
-	private data class Prepared(val gate: ProductionPositionCorrectionGate,
+	private data class Prepared(
+		val gate: ProductionPositionCorrectionGate,
 		val adapter: PositionCorrectionNonHmdProductionAdapter?,
-		val factory: ((ConstraintIkWriteback) -> MonakaPositionCorrectionSession)?)
+		val factory: ((ConstraintIkWriteback) -> MonakaPositionCorrectionSession)?,
+	)
 	companion object {
-		private fun prepare(config: PositionCorrectionConfig?, trackers: () -> Iterable<Tracker>,
-			body: () -> HipBodyModelSnapshotResult): Prepared {
+		private fun prepare(
+			config: PositionCorrectionConfig?,
+			trackers: () -> Iterable<Tracker>,
+			body: () -> HipBodyModelSnapshotResult,
+		): Prepared {
 			val foundation = config?.toFoundation() ?: return Prepared(ProductionPositionCorrectionGate.NOT_CONFIGURED, null, null)
 			// Materialize without capturing live providers or constructing an active session.
-			return Prepared(ProductionPositionCorrectionGate.CONFIGURED_RAW_HMD_BLOCKED,
-				PositionCorrectionNonHmdProductionAdapter(foundation, trackers, body)) { shared ->
-				val orchestrator = PositionCorrectionRuntimeOrchestrator(foundation.predictorPolicy, foundation.pairingPolicy,
-					foundation.learningTuning, foundation.reacquisitionTuning, shared)
+			return Prepared(
+				ProductionPositionCorrectionGate.CONFIGURED_RAW_HMD_BLOCKED,
+				PositionCorrectionNonHmdProductionAdapter(foundation, trackers, body),
+			) { shared ->
+				val orchestrator = PositionCorrectionRuntimeOrchestrator(
+					foundation.predictorPolicy,
+					foundation.pairingPolicy,
+					foundation.learningTuning,
+					foundation.reacquisitionTuning,
+					shared,
+				)
 				object : MonakaPositionCorrectionSession {
 					override fun process(tick: PositionCorrectionRuntimeTick) = orchestrator.process(tick)
 				}
