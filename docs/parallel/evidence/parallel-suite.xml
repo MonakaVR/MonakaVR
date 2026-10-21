@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dev.monaka.tracking.ParallelRegressionTests" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-20T22:04:51.493Z" hostname="ORZKWSK2" time="1.314">
+  <properties/>
+  <testcase name="pauseCloseAndReconstructionNeverReviveQueuedPose()" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.748"/>
+  <testcase name="unauthenticatedOrStationaryImuCannotAdvanceLearningAndEpochChangeRevokesIt()" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.02"/>
+  <testcase name="writerConflictLockAndReloadPreserveSourcesAndUnknownFields(Path)" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.281"/>
+  <testcase name="hybridDwellRequiresNewPhysicalFullAndBlendsBeforeSettling()" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.006"/>
+  <testcase name="currentDirectAssignmentRequiresRestartBeforeSourceEdit(Path)" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.01"/>
+  <testcase name="[1] IK" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.126"/>
+  <testcase name="[2] DIRECT" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.013"/>
+  <testcase name="[3] HYBRID" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.01"/>
+  <testcase name="publisherIdentitySurvivesReconnectAndCannotOverwriteSibling(Path)" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.023"/>
+  <testcase name="independentImuPhysicalAgeControlsFallbackWithoutSplittingFullMainPair()" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.005"/>
+  <testcase name="capabilityChoicesFailClosedAndValidityNeverRewritesSavedSelection(Path)" classname="dev.monaka.tracking.ParallelRegressionTests" time="0.024"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
