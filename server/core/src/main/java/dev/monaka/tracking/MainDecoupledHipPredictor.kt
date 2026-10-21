@@ -35,19 +35,29 @@ class PureMainDecoupledHipPredictor(
 		// Input constructors also guard future samples; retain the algorithm's explicit fail-closed gates.
 		if (hmdAt > now || imuAt > now) return unavailable()
 		// 0 <= samples <= now <= MAX makes ordered subtraction exact, including Long boundaries.
-		if (now - hmdAt > policy.maxHmdSampleAgeNanos || now - imuAt > policy.maxImuSampleAgeNanos)
+		if (now - hmdAt > policy.maxHmdSampleAgeNanos || now - imuAt > policy.maxImuSampleAgeNanos) {
 			return unavailable()
+		}
 		val earliest = minOf(hmdAt, imuAt)
 		val latest = maxOf(hmdAt, imuAt)
 		if (latest - earliest > policy.maxInputSkewNanos) return unavailable()
 
 		val position = hipPosition(input) ?: return unavailable()
 		return PositionPrediction.available(
-			TrackerPosition.HIP, position, input.space, PositionBodyReference.HIP_CENTER,
-			PositionPredictionProvenance(input.predictionSequence, now, earliest, latest, input.epoch(),
-				input.rawHmd.provenance.sequence, hmdAt, input.rawImu.provenance.sequence, imuAt),
-			setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
-				PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION),
+			TrackerPosition.HIP,
+			position,
+			input.space,
+			PositionBodyReference.HIP_CENTER,
+			PositionPredictionProvenance(
+				input.predictionSequence, now, earliest, latest, input.epoch(),
+				input.rawHmd.provenance.sequence, hmdAt, input.rawImu.provenance.sequence, imuAt,
+			),
+			setOf(
+				PositionPredictionDependency.RAW_HMD,
+				PositionPredictionDependency.RAW_IMU,
+				PositionPredictionDependency.BODY_MODEL,
+				PositionPredictionDependency.FIXED_CALIBRATION,
+			),
 		)
 	}
 

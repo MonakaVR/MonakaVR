@@ -1,6 +1,5 @@
 package dev.monaka.tracking.pico.desktop
 
-import com.sun.jna.Library
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
@@ -51,8 +50,11 @@ data class PicoMotionTrackerBridgeNativeReceiverConfig(
 )
 open class NativeReceiverConfig : Structure() {
 	@JvmField var listenPort: Short = 0
+
 	@JvmField var timeSyncIntervalNanos: Long = 0L
+
 	@JvmField var staleTimeoutNanos: Long = 0L
+
 	@JvmField var clientSessionId: Long = 0L
 }
 
@@ -89,67 +91,69 @@ open class NativeReceiverConfig : Structure() {
 )
 open class NativeTrackerState : Structure() {
 	@JvmField var serial: ByteArray = ByteArray(PICO_OT_BRIDGE_SERIAL_CAPACITY)
+
 	@JvmField var senderSessionId: Long = 0L
+
 	@JvmField var lastPoseSequence: Int = 0
+
 	@JvmField var lastDeviceSequence: Int = 0
+
 	@JvmField var hasPoseSequence: Byte = 0
+
 	@JvmField var hasDeviceSequence: Byte = 0
 
 	@JvmField var runtimeDeviceId: Int = -1
+
 	@JvmField var connectedSnapshot: Byte = 0
+
 	@JvmField var positionValid: Byte = 0
+
 	@JvmField var orientationSamplePresent: Byte = 0
+
 	@JvmField var rawTrackingState65: Byte = 0
+
 	@JvmField var referenceFrame: Byte = 0
+
 	@JvmField var angularVelocityFrame: Byte = 0
 
 	@JvmField var lastPoseReceivePcNanos: Long = 0L
+
 	@JvmField var lastDeviceReceivePcNanos: Long = 0L
+
 	@JvmField var posePcMonotonicNanos: Long = 0L
+
 	@JvmField var posePcMonotonicValid: Byte = 0
 
 	@JvmField var sourceTimestamp: Long = 0L
+
 	@JvmField var observedMonotonicNanos: Long = 0L
+
 	@JvmField var mappedMonotonicNanos: Long = 0L
+
 	@JvmField var mappedMonotonicValid: Byte = 0
 
 	@JvmField var positionMeters: DoubleArray = DoubleArray(3)
+
 	@JvmField var orientationXyzw: DoubleArray = DoubleArray(4)
+
 	@JvmField var linearVelocityMetersPerSec: DoubleArray = DoubleArray(3)
+
 	@JvmField var angularVelocityRadPerSec: DoubleArray = DoubleArray(3)
 
 	@JvmField var deviceStatePresent: Byte = 0
+
 	@JvmField var charging: Byte = 0
+
 	@JvmField var batteryBucketPresent: Byte = 0
+
 	@JvmField var batteryBucketRaw: Byte = 0
 }
 
 @Structure.FieldOrder("hmdMinusPcNanos", "networkRoundTripNanos")
 open class NativeClockEstimate : Structure() {
 	@JvmField var hmdMinusPcNanos: Long = 0L
+
 	@JvmField var networkRoundTripNanos: Long = 0L
-}
-
-interface PicoMotionTrackerBridgeNativeLibrary : Library {
-	fun pico_ot_bridge_c_api_version(): Int
-	fun pico_ot_bridge_receiver_config_size(): Int
-	fun pico_ot_bridge_tracker_state_size(): Int
-	fun pico_ot_bridge_clock_estimate_size(): Int
-
-	fun pico_ot_bridge_receiver_default_config(config: NativeReceiverConfig)
-	fun pico_ot_bridge_receiver_create(): Pointer?
-	fun pico_ot_bridge_receiver_destroy(receiver: Pointer?)
-	fun pico_ot_bridge_receiver_start(receiver: Pointer?, config: NativeReceiverConfig): Int
-	fun pico_ot_bridge_receiver_stop(receiver: Pointer?)
-	fun pico_ot_bridge_receiver_pump(receiver: Pointer?): Int
-	fun pico_ot_bridge_receiver_is_running(receiver: Pointer?): Byte
-	fun pico_ot_bridge_receiver_listen_port(receiver: Pointer?): Short
-	fun pico_ot_bridge_receiver_active_sender_session_id(receiver: Pointer?): Long
-	fun pico_ot_bridge_receiver_tracker_count(receiver: Pointer?): Int
-	fun pico_ot_bridge_receiver_get_tracker(receiver: Pointer?, index: Int, out: NativeTrackerState): Int
-	fun pico_ot_bridge_receiver_get_clock_estimate(receiver: Pointer?, out: NativeClockEstimate): Byte
-	fun pico_ot_bridge_receiver_last_error(receiver: Pointer?): String?
-	fun pico_ot_bridge_status_string(status: Int): String?
 }
 
 /**
@@ -164,7 +168,8 @@ interface PicoMotionTrackerBridgeNativeLibrary : Library {
  */
 class PicoMotionTrackerBridgeNativeReceiverClient(
 	private val config: PicoMotionTrackerBridgeNativeReceiverConfig = PicoMotionTrackerBridgeNativeReceiverConfig(),
-) : PicoMotionTrackerBridgeReceiverClient, AutoCloseable {
+) : PicoMotionTrackerBridgeReceiverClient,
+	AutoCloseable {
 	private val library: PicoMotionTrackerBridgeNativeLibrary = Native.load(
 		config.libraryName,
 		PicoMotionTrackerBridgeNativeLibrary::class.java,
@@ -271,6 +276,7 @@ class PicoMotionTrackerBridgeNativeReceiverClient(
 
 		val frame = when (referenceFrame.toInt() and 0xff) {
 			0 -> PicoMotionTrackerBridgeReferenceFrame.PICO_OUTPUT_A
+
 			else -> throw IllegalStateException(
 				"Unsupported PicoMotionTrackerBridge reference frame: ${referenceFrame.toInt() and 0xff}",
 			)

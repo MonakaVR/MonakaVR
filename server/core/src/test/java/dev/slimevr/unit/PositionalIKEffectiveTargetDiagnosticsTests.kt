@@ -83,8 +83,7 @@ class PositionalIKEffectiveTargetDiagnosticsTests {
 		return (field.get(solver) as List<IKChain>).filter { it.tailConstraint != null }
 	}
 
-	private fun vecMm(v: Vector3): String =
-		"(${v.x * 1000f},${v.y * 1000f},${v.z * 1000f})mm"
+	private fun vecMm(v: Vector3): String = "(${v.x * 1000f},${v.y * 1000f},${v.z * 1000f})mm"
 
 	private fun snapshot(fixture: Fixture, tick: Int): String {
 		val chains = constrainedChains(fixture.hpm)

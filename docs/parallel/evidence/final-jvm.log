@@ -1,0 +1,60 @@
+Starting a Gradle Daemon, 2 busy Daemons could not be reused, use --status for details
+
+> Configure project :server:android
+i: Configured for SlimeVR Android version "a07d0c7b" (6).
+w: Android KeyStore file is not valid or not found, skipping signing.
+
+The Kotlin Gradle plugin was loaded multiple times in different subprojects, which is not supported and may break the build. 
+This might happen in subprojects that apply the Kotlin plugins with the Gradle 'plugins { ... }' DSL if they specify explicit versions, even if the versions are equal.
+Please add the Kotlin plugin to the common parent project or the root project, then remove the versions in the subprojects.
+If the parent project does not need the plugin, add 'apply false' to the plugin line.
+See: https://docs.gradle.org/current/userguide/plugins.html#sec:subprojects_plugins_dsl
+The Kotlin plugin was loaded in the following projects: ':server:android', ':server:core', ':server:desktop'
+
+> Task :solarxr-protocol:compileJava UP-TO-DATE
+> Task :server:core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+
+> Task :server:core:verifyMonakaUpstream
+PASS exact protocol {'major': 2, 'minor': 1} artifact/manifest/lock/contracts/content tree
+
+> Task :server:core:compileKotlin UP-TO-DATE
+> Task :server:core:compileJava UP-TO-DATE
+> Task :server:core:processResources NO-SOURCE
+> Task :server:core:classes UP-TO-DATE
+> Task :server:core:jar UP-TO-DATE
+> Task :solarxr-protocol:processResources UP-TO-DATE
+> Task :solarxr-protocol:classes UP-TO-DATE
+> Task :solarxr-protocol:jar UP-TO-DATE
+> Task :server:core:compileTestKotlin UP-TO-DATE
+> Task :server:core:compileTestJava NO-SOURCE
+> Task :server:core:processTestResources NO-SOURCE
+> Task :server:core:testClasses UP-TO-DATE
+> Task :server:core:test
+> Task :server:desktop:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :server:desktop:generateBuildConfigClasses UP-TO-DATE
+> Task :server:desktop:compileKotlin UP-TO-DATE
+> Task :server:desktop:compileJava UP-TO-DATE
+> Task :server:desktop:processResources NO-SOURCE
+> Task :server:desktop:classes UP-TO-DATE
+> Task :server:desktop:jar UP-TO-DATE
+> Task :server:desktop:generateTestBuildConfigClasses SKIPPED
+> Task :server:desktop:compileTestKotlin UP-TO-DATE
+> Task :server:desktop:compileTestJava NO-SOURCE
+> Task :server:desktop:shadowJar
+> Task :server:desktop:processTestResources NO-SOURCE
+> Task :server:desktop:testClasses UP-TO-DATE
+> Task :server:desktop:test UP-TO-DATE
+
+> Task :server:desktop:mtpProcessE2E
+RESULT=PASS mtp-process-e2e stopped_at=complete evidence=C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\server\desktop\build\mtp-process-e2e\0caca89f-b2a4-446c-90e0-a117ab6bc415
+
+[Incubating] Problems report is available at: file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.4/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 43s
+17 actionable tasks: 4 executed, 13 up-to-date

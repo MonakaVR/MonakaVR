@@ -31,8 +31,7 @@ class ObservationStore {
 		return accepted
 	}
 
-	fun observationsFor(target: TrackerPosition): List<PoseObservation> =
-		latestBySource.values.filter { it.target == target }
+	fun observationsFor(target: TrackerPosition): List<PoseObservation> = latestBySource.values.filter { it.target == target }
 
 	fun targets(): Set<TrackerPosition> = latestBySource.values.mapTo(linkedSetOf()) { it.target }
 

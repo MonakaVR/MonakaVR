@@ -1,0 +1,3960 @@
+{
+  "base": "a07d0c7b3c69edc61dfee5f0cae1e4756ea02589",
+  "reference": "da596a6bee1e1a6e74bf2a9e9d58d504c84b161f",
+  "prs": [
+    {
+      "number": 8,
+      "head": "96f3650b75ad7244742c8ebbc25942a82b18cd51",
+      "branch": "fix/monaka-ci-platform-tests-20261021",
+      "integration_merge": "ef46e0c78835fd2b0b8e0918817f14c5de983d98",
+      "original_pr_disposition": "open Draft retained; not merged or closed; original head is ancestor"
+    },
+    {
+      "number": 12,
+      "head": "102ee4e6d1afd5f1db1cbcd8674e8ba13442ede5",
+      "branch": "fix/issue-10-pico-jna-abi-interface",
+      "integration_merge": "301ce487015a71dd80b86779ae513fee27c433e4",
+      "original_pr_disposition": "open Draft retained; not merged or closed; original head is ancestor"
+    },
+    {
+      "number": 11,
+      "head": "6d182b6a41ae1036698b3cb013af5ee9e6f57b3d",
+      "branch": "chore/issue-10-kotlin-spotless",
+      "integration_merge": "d65bf6c91da31d5bd24faaed90f51cfddf59fe0b",
+      "original_pr_disposition": "open Draft retained; not merged or closed; original head is ancestor"
+    },
+    {
+      "number": 5,
+      "head": "2e138448f2c23664f0467e0515861812a24bf42c",
+      "branch": "test/monaka-parallel-regression-i18n",
+      "integration_merge": "4b3287b5e65831b1ba39b4ae8347464fc6678bbd",
+      "original_pr_disposition": "open Draft retained; not merged or closed; original head is ancestor"
+    },
+    {
+      "number": 6,
+      "head": "7165c6d937f9e5c3ee3aac88324328de6985e30e",
+      "branch": "feature/monaka-body-rotation-guidance",
+      "integration_merge": "eef0056ccae6e01d2b3ad4bd393c2325ff394ccb",
+      "original_pr_disposition": "open Draft retained; not merged or closed; original head is ancestor"
+    },
+    {
+      "number": 7,
+      "head": "40c6e202e8d42cccf9eb92e7932cd3f84c4a14cc",
+      "branch": "feature/monaka-tracking-mode-editor",
+      "integration_merge": "27d6fec81cd3a144e958ebd8011c5ba6ffa71907",
+      "original_pr_disposition": "open Draft retained; not merged or closed; original head is ancestor"
+    },
+    {
+      "number": 4,
+      "head": "bebb9ab9195a7fe68d4b3483180214ec8d369c2b",
+      "branch": "feature/monaka-source-status-panel",
+      "integration_merge": "4c8a026f2b657d47027e5bb8b86e9335a87c6d0a",
+      "original_pr_disposition": "open Draft retained; not merged or closed; original head is ancestor"
+    }
+  ],
+  "referenceJobs": [
+    {
+      "run": 39523288611,
+      "jobs": [
+        {
+          "id": 118971981284,
+          "name": "Java Checks",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118971981523,
+          "name": "Configure Build Matrix",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118971981609,
+          "name": "Monaka current v2 software release evidence",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118971981703,
+          "name": "Gui Checks",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118971981720,
+          "name": "Build Desktop Server",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118971981821,
+          "name": "Build GUI Assets",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118972006959,
+          "name": "Build bindings provider for windows-latest",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118972006974,
+          "name": "Build bindings provider for ubuntu-22.04",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118972434861,
+          "name": "Build Android APK",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118973070969,
+          "name": "Package Desktop (macos - macos-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118973070996,
+          "name": "Package Desktop (windows - windows-latest)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118973071034,
+          "name": "Package Desktop (linux - ubuntu-22.04)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 118974651592,
+          "name": "Finalize Release Draft",
+          "status": "completed",
+          "conclusion": "skipped"
+        }
+      ]
+    },
+    {
+      "run": 39523284173,
+      "jobs": [
+        {
+          "id": 118971967040,
+          "name": "Dedicated Core and GUI component regressions",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "assembly_head": "4c8a026f2b657d47027e5bb8b86e9335a87c6d0a",
+  "all_215_input_paths_match_reference": true,
+  "whole_tree_difference_from_reference": [
+    "D\t.github/workflows/monaka-integration-spotless-stage.yml",
+    "D\t.github/workflows/monaka-parallel-component-validation.yml",
+    "D\tdocs/parallel/pr13-integration-ledger-20261021.md"
+  ],
+  "excluded_verification_only_paths": [
+    ".github/workflows/monaka-integration-spotless-stage.yml",
+    ".github/workflows/monaka-parallel-component-validation.yml",
+    "docs/parallel/pr13-integration-ledger-20261021.md"
+  ],
+  "actual_unmerged_conflicts": [
+    "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCaptureTests.kt",
+    "server/core/src/main/java/dev/monaka/tracking/MonakaConfiguration.kt",
+    "server/core/src/main/java/dev/monaka/tracking/MonakaInputConfigurationApi.kt"
+  ],
+  "managed_overlap_files": [
+    "server/desktop/src/test/java/dev/monaka/tracking/desktop/MonakaDesktopTests.kt",
+    "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCaptureTests.kt",
+    "server/core/src/main/java/dev/monaka/tracking/MonakaConfiguration.kt",
+    "server/core/src/main/java/dev/monaka/tracking/MonakaInputConfigurationApi.kt"
+  ],
+  "validation": {
+    "local": {
+      "result": "PASS",
+      "jdk": "Microsoft OpenJDK 17.0.20.1+1-LTS",
+      "node": "22.17.0",
+      "pnpm": "10.33.0",
+      "environment": "Windows x64",
+      "command": "gradlew.bat spotlessCheck :server:core:test :server:desktop:test :server:desktop:shadowJar :server:desktop:mtpProcessE2E --no-daemon --console=plain",
+      "spotlessCheck": "PASS",
+      "shadowJar": "PASS",
+      "jvm_suites": {
+        "core": {
+          "counts": {
+            "tests": 2015,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "suites": [
+            {
+              "name": "dev.monaka.tracking.ArchitectureRevisionTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.AssignedImuSampleFreshnessTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.BodyModelPredictorHandoffTests",
+              "tests": 34,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.CalibratedMainTeacherTemporalPairingTests",
+              "tests": 31,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.CommonWorldAuthorityFoundationTests",
+              "tests": 50,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ConstraintPipelineTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ConstraintResolverTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.CorePocHilStdioTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.CorePocHilTests",
+              "tests": 45,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.correction.BodyRotationGuidanceTests",
+              "tests": 35,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.DirectConstraintOutputTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.HipBodyModelSnapshotTests",
+              "tests": 13,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.HipRotationCorrectionTests",
+              "tests": 22,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.HybridDiagnosticStressTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.HybridFoundationTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.LiveHipBodyModelPublicationTests",
+              "tests": 13,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MainTrackerMountCalibrationTests",
+              "tests": 42,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ModeConfigurationTests",
+              "tests": 29,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MonakaResolvedTickSnapshotTests",
+              "tests": 18,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MonakaRuntimeTests",
+              "tests": 17,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MonakaSolverCompositionTests",
+              "tests": 22,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MonakaSourceTickSnapshotTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MtpCorrectionProvenanceTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MtpObservationBackendTests",
+              "tests": 15,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MtpRotationOnlyDownstreamTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationBackendLifecycleTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationBackendRunnerTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationBackendTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationFreshnessPolicyTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationSourceProfileRegistryTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationSourceProfileTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.OutputContinuityTests",
+              "tests": 12,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ParallelRegressionTests",
+              "tests": 11,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionApplicationTests",
+              "tests": 79,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionConfigurationTests",
+              "tests": 284,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionLearningLawTests",
+              "tests": 67,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionNonHmdProductionAdapterTests",
+              "tests": 31,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionRuntimeOrchestratorTests",
+              "tests": 46,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionSolverContinuityTests",
+              "tests": 113,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionErrorMeasurementTests",
+              "tests": 39,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionPredictionContractTests",
+              "tests": 16,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionTemporalPairingTests",
+              "tests": 46,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PredictorFixedCalibrationTests",
+              "tests": 48,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PureMainDecoupledHipPredictorTests",
+              "tests": 53,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.RecoveryAngularDynamicsTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.LegacyAssignmentMigrationTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.MainFallbackAssignmentSetTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.MainFallbackCandidateValidatorTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.MainFallbackPolicyTests",
+              "tests": 7,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.MainFallbackSelectorTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.PersistentTrackerIdentityTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.RotationCorrectionConfigurationTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.RotationSampleProvenanceTests",
+              "tests": 2,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.SlimeIndependentImuOrientationCaptureTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.SlimeRawImuProductionBoundaryTests",
+              "tests": 53,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.SlimeTrackerPoseObservationAdapterTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.SolverPositionReferenceSemanticsTests",
+              "tests": 41,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.StaticInputSelectionTests",
+              "tests": 13,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.TrustedHmdCommonWorldStreamTests",
+              "tests": 65,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.LegTweaksTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.MountingResetTests",
+              "tests": 65,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIK6DoFTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKCalibrationTargetDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKConvergenceDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKConvergenceTests",
+              "tests": 2,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKDynamicStabilityTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKEffectiveTargetDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKFixedReferenceIterationDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKFootGeometryDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKFootRotationDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKIntegrationTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKIterationBudgetDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKIterationCountDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKMultiConstraintTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKPauseTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKRotationCacheDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKSteadyStateDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKTrackerCorrectionDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKTrackerRotationLimitDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKZeroErrorDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.ReferenceAdjustmentsTests",
+              "tests": 10,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.SkeletonResetTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.TrackingPauseTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.TwinExtendedBackTests",
+              "tests": 360,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "io.github.axisangles.ktmath.QuaternionTest",
+              "tests": 37,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ]
+        },
+        "desktop": {
+          "counts": {
+            "tests": 153,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "suites": [
+            {
+              "name": "dev.monaka.tracking.desktop.DirectProtobufTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.HmdProviderEvidenceTransportTests",
+              "tests": 8,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.HybridServerIntegrationTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.InboundTransportSessionTests",
+              "tests": 20,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.MonakaDesktopTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.MtpHilCaptureTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.RawHmdPoseAdmissionTests",
+              "tests": 49,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.SolverCompositionIntegrationTests",
+              "tests": 11,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.StrongTrustedHmdPolicyTests",
+              "tests": 33,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.TrustedHmdPositionProvenanceTests",
+              "tests": 16,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ]
+        }
+      },
+      "logs": {
+        "formal-integration-jvm.log": {
+          "sha256": "25660b83deaa5984d908b7da332f96e73875e83dbc66fc4252532bc361543b9c",
+          "bytes": 26528,
+          "location": "local task-work evidence; not a historical PR artifact"
+        },
+        "formal-integration-install.log": {
+          "sha256": "77f605c2b86078c5727382ad64b36c0d20e748079116a9fb5529b0e5fe025414",
+          "bytes": 7023,
+          "location": "local task-work evidence; not a historical PR artifact"
+        },
+        "formal-integration-gui-launch-error.log": {
+          "sha256": "b57e5bc58715f2521f2e2154fb9e4b9d0a2a85820a5ee05de72ebcf0845b7809",
+          "bytes": 74,
+          "location": "local task-work evidence; not a historical PR artifact"
+        }
+      },
+      "source_identity": "All 215 source-PR file blobs match assembly 4c8a026f2b657d47027e5bb8b86e9335a87c6d0a and reference PR13. Subsequent candidate commits only edit its two ledger files.",
+      "mtp_process_e2e": {
+        "result": "PASS",
+        "failed_stage": null,
+        "error": null,
+        "passed": [
+          "feature-off-slime-equivalence",
+          "full-registration-existing-ik-protobuf",
+          "rotation-only-none-full-calibration",
+          "duplicate-reorder-age-unchanged",
+          "publisher-source-tracker-identity-isolation",
+          "active-session-and-peer-rejection",
+          "state-loss-timestamp-watermark-metadata-no-revival",
+          "stale-age-and-metadata-do-not-refresh",
+          "source-disappearance-timeout-loss",
+          "restart-session-recovery-and-retired-replay",
+          "receiver-close-unregister-and-port-release"
+        ],
+        "consumer_pid": 24516,
+        "publisher_pids": [
+          24328,
+          55024,
+          45356,
+          39664
+        ],
+        "wire": 2,
+        "steamvr_runtime": "NOT RUN",
+        "hardware": "NOT RUN",
+        "boundary": "Production intake/private IK input/computed tracker/ProtobufBridge bytes; synthetic external publisher and captured transport"
+      },
+      "gui_steps": [
+        {
+          "name": "gui-lint",
+          "result": "PASS",
+          "log": "gui-lint.log",
+          "exit_code": 0,
+          "duration_ms": 15986,
+          "log_sha256": "c3f631b067d0fd15ddab31b219921f6eb895542eadbd74143f869064e58d387f"
+        },
+        {
+          "name": "gui-build",
+          "result": "PASS",
+          "log": "gui-build.log",
+          "exit_code": 0,
+          "duration_ms": 14230,
+          "log_sha256": "7e2aaaa6822220e980037d1caf59c19b43cb4e0dfc21ea852e1bdea73ffa2194"
+        },
+        {
+          "name": "status-types",
+          "result": "PASS",
+          "log": "status-types.log",
+          "exit_code": 0,
+          "duration_ms": 1921,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "status-node",
+          "result": "PASS",
+          "log": "status-node.log",
+          "exit_code": 0,
+          "duration_ms": 382,
+          "log_sha256": "c73c89c9262cfc9cefcb90b30a7d11850e719d6fe820b4d33bcd70fd8d9c692d",
+          "tests": 40
+        },
+        {
+          "name": "mode-types",
+          "result": "PASS",
+          "log": "mode-types.log",
+          "exit_code": 0,
+          "duration_ms": 963,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "mode-node-core-subprocess",
+          "result": "PASS",
+          "log": "mode-node-core-subprocess.log",
+          "exit_code": 0,
+          "duration_ms": 550,
+          "log_sha256": "9a4266a097839c818def63219be91114ff405d4f03b3b38a0e13ff48d54897b4",
+          "tests": 10
+        },
+        {
+          "name": "status-edge",
+          "result": "PASS",
+          "log": "status-edge.log",
+          "exit_code": 0,
+          "duration_ms": 12931,
+          "log_sha256": "eac3b65022fc845084cbc15e60a7a171ce02ed7349d52236ce45a746c9dd2364",
+          "tests": 17
+        },
+        {
+          "name": "mode-edge",
+          "result": "PASS",
+          "log": "mode-edge.log",
+          "exit_code": 0,
+          "duration_ms": 5000,
+          "log_sha256": "0579ea6db5380f0e6bdcfacb0da6f7514e5683984da531ac31e8dbccdfa34eaf",
+          "tests": 3
+        }
+      ],
+      "runner_note": "First GUI attempt failed before test startup because PowerShell passed argv as one string. External runner argument splatting corrected; product/test/config sources unchanged. All eight actual steps then passed.",
+      "localization": {
+        "result": "PASS",
+        "tests": 2,
+        "failures": 0,
+        "skipped": 0,
+        "log_sha256": "def751e710ec84dae5763a6e4ef36c892e7d79329635d4a85d16ad70b1bfbf94"
+      },
+      "dependency_note": "Frozen install succeeded; optional register-scheme native build emitted a failure. Requested GUI gates passed; this does not validate OS scheme integration."
+    },
+    "candidate_github_actions": {
+      "result": "PASS",
+      "candidate_head": "e9a1c509bf72e674de9ae55b4c29ccf514ab5e84",
+      "github_test_merge": "9fb73f89ec2f8bab8db14690b71c22f9c799d2f2",
+      "pull_request": "https://github.com/MonakaVR/MonakaVR/pull/14",
+      "success": 14,
+      "failure": 0,
+      "skipped": [
+        "Finalize Release Draft"
+      ],
+      "runs": [
+        {
+          "id": 39538072317,
+          "head": "e9a1c509bf72e674de9ae55b4c29ccf514ab5e84",
+          "url": "https://github.com/MonakaVR/MonakaVR/actions/runs/39538072317",
+          "jobs": [
+            {
+              "id": 119019245136,
+              "name": "Configure Build Matrix",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run BASE='[{\"os\":\"ubuntu-22.04\",\"platform\":\"linux\"},{\"os\":\"windows-latest\",\"platform\":\"windows\"},{\"os\":\"macos-latest\",\"platform\":\"macos\"}]'",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245348,
+              "name": "Java Checks",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Java Spotless Check",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245362,
+              "name": "Monaka current v2 software release evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-java@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run gradle/actions/setup-gradle@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build and validate clean-HEAD v2 software evidence",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload current v2 evidence (hardware and SteamVR interactive NOT RUN)",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run gradle/actions/setup-gradle@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-java@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245400,
+              "name": "Gui Checks",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "GUI Lint",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245425,
+              "name": "Build GUI Assets",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build JS",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Tar GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245456,
+              "name": "Build Desktop Server",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build ShadowJar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Test with Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload Server Jar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019273167,
+              "name": "Build bindings provider for windows-latest",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install GCC",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Get CMake",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Configure",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload artifact",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019273275,
+              "name": "Build bindings provider for ubuntu-22.04",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install GCC",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get CMake",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Configure",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload artifact",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019681289,
+              "name": "Build Android APK",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Extract GUI for Android",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build APK",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Test with Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Prepare APK",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload APK",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build Google Play release bundle",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Upload the Google Play artifact",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Post Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119020355464,
+              "name": "Package Desktop (windows - windows-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download Server Jar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download bindings provider artifact",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Extract GUI for Electron",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run Electron Builder",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Collect and Rename Artifacts",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload For Release",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119020355473,
+              "name": "Package Desktop (macos - macos-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download Server Jar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download bindings provider artifact",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Download GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Extract GUI for Electron",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run Electron Builder",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Collect and Rename Artifacts",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload For Release",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119020355507,
+              "name": "Package Desktop (linux - ubuntu-22.04)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download Server Jar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download bindings provider artifact",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Extract GUI for Electron",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run Electron Builder",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Collect and Rename Artifacts",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload For Release",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119022010452,
+              "name": "Finalize Release Draft",
+              "status": "completed",
+              "conclusion": "skipped"
+            }
+          ]
+        },
+        {
+          "id": 39538072205,
+          "head": "e9a1c509bf72e674de9ae55b4c29ccf514ab5e84",
+          "url": "https://github.com/MonakaVR/MonakaVR/actions/runs/39538072205",
+          "jobs": [
+            {
+              "id": 119019244604,
+              "name": "fail-closed-validation (windows-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Normal Python release gate regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized Python release gate regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Pinned runtime ingress identity regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized runtime ingress identity regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Bounded capture reader regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized bounded capture reader regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019244898,
+              "name": "fail-closed-validation (ubuntu-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Normal Python release gate regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized Python release gate regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Pinned runtime ingress identity regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized runtime ingress identity regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Bounded capture reader regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized bounded capture reader regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "release_artifact": {
+        "id": 12317818826,
+        "name": "release-monaka-software-v2",
+        "digest": "sha256:874aed0727d1acd53d6a92e5740c2a0587582283e029dba0d75d94ec6f92991c",
+        "head": "e9a1c509bf72e674de9ae55b4c29ccf514ab5e84",
+        "expired": false
+      },
+      "note": "Existing permanent workflows only; reference-only formatter/component workflows intentionally excluded. Dedicated component checks executed locally with no skips."
+    },
+    "hardware_hil_steamvr_jna_dll": "NOT RUN"
+  },
+  "files": [
+    {
+      "path": "docs/codex/issue-10/NormalizeClasses.java",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "97bd2fb8be6824274023fb8af6c31a288f27e78a",
+      "sha256": "635af6413fe775f73510f11848837d12d8827d58a79cd2cb07bf28bd601bc41d",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/codex/issue-10/README.md",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "1d7916b7796d915fd9e2c2fa5477c95bb4039bba",
+      "sha256": "15f3174c11e45a3721a6dc2ebbca6791840339e6c1bc4f14055ba9d91b7cf18c",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/codex/issue-10/inventory.json",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "b1c7287b3cbbc3fa24c84a9bbe033868fd9c56f8",
+      "sha256": "a0626a9c1b926339e5cccd437a7337da9a0f612b8007120ec2503ef073eda7fc",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/codex/issue-10/logs/baseline-spotless.log",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "54fa56b57bb8c6bd8b4830a829c8a3865d6ff404",
+      "sha256": "7d6fddddbea475a9f50035a8d54cb01b5d88f8c36473af378f6b01cb8f569a53",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/codex/issue-10/logs/clean-tests.log",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "378093ed9f0ce412ecf9c757b0ef458a966944c3",
+      "sha256": "358b51cd75852ac4a09df33a06ef66c62dbe36658c443220e17ec73c956fa37b",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/codex/issue-10/logs/final-spotless.log",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "7977d12a742cf3f212f6f0034e40e3f7048560e8",
+      "sha256": "cc9cb702a2c0f3bf9bea2e17205e63ff9777677e07fe7899baa2af077be7759f",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/codex/issue-10/logs/gui-build.log",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "8910fd5556e6c080e439cc15b4a655bcc45b8496",
+      "sha256": "26e91e06d16de300d4f07b9c59016dbdc5e6dec4d40dc3c8930040ecac1bf04a",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/codex/issue-10/logs/gui-lint.log",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "8bf8a038092c966109ae102d42d21a0fd49f4237",
+      "sha256": "b377108257a2b0dcb1166908879f02145934556710d1421150650d32a7c81ed5",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/codex/issue-10/pico-jna-archive-abi.md",
+      "source_prs": [
+        12
+      ],
+      "git_blob": "2d2ff8a8032764b7e524a3e0113083e97c257779",
+      "sha256": "d6758ea0eb4a6af483f63ca4dd868240eaa346d79623163501a0986d0a29705d",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/codex/issue-10/validation.json",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "c46a22952803e9261219ecb291acf20e792120d7",
+      "sha256": "5c0ca4c821c6e58d7ee80c4a0c424706d7ddfb29e660f9687c523a2a496ca814",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/monaka-mode-configuration-api.md",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "c92d8bf84fc8ae7eedfdce914cad24a3e8f67bbd",
+      "sha256": "ad08dac0b6221d5ee250037d439d144e9b0e0ced560f8362daddf0b87947b89c",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/baseline-counts.json",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "372cbba5d958eedce47b355d12ae35416498f85b",
+      "sha256": "334a1dd39a92964081fc9c95c002a02e34c72ded0ccc6973552dab061f227d08",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/baseline-gui-build.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "dee463a2d2d5418c3db7b9a46006b4ebbc669f4c",
+      "sha256": "2cf41494f3c63c775813f983bc04e1233d8af13691e5aad01cf41510fe732661",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/baseline-gui-lint.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "6bb925053075902c2ae8b7c358fadafdb826c8eb",
+      "sha256": "264ad95da7b780363964c434a562ca75e93e7c276ed8a52dcb6cb69d52f5ce1d",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/baseline-gui-test.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "0f2f12bd6b2ceb2cea20285e89b77f8447b97b26",
+      "sha256": "1873b3f1243bf0e618841dcc585207d5cf24b134a378aa87827df58a8406c7ad",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/baseline-jvm.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "27ee504694bc1c56839b82d0c24e0fc3eea767af",
+      "sha256": "ab9955ff9e6cfc0b6935a98b500736d4b2bbf3d8613dca3d5be643309ff87091",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/final-counts.json",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "8cbf6c9832a151f4c9f83d777a950d7f52407b53",
+      "sha256": "9b0c096581c7e2aa5b1b6825d208e836ac2c04b497b58776c1b9ced15dbb4dbb",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/final-gui-build.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "d13e827b2e75ea4a31d66507b74a2ff7c1ab9063",
+      "sha256": "445f7cbcfde5c75a81f73be53bdf66a8d35ad3deca6e91799842b296dcfbe6c7",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/final-gui-lint.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "6bb925053075902c2ae8b7c358fadafdb826c8eb",
+      "sha256": "264ad95da7b780363964c434a562ca75e93e7c276ed8a52dcb6cb69d52f5ce1d",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/final-gui-test.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "57835f865e65495a84066a1aeb2c12b80106157b",
+      "sha256": "24dca4cba24fa7ec4ad48d44249cea68a371599b853ab92987a86761d3ee5213",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/final-jvm-tests.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "7350ffb32575bc263b88eadc569c21917c22e51b",
+      "sha256": "dd55999240a374e6f7f99712f44ab56344f7bc3e154e42b975d2ac86d26a56f0",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/final-jvm.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "09efb33db4769141c213bcf6a9dd0b067da624e4",
+      "sha256": "9c58c783e0ac0bf35fd0b3c28a9ef11ed91a0719df2998e210208bcbbfb42413",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/gui-install.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "776d0d94baec39ea8e7aaf59aec11e20f41f21eb",
+      "sha256": "69e3feae0810ee4acbcddee53bcea014441fcf0b8573798b08275a890b6c9c4c",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/localization-test.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "76ecf5e04dfa49c5b770e0244c7b5d968420103c",
+      "sha256": "a52f0d719ff1a6a8400402f629957c0f5712777233f7c9701013aa9677074f37",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/mtp-process-e2e.json",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "732f93a9a02b866d3fd74dafda281a655c10fbf7",
+      "sha256": "939b0c47c371f88586b0b15e51c1cea34f2272e1f7e5655914bb8ab28efb587d",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/new-suite.log",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "694d5bc73ad94b45301090ea03466a69eb3fdd96",
+      "sha256": "f3b4c86840ff9798d3203bcd8ea99f23db8103e85024df60032477e79649af82",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/parallel-suite.xml",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "7b3f0b313adba6ee29509f7d3d092b4e37bc33ef",
+      "sha256": "375fa1ba41939af065b8df567262cefc6dbb456a87df2dfcbdf64d41dac2ed81",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/evidence/sha256.json",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "13fd18971c821895c828661b24112be777e4760d",
+      "sha256": "e8b25a26c082f2601aa59702875e1fe62ba30ff40e1a49eda71a7b58d7422950",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/regression-matrix.md",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "b3a1ff60338aa47a0eb5e497f4a2d130cd1d5a1a",
+      "sha256": "6bd3f82ca6f565cb0f5ed58e63241fcc914705ee7de7a8f94085afc935ccaa80",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/rotation-guidance-core.md",
+      "source_prs": [
+        6
+      ],
+      "git_blob": "86d00442e824c3e6716bb5c3903f1ae0923ae1c0",
+      "sha256": "b50739a256bc581cfdfa473e0d6f5921a11cdb7c487c7cd2938b6995a358a5b0",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/rotation-guidance-gap.md",
+      "source_prs": [
+        6
+      ],
+      "git_blob": "b29a7a87006cd5df7f1f198f1cf063abc885f1cd",
+      "sha256": "56482a33f7c7c21fe16977c605443ac8a88875458cf47c22283b9726f21c61c8",
+      "matches_pr13": true
+    },
+    {
+      "path": "docs/parallel/rotation-guidance-validation.md",
+      "source_prs": [
+        6
+      ],
+      "git_blob": "bc914be51b1ef4c548ba4df06047b1c4858fe9d5",
+      "sha256": "159e45e7e801936a61e3ff5155bff990163939e5baae108889b200c9a6f0f778",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/public/i18n/en/translation.ftl",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "4b1364c77814a06169ee09d695a9e70d930ab413",
+      "sha256": "777baedc58d6d9111fe3c117286c5f29dac6518c19fb7b7717b0a13f97612910",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/public/i18n/ja/translation.ftl",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "b9a54fe12531aada15078df50eb752760f03a4fd",
+      "sha256": "0dc300ab2a22cd69d1ff1405b637c5a732fd6acfd4d417dd6752bb733b5f7ba2",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/src/components/monaka-mode/TrackingModeControl.tsx",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "7e859fe34a2066b9a4b33a5498a9aba1507bfd1d",
+      "sha256": "63dbb86fafb04d97a476a6378e4870b24b599657bc5bf716c8e0193f94d8923b",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/src/components/monaka-status/MonakaTrackingStatusPanel.tsx",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "cad382378a6ee46a7dc6990e00c5ee5d9a798235",
+      "sha256": "dc679c32bd4fcf4ece2854553b5a44d5cc9a22f2cff056a150edb814ebe32194",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/src/monaka-mode/mode-controller.ts",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "9110c3ef0248af9f590397d7531a4e4715b1bc1c",
+      "sha256": "432eb891ac8c6e71e8c17856c16dad314b52ac3346c4ee41033ae7b0ddb17333",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/src/monaka-status/view-model.ts",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "74fb6a709cc0af6299bc1ed6214bbb05edbf61f5",
+      "sha256": "ac9c259b1a148993bdc9386d558dc577b516761e81293469640fdd4daa0cd95a",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/bridge/parallel-localization.test.ts",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "d7b944eeeaad2ca168ac669ddf196fa7a1c5bf77",
+      "sha256": "a7ff2023c3ef0be6a101340a7912fd3917abe213d9af32da7beb2748a75fbcf6",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-mode/README.md",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "a713d8f1c8adcce31bf43c0377bd9b2f674380d5",
+      "sha256": "b11221adef6f106b8c254b0f4f6194afc1a567873db32186d0c647aa5bbe3dea",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-mode/component.spec.ts",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "6c0e65754fca69b06e492db0673b2762f4771483",
+      "sha256": "96db26ed429ebde89d8010b09586fc079619b30ea8e76ecc3cda80a78e85be4b",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-mode/controller.test.ts",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "27087906a95c94cf2320cba862c3905374501d52",
+      "sha256": "a8f4092c8eed3e2527db6e4e51ed622a621395da02bb0cf6857e09b402af6ade",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-mode/core-process.test.ts",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "1a5fa85cbd4b35486a03c6a4bfe2846b91aced21",
+      "sha256": "2e163f0c3c88fdf88a8ee398a36d4818c2d9adfc5ff3f35c252da7e1b47ab926",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-mode/fixture.tsx",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "cd8daba1547b600cc1a388fcef6958e5ce33fa0e",
+      "sha256": "e69351fab8a0b67ad8252642dca3e3e25c6fd4576781e36cbf7590c2ea5feee3",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-mode/index.html",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "aeb0aa2324344a383748866c9c65e45f158418bc",
+      "sha256": "4908227022e7b26bdec4dfd2d60e88d00771df047fb0f16fb01b3f8351f12183",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-mode/playwright.config.ts",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "343934d61593cf8a409a9e3d5f0e6f94852063eb",
+      "sha256": "e6326924daf575b6cc5e139741e819338578c40481af023e44dcf7866d5468b4",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-mode/tsconfig.json",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "814aefa44d9130ca1b61d3ebf2a59544831074cb",
+      "sha256": "c1272860c86c1e05c30eed039dfb261865cf74eacbf84e671e8ae3554cc534fe",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-mode/vite.config.ts",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "c4a82490c4a94962f265e8432f80c2254b3045dd",
+      "sha256": "7669c449f9d3755cf5b1c13ae36bff105370efa957f3f4a90797447fda1cbcd9",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/README.md",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "5109bb0111564eb5384ed41d3f1f0cadba4d6a3b",
+      "sha256": "ff828e80c0cf1fda59499bb45e8ed38a6319f7db7a5bd044ff1e173059b3e9c2",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/browser.spec.ts",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "5b23ec0e7dac91d3be8a1bc47271aa378c5536f2",
+      "sha256": "e816b0a5af7f867b51a1b2f9535d4f738f7ea8db08db7e57522f5b4c92a5fb7d",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/component.test.tsx",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "cff00d6c927ed7817fc9564cb8de962f63cce0b6",
+      "sha256": "6e0dc20670878fd3c493b8c69f812f846b6fe6507ae58862945cc07caf4c2ef2",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/fixtures.ts",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "95050df99a54ba9e5921c4ea19275149ca6c7250",
+      "sha256": "0e9f12b414bb0588677772bbdaf1529963c50f7768a0b499fc1d739f593ae47d",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/index.html",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "2ea8da647a0b2334ae9cf3feac7461e0993fdb60",
+      "sha256": "5732eeb1456830eb10aa8d2c0c9ef683af4c9e0b498aa552da9280224a03f79e",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/main.tsx",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "38a933d18bc51b77f89ff246c7d9968f76213b42",
+      "sha256": "67ef27bf6c899a271a69003c2c2a6c174abd879d0edaa04121f6030ac874ac8d",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/playwright.config.ts",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "57f31b5bb50e41d734cc9786202dcee2d051d625",
+      "sha256": "c464d76f9e012312967f8fd03e8b07f18c27e4b8529fb6bcaced120ed7bc6322",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/run.mjs",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "e885aa29798d59f0fa13d9a2bf2852b6b1665506",
+      "sha256": "8533fea7e1aec957c6e18a79b71802a8bd54197ef96702f3af043a74eef92c18",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/tsconfig.json",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "b0a2d9aa6c78171491d716ecc9467c014c426268",
+      "sha256": "ed6791b2320ed45d36b2b0a1a4455a65e2faacb635031b09afb88d33d920d666",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/view-model.test.ts",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "39ebfbddb6b0cdca8036bdd35d90bb67f75691a4",
+      "sha256": "f3571f8198970757243c9c0d40ae4224466047f1e93b821815b4d2bb7590a300",
+      "matches_pr13": true
+    },
+    {
+      "path": "gui/tests/monaka-status/vite.config.ts",
+      "source_prs": [
+        4
+      ],
+      "git_blob": "9a50ca75c69a9f4f63758ea0bad5f7637c74dbad",
+      "sha256": "e2abfad0eb511ec41ab8e6028d08cd5be52235352cfd096fcf65194f54e43103",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/AssignedImuSampleFreshness.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "2264a3b568674180a57758fa3fe123c23ea76099",
+      "sha256": "d82f85a92d65595b0984aa7c5fdf72c150d302180a819d3100db700096185be1",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/BackgroundIkPose.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "0adfb4c227c47715ae3813255d87526cb18b8576",
+      "sha256": "b9a9be365f23bad69ca7b18c92f05a45caa429d3c24da26b26ac7f0e5e159aa8",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/CommonWorldAuthority.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "22c9f0dc2435705254a0be66a12815fbece133b0",
+      "sha256": "6aa4c35fae793b4cc251be846a25c9606ea6aefe15bc77a828d1e9db0f84b441",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ConstraintIkWriteback.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "1a2af11eddc08a1355cad346fe12fca1d67c7c91",
+      "sha256": "8bf086075f373ffec771df3e58228a7f2881f33794a931032d6c6fb1f8b8c0ae",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ConstraintPipeline.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "4a7d85bcbf4281e529b87f45ed1b517dc98b4ae3",
+      "sha256": "7634baf278317e5ef39c7f6882e6dafe622ebc2d533bc612d16296fb64dc9bb1",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ConstraintResolver.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "6b648dbb8b29768e7ba1993d3421fd72afd38b7e",
+      "sha256": "4b4fd4fe43d5f33b7993847f60952f6d39300264475799bf798d3082fd3aaf60",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/DirectConstraintOutput.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "bc2b43bbc6d10f39cbc1216cfecff9c078962c04",
+      "sha256": "a87d21019be12c00ba23902f9751fe8bfc2fb09559685e12a7d7b6fb7aa19923",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/FeedbackExclusion.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "61fb62024f49c4cb1f694219325ef208f8f13c4a",
+      "sha256": "9741906c52faef0b931682282876c2d3feee906276af593fca6e3b88c917d2c0",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/HipBodyModelSnapshot.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "8bfe20fe7b3f77bbaad8b92c32ea2d4e43d7bfd9",
+      "sha256": "fbc83ec104f5bcf84bb0c3ffea4e07fff050bf721c04071bf3cbd3c878e4e530",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/HipRotationCorrection.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "7d2731de9fe32d289f90defcbaf4f68a8d395ca7",
+      "sha256": "f82b2ec4bb481b6740d2d6b087c2c050a333f41b842b788214d5a559715168a3",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/HybridTrackingDiagnostics.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "49c615e90060ef6b820f825077158ae3fe54d237",
+      "sha256": "2c07a122bbb5dbd739d7473ea56fab93dfb9553b6c2ff3ce2d15a372ffbf1f2b",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MainDecoupledHipPredictor.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "10094321bce48dafb403d1363f35271be56cba4a",
+      "sha256": "c0d1f440b3d29a1b437eedc8be8814be935bc17dd2a31a4c81d660c66ee0c185",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MainTrackerMountCalibration.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "1455b03678c6c66bef8c34b2be3bc87a2499bd2a",
+      "sha256": "a61e427d8c861b1eb7a083623521e8fffe347cecfa519e82ceac8ab2fa9ba2ff",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaConfiguration.kt",
+      "source_prs": [
+        11,
+        7
+      ],
+      "git_blob": "36fcc61bbca53668a77ab7340f6cb705c618e7bd",
+      "sha256": "96b8fcb16ecd857503cae74c23118e29c2340db16d45a998f64a0bb3e3119a64",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaInputConfigurationApi.kt",
+      "source_prs": [
+        11,
+        7
+      ],
+      "git_blob": "2b4794755b57e282f5c2678475bcfba9fe8ffe9a",
+      "sha256": "07863888d093b486bacb13b93694b2b5096b4e4b125b9a00131d88fbe49ca6e1",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaInputRpcDispatcher.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "4f24697b74db969e7895a0b7da61ee6ae5d82338",
+      "sha256": "913751ac6e31e235dfbc91983abf8a1b83e2bba08c5e47db43f87b3d29e60274",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaRuntime.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "71b43d743a45ba5bf31e8db5871403f408171a37",
+      "sha256": "35875ff430d167e88532cc51cea6d6079f500f2adb4ec37c142f3580584ae934",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaSolverComposition.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "e251aa6a69b70dacfef75bfbaecd600ec7cdb53f",
+      "sha256": "a36d1f9ba2ae4f1d353a587c9120b8162b828bd9f11de608bb9b27055c6ee89c",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/MonakaSourceTickSnapshot.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "ac839fa54bec636e138eb80b7a9e9dac37860be0",
+      "sha256": "c4e892555978ab6332ee301e21b150e4040551110338228eb06dc8f4e53c37cb",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ObservationBackendRunner.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "38d9967e413d1f36ace028563b8fa647f4715e0e",
+      "sha256": "dfdac0a1ca9d2c85c8e9d2e73c8f98b0699b28dc01b14ec11ae3884a3635162d",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ObservationSourceProfileRegistry.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "c96bdbccf6a6b55f40ff8320817816034a6a0070",
+      "sha256": "8d8ea6dc2e8db00e49447291deeca35520fabc0097d4e30a0eeb4af1f300675f",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ObservationStore.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "6d1c70a7eba20ade63414bc038a26837292323f4",
+      "sha256": "7d51530c8e6c4203a1ab7a7ed0583669bfe34d6fea3ccc1c5d85e5882dd65e94",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/OutputContinuityController.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "7f525bf4d532223b67866b5878e86b12502d889d",
+      "sha256": "5a2dceef497fe3bb91498eec7c31175e873aee91393dde68a01b7cac8033e903",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionApplication.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "efaf71408d7955b56366f1e85d8c645bf9ba50c3",
+      "sha256": "4431e315c54c7920d962fdfb37de2c442421902d28524259dcf216c3caf95ead",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionConfig.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "4f71d4a7a785834861d764f1f112aab1ad62d0ce",
+      "sha256": "ff89be14b6416046dda809ca7a6902d56c66ca01d428b59561293a4be8069477",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionConfigJson.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "4bb77e973003bfd077b7fccf9759fdec1ee4e77a",
+      "sha256": "3f89cac05466430c522e12c1523387b50cb33c626ad22d80e734dd604af96d58",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionLearningLaw.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "96809e524eba9ab6932ea75b7266a56c56220067",
+      "sha256": "76f054122da4988aa20633b17ef152bb50b7fd30e0368bde2da14a5627e27563",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionNonHmdProductionAdapter.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "c2f7e0cf545f7a06dca3b57e79da73ab92de4261",
+      "sha256": "5df8d333a25116e78685e519271c85131023261a7446820d31e710a239521eb4",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionRuntimeOrchestrator.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "2f6bb885b1492880a8c18b58d8eeb0f754806f00",
+      "sha256": "b34983a9c750ef9737ef3d8e7d9642b864008ce683e6be1c49f844c0f5956e55",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionCorrectionSolverContinuity.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "1fa274235121fe6459e8e189c6c89674d10c7692",
+      "sha256": "d7f0b6c9de82dcb95e30c6d0ab7f7b07b9d80a57e4d18b40ceb7f122a513acf9",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionErrorMeasurement.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "8d0c7371834568a87daa855589615285de75269e",
+      "sha256": "86f6df7307c7985b5bfd6da7e165d4abeaaa98cc590097e2ca848a44adaa0f1e",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionPredictionContract.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "2779c9296ad10fb726f4461cbf23db155de0faa3",
+      "sha256": "bcd4faaa2a56d3cf8086c3cb038e4d3ecdd1edad6995746b19a86d963bcbe9a5",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PositionTemporalPairing.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "cf9cc6d11cef70e865851194b310c036a1f87f88",
+      "sha256": "25a0492c648865487b27f5ce57bccbc6481cacce2adad1bde2fc5967f7f403c0",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/PredictorFixedCalibration.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "c695a8d3c562ce4c21fc86e0a7ba7ff4969dc977",
+      "sha256": "757dc380df7b37d5fa49a19810fbe98cb3dec9285c925f1eb6da651a5e857a9e",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/ResolvedTrackingPose.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "5f24ecfe353fcfc00771235298701aa77ed93f18",
+      "sha256": "a5a022dacbf14f0d10525ad6d03bd53ff53a9d8fa6b04fbed01283b16e91fa34",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SlimeIndependentImuOrientationCapture.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "b6b856a06994562327b16fe0a70b7362cf9e9512",
+      "sha256": "ba3b16f77c75a2a8cf8c830b664b59a1885d343563ee056aea564eea8a3b06db",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SlimeRawImuProductionBoundary.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "7d6f05fb28bde35b48260442b51cf81f2c60e70c",
+      "sha256": "74a110daa2f031499e0836ae0fb6783e5742be1a2988a80d3ec8dfb53f0c706f",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SlimeTrackerObservationBackend.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "ca522c03dbefc6fcad43940fd534f215ad72b09e",
+      "sha256": "0a33a8ccc18d6defec1b601490e1813227fd9c999b331bb6f6c6206351845419",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SlimeTrackerPoseObservationAdapter.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "2a3da6c365d8c49c3905a4fdc6646b3ad427e94f",
+      "sha256": "9bb4adec47e4de7cb7a8b237d5ff3f8614d1ce1ff80415b9a0e08f0309d5bc9c",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/SolverEffectiveConstraint.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "d5fb3bf9e1310d40a6de8e6f8bb05e0dbb985bd6",
+      "sha256": "f2ba0d9dc9711a10268f62eb66bc51cb964d6508069ed349f546733cde39d57b",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/TrackerBodyAssignments.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "c787dcb0c74028dc838fa8955f95741e00a19b99",
+      "sha256": "2581f073bc6cf78a52cf7ae2472787bea7921ae9c23c58d8d9aebe0bd9cf8689",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/TrackerInputCapabilities.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "8c7c981282599d7b735ba5f07b14284c7ceca3eb",
+      "sha256": "9cc4d45b627b9a856d2668d7a4d27f35942006971f47cf753d6ce6f39b89993c",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/TrustedHmdCommonWorldStream.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "a8c9e6165fbbff5f891ebf984be893ce9147e8d2",
+      "sha256": "879a6d80ef622a91b4e3924f40fa72c66ee07475705962ec9cf00a8516788f07",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/correction/BodyRotationGuidance.kt",
+      "source_prs": [
+        6
+      ],
+      "git_blob": "c73466c8f6d786c5fda1ce0770ed3ff82f7921b7",
+      "sha256": "b7fb812421b736d53609536d5a86cfd644a88e9679df289f010443e39605e620",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/correction/RotationGuidanceMath.kt",
+      "source_prs": [
+        6
+      ],
+      "git_blob": "9eac1d05562d964c2e710899618564bef5ac2e8c",
+      "sha256": "3813d810a367b63416d1e1a9d6ec45321f74b62db620632584f1b377ab35eb26",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilMain.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "9bf789932319c7ea872726851aedbb8bc6e7f6a0",
+      "sha256": "0c0e745947aefe6f7b0d4a9426c5420c0cd9f7ecb91a3f86441f6698ce5e4c06",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "b693655afa0448c7b9d971d007f624f25a30b2ce",
+      "sha256": "4909279d58f0055eac3bb50d263f5afc5f477e31134581a4d09f93c54f5246e4",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilStdioMain.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "ae3a9a421f97bc44715a457eebabf038f144eb68",
+      "sha256": "857edd0bdd29f4c4b9ff00d487a8623c04ff11f6e4d1f4a5ad69afb0a7d27e06",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/hil/HilValidityGate.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "6ddb5e3db93dd3b8f7bc4e7cb2cc3f7b1005904d",
+      "sha256": "6f1f4c08829794d4793acf4bfb9ab1a323bf5c6a9ce3fc66469e67f019f68d0d",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/mtp/MtpInbox.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "4d477150872b4efd2966a0b3163359021f490388",
+      "sha256": "51a20b4e843cc914fd9836c6d47f7fac7dc371d363b4625ca5a377dc20f3695a",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/mtp/MtpObservationBackend.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "19a028d09bb3d42c9b420c4ea927ea01d1f04b71",
+      "sha256": "d9c44f6a8969d978db2761b98ea7ce19d60260d60663b15ee75f5d4352c73e5f",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/mtp/MtpPoseAdapter.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "8bd27874bfa00c2d2c8589a155dac1170ec224e0",
+      "sha256": "9260a4fc2b503243c03623de313b3141eb611da14587a64867fb0574e2f1dc2e",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/pico/PicoMotionTrackerBridgeBodyAssignments.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "563d5e803236472ba8dac308b4214e71ae8de9ac",
+      "sha256": "c5fd6800fffe2ed0a1aab7c1bb33760c8596925a92efd8ba488b3f5c3ce93acc",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackAssignmentSet.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "d2e24d591ea0473ebfea836af5f9cde878b0948a",
+      "sha256": "9a7849c1f409b72ed9ab614b7c15e24af64ec62be33bd5828d889b585b607ab2",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackCandidateValidator.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "98e837b1810ece918021b432c5464021d69f367f",
+      "sha256": "68a02cc50d957c16cc82925d05262e3d31fd2cb80a20729800d22d255c0284c0",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackSelector.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "9daaa7e60c0603e3b95abc68d2cd25aba1aefaf2",
+      "sha256": "2ad227f519fa65e95fe517328f9431a59a60b2662a550e9ed42d56562658c53f",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/monaka/tracking/revision/PersistentTrackerIdentity.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "fb83b8f1b96ffe7db5f617f17f31ee1c2228ce20",
+      "sha256": "8ac8e1ab3e0a506d8689847ece74c1d6f023d9ff1cf6257eddfbc3493cd942b3",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/VRServer.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "dcea99abb0a0c1e94e81191ddfa5743ee1931b20",
+      "sha256": "dd6720fb3146f01a49d69e08f32875c6cd1783e1aafca727110c36c5ee9db90b",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/processor/HumanPoseManager.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "7000868c09e4d207a51056feea1be45f1b9ee1fb",
+      "sha256": "28372f58b55821b4f27943402fe8f7ce4edf7abb247ee524416d6aa1a081bd51",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/HumanSkeleton.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "d35ff683956d2b6f8868c29111c6a99ef33d37b6",
+      "sha256": "f13789c3de0a44c8c2d61ebdc7a495bcb5b88bd860f406591789246fb6d57646",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/IKConstraint.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "2bca636be1149c8a2bc45d04f181c8050e343ad6",
+      "sha256": "3d911eec2e4625d729098612e71703af86bbcb3b831c22b34fb0e5199abb74e8",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/IKSolver.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "10f7c6f1ce83ec7074ce04a9b19ac29c2b8cc931",
+      "sha256": "d86d91ed06eb712538c3a38a12dc85bb1f491727073ae79c2c2f57e1f31c97ed",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/trackers/Tracker.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "ed062aa8b617e8332180be7f8bf5754287b120d4",
+      "sha256": "353ad555cfd2361cc56d2762963984c0b96ec001a03b4f82d48ff7e06a90874e",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/tracking/trackers/TrackerResetsHandler.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "33131c0c6232825e9637dd51867e14aa59579fb6",
+      "sha256": "7993272f15a2195cf9b0417133be86a1531311f63ccff60cf8f3fa0db3fe221a",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/main/java/dev/slimevr/websocketapi/WebSocketVRBridge.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "41b50ee0ea574e51c91e8702cef1feadd3c5e22b",
+      "sha256": "76270ef148518f014d402fffee9f6d4c58f3efcfc3d76bfc5ab67daac376d6e7",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ArchitectureRevisionTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "b2754c3c4f5feebeae65e6f914490ff368107d67",
+      "sha256": "0991f8913cbc738192c497f6a8a47dcf576ac1555f5ac18e12bbff1e1779ca4c",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/AssignedImuSampleFreshnessTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "598ffdbfe76d9d020eb2bd40cc5a9d0defc1b057",
+      "sha256": "9caf3f71481dc3d144bed8eece7ef387d5fbe5d7923e6271a0c4536b1f221016",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/BodyModelPredictorHandoffTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "be9a090966c0447d3d688011219e9cce6dfdb8b3",
+      "sha256": "339b91152cda7e63f0a9863c6e202f13b66b92ba4d8c3dec35deb3d8c3cede96",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/CalibratedMainTeacherTemporalPairingTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "97efb427638f3d63d6f72defe00a5ccd10e55691",
+      "sha256": "90b994e1eefb32871dc6d33dc3ac01749923b0185346296957a17cdcdfa01cdc",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/CommonWorldAuthorityFoundationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "7c07268b81b74771e2e717f8ec223d981f66f963",
+      "sha256": "63b26e55fb4f4fe03d28e81d945ae079642fd6d413470f6b857e65ba3a61d20b",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ConstraintPipelineTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "334458ac57d81c62e543b5d67af23c28f8d068f7",
+      "sha256": "6a5e47f0cb606a7b94070d224b8578267b5918dac99f762de52c15b01a902a8a",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ConstraintResolverTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "2c274712111c7fa703148523ad478c8339f9a927",
+      "sha256": "2673649c2b4edd92b1cb4a18951eb728d3c77b4b76e538e67fba44e7b60db4fc",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/CorePocHilStdioTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "a06f3b2b4034029cd36a44a1265f5db6b51e07d9",
+      "sha256": "72789a651689ae6035471c0abcc6176ef54abc94f0a48315bead565f8709de47",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/CorePocHilTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "0f1146f46e09de54dbfc18adcd73d7171e0b5a69",
+      "sha256": "cb841d8f4d596d471e2cd60f6daeb830e41b1ed7b2f01a3b07feeaa3fbed7203",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/DirectConstraintOutputTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "19a961e384a53e51968582224d108f5ca604416f",
+      "sha256": "819630c3eaf600baafe0508b273b9157d7a3fbf6b950dade10eb25c38508dab3",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/DynamicGateComparisonProbe.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "92bd560fb84e84294ebb075d93b702e6866bc7cb",
+      "sha256": "ba51a8108c3373e19299e1c3e96b382bdc2849c73029fcd50686419f0a8b651b",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/HipBodyModelSnapshotTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "a5a27eac0f5def528533c026f60ad97b72d59a65",
+      "sha256": "1d1fe1abe26454b6900274472f1f1be7eff04d933ab911f9b69098be01900835",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/HipRotationCorrectionTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "51cf407f3aca4362f26bcbfd0f35d883c539eaa9",
+      "sha256": "93c8f054719546ffa8c479941ef9f5e2529649285e762d13db5525f6760e2e73",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/HybridDiagnosticStressTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "00c06cd8dad7c8eff7136e8cfec806fd8b6e9c4b",
+      "sha256": "3d38f7608ad211c7511e88960ba768f6259684b6ac213176fd154b58e26f6446",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/HybridFoundationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "79a0a13a847a35be31611fb42fc143dc9c0f7f65",
+      "sha256": "521647481847707952c60106ae0aa73737cf0523d839b8322e2c30bd181605da",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/LiveHipBodyModelPublicationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "e2d27afa72867d7823b31a9ad85bea558c71c3d5",
+      "sha256": "2713ec224b786b38ab61bb8b8dc7d5a9aa38823443723143c1133eab717a0127",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MainTrackerMountCalibrationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "23ef07c6d1bedd4eecef16d2bce22129930fb54d",
+      "sha256": "d66de2c09fd1234a80c5b2ef3c16b75a447bc01a37d310d65f7981de8a4279b9",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ModeConfigurationProcessFixture.kt",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "89f42bcaccefb7742e9da7a3b0fd150d49a3aafc",
+      "sha256": "8778b1e61bb9d5cacb40bd3b42c54ec57f19cce430db339bed4c45c4d883fc43",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ModeConfigurationTests.kt",
+      "source_prs": [
+        7
+      ],
+      "git_blob": "7782f96a7fe6308340d84b9247e05227142e72f5",
+      "sha256": "e1d949ee339d509c6bcbc294783ff3f8ed2da770dfe66052eea66bd9cd941bc6",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MonakaResolvedTickSnapshotTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "97937ce735f2c642b1e25d623d058c9a56d4a7d5",
+      "sha256": "2216b00f77487f1c9fbfbe211326b340bc89d71d370d1ca55355887060699de1",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MonakaRuntimeTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "abfe24af47bfa4c82ebfa52f96cde5bf4b58e514",
+      "sha256": "18c7acf88be51713b4809a67aabbc58941c3ae3d541b791f80890afe650ef7f8",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MonakaSolverCompositionTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "ae29be3c39e53d41e5a7a825d20cf3b46d95ccb1",
+      "sha256": "87f707991bb585e4111928f1befc3c6dad515045999b5dd56721e94f641d05b2",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MonakaSourceTickSnapshotTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "9a1d7ce7a62480bb59a193c360f30f94d4fb0776",
+      "sha256": "281be7770e41f9e10837a1352b8f018ea14b57b01501cd1d3c68cee798e8118c",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MtpCorrectionProvenanceTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "476f2ecec80199d62971bfe44837f2b38fb5b62c",
+      "sha256": "cc65c5a575e02da534cfffd3bf429e039fe4a5786c98aac1c193fa1eea5a6fff",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MtpObservationBackendTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "a184f6efbf584125b7c5174249dd72a14b548baf",
+      "sha256": "e7b9672b026e5de827ce8007a498ce98dab0c3eea867f4352aaf091dbd28e6c3",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/MtpRotationOnlyDownstreamTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "c1fd4fa612f38f6bab7909bba2d1f2c306be1c75",
+      "sha256": "388fad1914ec4832aa998fd9c745b0964a05549189ba2703085303e1b6173f42",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ObservationBackendLifecycleTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "03fa02349b3df16ac60cd8dfe7d0f6cad9f767e9",
+      "sha256": "c5b6774a943f49a8546fd02e2b0bf9acc312a6c87c0f5e8e524a509e2a90fc75",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ObservationBackendRunnerTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "32303794c1f43911f7e4cee58110ffe33a2d1372",
+      "sha256": "0c08f2d2a22674b263c93b66ca7c8517d19891f56d8f8db4070c5fa8d422e889",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ObservationFreshnessPolicyTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "00ce63227e4cf0dab552b56bcec298f9dbf69c5d",
+      "sha256": "43e36185d5684dabbb7239c860845f4af0d585b5891bdd956af4036694f106e6",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ObservationSourceProfileRegistryTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "48c4f8aebd6789b3ca6c7e0de36d8ffb59bde2b9",
+      "sha256": "05526a0f875ff4d79751eaa6e0f27630830387014764f936af5dd4dc1ef33095",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "99fd90b3b07ed81fe9d27f2f1610951b427b8be5",
+      "sha256": "89c5b767c0c0472a9660c926a0a5640c8dbedd3ef7a69a4ca95f54998ac3874b",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/ParallelRegressionTests.kt",
+      "source_prs": [
+        5
+      ],
+      "git_blob": "237840674ee119ecbfb2656ce44c68242e07f49e",
+      "sha256": "100468e2b5f60a10d5813dd7ba3bd8ef1d0fb3774d1faf71a8b224c084f41e26",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionApplicationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "e6b4a08595ad9ba7db5f338926d10f50d95f3510",
+      "sha256": "ca02fb45d884ab3ad3bbec6dfbceeb9717dba8488b7df9f49378f9310dd14224",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionConfigurationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "d5a9f6221e0b346c932af70e19612a5aedc2242d",
+      "sha256": "428b7261fdf30157429610c6dcb23c08b32e6dfabf23c3864e5b6c44db77b978",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionLearningLawTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "ef98eb85f5604be6197bf62e79c99ee30fbe4738",
+      "sha256": "d43666382c460ecf2942522e21b349e62a9582de8c68b475b162b87050cf46d5",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionNonHmdProductionAdapterTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "e68bb868be7e06f4982772f82a2d019362841965",
+      "sha256": "4b6774999a6c902d43e391d400993a0bb97f494bd9aab3a1f8cb70b810099c8a",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionRuntimeOrchestratorTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "03d34ad1f038fc0d19df5a6a430faf4dee59e9f0",
+      "sha256": "33ea52ae7afa811317147338bf6497c1e0663ac141eaa7b80258aa2e0bad095c",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionCorrectionSolverContinuityTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "af0376a2fd25585a11ae86dd6debb9b70a01be62",
+      "sha256": "7e0bf3281105b6bc0bbcd7c5c4928a6b14f786aad8d92b9f02922784016c8106",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionErrorMeasurementTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "ca40f3568e3eff092771eca60df77788507321a8",
+      "sha256": "2953ff1b442ac461a8ce932ab6dcd9dbdfd7d7c96c57bf4f4adb8a6dc5f61dc6",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionPredictionContractTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "2a86c20b5472119f0cbde30421ee1f7cdf75b25d",
+      "sha256": "69e836905634118561bbbc46331c18e3bd420858f47533b9806810d148060af8",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PositionTemporalPairingTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "9fdb31b801757d5d0f5d8ea89f55f80878e402f7",
+      "sha256": "c612d0711b75989d73800ccc6bc913dd8256315ead9e37ee515466b601482879",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PredictorFixedCalibrationTestFixtures.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "e449188d33a5d7a47d37222c99e5b0a711a58b50",
+      "sha256": "42f0634b8694bb82ddfde12efd2f7267af85364778ea3ff73a8653c672b60958",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PredictorFixedCalibrationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "4efbc1ea7e6b8cd2fc1646ad55eb1e2b8cb0cec1",
+      "sha256": "9cd27ae5ab5d2dc0fd27ce08487ff17f14f840416a51b8f82559524a5c0d69e0",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/PureMainDecoupledHipPredictorTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "fc596391b675604b3e318d431377f3b1232cb0ee",
+      "sha256": "10d772c730702c91e926b6cc7855f25bbef3b59e71b8d47eb89d0b612348b6ed",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/RecoveryAngularDynamicsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "002de8c6ef6e1fe3086193df3915d50250ec724b",
+      "sha256": "d083e508ae7a20bb2de7b247442c868cf01ac9cf9f69290b22f041a15d9fe4a6",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/RotationCorrectionConfigurationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "816a78f224c0b01071d7ce88596e0a9589d396a5",
+      "sha256": "9bedf1fa692f65e06d3e9723a1dd28fb5b4eae42747516b97cee4762945b179e",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/RotationSampleProvenanceTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "1871b50d2cebfe9c22b0552eeb2f105c9d15ca78",
+      "sha256": "4456d0e1c97e109a242257f45778e18ed676030cb19509b57dfe1e5799407176",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/SlimeIndependentImuOrientationCaptureTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "fd77f6250dc45c2ee0e2306aed40f22ccb092097",
+      "sha256": "18ab482efc6c99e5345fbb320d48aedf24440ec2f3ed0917b6c1752e5ad2b892",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/SlimeRawImuProductionBoundaryTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "fb163daa8d95565cd71c9495835026f44608e891",
+      "sha256": "7b8c741a77bcf155e5305ffc0341a862bcca556feabf1e2df722016618f6e151",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/SolverPositionReferenceSemanticsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "feab3f9abb9fcf70e94a64f977ba624ef971112b",
+      "sha256": "9813c4c44b16e8ca7878cb1b6caa6b302f0dc8ee099ba9b8b25dd05137b0e654",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/StaticInputSelectionTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "d3f921c9408a4bace4f51c30055694b631db2b68",
+      "sha256": "b66b1d4df12ed7c3754cc8253d640a3fc25e32fc3ee89103030f5027be2f379d",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/TrustedHmdCommonWorldStreamTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "9ca575b2f6b623cbba917315e2dcc02e9e3e2524",
+      "sha256": "fda40fb3d1f4d08ceed19052ba581f7426a1b8dead91df750d46539f6bb59440",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/correction/BodyRotationGuidanceTests.kt",
+      "source_prs": [
+        6
+      ],
+      "git_blob": "53046aee8ed2d3a97b91793691771b9820d00627",
+      "sha256": "c9e52ab2614750fa2ef55bf77cc098eb50aa6f4aff788ff7116c203bdc4cdaf2",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/monaka/tracking/pico/PicoMotionTrackerBridgeReceiverProviderTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "a79021a7bcb595df1d511a39bae0c6b42335a708",
+      "sha256": "2908edf4f9ad26cc2c46accef15f083832d0448285a4180f7a23310f2c5b41fc",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKCalibrationTargetDiagnosticsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "e817730598c8429e8f6c303dfbc18790754adf4d",
+      "sha256": "97ca29d5db875edb5dc3c938ca392d102b85ec5f10fe6e29d34e916470af819b",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKConvergenceDiagnosticsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "842cc3dbad62ae6ee8e03873e770cd6e9aa0e126",
+      "sha256": "176109668b07face687051f050e6930df014f2107b623354ee8532ce063939bf",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKEffectiveTargetDiagnosticsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "991b4c0c2afa94962c93335ccd69fa21c26004b4",
+      "sha256": "ddb6dcc6c501b07b494621398decd960da3312eb8dd0542de6fe66c42c3fe276",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKFootGeometryDiagnosticsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "385b71af58bf9d68f5bffc2558a07bb01b76ef18",
+      "sha256": "e5ce6041a0a331cfb187c3789dd760344f33273bdfe12d048b6342340917dbcf",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKFootRotationDiagnosticsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "c5d607929fa8fd9ade48981c6e4f6e3b5c955749",
+      "sha256": "19abb0cc2ad1e11a7e27bbdc47d4a768de3685e4fa08b00f080840ad91573dc8",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKRotationCacheDiagnosticsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "27dbbcb4337d265a89d85ca942664c7b35ea9180",
+      "sha256": "24bab13e182fed0425b246d3161dc59c296eaaf168040ec7ebf8f11c9dbc438a",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKSteadyStateDiagnosticsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "0d94c1616aa9e35cfe5535a2e3ce8804a52b07d5",
+      "sha256": "31139a4468e9fb8e0a19e78000f69b58db1e702b406e3e2387f3baec4757a51b",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/core/src/test/java/dev/slimevr/unit/PositionalIKZeroErrorDiagnosticsTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "b0563ef28a54bb66c991251b11d4ef1e4bde56ea",
+      "sha256": "e9479309117e2e2ea918e6dccaa7e391208c275bbe9eb9ee88425861c780c1a9",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/FixedCodecProbe.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "c5f1b5273ec445cc1848ff40e0dd09d9016e4207",
+      "sha256": "501b75621f20c545f228b9d977da21fadfe427e3e901f0945b0ead73998e7a0b",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/HmdProviderSampleTransport.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "8475a8eb145f3910fdaf2c3fcfa2ff108c649806",
+      "sha256": "01f8fc514f17f2cd5c668491bc915a2eb38b6e83618282eafc367d28672167e3",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/MonakaServerIntegration.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "bd68e3f93945e33f0d61c4d854bc9c6e9dbe3d8c",
+      "sha256": "c04ae247a988c94ca2a03d68a688d9a5b7d625f17642d2f32a03f6e722163b5e",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/MtpUdpReceiver.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "9b64d6e6f78d9829727145e43494f3c30785b957",
+      "sha256": "5e823ae177ba7b368851e9890c86a1e27d8c682afe2535fce10c021d9852df09",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdPoseAdmission.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "9d8337fafae2d887797f8195c7f46ce96d9f3b33",
+      "sha256": "3368c8bb333c1779c9d2a9db66eae72299078926b6d64b55e12657b0e0c0b064",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdProviderPoseEvidence.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "1a9bbc54bcc9b63220a35ef33800242391e37932",
+      "sha256": "0648c36e5566b52b29d78c498da6efbd4dd082c122a02c604fd199d6a3f67880",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/desktop/TrustedRawHmdPositionSource.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "a879ad78bfa1d3fd896fec4cfb7db620bec3d5ce",
+      "sha256": "fde446e15381ff4942aa6054402253bfe462982ccd13bc513f2e8504594903ab",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/pico/desktop/PicoMotionTrackerBridgeNativeLibrary.java",
+      "source_prs": [
+        12
+      ],
+      "git_blob": "8484090d8b044d1ba9783c4d8159c8df881a17d9",
+      "sha256": "b34502c348cb39bfdc0e0fea60c612501e7feace49a7f4c42150588b9b0ba14c",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/pico/desktop/PicoMotionTrackerBridgeNativeReceiver.kt",
+      "source_prs": [
+        12
+      ],
+      "git_blob": "81c3cfb340265a85303bd36b34908bfea05ab92f",
+      "sha256": "e4f45c24abbcd0ca0e6af8ab440b70e996a52440096da5eed38f1b2131a28511",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/monaka/tracking/pico/desktop/PicoMotionTrackerBridgeServerIntegration.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "fbf332f61c9997842be92ec109a7bbb1c5ac7dd5",
+      "sha256": "67c6b978e701f6434e1136f90ecc2332e289949e1e87518d62e0b589a6bc2438",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/slimevr/desktop/Main.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "b280874b0913ab31985bb1d717ad787500094c14",
+      "sha256": "5863c14de498e0ca5fbd771cfbf3f3f3c46b706239ad372c821247a2d9045365",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/slimevr/desktop/platform/InboundProtobufEnvelope.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "9c9ff5937bc130e3116c3c42652f90dcdf5db986",
+      "sha256": "47caa9a260c975055b18aaffd65329684d2cef0c98aa451d780f819a4ef21b67",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "3e44cb74e09cd8d6b5fa0c9a50d896f228941ab2",
+      "sha256": "7166f8a6a9b080569a3acfe5e08c5fdedaa712016c59f1879068e7f23fd30bcd",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/slimevr/desktop/platform/SteamVRBridge.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "ccf79a23f4302fef74985dbea2812c62c0652b78",
+      "sha256": "a81d4a40f95b03f574cdc6846556cf21db5377e5dc7bb57ccf55d63878398508",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/main/java/dev/slimevr/desktop/platform/windows/WindowsNamedPipeBridge.java",
+      "source_prs": [
+        8
+      ],
+      "git_blob": "dc0d7347cd119a88ce49df504aebfe22000ec070",
+      "sha256": "bb9a0c3b58d806557b95ba09cbea148b47d4049fd0b4ca8708cc71381afa3b95",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/DirectProtobufTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "b9a7070e425035854bb0f78e2108fd6e8962ed3e",
+      "sha256": "4dd367a41376a12ce50a82675e8edbeb296460a65686023c843f14e14c9d7faf",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/HmdProviderEvidenceTransportTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "0161378cd06af3a134c92277396f6d6e72c466e7",
+      "sha256": "2240acdde8a50ec0bf33ffd6955b8171851933522d2233f9f38f8cd9460ca5eb",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "f6774070978aadf3e610fad29a87d0fb4aaa74ab",
+      "sha256": "1cf85b9c3ceb77d9bc454e9d0103d4daae8211541a4fc967afc88815fe433c40",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/InboundTransportSessionTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "d29fc9aeac4a8ec6952465796a9ddc67727178e8",
+      "sha256": "a9b97e89f8d9a8e2311f7727b0305ba0036b36b4f8f0910201c3cf2ccc3206aa",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MonakaDesktopTests.kt",
+      "source_prs": [
+        8,
+        11
+      ],
+      "git_blob": "8e3d6b61bdd9b341f29a6d7a58bd935e03969f5a",
+      "sha256": "f266c10688882f5ab2661ed7126b8d709e46d5e22a3e866c577fe801798e779a",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MonakaInputProcessProbe.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "2875a529b4726d049d0fbb03d84a2db39f308ccb",
+      "sha256": "26b6c4c2cc7103cace9901c81bc34fccedd153e9e9ed7cd51cbc992a2597b53a",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCapture.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "b8295adb418e29e280c1758cd93117eb0094822b",
+      "sha256": "2b274db6bd5964e218b195aa61ca9d6d0f637257664e3eacf8dd046ffa505118",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCaptureTests.kt",
+      "source_prs": [
+        8,
+        11
+      ],
+      "git_blob": "f6552214e46a58f1de15e629e1f38ade833d0d4c",
+      "sha256": "a90e2a33f5e9179b5b5df457bea7fee2729086976b219079441b5e576e19f358",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpProcessE2E.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "f3741b3c81b9dab1bfc0d6a354f425235fb1ff15",
+      "sha256": "d31b2ffe907b6b6e0188fa686ef03f620402f4271a00b8661b6289e9117f82c7",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/RawHmdPoseAdmissionTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "507b73d6c4087ad7fa490a62961eaf49e3f009d2",
+      "sha256": "74ae65c4e9e65612efc5ff2ce2abad3d9ac70638cff10ac89c9d9c81d8408083",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/SolverCompositionIntegrationTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "012b849acaa706c5bca0cbf646232690068daca1",
+      "sha256": "1c48db7b357f6d6c385be90e4ccf17f5761b4688a4de9ab67b98a1ba79478d4e",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/StrongTrustedHmdPolicyTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "9378eca933b0d444bf05ab73cf016acf6e38d6b3",
+      "sha256": "0a0d9f78de88544987061eec334db3ac821dd80a6bed091077316562cc398a85",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/TestJvmExecutable.kt",
+      "source_prs": [
+        8
+      ],
+      "git_blob": "85e19618d7ba55dd11c0e9b5a5a0c3630e8c0e6e",
+      "sha256": "fedbb94806053dee09fe4d396128d587a2c11b295d3a42d9f49aec74510e0e6c",
+      "matches_pr13": true
+    },
+    {
+      "path": "server/desktop/src/test/java/dev/monaka/tracking/desktop/TrustedHmdPositionProvenanceTests.kt",
+      "source_prs": [
+        11
+      ],
+      "git_blob": "3b22888a51158c33886f196adce45c4a5dd6d40a",
+      "sha256": "7b699d83e2e9b8de18ad1f2a13be0f685af54d709ee35f9033d17f61f86dc772",
+      "matches_pr13": true
+    }
+  ],
+  "input_blob_manifest_sha256": "8b496a99919fadab856772d71a6346838e330931eba6274210642a618c5653d9",
+  "post_review": {
+    "review_date": "2026-10-21",
+    "source_reference_comparison": {
+      "assembly_source_215_paths_exact_to_pr13_at_original_candidate": true,
+      "updated_common_paths_matching_reference": 202,
+      "updated_common_paths_differing_only_evidence": 13,
+      "updated_product_or_test_differences": 0
+    },
+    "dev_policy": {
+      "commit": "9deecba91e58a2f01c4ec9f401b87389064bffd7",
+      "incorporated_by_merge": "c3c47d00a558505b6d0a857837ddad9455108584",
+      "changed_paths": [
+        "AGENTS.md"
+      ],
+      "current_candidate_matches_dev_agents": true,
+      "producer_independence_runtime_acceptance": "NOT RUN",
+      "bridge_responsibility_separation": "FOLLOW_ON_PHASE"
+    },
+    "evidence": {
+      "source_pr": 5,
+      "source_head": "636dab1f8a76bb2e5d0928269f9d0b087208d06b",
+      "merge": "6b69baad9b00f75c3eda0702e8c44b02ac0f81b1",
+      "redacted_log_count": 11,
+      "redacted_path_occurrences": 177,
+      "changed_paths_count": 13,
+      "sha256_index": "docs/parallel/evidence/sha256.json",
+      "old_unredacted_git_history": "REMAINS_ACCESSIBLE",
+      "commit_history_rewritten": false
+    },
+    "original_CI": {
+      "source_head": "3840a4cc3729cc60e7f33fe5f049d3596e2f8a11",
+      "passed": 14,
+      "failed": 0,
+      "skipped_tag_release": 1
+    },
+    "latest_CI": {
+      "source_head": "6b69baad9b00f75c3eda0702e8c44b02ac0f81b1",
+      "status": "PENDING_VERIFICATION"
+    }
+  }
+}

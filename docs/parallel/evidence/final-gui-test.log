@@ -1,0 +1,380 @@
+
+> slimevr@0.0.0 test C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\gui
+> pnpm run test:bridge
+
+
+> slimevr@0.0.0 test:bridge C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\gui
+> tsc --project bridge-tests.tsconfig.json && node --test --test-reporter=tap build/bridge-tests/tests/bridge/*.test.js
+
+TAP version 13
+# Subtest: load restores saved setting, review is required and selection changes revoke review
+ok 1 - load restores saved setting, review is required and selection changes revoke review
+  ---
+  duration_ms: 5.0058
+  type: 'test'
+  ...
+# Subtest: duplicate apply and refresh are guarded, mutation during save is ignored, cancel waits for completion
+ok 2 - duplicate apply and refresh are guarded, mutation during save is ignored, cancel waits for completion
+  ---
+  duration_ms: 6.4148
+  type: 'test'
+  ...
+# Subtest: save failure restores last loaded setting, retry succeeds, cancelling after commit reports saved
+ok 3 - save failure restores last loaded setting, retry succeeds, cancelling after commit reports saved
+  ---
+  duration_ms: 0.9502
+  type: 'test'
+  ...
+# Subtest: close/dispose cancels owned save and drops all late notifications
+ok 4 - close/dispose cancels owned save and drops all late notifications
+  ---
+  duration_ms: 0.6154
+  type: 'test'
+  ...
+# Subtest: load failure/cancellation/retry and missing configuration/validator do not allow save
+ok 5 - load failure/cancellation/retry and missing configuration/validator do not allow save
+  ---
+  duration_ms: 0.7813
+  type: 'test'
+  ...
+# Subtest: native file-dialog cancellation preserves edits and failure retains the previous source
+ok 6 - native file-dialog cancellation preserves edits and failure retains the previous source
+  ---
+  duration_ms: 0.9155
+  type: 'test'
+  ...
+# Subtest: unconfirmed cancellation does not imply saved state or release the busy guard
+ok 7 - unconfirmed cancellation does not imply saved state or release the busy guard
+  ---
+  duration_ms: 0.3401
+  type: 'test'
+  ...
+# Subtest: polling single-flight, failed read, reconnect, stale read and late close are explicit
+ok 8 - polling single-flight, failed read, reconnect, stale read and late close are explicit
+  ---
+  duration_ms: 0.861
+  type: 'test'
+  ...
+# Subtest: health presenter separates liveness, freshness, components, policy and revision
+ok 9 - health presenter separates liveness, freshness, components, policy and revision
+  ---
+  duration_ms: 0.504
+  type: 'test'
+  ...
+# Subtest: wrong config/publisher, old/future/missing timestamps and malformed devices fail closed
+ok 10 - wrong config/publisher, old/future/missing timestamps and malformed devices fail closed
+  ---
+  duration_ms: 0.594
+  type: 'test'
+  ...
+# Subtest: device identity survives reorder, separates source/publisher, clears disappearance and selection changes
+ok 11 - device identity survives reorder, separates source/publisher, clears disappearance and selection changes
+  ---
+  duration_ms: 1.0843
+  type: 'test'
+  ...
+# Subtest: unknown flags and malformed ages never manufacture valid components or fresh flow
+ok 12 - unknown flags and malformed ages never manufacture valid components or fresh flow
+  ---
+  duration_ms: 0.2442
+  type: 'test'
+  ...
+# Subtest: tray entry is a single navigation action and has no output writer
+ok 13 - tray entry is a single navigation action and has no output writer
+  ---
+  duration_ms: 0.2333
+  type: 'test'
+  ...
+# Subtest: explicit reload blocks editing and survives an in-flight metadata request
+ok 14 - explicit reload blocks editing and survives an in-flight metadata request
+  ---
+  duration_ms: 2.3665
+  type: 'test'
+  ...
+# Subtest: first Pos+Q selection uses static support even while invalid; manual clear persists
+ok 15 - first Pos+Q selection uses static support even while invalid; manual clear persists
+  ---
+  duration_ms: 0.7782
+  type: 'test'
+  ...
+# Subtest: Q-only and Slime never fill 6DoF; unknown/conflicting support is not selectable
+ok 16 - Q-only and Slime never fill 6DoF; unknown/conflicting support is not selectable
+  ---
+  duration_ms: 0.5139
+  type: 'test'
+  ...
+# Subtest: same names with different publishers, independent manual choices, and 6DoF-only
+ok 17 - same names with different publishers, independent manual choices, and 6DoF-only
+  ---
+  duration_ms: 0.4079
+  type: 'test'
+  ...
+# Subtest: cancel is read-only; reconnect metadata preserves an unsaved explicit choice
+ok 18 - cancel is read-only; reconnect metadata preserves an unsaved explicit choice
+  ---
+  duration_ms: 0.4086
+  type: 'test'
+  ...
+# Subtest: failure or unknown outcome prevents retry until explicit reload; no automatic save
+ok 19 - failure or unknown outcome prevents retry until explicit reload; no automatic save
+  ---
+  duration_ms: 1.2716
+  type: 'test'
+  ...
+# Subtest: another writer generation never overwrites the dirty draft or the saved assignment
+ok 20 - another writer generation never overwrites the dirty draft or the saved assignment
+  ---
+  duration_ms: 0.3815
+  type: 'test'
+  ...
+# Subtest: Desktop IPC restricts owner, shape, identifiers and existing policies
+ok 21 - Desktop IPC restricts owner, shape, identifiers and existing policies
+  ---
+  duration_ms: 4.1362
+  type: 'test'
+  ...
+# Subtest: Desktop IPC serializes file dialog, retains cancellation and permits retry
+ok 22 - Desktop IPC serializes file dialog, retains cancellation and permits retry
+  ---
+  duration_ms: 1.8615
+  type: 'test'
+  ...
+# Subtest: parallel localization: all eleven messages parse once with agreed en/ja meanings
+ok 23 - parallel localization: all eleven messages parse once with agreed en/ja meanings
+  ---
+  duration_ms: 16.4234
+  type: 'test'
+  ...
+# Subtest: parallel localization: existing locale then English preserves fallback and Japanese precedence
+ok 24 - parallel localization: existing locale then English preserves fallback and Japanese precedence
+  ---
+  duration_ms: 10.8873
+  type: 'test'
+  ...
+# Subtest: native validator: save/backup/revision/restore/no-op and untouched fields
+not ok 25 - native validator: save/backup/revision/restore/no-op and untouched fields
+  ---
+  duration_ms: 10.4958
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:70:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:71:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: same revision external bytes and changes during validation are preserved
+not ok 26 - same revision external bytes and changes during validation are preserved
+  ---
+  duration_ms: 3.8578
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:88:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:89:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: native failure, missing executable, revision exhaustion and retry leave saved data intact
+not ok 27 - native failure, missing executable, revision exhaustion and retry leave saved data intact
+  ---
+  duration_ms: 4.1759
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:102:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:103:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: duplicate apply, wrong cancellation ID, cancel, window close and retry
+not ok 28 - duplicate apply, wrong cancellation ID, cancel, window close and retry
+  ---
+  duration_ms: 2.9394
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:120:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:121:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: stale Desktop snapshot is rejected and old orphan marker cannot block the native transaction
+not ok 29 - stale Desktop snapshot is rejected and old orphan marker cannot block the native transaction
+  ---
+  duration_ms: 7.1726
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:161:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:162:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: replacement failure restores no external data, retry works, post-commit cancel is reported saved
+not ok 30 - replacement failure restores no external data, retry works, post-commit cancel is reported saved
+  ---
+  duration_ms: 4.745
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:171:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:172:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: configuration selection persistence/failure, independent approval flags, unknown profile and stale token
+not ok 31 - configuration selection persistence/failure, independent approval flags, unknown profile and stale token
+  ---
+  duration_ms: 3.3608
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:188:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:189:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: bounded/corrupt/unconfigured files, health missing/malformed, actual snapshot age, no writes
+not ok 32 - bounded/corrupt/unconfigured files, health missing/malformed, actual snapshot age, no writes
+  ---
+  duration_ms: 6.2506
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:216:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:217:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: load cancellation is bounded, preserves prior selection and accepts a fresh read after cancel
+not ok 33 - load cancellation is bounded, preserves prior selection and accepts a fresh read after cancel
+  ---
+  duration_ms: 3.4991
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:236:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:237:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: P2R extension: old validator cannot silently approve runtime_contract; original bytes preserved
+not ok 34 - P2R extension: old validator cannot silently approve runtime_contract; original bytes preserved
+  ---
+  duration_ms: 4.3178
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:281:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:282:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: P2R matching native validator preserves complete nested contract and changes only policy/revision
+not ok 35 - P2R matching native validator preserves complete nested contract and changes only policy/revision
+  ---
+  duration_ms: 7.8772
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:290:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:291:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: legacy CLI cannot commit even a configuration without P2R extensions
+not ok 36 - legacy CLI cannot commit even a configuration without P2R extensions
+  ---
+  duration_ms: 3.2066
+  type: 'test'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:308:1'
+  failureType: 'testCodeFailure'
+  error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:309:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..36
+# tests 36
+# suites 0
+# pass 24
+# fail 12
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 236.4555
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Test failed. See above for more details.

@@ -2,8 +2,13 @@ package dev.monaka.tracking.desktop
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
-import dev.monaka.protocol.v2.*
-import dev.monaka.tracking.*
+import dev.monaka.protocol.v2.DecodeResult
+import dev.monaka.protocol.v2.EncodeResult
+import dev.monaka.protocol.v2.MonakaCodec
+import dev.monaka.protocol.v2.ObservationDeviceState
+import dev.monaka.protocol.v2.TrackerObservation
+import dev.monaka.tracking.MonakaConfiguration
+import dev.monaka.tracking.MonakaRuntime
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -26,7 +31,10 @@ object MtpHilCapture {
 				reuseAddress = false
 				bind(InetSocketAddress(InetAddress.getByName("127.0.0.1"), port))
 				soTimeout = 1
-			} catch (e: Exception) { close(); throw e }
+			} catch (e: Exception) {
+				close()
+				throw e
+			}
 		}
 		// Refuse occupied ports; never stop or replace another receiver.
 		bind(config.port).use { mtp ->
@@ -37,12 +45,21 @@ object MtpHilCapture {
 				val clock = MonakaRuntime.monotonicClock()
 				MtpHilCaptureSession(config, directory, clock).use { capture ->
 					val hash = MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(configPath)).joinToString("") { "%02x".format(it) }
-					Files.writeString(directory.resolve("capture.json"), GsonBuilder().serializeNulls().create().toJson(mapOf(
-						"mode" to "diagnostic MonakaRuntime; no IK/SteamVR", "hardware_verdict" to "NOT EVALUATED",
-						"config" to configPath.toAbsolutePath().toString(), "config_sha256" to hash,
-						"mtp_port" to mtp.localPort, "observation_mirror_port" to observation.localPort,
-						"timeout_ns" to config.timeoutNanos.toString(), "started_utc" to java.time.Instant.now().toString(),
-					)))
+					Files.writeString(
+						directory.resolve("capture.json"),
+						GsonBuilder().serializeNulls().create().toJson(
+							mapOf(
+								"mode" to "diagnostic MonakaRuntime; no IK/SteamVR",
+								"hardware_verdict" to "NOT EVALUATED",
+								"config" to configPath.toAbsolutePath().toString(),
+								"config_sha256" to hash,
+								"mtp_port" to mtp.localPort,
+								"observation_mirror_port" to observation.localPort,
+								"timeout_ns" to config.timeoutNanos.toString(),
+								"started_utc" to java.time.Instant.now().toString(),
+							),
+						),
+					)
 					println("READY MTP=${mtp.localPort} Observation-mirror=${observation.localPort} logs=$directory")
 					val deadline = seconds * 1_000_000_000
 					while (clock() < deadline) {
@@ -71,8 +88,15 @@ internal class MtpHilCaptureSession(config: MonakaConfiguration, directory: Path
 	private val constraintsLog = Files.newBufferedWriter(directory.resolve("constraints.jsonl"))
 	private val runtime = MonakaRuntime({ emptyList() }, config.space, config.assignments, clock = clock, timeoutNanos = config.timeoutNanos)
 	private var lastConstraints: String? = null
-	private fun document(bytes: ByteArray): Any = try { JsonParser.parseString(bytes.toString(Charsets.UTF_8)) } catch (_: Exception) { mapOf("malformed_utf8" to bytes.toString(Charsets.UTF_8)) }
-	private fun write(log: java.io.BufferedWriter, row: Any) { log.write(json.toJson(row)); log.newLine() }
+	private fun document(bytes: ByteArray): Any = try {
+		JsonParser.parseString(bytes.toString(Charsets.UTF_8))
+	} catch (_: Exception) {
+		mapOf("malformed_utf8" to bytes.toString(Charsets.UTF_8))
+	}
+	private fun write(log: java.io.BufferedWriter, row: Any) {
+		log.write(json.toJson(row))
+		log.newLine()
+	}
 	fun observation(bytes: ByteArray) {
 		val decoded = MonakaCodec.decodeEnvelope(bytes)
 		val valid = decoded is DecodeResult.Success && (decoded.value is TrackerObservation || decoded.value is ObservationDeviceState)
@@ -90,18 +114,22 @@ internal class MtpHilCaptureSession(config: MonakaConfiguration, directory: Path
 			"constraints" to runtime.assignments.snapshot().targets.map { (body, relation) ->
 				val c = effective[body]
 				mapOf(
-					"body" to body.name, "main" to relation.mainTracker.observationId,
+					"body" to body.name,
+					"main" to relation.mainTracker.observationId,
 					"external_fallback" to relation.rotationFallbackTracker?.observationId,
 					"position" to c?.position?.value?.let { listOf(it.x, it.y, it.z) },
 					"orientation_xyzw" to c?.rotation?.value?.let { listOf(it.x, it.y, it.z, it.w) },
-					"position_source" to c?.position?.sourceId, "rotation_source" to c?.rotation?.sourceId,
+					"position_source" to c?.position?.sourceId,
+					"rotation_source" to c?.rotation?.sourceId,
 					"rotation_sample_ns" to c?.rotation?.observedAtNanos?.toString(),
 				)
 			},
-			"accepted_samples" to runtime.mtp.samples().values.map { sample -> mapOf(
-				"sample_ns" to sample.sampleTime.toString(),
-				"wire" to document((MonakaCodec.encodeEnvelope(sample.pose) as EncodeResult.Success).value),
-			) },
+			"accepted_samples" to runtime.mtp.samples().values.map { sample ->
+				mapOf(
+					"sample_ns" to sample.sampleTime.toString(),
+					"wire" to document((MonakaCodec.encodeEnvelope(sample.pose) as EncodeResult.Success).value),
+				)
+			},
 			"diagnostics" to runtime.inbox.diagnostics(),
 		)
 		val serialized = json.toJson(payload)
@@ -112,6 +140,14 @@ internal class MtpHilCaptureSession(config: MonakaConfiguration, directory: Path
 	}
 	override fun close() {
 		runtime.close()
-		try { observationLog.close() } finally { try { mtpLog.close() } finally { constraintsLog.close() } }
+		try {
+			observationLog.close()
+		} finally {
+			try {
+				mtpLog.close()
+			} finally {
+				constraintsLog.close()
+			}
+		}
 	}
 }
