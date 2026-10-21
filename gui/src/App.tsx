@@ -61,6 +61,7 @@ import { AppLocalizationProvider } from './i18n/config';
 import { openUrl } from './hooks/crossplatform';
 import { UdevRulesModal } from './components/onboarding/UdevRulesModal';
 import { MonakaBridgeSettings } from './components/settings/pages/MonakaBridgeSettings';
+import { MonakaInputSettings } from './components/settings/pages/MonakaInputSettings';
 
 export const GH_REPO = 'SlimeVR/SlimeVR-Server';
 export const VersionContext = createContext('');
@@ -139,6 +140,7 @@ function Layout() {
           >
             <Route path="firmware-tool" element={<FirmwareToolSettings />} />
             <Route path="trackers" element={<GeneralSettings />} />
+            <Route path="monaka-input" element={<MonakaInputSettings />} />
             <Route path="serial" element={<Serial />} />
             <Route path="osc/router" element={<OSCRouterSettings />} />
             <Route path="osc/vrchat" element={<VRCOSCSettings />} />

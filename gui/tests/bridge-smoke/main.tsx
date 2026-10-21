@@ -150,7 +150,7 @@ function SoftwareFixture() {
           {String(api.fail)}
         </p>
       </div>
-      <MonakaBridgeSettings api={api} inputControls={null} />
+      <MonakaBridgeSettings api={api} />
     </MemoryRouter>
   );
 }
