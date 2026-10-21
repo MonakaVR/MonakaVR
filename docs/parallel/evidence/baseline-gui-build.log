@@ -1,5 +1,5 @@
 
-> slimevr@0.0.0 build C:\Users\nynyp\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\gui
+> slimevr@0.0.0 build C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\gui
 > electron-vite build --config electron.vite.config.ts
 
 Git is dirty because of:

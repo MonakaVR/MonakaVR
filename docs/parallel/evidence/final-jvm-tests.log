@@ -40,13 +40,13 @@ PASS exact protocol {'major': 2, 'minor': 1} artifact/manifest/lock/contracts/co
 > Task :server:desktop:test UP-TO-DATE
 
 > Task :server:core:compileTestKotlin
-w: file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/server/core/src/test/java/dev/monaka/tracking/ParallelRegressionTests.kt:112:38 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
+w: file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/server/core/src/test/java/dev/monaka/tracking/ParallelRegressionTests.kt:112:38 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ResolvedComponent<Vector3>'.
 
 > Task :server:core:compileTestJava NO-SOURCE
 > Task :server:core:testClasses UP-TO-DATE
 > Task :server:core:test
 
-[Incubating] Problems report is available at: file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/build/reports/problems/problems-report.html
+[Incubating] Problems report is available at: file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/build/reports/problems/problems-report.html
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 

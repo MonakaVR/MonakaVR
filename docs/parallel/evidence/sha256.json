@@ -7,19 +7,19 @@
     },
     {
       "file": "baseline-gui-build.log",
-      "sha256": "2cf41494f3c63c775813f983bc04e1233d8af13691e5aad01cf41510fe732661"
+      "sha256": "31499ac44cc860f25d0d27f405bcd0ab4beee28a2660000fded16701ff7b136f"
     },
     {
       "file": "baseline-gui-lint.log",
-      "sha256": "264ad95da7b780363964c434a562ca75e93e7c276ed8a52dcb6cb69d52f5ce1d"
+      "sha256": "f443345695d8e9d997f71720b6b937f1ea4b2222e1f16c753c06beea7fb32e85"
     },
     {
       "file": "baseline-gui-test.log",
-      "sha256": "1873b3f1243bf0e618841dcc585207d5cf24b134a378aa87827df58a8406c7ad"
+      "sha256": "1bd59eca978521fd1ba35b2c3db469ba2b1065fb8dad9c3da29acb4148a8d668"
     },
     {
       "file": "baseline-jvm.log",
-      "sha256": "ab9955ff9e6cfc0b6935a98b500736d4b2bbf3d8613dca3d5be643309ff87091"
+      "sha256": "5a56cede670b6839a31767edda4e218994607aa233ebd27f1f1f471f31dc45e7"
     },
     {
       "file": "final-counts.json",
@@ -27,27 +27,27 @@
     },
     {
       "file": "final-gui-build.log",
-      "sha256": "445f7cbcfde5c75a81f73be53bdf66a8d35ad3deca6e91799842b296dcfbe6c7"
+      "sha256": "f9c5f773a348f6025fc8d41431f7c97a964bbdcd840bebcb4c5a65e6455c4852"
     },
     {
       "file": "final-gui-lint.log",
-      "sha256": "264ad95da7b780363964c434a562ca75e93e7c276ed8a52dcb6cb69d52f5ce1d"
+      "sha256": "f443345695d8e9d997f71720b6b937f1ea4b2222e1f16c753c06beea7fb32e85"
     },
     {
       "file": "final-gui-test.log",
-      "sha256": "24dca4cba24fa7ec4ad48d44249cea68a371599b853ab92987a86761d3ee5213"
+      "sha256": "f02eb3e159134a9314e9584058dc7e9e2171966bfe80b29f896447cfa753bedf"
     },
     {
       "file": "final-jvm-tests.log",
-      "sha256": "dd55999240a374e6f7f99712f44ab56344f7bc3e154e42b975d2ac86d26a56f0"
+      "sha256": "38e1be04c7fcf10cb9cf9f7ed1f49d5ef5205799def532ac86ef41c43df13400"
     },
     {
       "file": "final-jvm.log",
-      "sha256": "9c58c783e0ac0bf35fd0b3c28a9ef11ed91a0719df2998e210208bcbbfb42413"
+      "sha256": "2c39a3fd7cda890c6d4d34cdf137cf2c27145c8b4753822e24d0762ea100a80a"
     },
     {
       "file": "gui-install.log",
-      "sha256": "69e3feae0810ee4acbcddee53bcea014441fcf0b8573798b08275a890b6c9c4c"
+      "sha256": "e026017b3a4452c538c5206d7328a3305ae117500808b8ae470dab66b1c256af"
     },
     {
       "file": "localization-test.log",
@@ -59,7 +59,7 @@
     },
     {
       "file": "new-suite.log",
-      "sha256": "f3b4c86840ff9798d3203bcd8ea99f23db8103e85024df60032477e79649af82"
+      "sha256": "56d4603d71f2e974c34a8d8edeac8aaafda827ab37ad3af0ecf19e2f74c2a761"
     },
     {
       "file": "parallel-suite.xml",

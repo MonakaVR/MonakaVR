@@ -46,9 +46,9 @@ PASS exact protocol {'major': 2, 'minor': 1} artifact/manifest/lock/contracts/co
 > Task :server:desktop:test UP-TO-DATE
 
 > Task :server:desktop:mtpProcessE2E
-RESULT=PASS mtp-process-e2e stopped_at=complete evidence=C:\Users\nynyp\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\server\desktop\build\mtp-process-e2e\0caca89f-b2a4-446c-90e0-a117ab6bc415
+RESULT=PASS mtp-process-e2e stopped_at=complete evidence=C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\server\desktop\build\mtp-process-e2e\0caca89f-b2a4-446c-90e0-a117ab6bc415
 
-[Incubating] Problems report is available at: file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/build/reports/problems/problems-report.html
+[Incubating] Problems report is available at: file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/build/reports/problems/problems-report.html
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 
