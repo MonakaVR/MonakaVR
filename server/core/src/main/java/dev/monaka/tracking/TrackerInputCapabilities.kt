@@ -12,8 +12,15 @@ class DeclaredTrackerCapabilities(components: Collection<String>) {
 	override fun equals(other: Any?): Boolean = other is DeclaredTrackerCapabilities && components == other.components
 	override fun hashCode(): Int = components.hashCode()
 	companion object {
-		private val SUPPORTED = setOf("position", "orientation", "linear_velocity", "angular_velocity",
-			"linear_acceleration", "battery_fraction", "charging")
+		private val SUPPORTED = setOf(
+			"position",
+			"orientation",
+			"linear_velocity",
+			"angular_velocity",
+			"linear_acceleration",
+			"battery_fraction",
+			"charging",
+		)
 		fun orientationOnly() = DeclaredTrackerCapabilities(listOf("orientation"))
 	}
 }
@@ -24,7 +31,9 @@ data class QSixDofSourceSelection(
 	val sixDofSource: TrackerReference? = null,
 	val sixDofManuallySelected: Boolean = false,
 ) {
-	init { require(qSource != null || sixDofSource != null) { "Select at least one source" } }
+	init {
+		require(qSource != null || sixDofSource != null) { "Select at least one source" }
+	}
 	val mainTracker: TrackerReference get() = requireNotNull(sixDofSource ?: qSource)
 	val rotationFallbackTracker: TrackerReference? get() = qSource.takeUnless { it == mainTracker }
 }

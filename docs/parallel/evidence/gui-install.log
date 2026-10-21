@@ -1,0 +1,176 @@
+Scope: all 3 workspace projects
+..                                       | Progress: resolved 1, reused 0, downloaded 0, added 0
+..                                       |    +1034 ++++++++++++++++++++++++++++
+..                                       | Progress: resolved 1034, reused 289, downloaded 0, added 0
+..                                       | Progress: resolved 1034, reused 403, downloaded 0, added 0
+..                                       | Progress: resolved 1034, reused 471, downloaded 0, added 0
+..                                       | Progress: resolved 1034, reused 791, downloaded 0, added 0
+..                                       | Progress: resolved 1034, reused 1031, downloaded 0, added 15
+..                                       | Progress: resolved 1034, reused 1031, downloaded 0, added 48
+..                                       | Progress: resolved 1034, reused 1033, downloaded 0, added 99
+..                                       | Progress: resolved 1034, reused 1033, downloaded 0, added 149
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 215
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 293
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 408
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 467
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 522
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 606
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 642
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 726
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 806
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 859
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 935
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 999
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 1028
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 1030
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 1031
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 1032
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 1033
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 1034
+..                                       | Progress: resolved 1034, reused 1034, downloaded 0, added 1034, done
+.../node_modules/register-scheme install$ node-gyp rebuild
+.../node_modules/register-scheme install: C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\node_modules\.pnpm\register-scheme@https+++cod_bcae2678ffe77231c502692160103750\node_modules\register-scheme>if not defined npm_config_node_gyp (node "C:\Users\REDACTED\AppData\Roaming\npm\node_modules\pnpm\dist\node-gyp-bin\\..\node_modules\node-gyp\bin\node-gyp.js" rebuild )  else (node "C:\Users\REDACTED\AppData\Roaming\npm\node_modules\pnpm\dist\node_modules\node-gyp\bin\node-gyp.js" rebuild ) 
+.../node_modules/register-scheme install: gyp info it worked if it ends with ok
+.../node_modules/register-scheme install: gyp info using node-gyp@11.5.0
+.../node_modules/register-scheme install: gyp info using node@22.17.0 | win32 | x64
+.../node_modules/register-scheme install: gyp info find Python using Python version 3.13.15 found at "C:\Users\REDACTED\AppData\Local\Programs\Python\Python313\python.exe"
+.../node_modules/register-scheme install: gyp ERR! find VS 
+.../node_modules/register-scheme install: gyp ERR! find VS msvs_version not set from command line or npm config
+.../node_modules/register-scheme install: gyp ERR! find VS VCINSTALLDIR not set, not running in VS Command Prompt
+.../node_modules/register-scheme install: gyp ERR! find VS could not use PowerShell to find Visual Studio 2017 or newer, try re-running with '--loglevel silly' for more details.
+.../node_modules/register-scheme install: gyp ERR! find VS 
+.../node_modules/register-scheme install: gyp ERR! find VS Failure details: undefined
+.../node_modules/register-scheme install: gyp ERR! find VS unknown version "undefined" found at "C:\Program Files\Microsoft Visual Studio\18\Insiders"
+.../node_modules/register-scheme install: gyp ERR! find VS could not find a version of Visual Studio 2017 or newer to use
+.../node_modules/register-scheme install: gyp ERR! find VS not looking for VS2017 as it is only supported up to Node.js 21
+.../node_modules/register-scheme install: gyp ERR! find VS not looking for VS2017 as it is only supported up to Node.js 21
+.../node_modules/register-scheme install: gyp ERR! find VS not looking for VS2017 as it is only supported up to Node.js 21
+.../node_modules/register-scheme install: gyp ERR! find VS not looking for VS2015 as it is only supported up to Node.js 18
+.../node_modules/register-scheme install: gyp ERR! find VS not looking for VS2013 as it is only supported up to Node.js 8
+.../node_modules/register-scheme install: gyp ERR! find VS 
+.../node_modules/register-scheme install: gyp ERR! find VS **************************************************************
+.../node_modules/register-scheme install: gyp ERR! find VS You need to install the latest version of Visual Studio
+.../node_modules/register-scheme install: gyp ERR! find VS including the "Desktop development with C++" workload.
+.../node_modules/register-scheme install: gyp ERR! find VS For more information consult the documentation at:
+.../node_modules/register-scheme install: gyp ERR! find VS https://github.com/nodejs/node-gyp#on-windows
+.../node_modules/register-scheme install: gyp ERR! find VS **************************************************************
+.../node_modules/register-scheme install: gyp ERR! find VS 
+.../node_modules/register-scheme install: gyp ERR! configure error 
+.../node_modules/register-scheme install: gyp ERR! stack Error: Could not find any Visual Studio installation to use
+.../node_modules/register-scheme install: gyp ERR! stack at VisualStudioFinder.fail (C:\Users\REDACTED\AppData\Roaming\npm\node_modules\pnpm\dist\node_modules\node-gyp\lib\find-visualstudio.js:118:11)
+.../node_modules/register-scheme install: gyp ERR! stack at VisualStudioFinder.findVisualStudio (C:\Users\REDACTED\AppData\Roaming\npm\node_modules\pnpm\dist\node_modules\node-gyp\lib\find-visualstudio.js:74:17)
+.../node_modules/register-scheme install: gyp ERR! stack at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+.../node_modules/register-scheme install: gyp ERR! stack at async createBuildDir (C:\Users\REDACTED\AppData\Roaming\npm\node_modules\pnpm\dist\node_modules\node-gyp\lib\configure.js:112:18)
+.../node_modules/register-scheme install: gyp ERR! stack at async run (C:\Users\REDACTED\AppData\Roaming\npm\node_modules\pnpm\dist\node_modules\node-gyp\bin\node-gyp.js:81:18)
+.../node_modules/register-scheme install: gyp ERR! System Windows_NT 10.0.26300
+.../node_modules/register-scheme install: gyp ERR! command "C:\\Program Files\\nodejs\\node.exe" "C:\\Users\\REDACTED\\AppData\\Roaming\\npm\\node_modules\\pnpm\\dist\\node_modules\\node-gyp\\bin\\node-gyp.js" "rebuild"
+.../node_modules/register-scheme install: gyp ERR! cwd C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\node_modules\.pnpm\register-scheme@https+++cod_bcae2678ffe77231c502692160103750\node_modules\register-scheme
+.../node_modules/register-scheme install: gyp ERR! node -v v22.17.0
+.../node_modules/register-scheme install: gyp ERR! node-gyp -v v11.5.0
+.../node_modules/register-scheme install: gyp ERR! not ok 
+.../node_modules/register-scheme install: Failed
+
+dependencies:
++ @ryuziii/discord-rpc 1.0.1-rc.1
++ @xhayper/discord-rpc 1.3.3
++ commander 14.0.3
++ discord-rich-presence 0.0.8
++ glob 13.0.6
++ open 11.0.0
++ pino 10.3.1
++ pino-pretty 13.1.3
++ pino-roll 4.0.0
+
+devDependencies:
++ @dword-design/eslint-plugin-import-alias 4.0.9
++ @electron/asar 4.2.0
++ @eslint/eslintrc 3.3.5
++ @eslint/js 9.39.4
++ @fluent/bundle 0.18.0
++ @fluent/react 0.15.2
++ @fontsource/poppins 5.2.7
++ @formatjs/intl-localematcher 0.2.32
++ @hookform/resolvers 3.10.0
++ @openapi-codegen/cli 3.1.0
++ @openapi-codegen/typescript 8.1.1
++ @playwright/test 1.64.1
++ @react-hookz/deep-equal 3.0.4
++ @sentry/react 10.29.0
++ @sentry/vite-plugin 2.23.1
++ @stylistic/eslint-plugin 5.10.0
++ @tailwindcss/forms 0.5.11
++ @tailwindcss/typography 0.5.19
++ @tanstack/react-query 5.99.0
++ @tweenjs/tween.js 25.0.0
++ @twemoji/svg 15.0.0
++ @types/file-saver 2.0.7
++ @types/node 24.12.2
++ @types/react 18.3.28
++ @types/react-dom 18.3.7
++ @types/react-helmet 6.1.11
++ @types/react-modal 3.16.3
++ @types/semver 7.7.1
++ @types/three 0.163.0
++ @typescript-eslint/eslint-plugin 8.58.2
++ @typescript-eslint/parser 8.58.2
++ @vitejs/plugin-react 4.7.0
++ ajv 8.18.0
++ autoprefixer 10.5.0
++ browser-fs-access 0.35.0
++ classnames 2.5.1
++ convert 5.14.1
++ dmg-license 1.0.11
++ dotenv 16.6.1
++ electron 40.9.1
++ electron-builder 26.15.3
++ electron-vite 5.0.0
++ eslint 9.39.4
++ eslint-import-resolver-typescript 3.10.1
++ eslint-plugin-import 2.32.0
++ eslint-plugin-jsx-a11y 6.10.2
++ eslint-plugin-react 7.37.5
++ eslint-plugin-react-hooks 7.0.1
++ flatbuffers 22.10.26
++ globals 15.15.0
++ intl-pluralrules 2.0.1
++ ip-num 1.5.2
++ jotai 2.19.1
++ prettier 3.8.3
++ prompts 2.4.2
++ react 18.3.1
++ react-dom 18.3.1
++ react-error-boundary 4.1.2
++ react-helmet 6.1.0
++ react-hook-form 7.72.1
++ react-markdown 9.1.0
++ react-modal 3.16.3
++ react-responsive 10.0.1
++ react-router-dom 6.30.3
++ remark-gfm 4.0.1
++ rollup-plugin-visualizer 5.14.0
++ sass 1.99.0
++ semver 7.7.4
++ solarxr-protocol 0.0.0 <- ..\solarxr-protocol
++ spdx-satisfies 5.0.1
++ tailwind-gradient-mask-image 1.2.0
++ tailwindcss 3.4.19
++ three 0.163.0
++ ts-pattern 5.9.0
++ typescript 5.9.3
++ typescript-eslint 8.58.2
++ use-double-tap 1.3.7
++ uuid 13.0.0
++ vite 5.4.21
++ yup 1.7.1
+
+.. prepare$ husky && pnpm run update-solarxr
+../solarxr-protocol prepare$ npm run build
+.. prepare: > slimevr@0.0.0 update-solarxr C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n
+.. prepare: > cd solarxr-protocol && pnpm run build
+.. prepare: > solarxr-protocol@0.0.0 build C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\solarxr-protocol
+.. prepare: > tsc
+../solarxr-protocol prepare: > solarxr-protocol@0.0.0 build
+../solarxr-protocol prepare: > tsc
+.. prepare: Done
+../solarxr-protocol prepare: Done
+Done in 1m 0.9s using pnpm v10.33.0

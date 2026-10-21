@@ -1,0 +1,53 @@
+
+> slimevr@0.0.0 build C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\gui
+> electron-vite build --config electron.vite.config.ts
+
+Git is dirty because of:
+?? docs/parallel/
+?? server/core/src/test/java/dev/monaka/tracking/ParallelRegressionTests.kt
+
+version is a07d0c7b-dirty
+[sentry-vite-plugin] Warning: No auth token provided. Will not create release. Please set the `authToken` option. You can find information on how to generate a Sentry auth token here: https://docs.sentry.io/api/auth/
+[sentry-vite-plugin] Warning: No auth token provided. Will not upload source maps. Please set the `authToken` option. You can find information on how to generate a Sentry auth token here: https://docs.sentry.io/api/auth/
+vite v5.4.21 building SSR bundle for production...
+transforming...
+✓ 16 modules transformed.
+rendering chunks...
+out/main/chunks/Square30x30Logo-CHlqmClk.png   0.70 kB
+out/main/chunks/JavaVersion-mRrLWrXm.jar       0.89 kB
+out/main/chunks/icon-BRhPvPJ6.png             11.88 kB
+out/main/index.js                             39.88 kB
+✓ built in 619ms
+vite v5.4.21 building SSR bundle for production...
+transforming...
+✓ 2 modules transformed.
+rendering chunks...
+out/preload/index.js  3.80 kB
+✓ built in 16ms
+vite v5.4.21 building for production...
+[sentry-vite-plugin] Info: Sending telemetry data on issues and performance to Sentry. To disable telemetry, set `options.telemetry` to `false`.
+transforming...
+[DEPRECATED] jotai/babel/plugin-react-refresh is deprecated and will be removed in v3.
+Please use the `jotai-babel` package instead: https://github.com/jotaijs/jotai-babel
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2235 modules transformed.
+rendering chunks...
+out/renderer/index.html                                               0.68 kB
+out/renderer/assets/1f9cb-DO_VegKU.svg                                4.10 kB
+out/renderer/assets/poppins-latin-ext-700-normal-cby-RkWa.woff2       5.43 kB
+out/renderer/assets/poppins-latin-ext-500-normal-CK-6C4Hw.woff2       5.48 kB
+out/renderer/assets/poppins-latin-ext-700-normal-DctTR6Tg.woff        7.33 kB
+out/renderer/assets/poppins-latin-ext-500-normal-CgAe2rWW.woff        7.37 kB
+out/renderer/assets/poppins-latin-500-normal-C8OXljZJ.woff2           7.75 kB
+out/renderer/assets/poppins-latin-700-normal-Qrb0O0WB.woff2           7.82 kB
+out/renderer/assets/poppins-latin-500-normal-DGXqpDMm.woff           10.37 kB
+out/renderer/assets/poppins-latin-700-normal-BVuQR_eA.woff           10.43 kB
+out/renderer/assets/poppins-devanagari-500-normal-BIdkeU1p.woff2     39.08 kB
+out/renderer/assets/poppins-devanagari-700-normal-O-jipLrW.woff2     39.25 kB
+out/renderer/assets/poppins-devanagari-700-normal-fHs-vx92.woff      52.25 kB
+out/renderer/assets/poppins-devanagari-500-normal-DMPDjHtT.woff      52.42 kB
+out/renderer/assets/index-CLOvGF3_.css                              104.12 kB
+out/renderer/assets/index-CNvlTMvs.js                             5,517.29 kB
+✓ built in 18.30s

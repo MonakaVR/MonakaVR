@@ -87,8 +87,7 @@ class ObservationBackendRunner(
 
 	fun snapshot(): Map<String, ObservationBackend> = backendsById.toMap()
 
-	internal fun sourceOwnersSnapshot(): Map<String, String> =
-		java.util.Collections.unmodifiableMap(LinkedHashMap(sourceOwnerById))
+	internal fun sourceOwnersSnapshot(): Map<String, String> = java.util.Collections.unmodifiableMap(LinkedHashMap(sourceOwnerById))
 
 	fun ownedSources(backendId: String): Set<String> = sourcesByBackend[backendId]?.toSet() ?: emptySet()
 
@@ -103,8 +102,11 @@ class ObservationBackendRunner(
 		observedAtNanos: Long,
 		assignment: TrackerBodyAssignments.Snapshot? = null,
 	): Int {
-		val observations = if (assignment != null && backend is AssignmentSnapshotAwareObservationBackend)
-			backend.poll(observedAtNanos, assignment) else backend.poll(observedAtNanos)
+		val observations = if (assignment != null && backend is AssignmentSnapshotAwareObservationBackend) {
+			backend.poll(observedAtNanos, assignment)
+		} else {
+			backend.poll(observedAtNanos)
+		}
 		val observedSourceIds = linkedSetOf<String>()
 
 		for (observation in observations) {

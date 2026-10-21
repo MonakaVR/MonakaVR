@@ -17,7 +17,9 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 		private set
 	private var closed = false
 
-	init { skeleton.setConstraintInputView(::inputView) }
+	init {
+		skeleton.setConstraintInputView(::inputView)
+	}
 	fun masks(): Map<TrackerPosition, ComponentMask> = proxies.mapValues { ComponentMask(it.value.hasPosition, it.value.hasRotation) }
 
 	private fun inputView(raw: List<Tracker>): SkeletonInputView {
@@ -42,12 +44,14 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 		data object Paused : ApplyResult
 		data class Rejected(val reason: SolverTargetFailure) : ApplyResult
 	}
-	private fun stableName(target: TrackerPosition, relation: MainTrackerAssignment) =
-		"monaka-private:${target.name}:${relation.mainTracker.observationId}"
+	private fun stableName(target: TrackerPosition, relation: MainTrackerAssignment) = "monaka-private:${target.name}:${relation.mainTracker.observationId}"
 
 	/** Current raw Main -> effective HIP_CENTER. No cached calibration or teacher calibration. */
-	internal fun projectMainEffectiveHipTarget(raw: EffectiveConstraint, assignment: TrackerBodyAssignments.Snapshot,
-		nowNanos: Long): MainEffectiveHipTargetResult {
+	internal fun projectMainEffectiveHipTarget(
+		raw: EffectiveConstraint,
+		assignment: TrackerBodyAssignments.Snapshot,
+		nowNanos: Long,
+	): MainEffectiveHipTargetResult {
 		check(!closed)
 		val relation = assignment.targets[TrackerPosition.HIP]
 		val calibration = relation?.let { skeleton.ikSolver.calibrationFor(stableName(TrackerPosition.HIP, it), TrackerPosition.HIP.bodyPart) }
@@ -55,8 +59,7 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 	}
 
 	/** Diagnostic/test only; actual active IKConstraint.getPosition(), not proxy storage. */
-	internal fun effectivePositionTargetSnapshot(target: TrackerPosition): Vector3? =
-		proxies[target]?.let { skeleton.ikSolver.effectivePositionTargetFor(it.name, target.bodyPart) }
+	internal fun effectivePositionTargetSnapshot(target: TrackerPosition): Vector3? = proxies[target]?.let { skeleton.ikSolver.effectivePositionTargetFor(it.name, target.bodyPart) }
 
 	/** Typed sink remains dormant for correction. Generic production apply adapts raw origins. */
 	internal fun applySolver(
@@ -77,7 +80,10 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 		managed = targets
 		generation = assignment.generation
 		for (target in proxies.keys.toList()) {
-			if (target !in targets) { proxies.remove(target); rebuild = true }
+			if (target !in targets) {
+				proxies.remove(target)
+				rebuild = true
+			}
 		}
 		for (target in targets) {
 			val constraint = constraints[target]
@@ -85,16 +91,19 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 			val rotation = constraint?.rotation?.value
 			val reference = constraint?.positionReference ?: SolverPositionReference.NONE
 			var failure: SolverTargetFailure? = null
-			if (constraint != null && (constraint.target != target || (position == null) != (reference == SolverPositionReference.NONE)))
+			if (constraint != null && (constraint.target != target || (position == null) != (reference == SolverPositionReference.NONE))) {
 				failure = SolverTargetFailure.TARGET_REFERENCE_INVALID
-			else if ((position != null && !SolverCalibrationTransform.finite(position)) ||
-				(rotation != null && !SolverCalibrationTransform.valid(rotation))) failure = SolverTargetFailure.INPUT_INVALID
-			else if (position != null && reference == SolverPositionReference.IK_EFFECTIVE_TARGET) {
+			} else if ((position != null && !SolverCalibrationTransform.finite(position)) ||
+				(rotation != null && !SolverCalibrationTransform.valid(rotation))
+			) {
+				failure = SolverTargetFailure.INPUT_INVALID
+			} else if (position != null && reference == SolverPositionReference.IK_EFFECTIVE_TARGET) {
 				// Same exact rotation subsequently stored on an unfiltered, no-reset proxy.
 				val calibration = skeleton.ikSolver.calibrationFor(stableNames.getValue(target), target.bodyPart)
 				val offset = SolverCalibrationTransform.rotatedOffset(rotation ?: Quaternion.IDENTITY, calibration)
-				if (offset == null) failure = SolverTargetFailure.CALIBRATION_INVALID
-				else {
+				if (offset == null) {
+					failure = SolverTargetFailure.CALIBRATION_INVALID
+				} else {
 					position -= offset
 					if (!SolverCalibrationTransform.finite(position)) failure = SolverTargetFailure.PRECOMPENSATION_NONFINITE
 				}
@@ -132,7 +141,10 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 	}
 	override fun close() {
 		if (closed) return
-		proxies.clear(); managed = emptySet(); generation = -1
-		skeleton.setConstraintInputView(null); closed = true
+		proxies.clear()
+		managed = emptySet()
+		generation = -1
+		skeleton.setConstraintInputView(null)
+		closed = true
 	}
 }

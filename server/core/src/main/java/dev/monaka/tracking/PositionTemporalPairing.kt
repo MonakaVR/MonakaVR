@@ -10,8 +10,12 @@ internal data class PositionTemporalPairingPolicy(
 	val maxPredictionGenerationAgeNanos: Long,
 ) {
 	init {
-		require(maxTeacherToPredictionInputSkewNanos >= 0 && maxTeacherAgeNanos >= 0 &&
-			maxPredictionInputAgeNanos >= 0 && maxPredictionGenerationAgeNanos >= 0)
+		require(
+			maxTeacherToPredictionInputSkewNanos >= 0 &&
+				maxTeacherAgeNanos >= 0 &&
+				maxPredictionInputAgeNanos >= 0 &&
+				maxPredictionGenerationAgeNanos >= 0,
+		)
 	}
 }
 
@@ -40,8 +44,12 @@ internal data class PositionTeacherEpoch(
 			val provenance = main.provenance
 			val space = provenance.space ?: return null
 			val bodyReference = main.bodyReference
-			if (input.assignmentGeneration < 0 || main.sourceId.isBlank() ||
-				main.rawOrigin.sourceId != main.sourceId) return null
+			if (input.assignmentGeneration < 0 ||
+				main.sourceId.isBlank() ||
+				main.rawOrigin.sourceId != main.sourceId
+			) {
+				return null
+			}
 			return PositionTeacherEpoch(
 				sourceId = main.sourceId,
 				sourceEpoch = provenance.sourceEpoch,
@@ -100,8 +108,9 @@ internal object PositionTemporalPairing {
 		policy: PositionTemporalPairingPolicy,
 	): PositionTemporalPairingResult {
 		val structural = PositionCorrectionTeacherEligibility.check(input)
-		if (!structural.eligibleForPairing) return PositionTemporalPairingResult.Rejected(
-			PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE, structural.reason)
+		if (!structural.eligibleForPairing) {
+			return PositionTemporalPairingResult.Rejected(PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE, structural.reason)
+		}
 
 		val teacherEpoch = PositionTeacherEpoch.from(input)
 			?: return reject(PositionTemporalPairingRejectionReason.TEACHER_EPOCH_UNAVAILABLE)
@@ -111,14 +120,20 @@ internal object PositionTemporalPairing {
 		val prediction = input.prediction
 		val provenance = prediction.provenance!!
 		val predictionEpoch = provenance.epoch
-		if (predictionEpoch != input.expectedPredictionEpoch)
+		if (predictionEpoch != input.expectedPredictionEpoch) {
 			return reject(PositionTemporalPairingRejectionReason.PREDICTION_EPOCH_MISMATCH)
-		if (teacherEpoch.coordinateSpace != input.expectedSpace || prediction.space != input.expectedSpace ||
-			predictionEpoch.coordinateSpace != input.expectedSpace)
+		}
+		if (teacherEpoch.coordinateSpace != input.expectedSpace ||
+			prediction.space != input.expectedSpace ||
+			predictionEpoch.coordinateSpace != input.expectedSpace
+		) {
 			return reject(PositionTemporalPairingRejectionReason.SPACE_MISMATCH)
+		}
 		if (teacherEpoch.assignmentGeneration != input.assignmentGeneration ||
-			predictionEpoch.assignmentGeneration != input.assignmentGeneration)
+			predictionEpoch.assignmentGeneration != input.assignmentGeneration
+		) {
 			return reject(PositionTemporalPairingRejectionReason.ASSIGNMENT_GENERATION_MISMATCH)
+		}
 
 		val teacherAt = input.mainTeacher.provenance.sampleAtNanos
 		val earliest = provenance.inputEarliestAtNanos
@@ -133,15 +148,17 @@ internal object PositionTemporalPairing {
 		// Ordered nonnegative subtraction is therefore exact, including [0, Long.MAX_VALUE].
 		if (now - teacherAt > policy.maxTeacherAgeNanos) return reject(PositionTemporalPairingRejectionReason.TEACHER_STALE)
 		if (now - latest > policy.maxPredictionInputAgeNanos) return reject(PositionTemporalPairingRejectionReason.PREDICTION_INPUT_STALE)
-		if (now - generated > policy.maxPredictionGenerationAgeNanos)
+		if (now - generated > policy.maxPredictionGenerationAgeNanos) {
 			return reject(PositionTemporalPairingRejectionReason.PREDICTION_GENERATION_STALE)
+		}
 		val distance = when {
 			teacherAt < earliest -> earliest - teacherAt
 			teacherAt > latest -> teacherAt - latest
 			else -> 0L
 		}
-		if (distance > policy.maxTeacherToPredictionInputSkewNanos)
+		if (distance > policy.maxTeacherToPredictionInputSkewNanos) {
 			return reject(PositionTemporalPairingRejectionReason.PAIRING_SKEW_EXCEEDED)
+		}
 		return PositionTemporalPairingResult.Pairable(teacherAt, earliest, latest, distance, teacherEpoch, predictionEpoch)
 	}
 }

@@ -5,18 +5,32 @@ import dev.slimevr.tracking.trackers.TrackerPosition
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class OutputContinuityTests {
 	private val target = TrackerPosition.HIP
 	private val space = CoordinateSpace("test-world", "rh_y_up_neg_z_forward", 0)
-	private fun main(now: Long, full: Boolean = true, rotation: Boolean = true) = ResolvedTrackingPose(target, space,
+	private fun main(now: Long, full: Boolean = true, rotation: Boolean = true) = ResolvedTrackingPose(
+		target,
+		space,
 		if (full) ResolvedComponent(Vector3(3f, 2f, 1f), "main", ObservationQuality.TRACKED, now) else null,
 		if (rotation) ResolvedComponent(Quaternion.IDENTITY, if (full) "main" else "imu", ObservationQuality.TRACKED, now) else null,
-		MainSampleState(if (full) TrackingModality.FULL else TrackingModality.ROTATION_ONLY, full, rotation))
+		MainSampleState(if (full) TrackingModality.FULL else TrackingModality.ROTATION_ONLY, full, rotation),
+	)
 	private fun background(now: Long, p: Vector3 = Vector3(2.5f, 2f, 1f)) = BackgroundIkResult(
-		OutputPose(target, space, ResolvedComponent(p, "monaka-solver:HIP", ObservationQuality.TRACKED, now),
-			ResolvedComponent(Quaternion.IDENTITY, "monaka-solver:HIP", ObservationQuality.TRACKED, now), OutputPositionSource.BACKGROUND_IK), "current_solver_frame")
+		OutputPose(
+			target,
+			space,
+			ResolvedComponent(p, "monaka-solver:HIP", ObservationQuality.TRACKED, now),
+			ResolvedComponent(Quaternion.IDENTITY, "monaka-solver:HIP", ObservationQuality.TRACKED, now),
+			OutputPositionSource.BACKGROUND_IK,
+		),
+		"current_solver_frame",
+	)
 
 	@Test fun startupWithoutPacketsDoesNotBlockFirstFullAndFullFramesDoNotSpamLogs() {
 		val events = mutableListOf<OutputTransition>()
@@ -40,20 +54,26 @@ class OutputContinuityTests {
 		assertEquals(main(0).position!!.value, fallback.position!!.value) // loss begins at the emitted pose
 		assertEquals("imu", fallback.rotation!!.sourceId)
 		assertEquals(TrackingModality.FULL, fallback.modality) // output validity differs from Main modality
-		assertFalse(c.mainPose!!.positionValid); assertTrue(fallback.positionValid)
-		assertEquals(background(150_000_001).pose!!.position!!.value,
-			c.update(main(150_000_001, false), background(150_000_001), 150_000_001).position!!.value)
+		assertFalse(c.mainPose!!.positionValid)
+		assertTrue(fallback.positionValid)
+		assertEquals(
+			background(150_000_001).pose!!.position!!.value,
+			c.update(main(150_000_001, false), background(150_000_001), 150_000_001).position!!.value,
+		)
 		for ((now, bad) in listOf(
 			150_000_002L to background(1), // previous tick cannot masquerade as live IK
 			150_000_003L to background(150_000_003).let { it.copy(pose = it.pose!!.copy(space = space.copy(revision = 1))) },
 			150_000_004L to BackgroundIkResult(null, "alignment_unverified"),
 		)) {
 			val out = c.update(main(now, false), bad, now)
-			assertNull(out.position); assertFalse(out.positionValid)
+			assertNull(out.position)
+			assertFalse(out.positionValid)
 			assertEquals(TrackingModality.ROTATION_ONLY, out.modality)
 		}
 		val none = c.update(main(150_000_005, false, false), background(150_000_005), 150_000_005)
-		assertNull(none.position); assertNull(none.rotation); assertEquals(ContinuityState.UNAVAILABLE, c.state)
+		assertNull(none.position)
+		assertNull(none.rotation)
+		assertEquals(ContinuityState.UNAVAILABLE, c.state)
 	}
 
 	@Test fun stableFullDwellThenPositionAndRotationConvergeOnDeterministicClock() {
@@ -65,8 +85,11 @@ class OutputContinuityTests {
 		assertEquals(background(3_000_000).pose!!.position!!.value, loss.position!!.value)
 		assertEquals(loss.position!!.value, c.update(main(4_000_000), background(4_000_000), 4_000_000).position!!.value)
 		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
-		val duringDwell = c.update(main(6_000_000),
-			background(6_000_000, Vector3(2.6f, 2f, 1f)), 6_000_000)
+		val duringDwell = c.update(
+			main(6_000_000),
+			background(6_000_000, Vector3(2.6f, 2f, 1f)),
+			6_000_000,
+		)
 		assertTrue(duringDwell.position!!.value.x > 2.5f && duringDwell.position!!.value.x < 2.6f)
 		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
 		val first = c.update(main(7_000_000), background(7_000_000), 7_000_000)
@@ -80,8 +103,16 @@ class OutputContinuityTests {
 		assertEquals(ContinuityState.MAIN_DIRECT, c.state)
 		assertEquals(main(17_000_000).position, settled.position)
 		assertEquals(main(17_000_000).rotation, settled.rotation)
-		assertEquals(listOf(ContinuityState.MAIN_DIRECT, ContinuityState.FALLBACK_ACTIVE,
-			ContinuityState.FALLBACK_ACTIVE, ContinuityState.REACQUIRING, ContinuityState.MAIN_DIRECT), events.map { it.state })
+		assertEquals(
+			listOf(
+				ContinuityState.MAIN_DIRECT,
+				ContinuityState.FALLBACK_ACTIVE,
+				ContinuityState.FALLBACK_ACTIVE,
+				ContinuityState.REACQUIRING,
+				ContinuityState.MAIN_DIRECT,
+			),
+			events.map { it.state },
+		)
 		assertFails { c.update(main(16_000_000), background(16_000_000), 16_000_000) }
 	}
 
@@ -91,7 +122,8 @@ class OutputContinuityTests {
 		assertNull(c.update(main(1, false), background(1), 1).position)
 		val paused = c.update(main(2), background(2), 2, paused = true)
 		assertEquals(TrackingModality.NONE, paused.modality)
-		assertNull(paused.position); assertNull(paused.rotation)
+		assertNull(paused.position)
+		assertNull(paused.rotation)
 		assertEquals(ContinuityState.UNAVAILABLE, c.state)
 	}
 
@@ -116,8 +148,10 @@ class OutputContinuityTests {
 		assertEquals(ContinuityState.FALLBACK_ACTIVE, c.state)
 		assertEquals(halfway.position!!.value, backToFallback.position!!.value)
 		assertEquals(OutputPositionSource.BACKGROUND_IK, backToFallback.positionSource)
-		assertEquals(background(21_000_000).pose!!.position!!.value,
-			c.update(main(21_000_000, false), background(21_000_000), 21_000_000).position!!.value)
+		assertEquals(
+			background(21_000_000).pose!!.position!!.value,
+			c.update(main(21_000_000, false), background(21_000_000), 21_000_000).position!!.value,
+		)
 	}
 
 	@Test fun acceptedFullSamplesMustSpanDwellEvenWhenServerTicksContinue() {
@@ -211,8 +245,10 @@ class OutputContinuityTests {
 		c.update(main(0), background(0), 0)
 		c.update(main(1_000_000, false), background(1_000_000), 1_000_000)
 		c.update(main(2_000_000, false), background(2_000_000), 2_000_000)
-		fun selected(sampleAt: Long, angle: Float) = main(sampleAt).copy(rotation =
-			ResolvedComponent(Quaternion.rotationAroundYAxis(angle), "main", ObservationQuality.TRACKED, sampleAt))
+		fun selected(sampleAt: Long, angle: Float) = main(sampleAt).copy(
+			rotation =
+			ResolvedComponent(Quaternion.rotationAroundYAxis(angle), "main", ObservationQuality.TRACKED, sampleAt),
+		)
 		val a = c.update(selected(10_000_000, .2f), background(10_000_000), 10_000_000)
 		val b = c.update(selected(50_000_000, .4f), background(50_000_000), 50_000_000)
 		val d = c.update(selected(100_000_000, .6f), background(100_000_000), 100_000_000)
@@ -229,7 +265,8 @@ class OutputContinuityTests {
 		c.update(main(0), background(0), 0)
 		val none = c.update(main(1_000_000, false, false), background(1_000_000), 1_000_000)
 		assertEquals(ContinuityState.UNAVAILABLE, c.state)
-		assertFalse(none.positionValid); assertFalse(none.rotationValid)
+		assertFalse(none.positionValid)
+		assertFalse(none.rotationValid)
 		val fallback = c.update(main(2_000_000, false), background(2_000_000), 2_000_000)
 		assertEquals(background(2_000_000).pose!!.position!!.value, fallback.position!!.value)
 		val desired = -Quaternion.rotationAroundYAxis(1f)

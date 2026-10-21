@@ -23,7 +23,8 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 	protected final String bridgeSettingsKey;
 	protected WindowsNamedPipe pipe = null;
 	protected WindowsNamedPipe.PipeConnection connection = null;
-	// Bridge-thread owned: changes on each successful accept, even when connection is reused.
+	// Bridge-thread owned: changes on each successful accept, even when
+	// connection is reused.
 	private TransportSessionHandle transportSession = null;
 	private final byte[] buf = new byte[2048];
 
@@ -56,7 +57,8 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 					// Report that our pipe is disconnected right now
 					reportDisconnected();
 					if ((connection = pipe.tryAccept()) != null) {
-						// tryAccept's CREATED -> OPEN transition does not dispatch messages.
+						// tryAccept's CREATED -> OPEN transition does not
+						// dispatch messages.
 						transportSession = openInboundTransportSession();
 						VRServer.Companion.getInstance().queueTask(this::reconnected);
 					}

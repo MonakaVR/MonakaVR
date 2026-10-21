@@ -1,7 +1,16 @@
 package dev.monaka.tracking.mtp
 
-import dev.monaka.protocol.v2.*
-import dev.monaka.tracking.*
+import dev.monaka.protocol.v2.CoordinateSpace
+import dev.monaka.protocol.v2.MtpPose
+import dev.monaka.protocol.v2.MtpTrackerState
+import dev.monaka.tracking.AssignmentSnapshotAwareObservationBackend
+import dev.monaka.tracking.DeclaredTrackerCapabilities
+import dev.monaka.tracking.FeedbackExclusion
+import dev.monaka.tracking.LogicalTracker
+import dev.monaka.tracking.ObservationBackend
+import dev.monaka.tracking.ObservationStore
+import dev.monaka.tracking.PoseObservation
+import dev.monaka.tracking.TrackerBodyAssignments
 
 /** Backend-owned admitted source context, independent of teacher extraction/assignment. */
 internal data class MtpSourceContextSnapshot(
@@ -19,11 +28,12 @@ class MtpObservationBackend(
 	private val expectedSpace: CoordinateSpace,
 	override val backendId: String = "mtp",
 	override val profileId: String = "mtp",
-) : ObservationBackend, AssignmentSnapshotAwareObservationBackend {
+) : ObservationBackend,
+	AssignmentSnapshotAwareObservationBackend {
 	data class Sample(val pose: MtpPose, val sampleTime: Long)
 	private class Lifetime(val session: String, val clock: String, val peer: String, val retired: MutableSet<String>) {
 		var quarantined = false
-        var lastAccepted = -1L
+		var lastAccepted = -1L
 	}
 	private class Device {
 		var poseSequence = -1L
@@ -45,30 +55,51 @@ class MtpObservationBackend(
 	var suspended = false
 		private set
 
-	init { require(expectedSpace.convention == "rh_y_up_neg_z_forward") }
+	init {
+		require(expectedSpace.convention == "rh_y_up_neg_z_forward")
+	}
+
 	/** Static declaration survives absent/loss/pause; usability never follows from support. */
 	data class CapabilitySnapshot(
-		val tracker: LogicalTracker, val capabilities: DeclaredTrackerCapabilities?, val conflict: Boolean,
-		val modality: String, val sampleTime: Long?, val positionValid: Boolean, val orientationValid: Boolean,
+		val tracker: LogicalTracker,
+		val capabilities: DeclaredTrackerCapabilities?,
+		val conflict: Boolean,
+		val modality: String,
+		val sampleTime: Long?,
+		val positionValid: Boolean,
+		val orientationValid: Boolean,
 	) {
-		fun freshAt(now: Long, timeoutNanos: Long): Boolean =
-			!conflict && sampleTime?.let { it <= now && now - it < timeoutNanos } == true
+		fun freshAt(now: Long, timeoutNanos: Long): Boolean = !conflict && sampleTime?.let { it <= now && now - it < timeoutNanos } == true
 	}
 	fun capabilitiesSnapshot(): Map<LogicalTracker, CapabilitySnapshot> = java.util.Collections.unmodifiableMap(
-		LinkedHashMap(devices.mapValues { (key, d) ->
-			// Reuse the actual component gate, including confidence/tracking/Float checks.
-			val adapted = d.sample?.let { sample -> runCatching {
-				adapter.adapt(sample.pose, dev.slimevr.tracking.trackers.TrackerPosition.HEAD, sample.sampleTime)
-			}.getOrNull() }
-			CapabilitySnapshot(key, d.capabilities.takeUnless { d.capabilityConflict }, d.capabilityConflict,
-				d.sample?.pose?.modality ?: "none", d.sample?.sampleTime,
-				adapted?.position != null, adapted?.rotation != null)
-		}))
+		LinkedHashMap(
+			devices.mapValues { (key, d) ->
+				// Reuse the actual component gate, including confidence/tracking/Float checks.
+				val adapted = d.sample?.let { sample ->
+					runCatching {
+						adapter.adapt(sample.pose, dev.slimevr.tracking.trackers.TrackerPosition.HEAD, sample.sampleTime)
+					}.getOrNull()
+				}
+				CapabilitySnapshot(
+					key,
+					d.capabilities.takeUnless { d.capabilityConflict },
+					d.capabilityConflict,
+					d.sample?.pose?.modality ?: "none",
+					d.sample?.sampleTime,
+					adapted?.position != null,
+					adapted?.rotation != null,
+				)
+			},
+		),
+	)
 	fun samples(): Map<LogicalTracker, Sample> = devices.mapNotNull { (k, d) -> d.sample?.let { k to it } }.toMap()
-	internal fun sourceContexts(): Map<LogicalTracker, MtpSourceContextSnapshot> =
-		java.util.Collections.unmodifiableMap(LinkedHashMap(devices.mapNotNull { (key, device) ->
-			device.context?.let { key to it }
-		}.toMap()))
+	internal fun sourceContexts(): Map<LogicalTracker, MtpSourceContextSnapshot> = java.util.Collections.unmodifiableMap(
+		LinkedHashMap(
+			devices.mapNotNull { (key, device) ->
+				device.context?.let { key to it }
+			}.toMap(),
+		),
+	)
 	fun suspend(value: Boolean) {
 		if (suspended != value) {
 			invalidateSamples()
@@ -90,13 +121,22 @@ class MtpObservationBackend(
 
 	val resumeDrainBound: Int
 		get() = inbox.resumeDrainBound
+
 	/** Retain sequence/session tombstones so old packets cannot resurrect cleared constraints. */
 	fun invalidateSamples() {
 		if (devices.values.any { it.sample != null }) historyGeneration++
-		for ((key, device) in devices) { device.sample = null; device.context = null; removed += key.observationId }
+		for ((key, device) in devices) {
+			device.sample = null
+			device.context = null
+			removed += key.observationId
+		}
 	}
 	fun close() {
-		invalidateSamples(); inbox.clear(); devices.clear(); lifetimes.clear(); assignmentGeneration = -1
+		invalidateSamples()
+		inbox.clear()
+		devices.clear()
+		lifetimes.clear()
+		assignmentGeneration = -1
 	}
 	override fun drainRemovedSources(): Set<String> = removed.toSet().also { removed.clear() }
 
@@ -114,11 +154,17 @@ class MtpObservationBackend(
 			// Replacement follows sequence admission, not the local timestamp ordering in ObservationStore.
 			removed += key.observationId
 			val sample = devices[key]?.sample ?: return@mapNotNull null
-			val target = assignment.entries[key] ?: run { inbox.count("UnassignedPose"); return@mapNotNull null }
-			try { adapter.adapt(sample.pose, target, sample.sampleTime) } catch (_: IllegalArgumentException) {
+			val target = assignment.entries[key] ?: run {
+				inbox.count("UnassignedPose")
+				return@mapNotNull null
+			}
+			try {
+				adapter.adapt(sample.pose, target, sample.sampleTime)
+			} catch (_: IllegalArgumentException) {
 				devices.getValue(key).sample = null
 				devices.getValue(key).context = null
-				inbox.count("FloatOverflow"); null
+				inbox.count("FloatOverflow")
+				null
 			}
 		}
 	}
@@ -134,60 +180,102 @@ class MtpObservationBackend(
 	private fun admit(received: MtpInbox.Received, dirty: MutableSet<LogicalTracker>) {
 		val pose = received.envelope as? MtpPose
 		val state = received.envelope as? MtpTrackerState
-		val key = if (pose != null) LogicalTracker(pose.source_id, pose.tracker_id, pose.publisher_id)
-			else LogicalTracker(requireNotNull(state).source_id, state.tracker_id, state.publisher_id)
+		val key = if (pose != null) {
+			LogicalTracker(pose.source_id, pose.tracker_id, pose.publisher_id)
+		} else {
+			LogicalTracker(requireNotNull(state).source_id, state.tracker_id, state.publisher_id)
+		}
 		if (key.isFeedback || (pose != null && FeedbackExclusion.isOutput(pose.input.device_id))) {
-			inbox.count("FeedbackExcluded"); return
+			inbox.count("FeedbackExcluded")
+			return
 		}
 		val session = pose?.session_id ?: state!!.session_id
 		val clock = pose?.clock_id ?: state!!.clock_id
 		var lifetime = lifetimes[key.lifetimeId]
 		if (lifetime == null) {
-			if (lifetimes.size >= 64) { inbox.count("SourceLimit"); return }
+			if (lifetimes.size >= 64) {
+				inbox.count("SourceLimit")
+				return
+			}
 			lifetime = Lifetime(session, clock, received.peer, linkedSetOf())
 			lifetimes[key.lifetimeId] = lifetime
 		} else {
-			if (lifetime.quarantined || session in lifetime.retired) { inbox.count("RetiredSession"); return }
-			if (session == lifetime.session && received.peer != lifetime.peer) { inbox.count("PeerMismatch"); return }
-            if (session != lifetime.session) {
-                if (received.receivedAtNanos - lifetime.lastAccepted < 500_000_000) { inbox.count("ActiveLease"); return }
+			if (lifetime.quarantined || session in lifetime.retired) {
+				inbox.count("RetiredSession")
+				return
+			}
+			if (session == lifetime.session && received.peer != lifetime.peer) {
+				inbox.count("PeerMismatch")
+				return
+			}
+			if (session != lifetime.session) {
+				if (received.receivedAtNanos - lifetime.lastAccepted < 500_000_000) {
+					inbox.count("ActiveLease")
+					return
+				}
 				removeSource(key.lifetimeId)
 				// Do not evict retired UUIDs and accidentally allow replay. Saturation fails closed.
 				if (lifetime.retired.size >= 256) {
-					lifetime.quarantined = true; inbox.count("SessionLimit"); return
+					lifetime.quarantined = true
+					inbox.count("SessionLimit")
+					return
 				}
 				lifetime.retired += lifetime.session
 				lifetimes[key.lifetimeId] = Lifetime(session, clock, received.peer, lifetime.retired)
 				devices.keys.filter { it.lifetimeId == key.lifetimeId }.forEach { devices.remove(it) }
 				inbox.count("SessionChanged")
 			} else if (clock != lifetime.clock) {
-				devices[key]?.let { it.sample = null; it.context = null }; removed += key.observationId
-                inbox.count("ClockMismatch"); return
+				devices[key]?.let {
+					it.sample = null
+					it.context = null
+				}
+				removed += key.observationId
+				inbox.count("ClockMismatch")
+				return
 			}
 		}
-		if (key !in devices && devices.size >= 1024) { inbox.count("TrackerLimit"); return }
+		if (key !in devices && devices.size >= 1024) {
+			inbox.count("TrackerLimit")
+			return
+		}
 		val device = devices.getOrPut(key) { Device() }
 		val sequence = pose?.sequence ?: state!!.sequence
 		val previous = if (pose != null) device.poseSequence else device.stateSequence
-		if (sequence <= previous) { inbox.count("DuplicateOrOldSequence"); return }
+		if (sequence <= previous) {
+			inbox.count("DuplicateOrOldSequence")
+			return
+		}
 		if (pose != null) device.poseSequence = sequence else device.stateSequence = sequence
 		val space = pose?.coordinate_space ?: state!!.coordinate_space
 		if (space != expectedSpace) {
 			if (device.sample != null) historyGeneration++
-			device.sample = null; device.context = null; removed += key.observationId; inbox.count("SpaceMismatch"); return
+			device.sample = null
+			device.context = null
+			removed += key.observationId
+			inbox.count("SpaceMismatch")
+			return
 		}
 		val revision = pose?.mapping_revision ?: state!!.mapping_revision
-		if (revision < device.mappingRevision) { inbox.count("OldMappingRevision"); return }
+		if (revision < device.mappingRevision) {
+			inbox.count("OldMappingRevision")
+			return
+		}
 		if (revision > device.mappingRevision) {
 			historyGeneration++
-			device.sample = null; device.context = null; removed += key.observationId; device.mappingRevision = revision
+			device.sample = null
+			device.context = null
+			removed += key.observationId
+			device.mappingRevision = revision
 		}
 		val declaration = DeclaredTrackerCapabilities(pose?.capabilities ?: state!!.capabilities)
 		if (device.capabilityConflict || (device.capabilities != null && device.capabilities != declaration)) {
 			device.capabilityConflict = true
 			if (device.sample != null) historyGeneration++
-			device.sample = null; device.context = null; removed += key.observationId
-			inbox.count("CapabilityConflict"); return
+			device.sample = null
+			device.context = null
+			removed += key.observationId
+			inbox.count("CapabilityConflict")
+			return
 		}
 		device.capabilities = declaration
 		if (pose == null) {
@@ -195,23 +283,33 @@ class MtpObservationBackend(
 				device.absentAt = maxOf(device.absentAt, state.timestamp_ns)
 				if (device.sample?.pose?.timestamp_ns?.let { it <= device.absentAt } != false) {
 					if (device.sample != null) historyGeneration++
-					device.sample = null; device.context = null; removed += key.observationId
+					device.sample = null
+					device.context = null
+					removed += key.observationId
 				}
 			}
 			lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
-            return // Present/battery heartbeat cannot repair or refresh a pose.
+			return // Present/battery heartbeat cannot repair or refresh a pose.
 		}
 		dirty += key
 		device.sample = null
 		device.context = null
 		if (pose.timestamp_ns <= device.absentAt) return
-        lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
-        if (suspended) return
+		lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
+		if (suspended) return
 		val age = pose.sent_at_ns - pose.timestamp_ns // Both U63, codec checked timestamp <= sent_at.
-		if (age > received.receivedAtNanos) { inbox.count("BeforeLocalEpoch"); return }
+		if (age > received.receivedAtNanos) {
+			inbox.count("BeforeLocalEpoch")
+			return
+		}
 		device.sample = Sample(pose, received.receivedAtNanos - age)
-		device.context = MtpSourceContextSnapshot(key, "${pose.session_id}:${pose.clock_id}",
-			pose.input.session_id, pose.mapping_revision, pose.coordinate_space)
+		device.context = MtpSourceContextSnapshot(
+			key,
+			"${pose.session_id}:${pose.clock_id}",
+			pose.input.session_id,
+			pose.mapping_revision,
+			pose.coordinate_space,
+		)
 		inbox.count("PoseAccepted")
 	}
 }

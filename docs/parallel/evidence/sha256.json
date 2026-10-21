@@ -1,0 +1,69 @@
+{
+  "bytes": "Git blob bytes (LF-normalized by repository attributes)",
+  "files": [
+    {
+      "file": "baseline-counts.json",
+      "sha256": "334a1dd39a92964081fc9c95c002a02e34c72ded0ccc6973552dab061f227d08"
+    },
+    {
+      "file": "baseline-gui-build.log",
+      "sha256": "31499ac44cc860f25d0d27f405bcd0ab4beee28a2660000fded16701ff7b136f"
+    },
+    {
+      "file": "baseline-gui-lint.log",
+      "sha256": "f443345695d8e9d997f71720b6b937f1ea4b2222e1f16c753c06beea7fb32e85"
+    },
+    {
+      "file": "baseline-gui-test.log",
+      "sha256": "1bd59eca978521fd1ba35b2c3db469ba2b1065fb8dad9c3da29acb4148a8d668"
+    },
+    {
+      "file": "baseline-jvm.log",
+      "sha256": "5a56cede670b6839a31767edda4e218994607aa233ebd27f1f1f471f31dc45e7"
+    },
+    {
+      "file": "final-counts.json",
+      "sha256": "9b0c096581c7e2aa5b1b6825d208e836ac2c04b497b58776c1b9ced15dbb4dbb"
+    },
+    {
+      "file": "final-gui-build.log",
+      "sha256": "f9c5f773a348f6025fc8d41431f7c97a964bbdcd840bebcb4c5a65e6455c4852"
+    },
+    {
+      "file": "final-gui-lint.log",
+      "sha256": "f443345695d8e9d997f71720b6b937f1ea4b2222e1f16c753c06beea7fb32e85"
+    },
+    {
+      "file": "final-gui-test.log",
+      "sha256": "f02eb3e159134a9314e9584058dc7e9e2171966bfe80b29f896447cfa753bedf"
+    },
+    {
+      "file": "final-jvm-tests.log",
+      "sha256": "38e1be04c7fcf10cb9cf9f7ed1f49d5ef5205799def532ac86ef41c43df13400"
+    },
+    {
+      "file": "final-jvm.log",
+      "sha256": "2c39a3fd7cda890c6d4d34cdf137cf2c27145c8b4753822e24d0762ea100a80a"
+    },
+    {
+      "file": "gui-install.log",
+      "sha256": "e026017b3a4452c538c5206d7328a3305ae117500808b8ae470dab66b1c256af"
+    },
+    {
+      "file": "localization-test.log",
+      "sha256": "a52f0d719ff1a6a8400402f629957c0f5712777233f7c9701013aa9677074f37"
+    },
+    {
+      "file": "mtp-process-e2e.json",
+      "sha256": "939b0c47c371f88586b0b15e51c1cea34f2272e1f7e5655914bb8ab28efb587d"
+    },
+    {
+      "file": "new-suite.log",
+      "sha256": "56d4603d71f2e974c34a8d8edeac8aaafda827ab37ad3af0ecf19e2f74c2a761"
+    },
+    {
+      "file": "parallel-suite.xml",
+      "sha256": "375fa1ba41939af065b8df567262cefc6dbb456a87df2dfcbdf64d41dac2ed81"
+    }
+  ]
+}

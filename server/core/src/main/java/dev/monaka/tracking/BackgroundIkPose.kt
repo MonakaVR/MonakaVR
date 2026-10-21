@@ -16,14 +16,20 @@ fun interface BackgroundIkAlignment {
 
 	companion object {
 		val UNVERIFIED = BackgroundIkAlignment { _, _ -> null }
+
 		/** Explicit operator assertion; not automatic calibration or an HIL PASS. */
 		fun confirmedSameSpace(space: CoordinateSpace) = BackgroundIkAlignment { pose, requested ->
-			if (space != requested) null else OutputPose(
-				pose.target, space,
-				ResolvedComponent(pose.position, "monaka-solver:${pose.target.name}", ObservationQuality.TRACKED, pose.evaluatedAt),
-				ResolvedComponent(pose.rotation, "monaka-solver:${pose.target.name}", ObservationQuality.TRACKED, pose.evaluatedAt),
-				OutputPositionSource.BACKGROUND_IK,
-			)
+			if (space != requested) {
+				null
+			} else {
+				OutputPose(
+					pose.target,
+					space,
+					ResolvedComponent(pose.position, "monaka-solver:${pose.target.name}", ObservationQuality.TRACKED, pose.evaluatedAt),
+					ResolvedComponent(pose.rotation, "monaka-solver:${pose.target.name}", ObservationQuality.TRACKED, pose.evaluatedAt),
+					OutputPositionSource.BACKGROUND_IK,
+				)
+			}
 		}
 	}
 }
@@ -39,16 +45,25 @@ class BackgroundIkPoseReader(private val skeleton: HumanSkeleton, private val al
 		if (skeleton.getPauseTracking()) return BackgroundIkResult(null, "paused")
 		if (!skeleton.ikSolver.enabled) return BackgroundIkResult(null, "solver_disabled")
 		val anchor = skeleton.headTracker
-		if (anchor == null || !anchor.hasPosition || anchor.status != TrackerStatus.OK ||
-			anchor.sampleModality in setOf(TrackingModality.ROTATION_ONLY, TrackingModality.NONE) || !finite(anchor.position)
-		) return BackgroundIkResult(null, "no_valid_root_anchor")
+		if (anchor == null ||
+			!anchor.hasPosition ||
+			anchor.status != TrackerStatus.OK ||
+			anchor.sampleModality in setOf(TrackingModality.ROTATION_ONLY, TrackingModality.NONE) ||
+			!finite(anchor.position)
+		) {
+			return BackgroundIkResult(null, "no_valid_root_anchor")
+		}
 		val role = target.trackerRole ?: return BackgroundIkResult(null, "no_computed_role")
-		val computed = try { skeleton.getComputedTracker(role) } catch (_: IllegalArgumentException) {
+		val computed = try {
+			skeleton.getComputedTracker(role)
+		} catch (_: IllegalArgumentException) {
 			return BackgroundIkResult(null, "no_computed_role")
 		}
-		val p = computed.position; val q = computed.getRotation()
-		if (!finite(p) || !listOf(q.w, q.x, q.y, q.z).all { it.isFinite() } || !q.lenSq().isFinite() || q.lenSq() <= 0f)
+		val p = computed.position
+		val q = computed.getRotation()
+		if (!finite(p) || !listOf(q.w, q.x, q.y, q.z).all { it.isFinite() } || !q.lenSq().isFinite() || q.lenSq() <= 0f) {
 			return BackgroundIkResult(null, "nonfinite_or_invalid_solver_pose")
+		}
 		val aligned = alignment.toMonakaWorld(SkeletonWorldPose(target, p, q, now), space)
 		return if (aligned == null) BackgroundIkResult(null, "alignment_unverified") else BackgroundIkResult(aligned, "current_solver_frame")
 	}

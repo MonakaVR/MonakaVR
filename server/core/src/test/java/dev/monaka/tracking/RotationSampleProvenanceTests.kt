@@ -9,14 +9,18 @@ import io.github.axisangles.ktmath.Quaternion
 import org.junit.jupiter.api.Test
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 
 class RotationSampleProvenanceTests {
 	@Test fun onlyPhysicalOrientationAcceptanceAdvancesSlimeSequenceNotPollHeartbeatOrTick() {
 		val device = UDPDevice(InetSocketAddress("127.0.0.1", 20000), InetAddress.getLoopbackAddress(), "test-hwid")
-		val tracker = Tracker(device, 101, "test-imu", trackerPosition = TrackerPosition.HIP,
+		val tracker = Tracker(
+			device, 101, "test-imu", trackerPosition = TrackerPosition.HIP,
 			hasRotation = true, imuType = IMUType.UNKNOWN, allowReset = true, allowMounting = true,
-			trackRotDirection = false)
+			trackRotDirection = false,
+		)
 		tracker.status = TrackerStatus.OK
 		tracker.setRotation(Quaternion.IDENTITY)
 		val sample = tracker.correctionOrientationSample()!!
@@ -54,8 +58,15 @@ class RotationSampleProvenanceTests {
 	}
 
 	@Test fun internalAndNonImuTrackerCannotClaimPhysicalImuProvenance() {
-		val tracker = Tracker(null, 102, "virtual", trackerPosition = TrackerPosition.HIP,
-			hasRotation = true, isInternal = true, trackRotDirection = false)
+		val tracker = Tracker(
+			null,
+			102,
+			"virtual",
+			trackerPosition = TrackerPosition.HIP,
+			hasRotation = true,
+			isInternal = true,
+			trackRotDirection = false,
+		)
 		tracker.status = TrackerStatus.OK
 		tracker.setRotation(Quaternion.IDENTITY)
 		assertNull(SlimeTrackerPoseObservationAdapter().adapt(tracker, 1_000_000_000)!!.provenance)

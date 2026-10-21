@@ -6,23 +6,32 @@ import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RecoveryAngularDynamicsTests {
 	private val target = TrackerPosition.HIP
 	private val space = CoordinateSpace("angular-test", "rh_y_up_neg_z_forward", 0)
 	private val residual = .0425f // Captured 2C-3H stationary loss orientation residual.
-	private fun selected(now: Long, full: Boolean, q: Quaternion) = ResolvedTrackingPose(target, space,
+	private fun selected(now: Long, full: Boolean, q: Quaternion) = ResolvedTrackingPose(
+		target,
+		space,
 		if (full) ResolvedComponent(Vector3(.17f, -.38f, -.12f), "main", ObservationQuality.TRACKED, now) else null,
 		ResolvedComponent(q, if (full) "main" else "fallback", ObservationQuality.TRACKED, now),
-		MainSampleState(if (full) TrackingModality.FULL else TrackingModality.ROTATION_ONLY, full, true))
-	private fun background(now: Long) = BackgroundIkResult(OutputPose(target, space,
-		ResolvedComponent(Vector3(.155f, -.31f, -.146f), "solver", ObservationQuality.TRACKED, now),
-		ResolvedComponent(Quaternion.IDENTITY, "solver", ObservationQuality.TRACKED, now),
-		OutputPositionSource.BACKGROUND_IK), "current_solver_frame")
+		MainSampleState(if (full) TrackingModality.FULL else TrackingModality.ROTATION_ONLY, full, true),
+	)
+	private fun background(now: Long) = BackgroundIkResult(
+		OutputPose(
+			target,
+			space,
+			ResolvedComponent(Vector3(.155f, -.31f, -.146f), "solver", ObservationQuality.TRACKED, now),
+			ResolvedComponent(Quaternion.IDENTITY, "solver", ObservationQuality.TRACKED, now),
+			OutputPositionSource.BACKGROUND_IK,
+		),
+		"current_solver_frame",
+	)
 	private fun angle(a: Quaternion, b: Quaternion) = (b / a).angleR().toDouble()
-	private fun tick(c: OutputContinuityController, ms: Long, full: Boolean, q: Quaternion) =
-		c.update(selected(ms * 1_000_000, full, q), background(ms * 1_000_000), ms * 1_000_000)
+	private fun tick(c: OutputContinuityController, ms: Long, full: Boolean, q: Quaternion) = c.update(selected(ms * 1_000_000, full, q), background(ms * 1_000_000), ms * 1_000_000)
 	private fun fallback(c: OutputContinuityController): OutputPose {
 		tick(c, 0, true, Quaternion.IDENTITY)
 		val before = c.lastOutput!!
@@ -60,8 +69,10 @@ class RecoveryAngularDynamicsTests {
 	@Test fun antipodalMainSamplesFollowSameShortestArcThroughDwellBlendAndFull() {
 		val a = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK)
 		val b = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK)
-		fallback(a); fallback(b)
-		val desired = Quaternion.rotationAroundXAxis(.1f) * Quaternion.rotationAroundYAxis(.2f) *
+		fallback(a)
+		fallback(b)
+		val desired = Quaternion.rotationAroundXAxis(.1f) *
+			Quaternion.rotationAroundYAxis(.2f) *
 			Quaternion.rotationAroundZAxis(-.3f)
 		for ((index, ms) in (220L..700L step 20).withIndex()) {
 			val x = tick(a, ms, true, desired)
@@ -75,7 +86,8 @@ class RecoveryAngularDynamicsTests {
 	@Test fun angularChangeLeavesPositionTrajectoryExactlyUnchanged() {
 		val a = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK)
 		val b = OutputContinuityController(target, ContinuityPolicy.BACKGROUND_IK)
-		fallback(a); fallback(b)
+		fallback(a)
+		fallback(b)
 		for (ms in 220L..700L step 20) {
 			val x = tick(a, ms, true, Quaternion.IDENTITY)
 			val y = tick(b, ms, true, Quaternion.rotationAroundYAxis(.5f))
@@ -96,8 +108,14 @@ class RecoveryAngularDynamicsTests {
 			assertEquals(FusionPhase.FALLBACK_IK, c.fusionPhase)
 			for (ms in lossMs + 20..lossMs + 700 step 20) {
 				val out = tick(c, ms, true, Quaternion.IDENTITY)
-				assertTrue(listOf(out.rotation!!.value.x, out.rotation.value.y, out.rotation.value.z,
-					out.rotation.value.w).all { it.isFinite() })
+				assertTrue(
+					listOf(
+						out.rotation!!.value.x,
+						out.rotation.value.y,
+						out.rotation.value.z,
+						out.rotation.value.w,
+					).all { it.isFinite() },
+				)
 			}
 			assertEquals(FusionPhase.FULL_6DOF, c.fusionPhase)
 		}

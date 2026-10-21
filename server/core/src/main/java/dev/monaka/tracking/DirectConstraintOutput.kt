@@ -44,5 +44,7 @@ class DirectConstraintOutput(
 	}
 
 	override fun close() = apply(emptyMap())
-	companion object { const val PREFIX = "monaka-direct:resolved-v1:" }
+	companion object {
+		const val PREFIX = "monaka-direct:resolved-v1:"
+	}
 }
