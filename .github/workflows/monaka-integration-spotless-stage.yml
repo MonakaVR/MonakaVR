@@ -1,0 +1,62 @@
+name: Monaka combined Spotless staging (verification only)
+
+on:
+  push:
+    branches:
+      - integration/monaka-spotless-all-prs-20261021
+
+permissions:
+  contents: write
+
+jobs:
+  stage-kotlin-java-format:
+    if: "!contains(github.event.head_commit.message, '[format-stage-complete]')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout isolated verification branch
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Set up JDK17
+        uses: actions/setup-java@v5
+        with:
+          distribution: microsoft
+          java-version: '17'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Apply pinned Kotlin and Java formatters without disabling any rules
+        run: ./gradlew :server:spotlessKotlinApply :server:spotlessJavaApply --no-daemon --console=plain --continue
+      - name: Verify complete unchanged Spotless quality gate
+        run: ./gradlew spotlessCheck --no-daemon --console=plain
+      - name: Confirm bounded source-only changes, then record verification formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/integration/monaka-spotless-all-prs-20261021"
+          python3 - <<'PY'
+          import subprocess
+          paths = subprocess.check_output(
+              ["git", "diff", "--name-only"], text=True
+          ).splitlines()
+          print(f"Formatter produced {len(paths)} changed paths")
+          if len(paths) > 100:
+              raise SystemExit("Unexpectedly large formatting diff: manual audit required")
+          for path in paths:
+              if not path.startswith("server/") or not path.endswith((".kt", ".java")):
+                  raise SystemExit(f"Non-source or out-of-scope formatting edit: {path}")
+          PY
+          git diff --check
+          if git diff --quiet; then
+            echo "Formatter made no changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- server/
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m "test(integration): normalize merged sources with pinned Spotless [format-stage-complete]"
+          git push origin HEAD:refs/heads/integration/monaka-spotless-all-prs-20261021
