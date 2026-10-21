@@ -1,9 +1,9 @@
 
-> slimevr@0.0.0 test C:\Users\nynyp\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\gui
+> slimevr@0.0.0 test C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\gui
 > pnpm run test:bridge
 
 
-> slimevr@0.0.0 test:bridge C:\Users\nynyp\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\gui
+> slimevr@0.0.0 test:bridge C:\Users\REDACTED\Downloads\6Dof\task-work\monaka-parallel-regression-i18n\gui
 > tsc --project bridge-tests.tsconfig.json && node --test --test-reporter=tap build/bridge-tests/tests/bridge/*.test.js
 
 TAP version 13
@@ -156,7 +156,7 @@ not ok 25 - native validator: save/backup/revision/restore/no-op and untouched f
   ---
   duration_ms: 10.4958
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:70:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:70:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -164,8 +164,8 @@ not ok 25 - native validator: save/backup/revision/restore/no-op and untouched f
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:71:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:71:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
   ...
@@ -174,7 +174,7 @@ not ok 26 - same revision external bytes and changes during validation are prese
   ---
   duration_ms: 3.8578
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:88:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:88:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -182,8 +182,8 @@ not ok 26 - same revision external bytes and changes during validation are prese
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:89:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:89:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -192,7 +192,7 @@ not ok 27 - native failure, missing executable, revision exhaustion and retry le
   ---
   duration_ms: 4.1759
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:102:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:102:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -200,8 +200,8 @@ not ok 27 - native failure, missing executable, revision exhaustion and retry le
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:103:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:103:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -210,7 +210,7 @@ not ok 28 - duplicate apply, wrong cancellation ID, cancel, window close and ret
   ---
   duration_ms: 2.9394
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:120:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:120:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -218,8 +218,8 @@ not ok 28 - duplicate apply, wrong cancellation ID, cancel, window close and ret
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:121:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:121:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -228,7 +228,7 @@ not ok 29 - stale Desktop snapshot is rejected and old orphan marker cannot bloc
   ---
   duration_ms: 7.1726
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:161:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:161:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -236,8 +236,8 @@ not ok 29 - stale Desktop snapshot is rejected and old orphan marker cannot bloc
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:162:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:162:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -246,7 +246,7 @@ not ok 30 - replacement failure restores no external data, retry works, post-com
   ---
   duration_ms: 4.745
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:171:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:171:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -254,8 +254,8 @@ not ok 30 - replacement failure restores no external data, retry works, post-com
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:172:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:172:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -264,7 +264,7 @@ not ok 31 - configuration selection persistence/failure, independent approval fl
   ---
   duration_ms: 3.3608
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:188:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:188:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -272,8 +272,8 @@ not ok 31 - configuration selection persistence/failure, independent approval fl
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:189:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:189:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -282,7 +282,7 @@ not ok 32 - bounded/corrupt/unconfigured files, health missing/malformed, actual
   ---
   duration_ms: 6.2506
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:216:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:216:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -290,8 +290,8 @@ not ok 32 - bounded/corrupt/unconfigured files, health missing/malformed, actual
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:217:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:217:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -300,7 +300,7 @@ not ok 33 - load cancellation is bounded, preserves prior selection and accepts 
   ---
   duration_ms: 3.4991
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:236:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:236:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -308,8 +308,8 @@ not ok 33 - load cancellation is bounded, preserves prior selection and accepts 
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:237:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:237:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -318,7 +318,7 @@ not ok 34 - P2R extension: old validator cannot silently approve runtime_contrac
   ---
   duration_ms: 4.3178
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:281:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:281:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -326,8 +326,8 @@ not ok 34 - P2R extension: old validator cannot silently approve runtime_contrac
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:282:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:282:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -336,7 +336,7 @@ not ok 35 - P2R matching native validator preserves complete nested contract and
   ---
   duration_ms: 7.8772
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:290:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:290:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -344,8 +344,8 @@ not ok 35 - P2R matching native validator preserves complete nested contract and
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:291:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:291:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
@@ -354,7 +354,7 @@ not ok 36 - legacy CLI cannot commit even a configuration without P2R extensions
   ---
   duration_ms: 3.2066
   type: 'test'
-  location: 'C:\\Users\\nynyp\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:308:1'
+  location: 'C:\\Users\\REDACTED\\Downloads\\6Dof\\task-work\\monaka-parallel-regression-i18n\\gui\\build\\bridge-tests\\tests\\bridge\\service.test.js:308:1'
   failureType: 'testCodeFailure'
   error: 'Provide the pinned baseline validator path; no synthetic native PASS is substituted.'
   code: 'ERR_ASSERTION'
@@ -362,8 +362,8 @@ not ok 36 - legacy CLI cannot commit even a configuration without P2R extensions
   expected: true
   operator: '=='
   stack: |-
-    fixture (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
-    async TestContext.<anonymous> (file:///C:/Users/nynyp/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:309:15)
+    fixture (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:62:12)
+    async TestContext.<anonymous> (file:///C:/Users/REDACTED/Downloads/6Dof/task-work/monaka-parallel-regression-i18n/gui/build/bridge-tests/tests/bridge/service.test.js:309:15)
     async Test.run (node:internal/test_runner/test:1054:7)
     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
   ...
