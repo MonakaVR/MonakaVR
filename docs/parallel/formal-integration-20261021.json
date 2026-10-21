@@ -3916,5 +3916,45 @@
       "matches_pr13": true
     }
   ],
-  "input_blob_manifest_sha256": "8b496a99919fadab856772d71a6346838e330931eba6274210642a618c5653d9"
+  "input_blob_manifest_sha256": "8b496a99919fadab856772d71a6346838e330931eba6274210642a618c5653d9",
+  "post_review": {
+    "review_date": "2026-10-21",
+    "source_reference_comparison": {
+      "assembly_source_215_paths_exact_to_pr13_at_original_candidate": true,
+      "updated_common_paths_matching_reference": 202,
+      "updated_common_paths_differing_only_evidence": 13,
+      "updated_product_or_test_differences": 0
+    },
+    "dev_policy": {
+      "commit": "9deecba91e58a2f01c4ec9f401b87389064bffd7",
+      "incorporated_by_merge": "c3c47d00a558505b6d0a857837ddad9455108584",
+      "changed_paths": [
+        "AGENTS.md"
+      ],
+      "current_candidate_matches_dev_agents": true,
+      "producer_independence_runtime_acceptance": "NOT RUN",
+      "bridge_responsibility_separation": "FOLLOW_ON_PHASE"
+    },
+    "evidence": {
+      "source_pr": 5,
+      "source_head": "636dab1f8a76bb2e5d0928269f9d0b087208d06b",
+      "merge": "6b69baad9b00f75c3eda0702e8c44b02ac0f81b1",
+      "redacted_log_count": 11,
+      "redacted_path_occurrences": 177,
+      "changed_paths_count": 13,
+      "sha256_index": "docs/parallel/evidence/sha256.json",
+      "old_unredacted_git_history": "REMAINS_ACCESSIBLE",
+      "commit_history_rewritten": false
+    },
+    "original_CI": {
+      "source_head": "3840a4cc3729cc60e7f33fe5f049d3596e2f8a11",
+      "passed": 14,
+      "failed": 0,
+      "skipped_tag_release": 1
+    },
+    "latest_CI": {
+      "source_head": "6b69baad9b00f75c3eda0702e8c44b02ac0f81b1",
+      "status": "PENDING_VERIFICATION"
+    }
+  }
 }

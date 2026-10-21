@@ -1,5 +1,17 @@
 # MonakaVR formal integration candidate — 2026-10-21 JST
 
+## Post-review update: current dev policy + public evidence hygiene
+
+The initial 215-path source/reference identity reported below is a **historical statement about the assembly commit** `4c8a026f2b657d47027e5bb8b86e9335a87c6d0a` and the original candidate HEAD `3840a4cc3729cc60e7f33fe5f049d3596e2f8a11`. It must not be misread as current blob identity after the following evidence-only remediation.
+
+- `dev` advanced independently by one documentation-only commit `9deecba91e58a2f01c4ec9f401b87389064bffd7` modifying `AGENTS.md`. That exact file was merged into this candidate at `c3c47d00a558505b6d0a857837ddad9455108584` (two-parent, non-forced). No production/test source changed during this merge; `dev` and `main` were not written by this work.
+- PR #5 gained an evidence-only commit `636dab1f8a76bb2e5d0928269f9d0b087208d06b`: 11 published log files have user-specific home-directory names replaced with `REDACTED`, their Git-byte SHA-256 manifest is updated, and `docs/parallel/regression-matrix.md` documents the operation. This change was merged into the candidate at `6b69baad9b00f75c3eda0702e8c44b02ac0f81b1` using the PR #5 branch as a second parent.
+- **Current reference correspondence before this addendum:** of the original 215 common PR #13 input files, **202 remain byte-for-byte identical**, while **13 evidence/document paths differ solely for anonymization and SHA provenance**. All product, test, translation, core solver, IO, and protocol files remain identical. PR #13's two temporary workflows and PR #13-specific ledger remain excluded. No CI policy is relaxed.
+- **Git history:** previous publicly accessible Git commits still retain the original evidence logs. Updating a branch tip does not delete older commits. History rewriting or deleting previously published commits has **not** been performed or authorized; permanent erasure requires a separately controlled security/privacy process.
+- **Producer/Bridge responsibility separation:** the user explicitly schedules this architecture work for a separate follow-on phase after the present software integration. The new `AGENTS.md` is incorporated verbatim, but its additional producer-absence, two-independent-producer, runtime boundary and product UI gates are **NOT RUN / NOT CERTIFIED** here. This is a scoped schedule separation, **not** a finding of full architecture compliance or a waiver of its constraints.
+- Previous final-HEAD Actions 14 PASS / 0 FAIL / 1 expected SKIP apply to `3840a4cc...`. The current candidate after the two documentation/evidence merges requires fresh Actions results to revalidate that HEAD before any approved merge.
+
+
 Status: **DRAFT / SOFTWARE VALIDATION PASS / INDEPENDENT REVIEW AND USER APPROVAL REQUIRED**.
 
 This candidate preserves the original histories of PRs #8, #12, #11, #5, #6, #7 and #4, in that order, using seven explicit merge commits on `integration/monaka-formal-candidate-20261021`. The base is fixed `dev` at `a07d0c7b3c69edc61dfee5f0cae1e4756ea02589`. The passing reference is PR #13 at `da596a6bee1e1a6e74bf2a9e9d58d504c84b161f`. Neither verification PR #9 nor #13 is an ancestor or a merge input. `dev` and `main` have not been modified.
