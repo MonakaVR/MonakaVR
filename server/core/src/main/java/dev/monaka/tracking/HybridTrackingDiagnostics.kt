@@ -70,7 +70,9 @@ class HybridTrackingDiagnosticRecorder(private val onEvent: (HybridTrackingDiagn
 		if (key != previousKey) {
 			previousKey = key
 			// Diagnostic sinks are best-effort; a logging failure must never stop tracking.
-			try { onEvent(HybridTrackingDiagnosticEvent(snapshot)) } catch (_: Exception) { }
+			try {
+				onEvent(HybridTrackingDiagnosticEvent(snapshot))
+			} catch (_: Exception) { }
 		}
 	}
 }

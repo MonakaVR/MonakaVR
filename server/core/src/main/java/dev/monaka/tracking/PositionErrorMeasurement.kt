@@ -56,8 +56,7 @@ internal object PositionErrorMeasurement {
 		pairingPolicy: PositionTemporalPairingPolicy,
 	): PositionErrorMeasurementResult {
 		val paired = when (val result = PositionTemporalPairing.check(input, expectedTeacherEpoch, pairingPolicy)) {
-			is PositionTemporalPairingResult.Rejected -> return PositionErrorMeasurementResult.Rejected(
-				PositionErrorMeasurementRejectionReason.PAIRING_REJECTED, result.reason, result.structuralReason)
+			is PositionTemporalPairingResult.Rejected -> return PositionErrorMeasurementResult.Rejected(PositionErrorMeasurementRejectionReason.PAIRING_REJECTED, result.reason, result.structuralReason)
 			is PositionTemporalPairingResult.Pairable -> result
 		}
 		// The same immutable input that passed real pairing supplies exact samples and numeric snapshots.
@@ -68,31 +67,34 @@ internal object PositionErrorMeasurement {
 		val prediction = Vector3(predictionSource.x, predictionSource.y, predictionSource.z)
 		val error = Vector3(teacher.x - prediction.x, teacher.y - prediction.y, teacher.z - prediction.z)
 		// Finite sources can overflow subtraction. Fail closed; no clamp or signed-zero rewrite.
-		if (!error.x.isFinite() || !error.y.isFinite() || !error.z.isFinite())
+		if (!error.x.isFinite() || !error.y.isFinite() || !error.z.isFinite()) {
 			return PositionErrorMeasurementResult.Rejected(PositionErrorMeasurementRejectionReason.ERROR_NONFINITE)
+		}
 		val provenance = input.prediction.provenance!!
-		return PositionErrorMeasurementResult.Measured(PositionErrorSample(
-			target = TrackerPosition.HIP,
-			bodyReference = PositionBodyReference.HIP_CENTER,
-			coordinateSpace = input.expectedSpace,
-			teacherPosition = teacher,
-			predictionPosition = prediction,
-			errorWorld = error,
-			teacherSequence = input.mainTeacher.provenance.sequence,
-			predictionSequence = provenance.predictionSequence,
-			predictionHmdSequence = provenance.inputHmdSequence,
-			predictionHmdSampleAtNanos = provenance.inputHmdSampleAtNanos,
-			predictionImuSequence = provenance.inputImuSequence,
-			predictionImuSampleAtNanos = provenance.inputImuSampleAtNanos,
-			teacherSampleAtNanos = paired.teacherSampleAtNanos,
-			predictionInputEarliestAtNanos = paired.predictionInputEarliestAtNanos,
-			predictionInputLatestAtNanos = paired.predictionInputLatestAtNanos,
-			predictionGeneratedAtNanos = provenance.generatedAtNanos,
-			evaluatedAtNanos = input.nowNanos,
-			teacherToPredictionInputDistanceNanos = paired.teacherToPredictionInputDistanceNanos,
-			teacherEpoch = paired.teacherEpoch,
-			predictionEpoch = paired.predictionEpoch,
-			assignmentGeneration = input.assignmentGeneration,
-		))
+		return PositionErrorMeasurementResult.Measured(
+			PositionErrorSample(
+				target = TrackerPosition.HIP,
+				bodyReference = PositionBodyReference.HIP_CENTER,
+				coordinateSpace = input.expectedSpace,
+				teacherPosition = teacher,
+				predictionPosition = prediction,
+				errorWorld = error,
+				teacherSequence = input.mainTeacher.provenance.sequence,
+				predictionSequence = provenance.predictionSequence,
+				predictionHmdSequence = provenance.inputHmdSequence,
+				predictionHmdSampleAtNanos = provenance.inputHmdSampleAtNanos,
+				predictionImuSequence = provenance.inputImuSequence,
+				predictionImuSampleAtNanos = provenance.inputImuSampleAtNanos,
+				teacherSampleAtNanos = paired.teacherSampleAtNanos,
+				predictionInputEarliestAtNanos = paired.predictionInputEarliestAtNanos,
+				predictionInputLatestAtNanos = paired.predictionInputLatestAtNanos,
+				predictionGeneratedAtNanos = provenance.generatedAtNanos,
+				evaluatedAtNanos = input.nowNanos,
+				teacherToPredictionInputDistanceNanos = paired.teacherToPredictionInputDistanceNanos,
+				teacherEpoch = paired.teacherEpoch,
+				predictionEpoch = paired.predictionEpoch,
+				assignmentGeneration = input.assignmentGeneration,
+			),
+		)
 	}
 }

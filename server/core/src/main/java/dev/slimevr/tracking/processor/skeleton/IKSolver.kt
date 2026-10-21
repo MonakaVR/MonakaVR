@@ -25,20 +25,18 @@ class IKSolver(private val root: Bone) {
 	private var needsReset = false
 	private val calibration = mutableMapOf<Pair<String, Int?>, IKConstraint.Calibration>()
 	private fun key(tracker: Tracker) = tracker.name to tracker.trackerPosition?.bodyPart
+
 	/** Diagnostic snapshot of actual calibrated inputs, used by numerical lifecycle tests. */
-	fun calibrationSnapshot(): Map<Pair<String, Int?>, IKConstraint.Calibration> =
-		calibration + chainList.flatMap { it.positionalInputs() }.associate { key(it.tracker) to it.calibration() }
+	fun calibrationSnapshot(): Map<Pair<String, Int?>, IKConstraint.Calibration> = calibration + chainList.flatMap { it.positionalInputs() }.associate { key(it.tracker) to it.calibration() }
 
 	/** Current active value wins over retained calibration; exact stable name/body key only. */
-	internal fun calibrationFor(trackerName: String, bodyPart: Int?): IKConstraint.Calibration? =
-		chainList.asSequence().flatMap { it.positionalInputs().asSequence() }
-			.lastOrNull { key(it.tracker) == (trackerName to bodyPart) }?.calibration()
-			?: calibration[trackerName to bodyPart]
+	internal fun calibrationFor(trackerName: String, bodyPart: Int?): IKConstraint.Calibration? = chainList.asSequence().flatMap { it.positionalInputs().asSequence() }
+		.lastOrNull { key(it.tracker) == (trackerName to bodyPart) }?.calibration()
+		?: calibration[trackerName to bodyPart]
 
 	/** Diagnostic/test only: reads actual IKConstraint, never source-selection authority. */
-	internal fun effectivePositionTargetFor(trackerName: String, bodyPart: Int?) =
-		chainList.asSequence().flatMap { it.positionalInputs().asSequence() }
-			.firstOrNull { key(it.tracker) == (trackerName to bodyPart) }?.getPosition()
+	internal fun effectivePositionTargetFor(trackerName: String, bodyPart: Int?) = chainList.asSequence().flatMap { it.positionalInputs().asSequence() }
+		.firstOrNull { key(it.tracker) == (trackerName to bodyPart) }?.getPosition()
 
 	/**
 	 * Any time the skeleton is rebuilt or trackers are assigned / unassigned the chains
@@ -48,7 +46,9 @@ class IKSolver(private val root: Bone) {
 		if (preserveCalibration) {
 			calibration.putAll(calibrationSnapshot())
 			calibration.keys.removeAll { it.first !in retainedNames }
-		} else calibration.clear()
+		} else {
+			calibration.clear()
+		}
 		chainList.clear()
 
 		val positionalConstraints = extractPositionalConstraints(trackers)
@@ -57,8 +57,10 @@ class IKSolver(private val root: Bone) {
 		rootChain = chainBuilder(root, null, 0, positionalConstraints, rotationalConstraints)
 		populateChainList(rootChain!!)
 		addConstraints()
-		if (preserveCalibration) for (input in chainList.flatMap { it.positionalInputs() }) {
-			calibration[key(input.tracker)]?.let(input::restore)
+		if (preserveCalibration) {
+			for (input in chainList.flatMap { it.positionalInputs() }) {
+				calibration[key(input.tracker)]?.let(input::restore)
+			}
 		}
 
 		// Check if there is any constraints (other than the head) in the model

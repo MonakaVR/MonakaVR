@@ -14,24 +14,41 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class HipBodyModelSnapshotTests {
-	private val relevant = listOf(SkeletonConfigOffsets.HEAD, SkeletonConfigOffsets.NECK,
-		SkeletonConfigOffsets.UPPER_CHEST, SkeletonConfigOffsets.CHEST,
-		SkeletonConfigOffsets.WAIST, SkeletonConfigOffsets.HIP)
-	private fun capture(config: SkeletonConfigManager) =
-		assertIs<HipBodyModelSnapshotResult.Available>(SlimeHipBodyModelSnapshotSource.captureOffline(config)).snapshot
-	private fun fields(snapshot: HipBodyModelSnapshot) = listOf(snapshot.headShift, snapshot.neckLength,
-		snapshot.upperChestLength, snapshot.chestLength, snapshot.waistLength, snapshot.hipLength)
+	private val relevant = listOf(
+		SkeletonConfigOffsets.HEAD,
+		SkeletonConfigOffsets.NECK,
+		SkeletonConfigOffsets.UPPER_CHEST,
+		SkeletonConfigOffsets.CHEST,
+		SkeletonConfigOffsets.WAIST,
+		SkeletonConfigOffsets.HIP,
+	)
+	private fun capture(config: SkeletonConfigManager) = assertIs<HipBodyModelSnapshotResult.Available>(SlimeHipBodyModelSnapshotSource.captureOffline(config)).snapshot
+	private fun fields(snapshot: HipBodyModelSnapshot) = listOf(
+		snapshot.headShift,
+		snapshot.neckLength,
+		snapshot.upperChestLength,
+		snapshot.chestLength,
+		snapshot.waistLength,
+		snapshot.hipLength,
+	)
 
 	@Test fun defaultsMatchAllEffectiveCenterChainOffsets() {
 		val config = SkeletonConfigManager(false)
 		val snapshot = capture(config)
 		assertEquals(relevant.map { config.getOffset(it) }, fields(snapshot))
 		assertEquals("monaka:slimevr:hip-body-model:v1", snapshot.identity.modelId)
-		assertEquals("hip-body-v1;headShift=3dcccccd;neckLength=3dcccccd;upperChestLength=3e23d70a;" +
-			"chestLength=3e23d70a;waistLength=3e4ccccd;hipLength=3d23d70a;", snapshot.identity.epoch)
+		assertEquals(
+			"hip-body-v1;headShift=3dcccccd;neckLength=3dcccccd;upperChestLength=3e23d70a;" +
+				"chestLength=3e23d70a;waistLength=3e4ccccd;hipLength=3d23d70a;",
+			snapshot.identity.epoch,
+		)
 	}
 
 	@Test fun everyRelevantEffectiveFieldIndividuallyChangesContentEpoch() {
@@ -42,8 +59,10 @@ class HipBodyModelSnapshotTests {
 			val after = capture(config)
 			assertEquals(config.getOffset(key), fields(after)[index], key.name)
 			assertNotEquals(before.identity.epoch, after.identity.epoch, key.name)
-			assertEquals(fields(before).filterIndexed { i, _ -> i != index },
-				fields(after).filterIndexed { i, _ -> i != index })
+			assertEquals(
+				fields(before).filterIndexed { i, _ -> i != index },
+				fields(after).filterIndexed { i, _ -> i != index },
+			)
 		}
 	}
 
@@ -114,17 +133,18 @@ class HipBodyModelSnapshotTests {
 	}
 
 	@Test fun nonfiniteEffectiveGeometryFailsClosedForEveryFieldWithoutClamping() {
-		for (key in relevant) for (invalid in listOf(Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY)) {
-			val config = SkeletonConfigManager(false)
-			config.setOffset(key, invalid, false)
-			assertIs<HipBodyModelSnapshotResult.Unavailable>(SlimeHipBodyModelSnapshotSource.captureOffline(config), key.name)
+		for (key in relevant) {
+			for (invalid in listOf(Float.NaN, Float.POSITIVE_INFINITY, Float.NEGATIVE_INFINITY)) {
+				val config = SkeletonConfigManager(false)
+				config.setOffset(key, invalid, false)
+				assertIs<HipBodyModelSnapshotResult.Unavailable>(SlimeHipBodyModelSnapshotSource.captureOffline(config), key.name)
+			}
 		}
 		assertIs<HipBodyModelSnapshotResult.Unavailable>(HipBodyModelSnapshot.create(0f, 0f, Float.NaN, 0f, 0f, 0f))
 	}
 
 	@Test fun signedZeroPolicyAndRawBitPrecisionAreExplicit() {
-		fun identity(head: Float) = assertIs<HipBodyModelSnapshotResult.Available>(
-			HipBodyModelSnapshot.create(head, .1f, .16f, .16f, .2f, .04f)).snapshot.identity
+		fun identity(head: Float) = assertIs<HipBodyModelSnapshotResult.Available>(HipBodyModelSnapshot.create(head, .1f, .16f, .16f, .2f, .04f)).snapshot.identity
 		assertNotEquals(identity(+0.0f), identity(-0.0f))
 		assertNotEquals(identity(.1f), identity(Float.fromBits(.1f.toRawBits() + 1)))
 		assertEquals(identity(.1f), identity(.1f))
@@ -133,8 +153,7 @@ class HipBodyModelSnapshotTests {
 	@Test fun attachedConfigurationCannotClaimAtomicCapture() {
 		val hpm = HumanPoseManager(emptyList())
 		val attached = SkeletonConfigManager(false, hpm)
-		val result = assertIs<HipBodyModelSnapshotResult.Unavailable>(
-			SlimeHipBodyModelSnapshotSource.captureOffline(attached))
+		val result = assertIs<HipBodyModelSnapshotResult.Unavailable>(SlimeHipBodyModelSnapshotSource.captureOffline(attached))
 		assertEquals("offline_capture_requires_detached_config", result.reason)
 	}
 
@@ -142,9 +161,12 @@ class HipBodyModelSnapshotTests {
 		val config = SkeletonConfigManager(false)
 		val result = AtomicReference<HipBodyModelSnapshotResult>()
 		val reader = Thread { result.set(SlimeHipBodyModelSnapshotSource.captureOffline(config)) }
-		reader.start(); reader.join()
-		assertEquals("offline_capture_wrong_thread",
-			assertIs<HipBodyModelSnapshotResult.Unavailable>(result.get()).reason)
+		reader.start()
+		reader.join()
+		assertEquals(
+			"offline_capture_wrong_thread",
+			assertIs<HipBodyModelSnapshotResult.Unavailable>(result.get()).reason,
+		)
 		assertIs<HipBodyModelSnapshotResult.Available>(SlimeHipBodyModelSnapshotSource.captureOffline(config))
 	}
 
@@ -167,10 +189,16 @@ class HipBodyModelSnapshotTests {
 				for (step in 0..2) {
 					trackers.head.position = Vector3(.2f + step, 1.7f, -.1f)
 					trackers.hip.setRotation(Quaternion.IDENTITY)
-					val main = EffectiveConstraint(TrackerPosition.HIP,
-						position = ResolvedComponent(Vector3(.3f + step, 1f, .4f), "mtp:main",
-							ObservationQuality.TRACKED, step.toLong()),
-						rotation = ResolvedComponent(Quaternion.IDENTITY, "mtp:main", ObservationQuality.TRACKED, step.toLong()))
+					val main = EffectiveConstraint(
+						TrackerPosition.HIP,
+						position = ResolvedComponent(
+							Vector3(.3f + step, 1f, .4f),
+							"mtp:main",
+							ObservationQuality.TRACKED,
+							step.toLong(),
+						),
+						rotation = ResolvedComponent(Quaternion.IDENTITY, "mtp:main", ObservationQuality.TRACKED, step.toLong()),
+					)
 					writeback.apply(if (step == 0) emptyMap() else mapOf(TrackerPosition.HIP to main), assignments.snapshot())
 					hpm.update()
 					if (previous != null && previous != computed.position) changed = true
@@ -187,9 +215,11 @@ class HipBodyModelSnapshotTests {
 	@Test fun snapshotHasOnlyImmutableValuesAndExistingBodyIdentityInterop() {
 		val snapshot = capture(SkeletonConfigManager(false))
 		val allowed = setOf(Float::class.javaPrimitiveType, BodyModelIdentity::class.java)
-		assertTrue(HipBodyModelSnapshot::class.java.declaredFields
-			.filter { !java.lang.reflect.Modifier.isStatic(it.modifiers) }
-			.all { it.type in allowed && java.lang.reflect.Modifier.isFinal(it.modifiers) })
+		assertTrue(
+			HipBodyModelSnapshot::class.java.declaredFields
+				.filter { !java.lang.reflect.Modifier.isStatic(it.modifiers) }
+				.all { it.type in allowed && java.lang.reflect.Modifier.isFinal(it.modifiers) },
+		)
 		assertTrue(snapshot.identity.modelId.isNotBlank())
 		assertTrue(snapshot.identity.epoch.startsWith(HipBodyModelSnapshot.EPOCH_SCHEMA + ";"))
 	}

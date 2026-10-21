@@ -8,49 +8,86 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /** Actual 5V -> structural preflight -> 5U boundaries; prediction is deliberately synthetic. */
 class CalibratedMainTeacherTemporalPairingTests {
 	private val space = CoordinateSpace("canonical", "rh_y_up_neg_z_forward", 2)
 	private val origin = RawSourceIdentity("mtp:main", RawSourceKind.RAW_BACKEND)
 	private val zero = Vector3(0f, 0f, 0f)
-	private val body = assertIs<HipBodyModelSnapshotResult.Available>(
-		HipBodyModelSnapshot.create(.1f, .2f, .25f, .3f, .35f, .15f)).snapshot
+	private val body = assertIs<HipBodyModelSnapshotResult.Available>(HipBodyModelSnapshot.create(.1f, .2f, .25f, .3f, .35f, .15f)).snapshot
 	private val predictionEpoch = predictorInput(body).epoch()
 	private fun predictorInput(snapshot: HipBodyModelSnapshot) = MainDecoupledHipInput(
-		RawHmdPoseInput(RawSourceIdentity("hmd", RawSourceKind.RAW_HMD, isHmd = true),
-			Vector3(0f, 1.7f, 0f), Quaternion.IDENTITY, space,
-			ObservationSampleProvenance(4, 80, "hmd:1", "hmd-cal:1", null, space)),
-		RawImuOrientationInput(RawSourceIdentity("imu", RawSourceKind.RAW_IMU),
-			Quaternion.IDENTITY, space,
-			ObservationSampleProvenance(4, 90, "imu:1", "imu-cal:1", 1, space)),
-		snapshot, syntheticHeadAnchorCalibration("hmd", snapshot.identity.modelId), space, 3, 100, predictionSequence = 7)
-	private val safe = setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
-		PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION)
+		RawHmdPoseInput(
+			RawSourceIdentity("hmd", RawSourceKind.RAW_HMD, isHmd = true),
+			Vector3(0f, 1.7f, 0f),
+			Quaternion.IDENTITY,
+			space,
+			ObservationSampleProvenance(4, 80, "hmd:1", "hmd-cal:1", null, space),
+		),
+		RawImuOrientationInput(
+			RawSourceIdentity("imu", RawSourceKind.RAW_IMU),
+			Quaternion.IDENTITY,
+			space,
+			ObservationSampleProvenance(4, 90, "imu:1", "imu-cal:1", 1, space),
+		),
+		snapshot,
+		syntheticHeadAnchorCalibration("hmd", snapshot.identity.modelId),
+		space,
+		3,
+		100,
+		predictionSequence = 7,
+	)
+	private val safe = setOf(
+		PositionPredictionDependency.RAW_HMD,
+		PositionPredictionDependency.RAW_IMU,
+		PositionPredictionDependency.BODY_MODEL,
+		PositionPredictionDependency.FIXED_CALIBRATION,
+	)
 	private val policy = PositionTemporalPairingPolicy(10, 100, 100, 100)
-	private fun calibration(id: String = "main-mount", session: String = "mount-session:1", offset: Vector3 = zero) =
-		assertIs<MainTrackerMountCalibrationSnapshotResult.Available>(MainTrackerMountCalibrationSnapshot.create(
-			id, session, origin.sourceId, offset)).snapshot
+	private fun calibration(id: String = "main-mount", session: String = "mount-session:1", offset: Vector3 = zero) = assertIs<MainTrackerMountCalibrationSnapshotResult.Available>(MainTrackerMountCalibrationSnapshot.create(id, session, origin.sourceId, offset)).snapshot
 	private fun raw(observed: Long = 100, at: Long = 85, mapping: Long? = 1) = PoseObservation(
-		origin.sourceId, TrackerPosition.HIP, observed, position = Vector3(.1f, 1f, .2f),
+		origin.sourceId,
+		TrackerPosition.HIP,
+		observed,
+		position = Vector3(.1f, 1f, .2f),
 		rotation = Quaternion(.70710677f, 0f, .70710677f, 0f),
-		provenance = ObservationSampleProvenance(4, at, "main:1", "upstream-cal:1", mapping, space))
-	private fun teacher(raw: PoseObservation = raw(), mount: MainTrackerMountCalibrationSnapshot = calibration()) =
-		assertIs<MainHipCenterTeacherResult.Available>(MainTrackerMountToHipCenter.normalize(raw, origin, mount)).teacher
-	private fun prediction(epoch: PositionPredictionEpoch = predictionEpoch,
+		provenance = ObservationSampleProvenance(4, at, "main:1", "upstream-cal:1", mapping, space),
+	)
+	private fun teacher(raw: PoseObservation = raw(), mount: MainTrackerMountCalibrationSnapshot = calibration()) = assertIs<MainHipCenterTeacherResult.Available>(MainTrackerMountToHipCenter.normalize(raw, origin, mount)).teacher
+	private fun prediction(
+		epoch: PositionPredictionEpoch = predictionEpoch,
 		body: PositionBodyReference = PositionBodyReference.HIP_CENTER,
-		target: TrackerPosition = TrackerPosition.HIP, dependencies: Set<PositionPredictionDependency> = safe) =
-		PositionPrediction.available(target, Vector3(.1f, 1f, .2f), epoch.coordinateSpace, body,
-			PositionPredictionProvenance(7, 100, 80, 90, epoch, 4, 80, 4, 90), dependencies)
-	private fun input(teacher: MainHipCenterPositionTeacher = teacher()) =
-		PositionCorrectionInput(teacher, prediction(), space, predictionEpoch, 3, 100)
+		target: TrackerPosition = TrackerPosition.HIP,
+		dependencies: Set<PositionPredictionDependency> = safe,
+	) = PositionPrediction.available(
+		target,
+		Vector3(.1f, 1f, .2f),
+		epoch.coordinateSpace,
+		body,
+		PositionPredictionProvenance(7, 100, 80, 90, epoch, 4, 80, 4, 90),
+		dependencies,
+	)
+	private fun input(teacher: MainHipCenterPositionTeacher = teacher()) = PositionCorrectionInput(teacher, prediction(), space, predictionEpoch, 3, 100)
+
 	// Explicit current source/assignment/calibration selection, never auto-adopt an input sample's epoch.
-	private fun expected(mount: MainTrackerMountCalibrationSnapshot = calibration(), mapping: Long? = 1) =
-		PositionTeacherEpoch(origin.sourceId, "main:1", "upstream-cal:1", mapping, space, 3,
-			PositionBodyReference.HIP_CENTER, mount.identity)
-	private fun pair(input: PositionCorrectionInput = input(), expected: PositionTeacherEpoch = expected()) =
-		PositionTemporalPairing.check(input, expected, policy)
+	private fun expected(mount: MainTrackerMountCalibrationSnapshot = calibration(), mapping: Long? = 1) = PositionTeacherEpoch(
+		origin.sourceId,
+		"main:1",
+		"upstream-cal:1",
+		mapping,
+		space,
+		3,
+		PositionBodyReference.HIP_CENTER,
+		mount.identity,
+	)
+	private fun pair(input: PositionCorrectionInput = input(), expected: PositionTeacherEpoch = expected()) = PositionTemporalPairing.check(input, expected, policy)
 	private fun mismatch(input: PositionCorrectionInput = input(), expected: PositionTeacherEpoch) {
 		assertTrue(PositionCorrectionTeacherEligibility.check(input).eligibleForPairing)
 		val result = assertIs<PositionTemporalPairingResult.Rejected>(pair(input, expected))
@@ -58,8 +95,12 @@ class CalibratedMainTeacherTemporalPairingTests {
 		assertNull(result.structuralReason)
 	}
 	private fun structural(input: PositionCorrectionInput, reason: String) {
-		val result = assertIs<PositionTemporalPairingResult.Rejected>(pair(input,
-			expected(calibration(session = "new-mount"))))
+		val result = assertIs<PositionTemporalPairingResult.Rejected>(
+			pair(
+				input,
+				expected(calibration(session = "new-mount")),
+			),
+		)
 		assertEquals(PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE, result.reason)
 		assertEquals(reason, result.structuralReason)
 	}
@@ -140,8 +181,9 @@ class CalibratedMainTeacherTemporalPairingTests {
 	}
 
 	@Test fun eachExactExpectedSpaceComponentRejectsOldTeacher() {
-		for (changed in listOf(space.copy(id = "other"), space.copy(convention = "other"), space.copy(revision = 3)))
+		for (changed in listOf(space.copy(id = "other"), space.copy(convention = "other"), space.copy(revision = 3))) {
 			mismatch(expected = expected().copy(coordinateSpace = changed))
+		}
 	}
 
 	@Test fun sourceIdentityChangeRejectsEvenWithEqualNumbers() {
@@ -150,8 +192,13 @@ class CalibratedMainTeacherTemporalPairingTests {
 
 	@Test fun assignmentChangeRejectsOldTeacherAndOldPredictionInCurrentContext() {
 		mismatch(expected = expected().copy(assignmentGeneration = 4))
-		structural(input().copy(assignmentGeneration = 4,
-			expectedPredictionEpoch = predictionEpoch.copy(assignmentGeneration = 4)), "prediction_epoch_mismatch")
+		structural(
+			input().copy(
+				assignmentGeneration = 4,
+				expectedPredictionEpoch = predictionEpoch.copy(assignmentGeneration = 4),
+			),
+			"prediction_epoch_mismatch",
+		)
 		val epoch = predictionEpoch.copy(assignmentGeneration = 4)
 		val current = input().copy(assignmentGeneration = 4, expectedPredictionEpoch = epoch, prediction = prediction(epoch))
 		mismatch(current, expected())
@@ -166,8 +213,7 @@ class CalibratedMainTeacherTemporalPairingTests {
 			assertSame(original.provenance, normalized.provenance)
 			assertEquals(first, normalized)
 			assertEquals(pair(input(first)), pair(input(normalized)))
-			val result = assertIs<PositionTemporalPairingResult.Rejected>(PositionTemporalPairing.check(
-				input(normalized), expected(), policy.copy(maxTeacherAgeNanos = 20)))
+			val result = assertIs<PositionTemporalPairingResult.Rejected>(PositionTemporalPairing.check(input(normalized), expected(), policy.copy(maxTeacherAgeNanos = 20)))
 			assertEquals(PositionTemporalPairingRejectionReason.TEACHER_STALE, result.reason)
 		}
 	}
@@ -183,45 +229,57 @@ class CalibratedMainTeacherTemporalPairingTests {
 
 	@Test fun positionOnlyTeacherCarriesNoRawPoseRotationOrPublicationField() {
 		assertFalse(PoseObservation::class.java.isInstance(teacher()))
-		assertTrue(MainHipCenterPositionTeacher::class.java.declaredFields.none {
-			it.type == Quaternion::class.java || it.type == PoseObservation::class.java || it.name.contains("observedAt")
-		})
-		assertEquals(listOf(MainHipCenterPositionTeacher::class.java), PositionCorrectionInput::class.java.declaredFields
-			.filter { it.name == "mainTeacher" }.map { it.type })
+		assertTrue(
+			MainHipCenterPositionTeacher::class.java.declaredFields.none {
+				it.type == Quaternion::class.java || it.type == PoseObservation::class.java || it.name.contains("observedAt")
+			},
+		)
+		assertEquals(
+			listOf(MainHipCenterPositionTeacher::class.java),
+			PositionCorrectionInput::class.java.declaredFields
+				.filter { it.name == "mainTeacher" }.map { it.type },
+		)
 	}
 
 	@Test fun trackerRotationQualityIsNotAComparisonRequirementAfterNormalization() {
 		val normalized = teacher()
 		assertTrue(PositionCorrectionTeacherEligibility.check(input(normalized)).eligibleForPairing)
 		assertIs<PositionTemporalPairingResult.Pairable>(pair(input(normalized)))
-		assertIs<MainHipCenterTeacherResult.Unavailable>(MainTrackerMountToHipCenter.normalize(
-			raw().copy(rotationQuality = ObservationQuality.STALE), origin, calibration()))
+		assertIs<MainHipCenterTeacherResult.Unavailable>(MainTrackerMountToHipCenter.normalize(raw().copy(rotationQuality = ObservationQuality.STALE), origin, calibration()))
 	}
 
 	@Test fun rawPoseWithMissingRotationCannotEnterViaNormalization() {
-		assertIs<MainHipCenterTeacherResult.Unavailable>(MainTrackerMountToHipCenter.normalize(
-			raw().copy(rotation = null, rotationQuality = ObservationQuality.UNAVAILABLE), origin, calibration()))
+		assertIs<MainHipCenterTeacherResult.Unavailable>(MainTrackerMountToHipCenter.normalize(raw().copy(rotation = null, rotationQuality = ObservationQuality.UNAVAILABLE), origin, calibration()))
 	}
 
 	@Test fun unusablePositionAndNonfiniteTeacherKeepStructuralPrecedence() {
-		for (quality in listOf(ObservationQuality.LOST, ObservationQuality.STALE, ObservationQuality.UNAVAILABLE))
+		for (quality in listOf(ObservationQuality.LOST, ObservationQuality.STALE, ObservationQuality.UNAVAILABLE)) {
 			structural(input(teacher().copy(positionQuality = quality)), "main_position_invalid")
-		for (position in listOf(Vector3(Float.NaN, 0f, 0f), Vector3(0f, Float.POSITIVE_INFINITY, 0f)))
+		}
+		for (position in listOf(Vector3(Float.NaN, 0f, 0f), Vector3(0f, Float.POSITIVE_INFINITY, 0f))) {
 			structural(input(teacher().copy(position = position)), "main_position_invalid")
+		}
 	}
 
 	@Test fun malformedSpaceCannotThrowOrOverrideStructuralPrecedence() {
 		val normalized = teacher()
 		structural(input(normalized.copy(provenance = normalized.provenance.copy(space = null))), "main_space_unknown")
-		for (changed in listOf(space.copy(id = "other"), space.copy(convention = "other"), space.copy(revision = 3)))
+		for (changed in listOf(space.copy(id = "other"), space.copy(convention = "other"), space.copy(revision = 3))) {
 			structural(input(normalized.copy(provenance = normalized.provenance.copy(space = changed))), "space_mismatch")
+		}
 	}
 
 	@Test fun feedbackOriginsAndSourceDisagreementCannotPair() {
 		val normalized = teacher()
-		for (bad in listOf(origin.copy(kind = RawSourceKind.DERIVED_OUTPUT), origin.copy(isComputed = true),
-			origin.copy(isInternal = true), origin.copy(isHmd = true), origin.copy(sourceId = "other")))
+		for (bad in listOf(
+			origin.copy(kind = RawSourceKind.DERIVED_OUTPUT),
+			origin.copy(isComputed = true),
+			origin.copy(isInternal = true),
+			origin.copy(isHmd = true),
+			origin.copy(sourceId = "other"),
+		)) {
 			structural(input(normalized.copy(rawOrigin = bad)), "main_not_raw_backend")
+		}
 		for (prefix in listOf("monaka-direct:", "monaka-solver:", "monaka-private:", "human://")) {
 			val bad = origin.copy(sourceId = "${prefix}main")
 			structural(input(normalized.copy(sourceId = bad.sourceId, rawOrigin = bad)), "main_not_raw_backend")
@@ -229,8 +287,9 @@ class CalibratedMainTeacherTemporalPairingTests {
 	}
 
 	@Test fun predictionFeedbackAndWrongReferenceRemainIneligible() {
-		for (dependency in PositionCorrectionTeacherEligibility.forbiddenDependencies)
+		for (dependency in PositionCorrectionTeacherEligibility.forbiddenDependencies) {
 			structural(input().copy(prediction = prediction(dependencies = safe + dependency)), "feedback_dependency")
+		}
 		structural(input().copy(prediction = prediction(body = PositionBodyReference.TRACKER_MOUNT)), "body_reference_mismatch")
 		structural(input().copy(prediction = prediction(target = TrackerPosition.LEFT_FOOT)), "main_position_invalid")
 	}
@@ -251,11 +310,16 @@ class CalibratedMainTeacherTemporalPairingTests {
 	@ParameterizedTest
 	@ValueSource(ints = [0, 1, 2, 3, 4, 5])
 	fun bodyContentChangeRejectsOldPredictionWithSameNumbersAndSameTeacher(index: Int) {
-		val values = mutableListOf(body.headShift, body.neckLength, body.upperChestLength,
-			body.chestLength, body.waistLength, body.hipLength)
+		val values = mutableListOf(
+			body.headShift,
+			body.neckLength,
+			body.upperChestLength,
+			body.chestLength,
+			body.waistLength,
+			body.hipLength,
+		)
 		values[index] += .125f
-		val changed = assertIs<HipBodyModelSnapshotResult.Available>(HipBodyModelSnapshot.create(
-			values[0], values[1], values[2], values[3], values[4], values[5])).snapshot
+		val changed = assertIs<HipBodyModelSnapshotResult.Available>(HipBodyModelSnapshot.create(values[0], values[1], values[2], values[3], values[4], values[5])).snapshot
 		val oldInput = predictorInput(body)
 		val newInput = oldInput.copy(bodyModel = changed)
 		val old = input()

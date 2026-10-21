@@ -37,8 +37,7 @@ class PositionalIKCalibrationTargetDiagnosticsTests {
 		return tracker
 	}
 
-	private fun vecMm(v: Vector3): String =
-		"(${v.x * 1000f},${v.y * 1000f},${v.z * 1000f})mm"
+	private fun vecMm(v: Vector3): String = "(${v.x * 1000f},${v.y * 1000f},${v.z * 1000f})mm"
 
 	private fun runCase(feetHaveRotation: Boolean): String {
 		val trackers = TestTrackerSet(positional = true)

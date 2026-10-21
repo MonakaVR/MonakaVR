@@ -20,16 +20,22 @@ internal data class SourceSpaceAuthorityEpoch(
 
 /** Opaque publication supplied by the future Bridge owner. No local mint/allocator. */
 internal data class CommonWorldEpoch(val value: String) {
-	init { require(value.isNotBlank()) }
+	init {
+		require(value.isNotBlank())
+	}
 }
 
 internal data class CommonMappingCalibrationEpoch(val value: String) {
-	init { require(value.isNotBlank()) }
+	init {
+		require(value.isNotBlank())
+	}
 }
 
 /** Bridge Config uint32 content revision, independent of the destination frame revision. */
 internal data class CommonMappingRevision(val value: Long) {
-	init { require(value in 0..4294967295L) }
+	init {
+		require(value in 0..4294967295L)
+	}
 }
 
 internal data class CommonWorldAuthority(
@@ -48,10 +54,18 @@ internal data class CommonWorldAuthority(
  * The Bridge config unit-norm-squared tolerance is 1e-5; never normalize or repair here.
  */
 internal data class SourceToCommonRigidTransform(val rotation: Quaternion, val translation: Vector3) {
-	init { require(commonFinite(translation) && commonUnit(rotation)) }
+	init {
+		require(commonFinite(translation) && commonUnit(rotation))
+	}
+
 	// Signed zero is a numerical identity; quaternion sign also represents the same rotation.
-	val isIdentity: Boolean get() = abs(rotation.w) == 1f && rotation.x == 0f && rotation.y == 0f &&
-		rotation.z == 0f && translation.x == 0f && translation.y == 0f && translation.z == 0f
+	val isIdentity: Boolean get() = abs(rotation.w) == 1f &&
+		rotation.x == 0f &&
+		rotation.y == 0f &&
+		rotation.z == 0f &&
+		translation.x == 0f &&
+		translation.y == 0f &&
+		translation.z == 0f
 }
 
 internal data class SourceToCommonMappingSnapshot(
@@ -62,7 +76,9 @@ internal data class SourceToCommonMappingSnapshot(
 	val mappingRevision: CommonMappingRevision,
 	val transform: SourceToCommonRigidTransform,
 ) {
-	init { require(ownerId == commonWorld.ownerId) }
+	init {
+		require(ownerId == commonWorld.ownerId)
+	}
 
 	companion object {
 		/** M2 HMD anchor only. Generic snapshots can represent calibrated nonidentity transforms. */
@@ -74,8 +90,14 @@ internal data class SourceToCommonMappingSnapshot(
 			transform: SourceToCommonRigidTransform,
 		): SourceToCommonMappingSnapshot {
 			require(sourceSpace == commonWorld.anchor && transform.isIdentity)
-			return SourceToCommonMappingSnapshot(commonWorld.ownerId, sourceSpace, commonWorld,
-				calibrationEpoch, mappingRevision, transform)
+			return SourceToCommonMappingSnapshot(
+				commonWorld.ownerId,
+				sourceSpace,
+				commonWorld,
+				calibrationEpoch,
+				mappingRevision,
+				transform,
+			)
 		}
 	}
 }
@@ -88,8 +110,14 @@ internal class SourceToCommonMappingHandle internal constructor(
 )
 
 internal enum class CommonWorldRevocationReason {
-	ANCHOR_AUTHORITY_LOST, SOURCE_SPACE_CHANGED, SOURCE_SESSION_CHANGED, EVENT_STREAM_LOST,
-	EXPLICIT_WORLD_REPLACEMENT, MAPPING_CONFLICT, MAPPING_WITHDRAWN, CAPACITY_EXHAUSTED,
+	ANCHOR_AUTHORITY_LOST,
+	SOURCE_SPACE_CHANGED,
+	SOURCE_SESSION_CHANGED,
+	EVENT_STREAM_LOST,
+	EXPLICIT_WORLD_REPLACEMENT,
+	MAPPING_CONFLICT,
+	MAPPING_WITHDRAWN,
+	CAPACITY_EXHAUSTED,
 }
 
 /** Immutable local diagnostic/order receipt, never an epoch or a wire message. */
@@ -99,14 +127,18 @@ internal data class CommonWorldAuthorityRevocation(
 	val reason: CommonWorldRevocationReason,
 	val sequence: Long,
 ) {
-	init { require(ownerId.isNotBlank() && sequence >= 0) }
+	init {
+		require(ownerId.isNotBlank() && sequence >= 0)
+	}
 }
 
 internal data class TrustedHmdSourceObservationIdentity(
 	val sourceSpace: SourceSpaceAuthorityEpoch,
 	val observationId: Long,
 ) {
-	init { require(observationId >= 0) }
+	init {
+		require(observationId >= 0)
+	}
 }
 
 /** Structural source value only; source validity, timing and reviewed ingress remain future gates. */
@@ -115,7 +147,9 @@ internal data class TrustedHmdSourcePoseSnapshot(
 	val position: Vector3,
 	val orientation: Quaternion,
 ) {
-	init { require(commonFinite(position) && commonUnit(orientation)) }
+	init {
+		require(commonFinite(position) && commonUnit(orientation))
+	}
 }
 
 internal data class CommonWorldMappedHmdPose(
@@ -136,7 +170,9 @@ internal class CommonWorldAuthorityState(
 	/** C2.1 scopes mapping revisions to owner/world; legacy 5Z callers retain Config-global ordering. */
 	private val worldScopedMappingHighWater: Boolean = false,
 ) {
-	init { require(expectedOwnerId.isNotBlank() && capacity > 0) }
+	init {
+		require(expectedOwnerId.isNotBlank() && capacity > 0)
+	}
 	private var world: CommonWorldAuthorityHandle? = null
 	private var mapping: SourceToCommonMappingHandle? = null
 	private var lastMapping: SourceToCommonMappingSnapshot? = null
@@ -149,24 +185,34 @@ internal class CommonWorldAuthorityState(
 	private var revocation: CommonWorldAuthorityRevocation? = null
 
 	@Synchronized fun currentWorld(): CommonWorldAuthorityHandle? = world
+
 	@Synchronized fun currentMapping(): SourceToCommonMappingHandle? = mapping
+
 	@Synchronized fun lastRevocation(): CommonWorldAuthorityRevocation? = revocation
+
 	@Synchronized fun isCurrent(handle: CommonWorldAuthorityHandle): Boolean = !exhausted && world === handle
-	@Synchronized fun isCurrent(handle: SourceToCommonMappingHandle): Boolean =
-		!exhausted && mapping === handle && world === handle.worldHandle
+
+	@Synchronized fun isCurrent(handle: SourceToCommonMappingHandle): Boolean = !exhausted && mapping === handle && world === handle.worldHandle
 
 	@Synchronized fun establishWorld(authority: CommonWorldAuthority): CommonWorldAuthorityHandle? {
 		if (exhausted) return null
-		if (authority.ownerId != expectedOwnerId) { revokeWorld(CommonWorldRevocationReason.MAPPING_CONFLICT); return null }
+		if (authority.ownerId != expectedOwnerId) {
+			revokeWorld(CommonWorldRevocationReason.MAPPING_CONFLICT)
+			return null
+		}
 		val old = world
 		if (old?.authority == authority) return old
 		if (old?.authority?.epoch == authority.epoch) {
-			revokeWorld(CommonWorldRevocationReason.MAPPING_CONFLICT); return null
+			revokeWorld(CommonWorldRevocationReason.MAPPING_CONFLICT)
+			return null
 		}
 		if (authority.epoch in retiredWorlds) return null
 		val highest = worldRevisions[authority.space.id]
 		if (highest != null && authority.space.revision <= highest) return null
-		if (highest == null && worldRevisions.size >= capacity) { exhaust(); return null }
+		if (highest == null && worldRevisions.size >= capacity) {
+			exhaust()
+			return null
+		}
 		if (old != null) revokeWorld(CommonWorldRevocationReason.EXPLICIT_WORLD_REPLACEMENT)
 		if (exhausted) return null
 		if (worldScopedMappingHighWater) {
@@ -184,7 +230,10 @@ internal class CommonWorldAuthorityState(
 		world = null
 		retireMapping()
 		if (exhausted) return
-		if (retiredWorlds.size >= capacity && old.authority.epoch !in retiredWorlds) { exhaust(old.authority); return }
+		if (retiredWorlds.size >= capacity && old.authority.epoch !in retiredWorlds) {
+			exhaust(old.authority)
+			return
+		}
 		retiredWorlds += old.authority.epoch
 		recordRevocation(old.authority, reason)
 	}
@@ -204,7 +253,8 @@ internal class CommonWorldAuthorityState(
 		}
 		if (snapshot.calibrationEpoch in retiredCalibrations) return null
 		if (old != null && snapshot.sourceSpace != old.snapshot.sourceSpace) {
-			revokeMapping(CommonWorldRevocationReason.SOURCE_SPACE_CHANGED); return null
+			revokeMapping(CommonWorldRevocationReason.SOURCE_SPACE_CHANGED)
+			return null
 		}
 		if (old != null && snapshot.calibrationEpoch != old.snapshot.calibrationEpoch) retireMapping()
 		if (exhausted) return null
@@ -223,19 +273,33 @@ internal class CommonWorldAuthorityState(
 		val old = mapping ?: return
 		mapping = null
 		val calibration = old.snapshot.calibrationEpoch
-		if (calibration !in retiredCalibrations && retiredCalibrations.size >= capacity) { exhaust(); return }
+		if (calibration !in retiredCalibrations && retiredCalibrations.size >= capacity) {
+			exhaust()
+			return
+		}
 		retiredCalibrations += calibration
 	}
 
 	private fun recordRevocation(authority: CommonWorldAuthority, reason: CommonWorldRevocationReason) {
-		if (revocationSequence == Long.MAX_VALUE) { exhaust(); return }
+		if (revocationSequence == Long.MAX_VALUE) {
+			exhaust()
+			return
+		}
 		revocation = CommonWorldAuthorityRevocation(authority.ownerId, authority.epoch, reason, revocationSequence++)
 	}
 
 	private fun exhaust(authority: CommonWorldAuthority? = world?.authority ?: lastMapping?.commonWorld) {
-		exhausted = true; world = null; mapping = null
-		if (authority != null) revocation = CommonWorldAuthorityRevocation(authority.ownerId, authority.epoch,
-			CommonWorldRevocationReason.CAPACITY_EXHAUSTED, revocationSequence)
+		exhausted = true
+		world = null
+		mapping = null
+		if (authority != null) {
+			revocation = CommonWorldAuthorityRevocation(
+				authority.ownerId,
+				authority.epoch,
+				CommonWorldRevocationReason.CAPACITY_EXHAUSTED,
+				revocationSequence,
+			)
+		}
 	}
 
 	/** Exact source -> one frozen snapshot -> output. Callback enables deterministic in-flight races.
@@ -248,13 +312,19 @@ internal class CommonWorldAuthorityState(
 		// Keep the exact bits on an identity path, including signed zero and source quaternion sign.
 		val position = if (transform.isIdentity) source.position else transform.rotation.sandwich(source.position) + transform.translation
 		// A negative identity quaternion still negates Q in the specified Hamilton product.
-		val orientation = if (transform.isIdentity && transform.rotation.w == 1f) source.orientation
-			else transform.rotation * source.orientation
+		val orientation = if (transform.isIdentity && transform.rotation.w == 1f) {
+			source.orientation
+		} else {
+			transform.rotation * source.orientation
+		}
 		if (!commonFinite(position) || !commonUnit(orientation)) return null
 		afterCompute()
 		return synchronized(this) {
-			if (currentMapping() !== before || !isCurrent(before)) null
-			else CommonWorldMappedHmdPose(source, before.snapshot, position, orientation)
+			if (currentMapping() !== before || !isCurrent(before)) {
+				null
+			} else {
+				CommonWorldMappedHmdPose(source, before.snapshot, position, orientation)
+			}
 		}
 	}
 }

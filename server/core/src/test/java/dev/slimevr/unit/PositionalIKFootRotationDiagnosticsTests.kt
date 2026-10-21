@@ -86,7 +86,8 @@ class PositionalIKFootRotationDiagnosticsTests {
 		return maxOf(
 			(left.position - fixture.leftTarget).len(),
 			(right.position - fixture.rightTarget).len(),
-		) * 1000f
+		) *
+			1000f
 	}
 
 	@Suppress("UNCHECKED_CAST")

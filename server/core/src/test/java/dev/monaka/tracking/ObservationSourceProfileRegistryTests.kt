@@ -89,7 +89,7 @@ class ObservationSourceProfileRegistryTests {
 				target = TrackerPosition.HIP,
 				observedAtNanos = 100L,
 				position = Vector3(9f, 9f, 9f),
-                modality = TrackingModality.ROTATION_ONLY,
+				modality = TrackingModality.ROTATION_ONLY,
 				rotation = Quaternion.IDENTITY,
 			),
 			profileId = "imu",

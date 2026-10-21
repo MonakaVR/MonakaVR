@@ -2,8 +2,23 @@ package dev.monaka.tracking.desktop
 
 import dev.monaka.protocol.v2.CoordinateSpace
 import dev.monaka.tracking.TrackingModality
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_EPOCH_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_REFERENCE_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_SPACE_INVALID
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRAME_SPACE_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.FRESHNESS_POLICY_INVALID
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.MAPPING_REVISION_INVALID
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.OBSERVATION_ID_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_MODALITY_NOT_FULL
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.POSITION_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.PROVIDER_EVIDENCE_INVALID
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.PROVIDER_SESSION_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.RAW_SPACE_GENERATION_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SAMPLE_PROVENANCE_INVALID
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SESSION_EPOCH_UNAVAILABLE
+import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.SOURCE_IDENTITY_MISMATCH
 import dev.slimevr.desktop.platform.ProtobufMessages.Position
-import dev.monaka.tracking.desktop.RawHmdPoseInputRejectionReason.*
 
 /** Actual source-to-output mapping, frozen with the final P/Q. Identity must be explicit.
  * Epoch covers output-space incarnation/change; revision is NOT a raw-space generation.
@@ -60,35 +75,51 @@ internal fun providerEvidenceRejections(
 ): Set<RawHmdPoseInputRejectionReason> = buildSet {
 	val evidence = sample.providerEvidence
 	if (evidence?.providerSessionEpoch.isNullOrBlank()) add(PROVIDER_SESSION_UNAVAILABLE)
-	if (evidence?.observationId == null) add(OBSERVATION_ID_UNAVAILABLE)
-	else if (evidence.observationId < 0) add(PROVIDER_EVIDENCE_INVALID)
-	if (evidence?.rawSpaceOwner.isNullOrBlank() || evidence?.rawSpaceIncarnation.isNullOrBlank() ||
-		evidence?.rawSpaceGeneration.isNullOrBlank()) add(RAW_SPACE_GENERATION_UNAVAILABLE)
+	if (evidence?.observationId == null) {
+		add(OBSERVATION_ID_UNAVAILABLE)
+	} else if (evidence.observationId < 0) {
+		add(PROVIDER_EVIDENCE_INVALID)
+	}
+	if (evidence?.rawSpaceOwner.isNullOrBlank() ||
+		evidence?.rawSpaceIncarnation.isNullOrBlank() ||
+		evidence?.rawSpaceGeneration.isNullOrBlank()
+	) {
+		add(RAW_SPACE_GENERATION_UNAVAILABLE)
+	}
 	val mapping = evidence?.appliedMapping
 	if (mapping == null) {
-		add(FRAME_SPACE_UNAVAILABLE); add(FRAME_EPOCH_UNAVAILABLE)
+		add(FRAME_SPACE_UNAVAILABLE)
+		add(FRAME_EPOCH_UNAVAILABLE)
 	} else {
-		if (mapping.outputSpace.id.isBlank() || mapping.outputSpace.convention.isBlank() || mapping.outputSpace.revision < 0)
+		if (mapping.outputSpace.id.isBlank() || mapping.outputSpace.convention.isBlank() || mapping.outputSpace.revision < 0) {
 			add(FRAME_SPACE_INVALID)
+		}
 		if (mapping.outputSpaceEpoch.isBlank() || mapping.calibrationEpoch.isBlank()) add(FRAME_EPOCH_UNAVAILABLE)
 		if (mapping.revision != null && mapping.revision < 0) add(MAPPING_REVISION_INVALID)
 		if (!mapping.identity && mapping.revision == null) add(PROVIDER_EVIDENCE_INVALID)
 	}
 	if (evidence?.sourceValid != true) add(PROVIDER_EVIDENCE_INVALID)
-	if (evidence?.sourceIdentity.isNullOrBlank() || evidence?.sourceIdentity != sample.ingressIdentity.sourceId)
+	if (evidence?.sourceIdentity.isNullOrBlank() || evidence?.sourceIdentity != sample.ingressIdentity.sourceId) {
 		add(SOURCE_IDENTITY_MISMATCH)
-	if (context == null || context.backend.contractId.isBlank() || context.backend.proofSource.isBlank())
+	}
+	if (context == null || context.backend.contractId.isBlank() || context.backend.proofSource.isBlank()) {
 		add(FRAME_REFERENCE_UNAVAILABLE)
+	}
 	if (context != null) {
 		if (context.backend.sourceIdentity != sample.ingressIdentity.sourceId) add(SOURCE_IDENTITY_MISMATCH)
-		if (context.providerSessionEpoch.isBlank() || context.rawSpaceIncarnation.isBlank() ||
-			context.rawSpaceGeneration.isBlank() || context.backend.rawSpaceOwner.isBlank() ||
+		if (context.providerSessionEpoch.isBlank() ||
+			context.rawSpaceIncarnation.isBlank() ||
+			context.rawSpaceGeneration.isBlank() ||
+			context.backend.rawSpaceOwner.isBlank() ||
 			evidence?.providerSessionEpoch != context.providerSessionEpoch ||
 			evidence.rawSpaceOwner != context.backend.rawSpaceOwner ||
 			evidence.rawSpaceIncarnation != context.rawSpaceIncarnation ||
 			evidence.rawSpaceGeneration != context.rawSpaceGeneration ||
-			mapping != context.appliedMapping || mapping?.outputSpace != context.backend.outputSpace)
+			mapping != context.appliedMapping ||
+			mapping?.outputSpace != context.backend.outputSpace
+		) {
 			add(PROVIDER_EVIDENCE_INVALID)
+		}
 	}
 }
 
@@ -103,18 +134,22 @@ internal fun deriveRawHmdPoseInputCapability(
 	if (freshnessPolicy.maxReceiptAgeNanos <= 0) reasons += FRESHNESS_POLICY_INVALID
 	if (!sample.ingressIdentity.isRawHmd()) reasons += FEEDBACK_SOURCE_NOT_ALLOWED
 	if (sample.transportSessionEpoch.isNullOrBlank()) reasons += SESSION_EPOCH_UNAVAILABLE
-	if (sample.sequence < 0 || sample.sourceEpoch.isBlank() || sample.receivedAtSystemNanos < 0)
+	if (sample.sequence < 0 || sample.sourceEpoch.isBlank() || sample.receivedAtSystemNanos < 0) {
 		reasons += SAMPLE_PROVENANCE_INVALID
+	}
 	if (sample.structuralRejectionReasons.isNotEmpty()) reasons += SAMPLE_PROVENANCE_INVALID
-	if (!sample.dataSourcePresent || sample.modality != TrackingModality.FULL || sample.dataSourceValue != Position.DataSource.FULL.number)
+	if (!sample.dataSourcePresent || sample.modality != TrackingModality.FULL || sample.dataSourceValue != Position.DataSource.FULL.number) {
 		reasons += POSITION_MODALITY_NOT_FULL
+	}
 	if (reasons.isNotEmpty()) return RawHmdPoseInputCapability.Unavailable(reasons)
 	val mapping = requireNotNull(sample.providerEvidence?.appliedMapping)
-	return RawHmdPoseInputCapability.Ready(sample.ingressIdentity.sourceId, sample.sourceEpoch,
+	return RawHmdPoseInputCapability.Ready(
+		sample.ingressIdentity.sourceId, sample.sourceEpoch,
 		requireNotNull(sample.transportSessionEpoch), sample.sequence, mapping.outputSpace,
 		mapping.calibrationEpoch, mapping.revision, freshnessPolicy,
 		RawHmdFrameProofKind.EXPLICIT_POSE_BOUND_FRAME_PROOF, requireNotNull(context).backend.proofSource,
-		sample, context)
+		sample, context,
+	)
 }
 
 /** Server-thread observation high-water, not a global/persistent replay cache.
@@ -138,51 +173,73 @@ internal class HmdProviderObservationState {
 		if (session == next) return true
 		if (exhausted || next.providerSessionEpoch in retired) return false
 		if (next.appliedMapping.outputSpaceEpoch in retiredOutputEpochs ||
-			next.appliedMapping.calibrationEpoch in retiredCalibrationEpochs) { retire(); return false }
+			next.appliedMapping.calibrationEpoch in retiredCalibrationEpochs
+		) {
+			retire()
+			return false
+		}
 		val old = session
 		if (old?.providerSessionEpoch == next.providerSessionEpoch) {
 			val raw = next.rawSpaceIncarnation to next.rawSpaceGeneration
 			val oldRaw = old.rawSpaceIncarnation to old.rawSpaceGeneration
 			if (raw in retiredRawSpaces) {
-				retire(); return false
+				retire()
+				return false
 			}
 			val before = old.appliedMapping
 			val after = next.appliedMapping
 			if (before != after && before.outputSpaceEpoch == after.outputSpaceEpoch) {
 				// Mapping content may change within one world. Physical observation progression stays independent.
 				if (before.revision != null && after.revision != null && after.revision < before.revision) {
-					candidate = null; return false
+					candidate = null
+					return false
 				}
-				if (before.outputSpace != after.outputSpace || before.revision == null || after.revision == null ||
-					after.revision <= before.revision) { retire(); return false }
+				if (before.outputSpace != after.outputSpace ||
+					before.revision == null ||
+					after.revision == null ||
+					after.revision <= before.revision
+				) {
+					retire()
+					return false
+				}
 			}
 			if (raw != oldRaw) retiredRawSpaces += oldRaw
 		}
 		if (old != null) {
-			if (next.appliedMapping.outputSpaceEpoch != old.appliedMapping.outputSpaceEpoch)
+			if (next.appliedMapping.outputSpaceEpoch != old.appliedMapping.outputSpaceEpoch) {
 				retiredOutputEpochs += old.appliedMapping.outputSpaceEpoch
-			if (next.appliedMapping.calibrationEpoch != old.appliedMapping.calibrationEpoch)
+			}
+			if (next.appliedMapping.calibrationEpoch != old.appliedMapping.calibrationEpoch) {
 				retiredCalibrationEpochs += old.appliedMapping.calibrationEpoch
+			}
 		}
 		if (retiredRawSpaces.size > 128 || retiredOutputEpochs.size > 128 || retiredCalibrationEpochs.size > 128) {
-			exhausted = true; retire(); return false
+			exhausted = true
+			retire()
+			return false
 		}
 		// Changing raw/mapping context in one provider epoch keeps the observation high-water.
 		if (session?.providerSessionEpoch != next.providerSessionEpoch) {
-			retire(); highWater = null; lastObservation = null
+			retire()
+			highWater = null
+			lastObservation = null
 			retiredRawSpaces.clear()
 			if (exhausted) return false
 		}
-		session = next; candidate = null
+		session = next
+		candidate = null
 		return true
 	}
 
-	fun invalidate() { candidate = null }
+	fun invalidate() {
+		candidate = null
+	}
 	fun retire() {
 		session?.let {
 			if (retired.size >= 128) exhausted = true else retired += it.providerSessionEpoch
 		}
-		session = null; candidate = null
+		session = null
+		candidate = null
 	}
 
 	fun observe(sample: HmdAcceptedPoseMessageSample, policy: RawHmdPoseFreshnessPolicy) {
@@ -190,18 +247,24 @@ internal class HmdProviderObservationState {
 		if (sample.providerEvidence?.providerSessionEpoch != session?.providerSessionEpoch) {
 			// Retired/foreign provider traffic cannot replace or invalidate the current provider.
 			if (sample.providerEvidence?.providerSessionEpoch in retired) return
-			invalidate(); return
+			invalidate()
+			return
 		}
-		if (id == null || id < 0) { invalidate(); return }
+		if (id == null || id < 0) {
+			invalidate()
+			return
+		}
 		val previous = highWater
 		if (previous != null && id < previous) return
 		if (previous == id) {
 			val old = lastObservation
-			if (old == null || sample.copy(sequence = old.sequence, receivedAtSystemNanos = old.receivedAtSystemNanos) != old)
+			if (old == null || sample.copy(sequence = old.sequence, receivedAtSystemNanos = old.receivedAtSystemNanos) != old) {
 				retire()
+			}
 			return
 		}
-		highWater = id; lastObservation = sample
+		highWater = id
+		lastObservation = sample
 		candidate = if (deriveRawHmdPoseInputCapability(sample, session, policy) is RawHmdPoseInputCapability.Ready) sample else null
 	}
 }

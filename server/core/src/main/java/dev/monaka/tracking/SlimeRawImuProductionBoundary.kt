@@ -12,15 +12,31 @@ internal data class SlimeRawImuCoordinateSpaceBinding(
 	/** Runtime-only future Bridge publication seam; absent from persistent config. */
 	val commonWorldEpoch: String? = null,
 ) {
-	init { require(commonWorldEpoch == null || commonWorldEpoch.isNotBlank()) }
+	init {
+		require(commonWorldEpoch == null || commonWorldEpoch.isNotBlank())
+	}
 }
 
 internal enum class SlimeRawImuInputRejectionReason {
-	TRACKER_NOT_PHYSICAL, TRACKER_NOT_IMU, TRACKER_INTERNAL, TRACKER_COMPUTED, TRACKER_IS_HMD,
-	TARGET_NOT_HIP, ROTATION_UNAVAILABLE, STATUS_UNUSABLE, FEEDBACK_SOURCE_NOT_ALLOWED,
-	SAMPLE_UNAVAILABLE, SAMPLE_UNSTABLE, SOURCE_EPOCH_CHANGED, CALIBRATION_EPOCH_CHANGED,
-	SAMPLE_TIME_UNAVAILABLE, SAMPLE_AFTER_TICK_CUTOFF, ORIENTATION_INVALID,
-	SPACE_BINDING_UNCONFIRMED, SPACE_BINDING_SOURCE_MISMATCH, SPACE_INVALID,
+	TRACKER_NOT_PHYSICAL,
+	TRACKER_NOT_IMU,
+	TRACKER_INTERNAL,
+	TRACKER_COMPUTED,
+	TRACKER_IS_HMD,
+	TARGET_NOT_HIP,
+	ROTATION_UNAVAILABLE,
+	STATUS_UNUSABLE,
+	FEEDBACK_SOURCE_NOT_ALLOWED,
+	SAMPLE_UNAVAILABLE,
+	SAMPLE_UNSTABLE,
+	SOURCE_EPOCH_CHANGED,
+	CALIBRATION_EPOCH_CHANGED,
+	SAMPLE_TIME_UNAVAILABLE,
+	SAMPLE_AFTER_TICK_CUTOFF,
+	ORIENTATION_INVALID,
+	SPACE_BINDING_UNCONFIRMED,
+	SPACE_BINDING_SOURCE_MISMATCH,
+	SPACE_INVALID,
 }
 
 internal sealed interface SlimeRawImuInputResult {
@@ -33,59 +49,91 @@ internal class SlimeRawImuProductionBoundary(
 	private val capture: SlimeIndependentImuOrientationCapture = SlimeIndependentImuOrientationCapture(System::nanoTime),
 	private val sourcePrefix: String = "slime",
 ) {
-	init { require(sourcePrefix.isNotBlank()) }
+	init {
+		require(sourcePrefix.isNotBlank())
+	}
 
-	fun adapt(tracker: Tracker, observedAtNanos: Long,
-		binding: SlimeRawImuCoordinateSpaceBinding): SlimeRawImuInputResult = adaptCaptured(tracker, observedAtNanos, binding, null)
+	fun adapt(
+		tracker: Tracker,
+		observedAtNanos: Long,
+		binding: SlimeRawImuCoordinateSpaceBinding,
+	): SlimeRawImuInputResult = adaptCaptured(tracker, observedAtNanos, binding, null)
 
-	fun adaptAtTick(tracker: Tracker, observedAtNanos: Long, receiptCutoffSystemNanos: Long,
-		binding: SlimeRawImuCoordinateSpaceBinding): SlimeRawImuInputResult =
-		adaptCaptured(tracker, observedAtNanos, binding, receiptCutoffSystemNanos)
+	fun adaptAtTick(
+		tracker: Tracker,
+		observedAtNanos: Long,
+		receiptCutoffSystemNanos: Long,
+		binding: SlimeRawImuCoordinateSpaceBinding,
+	): SlimeRawImuInputResult = adaptCaptured(tracker, observedAtNanos, binding, receiptCutoffSystemNanos)
 
-	private fun adaptCaptured(tracker: Tracker, observedAtNanos: Long,
-		binding: SlimeRawImuCoordinateSpaceBinding, cutoff: Long?): SlimeRawImuInputResult {
+	private fun adaptCaptured(
+		tracker: Tracker,
+		observedAtNanos: Long,
+		binding: SlimeRawImuCoordinateSpaceBinding,
+		cutoff: Long?,
+	): SlimeRawImuInputResult {
 		require(observedAtNanos >= 0L)
 		fun reject(reason: SlimeRawImuInputRejectionReason) = SlimeRawImuInputResult.Unavailable(reason)
 		val sourceId = "$sourcePrefix:${tracker.name}"
-		if (FeedbackExclusion.isOutput(tracker.name) || FeedbackExclusion.isOutput(sourceId))
+		if (FeedbackExclusion.isOutput(tracker.name) || FeedbackExclusion.isOutput(sourceId)) {
 			return reject(SlimeRawImuInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED)
+		}
 		if (tracker.device == null) return reject(SlimeRawImuInputRejectionReason.TRACKER_NOT_PHYSICAL)
 		if (tracker.isInternal) return reject(SlimeRawImuInputRejectionReason.TRACKER_INTERNAL)
 		if (tracker.isComputed) return reject(SlimeRawImuInputRejectionReason.TRACKER_COMPUTED)
 		if (tracker.isHmd) return reject(SlimeRawImuInputRejectionReason.TRACKER_IS_HMD)
 		if (!tracker.isImu()) return reject(SlimeRawImuInputRejectionReason.TRACKER_NOT_IMU)
 		if (tracker.trackerPosition != TrackerPosition.HIP) return reject(SlimeRawImuInputRejectionReason.TARGET_NOT_HIP)
-		val modality = tracker.sampleModality ?: if (tracker.hasPosition && tracker.hasRotation)
-			TrackingModality.FULL else TrackingModality.ROTATION_ONLY
-		if (!tracker.hasRotation || modality == TrackingModality.NONE)
+		val modality = tracker.sampleModality ?: if (tracker.hasPosition && tracker.hasRotation) {
+			TrackingModality.FULL
+		} else {
+			TrackingModality.ROTATION_ONLY
+		}
+		if (!tracker.hasRotation || modality == TrackingModality.NONE) {
 			return reject(SlimeRawImuInputRejectionReason.ROTATION_UNAVAILABLE)
-		if (!tracker.status.slimeObservationQuality(modality).usable)
+		}
+		if (!tracker.status.slimeObservationQuality(modality).usable) {
 			return reject(SlimeRawImuInputRejectionReason.STATUS_UNUSABLE)
+		}
 		if (!binding.operatorConfirmed) return reject(SlimeRawImuInputRejectionReason.SPACE_BINDING_UNCONFIRMED)
-		if (binding.sourceId.isBlank() || binding.sourceId != sourceId)
+		if (binding.sourceId.isBlank() || binding.sourceId != sourceId) {
 			return reject(SlimeRawImuInputRejectionReason.SPACE_BINDING_SOURCE_MISMATCH)
+		}
 		val space = binding.space
-		if (space.id.isBlank() || space.revision < 0 || space.convention != "rh_y_up_neg_z_forward")
+		if (space.id.isBlank() || space.revision < 0 || space.convention != "rh_y_up_neg_z_forward") {
 			return reject(SlimeRawImuInputRejectionReason.SPACE_INVALID)
-		val captured = if (cutoff == null) capture.capture(tracker, observedAtNanos)
-			else capture.captureAtTick(tracker, observedAtNanos, cutoff)
+		}
+		val captured = if (cutoff == null) {
+			capture.capture(tracker, observedAtNanos)
+		} else {
+			capture.captureAtTick(tracker, observedAtNanos, cutoff)
+		}
 		val sample = when (val result = captured) {
 			is SlimeImuCaptureResult.Available -> result.sample
-			is SlimeImuCaptureResult.Unavailable -> return reject(when (result.reason) {
-				SlimeImuCaptureRejection.SAMPLE_UNAVAILABLE -> SlimeRawImuInputRejectionReason.SAMPLE_UNAVAILABLE
-				SlimeImuCaptureRejection.SAMPLE_UNSTABLE -> SlimeRawImuInputRejectionReason.SAMPLE_UNSTABLE
-				SlimeImuCaptureRejection.SOURCE_EPOCH_CHANGED -> SlimeRawImuInputRejectionReason.SOURCE_EPOCH_CHANGED
-				SlimeImuCaptureRejection.CALIBRATION_EPOCH_CHANGED -> SlimeRawImuInputRejectionReason.CALIBRATION_EPOCH_CHANGED
-				SlimeImuCaptureRejection.SAMPLE_TIME_UNAVAILABLE -> SlimeRawImuInputRejectionReason.SAMPLE_TIME_UNAVAILABLE
-				SlimeImuCaptureRejection.SAMPLE_AFTER_TICK_CUTOFF -> SlimeRawImuInputRejectionReason.SAMPLE_AFTER_TICK_CUTOFF
-			})
+
+			is SlimeImuCaptureResult.Unavailable -> return reject(
+				when (result.reason) {
+					SlimeImuCaptureRejection.SAMPLE_UNAVAILABLE -> SlimeRawImuInputRejectionReason.SAMPLE_UNAVAILABLE
+					SlimeImuCaptureRejection.SAMPLE_UNSTABLE -> SlimeRawImuInputRejectionReason.SAMPLE_UNSTABLE
+					SlimeImuCaptureRejection.SOURCE_EPOCH_CHANGED -> SlimeRawImuInputRejectionReason.SOURCE_EPOCH_CHANGED
+					SlimeImuCaptureRejection.CALIBRATION_EPOCH_CHANGED -> SlimeRawImuInputRejectionReason.CALIBRATION_EPOCH_CHANGED
+					SlimeImuCaptureRejection.SAMPLE_TIME_UNAVAILABLE -> SlimeRawImuInputRejectionReason.SAMPLE_TIME_UNAVAILABLE
+					SlimeImuCaptureRejection.SAMPLE_AFTER_TICK_CUTOFF -> SlimeRawImuInputRejectionReason.SAMPLE_AFTER_TICK_CUTOFF
+				},
+			)
 		}
 		val q = sample.orientation
-		if (!listOf(q.w, q.x, q.y, q.z).all(Float::isFinite) || !q.lenSq().isFinite() || q.lenSq() <= 1e-10f)
+		if (!listOf(q.w, q.x, q.y, q.z).all(Float::isFinite) || !q.lenSq().isFinite() || q.lenSq() <= 1e-10f) {
 			return reject(SlimeRawImuInputRejectionReason.ORIENTATION_INVALID)
+		}
 		// Fixed transforms preserve norm for unit inputs. Normalize valid non-unit inputs at this boundary only.
-		return SlimeRawImuInputResult.Available(RawImuOrientationInput(
-			RawSourceIdentity(sourceId, RawSourceKind.RAW_IMU), q.unit(), space,
-			sample.provenance.copy(space = space, commonWorldEpoch = binding.commonWorldEpoch)))
+		return SlimeRawImuInputResult.Available(
+			RawImuOrientationInput(
+				RawSourceIdentity(sourceId, RawSourceKind.RAW_IMU),
+				q.unit(),
+				space,
+				sample.provenance.copy(space = space, commonWorldEpoch = binding.commonWorldEpoch),
+			),
+		)
 	}
 }

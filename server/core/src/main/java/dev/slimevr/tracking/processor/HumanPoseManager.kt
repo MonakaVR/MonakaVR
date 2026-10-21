@@ -34,8 +34,7 @@ class HumanPoseManager(val server: VRServer?) {
 
 	/** One atomic publication read; no solved pose or mutable offset access. */
 	@ThreadSafe
-	fun currentHipBodyModelSnapshot(): dev.monaka.tracking.HipBodyModelSnapshotResult =
-		skeletonConfigManager.currentHipBodyModelSnapshot()
+	fun currentHipBodyModelSnapshot(): dev.monaka.tracking.HipBodyModelSnapshotResult = skeletonConfigManager.currentHipBodyModelSnapshot()
 
 	@get:ThreadSafe
 	lateinit var skeleton: HumanSkeleton

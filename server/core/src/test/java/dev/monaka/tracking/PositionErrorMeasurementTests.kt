@@ -15,40 +15,90 @@ import org.junit.jupiter.params.provider.ValueSource
 import java.lang.reflect.Modifier
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class PositionErrorMeasurementTests {
 	private val space = CoordinateSpace("synthetic-world", "rh_y_up_neg_z_forward", 7)
 	private val origin = RawSourceIdentity("synthetic:main", RawSourceKind.RAW_BACKEND)
 	private val mount = MainTrackerMountCalibrationIdentity("main-mount", "fit:1;content:abc")
-	private val dependencies = setOf(PositionPredictionDependency.RAW_HMD, PositionPredictionDependency.RAW_IMU,
-		PositionPredictionDependency.BODY_MODEL, PositionPredictionDependency.FIXED_CALIBRATION)
-	private val epoch = PositionPredictionEpoch("synthetic:hmd", "hmd:1", "provider:2", 4,
-		"slime:hip", "imu:3", "mount:4", null, "body", "body:5", "fixed", "fixed:6", space, 3)
+	private val dependencies = setOf(
+		PositionPredictionDependency.RAW_HMD,
+		PositionPredictionDependency.RAW_IMU,
+		PositionPredictionDependency.BODY_MODEL,
+		PositionPredictionDependency.FIXED_CALIBRATION,
+	)
+	private val epoch = PositionPredictionEpoch(
+		"synthetic:hmd", "hmd:1", "provider:2", 4,
+		"slime:hip", "imu:3", "mount:4", null, "body", "body:5", "fixed", "fixed:6", space, 3,
+	)
 	private val policy = PositionTemporalPairingPolicy(10, 100, 100, 100)
 	private val zero = Vector3(0f, 0f, 0f)
 
-	private fun prediction(position: Vector3 = Vector3(1f, 0f, 0f), earliest: Long = 80,
-		latest: Long = 90, generated: Long = 95, sequence: Long = 73,
-		predictionEpoch: PositionPredictionEpoch = epoch) = PositionPrediction.available(
-		TrackerPosition.HIP, position, space, PositionBodyReference.HIP_CENTER,
-		PositionPredictionProvenance(sequence, generated, earliest, latest, predictionEpoch, 4, earliest, 4, latest), dependencies)
+	private fun prediction(
+		position: Vector3 = Vector3(1f, 0f, 0f),
+		earliest: Long = 80,
+		latest: Long = 90,
+		generated: Long = 95,
+		sequence: Long = 73,
+		predictionEpoch: PositionPredictionEpoch = epoch,
+	) = PositionPrediction.available(
+		TrackerPosition.HIP,
+		position,
+		space,
+		PositionBodyReference.HIP_CENTER,
+		PositionPredictionProvenance(sequence, generated, earliest, latest, predictionEpoch, 4, earliest, 4, latest),
+		dependencies,
+	)
 
-	private fun input(teacher: Vector3 = Vector3(2f, 0f, 0f), predicted: Vector3 = Vector3(1f, 0f, 0f),
-		teacherAt: Long = 85, earliest: Long = 80, latest: Long = 90, generated: Long = 95,
-		now: Long = 100, teacherSequence: Long = 42, predictionSequence: Long = 73) = PositionCorrectionInput(
-		MainHipCenterPositionTeacher(origin.sourceId, teacher, ObservationQuality.TRACKED,
-			ObservationSampleProvenance(teacherSequence, teacherAt, "main:1", "upstream:2", 5, space), origin, mount),
-		prediction(predicted, earliest, latest, generated, predictionSequence), space, epoch, 3, now)
+	private fun input(
+		teacher: Vector3 = Vector3(2f, 0f, 0f),
+		predicted: Vector3 = Vector3(1f, 0f, 0f),
+		teacherAt: Long = 85,
+		earliest: Long = 80,
+		latest: Long = 90,
+		generated: Long = 95,
+		now: Long = 100,
+		teacherSequence: Long = 42,
+		predictionSequence: Long = 73,
+	) = PositionCorrectionInput(
+		MainHipCenterPositionTeacher(
+			origin.sourceId,
+			teacher,
+			ObservationQuality.TRACKED,
+			ObservationSampleProvenance(teacherSequence, teacherAt, "main:1", "upstream:2", 5, space),
+			origin,
+			mount,
+		),
+		prediction(predicted, earliest, latest, generated, predictionSequence),
+		space,
+		epoch,
+		3,
+		now,
+	)
 
 	private fun teacherEpoch(value: PositionCorrectionInput) = assertNotNull(PositionTeacherEpoch.from(value))
-	private fun measured(value: PositionCorrectionInput = input(), expected: PositionTeacherEpoch = teacherEpoch(value),
-		pairingPolicy: PositionTemporalPairingPolicy = policy) = assertIs<PositionErrorMeasurementResult.Measured>(
-		PositionErrorMeasurement.evaluate(value, expected, pairingPolicy)).sample
-
-	private fun rejected(value: PositionCorrectionInput, expected: PositionTeacherEpoch = teacherEpoch(input()),
+	private fun measured(
+		value: PositionCorrectionInput = input(),
+		expected: PositionTeacherEpoch = teacherEpoch(value),
 		pairingPolicy: PositionTemporalPairingPolicy = policy,
-		reason: PositionTemporalPairingRejectionReason, structural: String? = null) {
+	) = assertIs<PositionErrorMeasurementResult.Measured>(PositionErrorMeasurement.evaluate(value, expected, pairingPolicy)).sample
+
+	private fun rejected(
+		value: PositionCorrectionInput,
+		expected: PositionTeacherEpoch = teacherEpoch(input()),
+		pairingPolicy: PositionTemporalPairingPolicy = policy,
+		reason: PositionTemporalPairingRejectionReason,
+		structural: String? = null,
+	) {
 		val pairing = assertIs<PositionTemporalPairingResult.Rejected>(PositionTemporalPairing.check(value, expected, pairingPolicy))
 		val result = assertIs<PositionErrorMeasurementResult.Rejected>(PositionErrorMeasurement.evaluate(value, expected, pairingPolicy))
 		assertEquals(PositionErrorMeasurementRejectionReason.PAIRING_REJECTED, result.reason)
@@ -122,8 +172,19 @@ class PositionErrorMeasurementTests {
 		assertEquals(95L, sample.predictionGeneratedAtNanos)
 		assertEquals(value.nowNanos, sample.evaluatedAtNanos)
 		assertEquals(0L, sample.teacherToPredictionInputDistanceNanos)
-		assertEquals(PositionTeacherEpoch(origin.sourceId, "main:1", "upstream:2", 5, space, 3,
-			PositionBodyReference.HIP_CENTER, mount), sample.teacherEpoch)
+		assertEquals(
+			PositionTeacherEpoch(
+				origin.sourceId,
+				"main:1",
+				"upstream:2",
+				5,
+				space,
+				3,
+				PositionBodyReference.HIP_CENTER,
+				mount,
+			),
+			sample.teacherEpoch,
+		)
 		assertEquals(epoch, sample.predictionEpoch)
 		assertEquals(3L, sample.assignmentGeneration)
 		assertEquals(sample.assignmentGeneration, sample.teacherEpoch.assignmentGeneration)
@@ -137,8 +198,15 @@ class PositionErrorMeasurementTests {
 	}
 
 	@Test fun sequenceZeroAndLongTimeExtremesRemainExactFacts() {
-		val value = input(teacherAt = Long.MAX_VALUE, earliest = 0, latest = Long.MAX_VALUE,
-			generated = Long.MAX_VALUE, now = Long.MAX_VALUE, teacherSequence = 0, predictionSequence = 0)
+		val value = input(
+			teacherAt = Long.MAX_VALUE,
+			earliest = 0,
+			latest = Long.MAX_VALUE,
+			generated = Long.MAX_VALUE,
+			now = Long.MAX_VALUE,
+			teacherSequence = 0,
+			predictionSequence = 0,
+		)
 		val sample = measured(value, pairingPolicy = PositionTemporalPairingPolicy(0, 0, 0, 0))
 		assertEquals(0L, sample.teacherSequence)
 		assertEquals(0L, sample.predictionSequence)
@@ -153,15 +221,28 @@ class PositionErrorMeasurementTests {
 		val value = input()
 		val first = measured(value)
 		measured(input(teacherSequence = 0, predictionSequence = 0))
-		rejected(value.copy(prediction = PositionPrediction.unavailable(TrackerPosition.HIP)),
-			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE, structural = "prediction_unavailable")
+		rejected(
+			value.copy(prediction = PositionPrediction.unavailable(TrackerPosition.HIP)),
+			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
+			structural = "prediction_unavailable",
+		)
 		assertEquals(first, measured(value))
 	}
 
 	@Test fun sameEpochNewSamplesProduceDistinctMeasurementFacts() {
 		val first = measured()
-		val second = measured(input(Vector3(3f, 0f, 0f), teacherAt = 86, earliest = 81, latest = 91,
-			generated = 96, now = 101, teacherSequence = 43, predictionSequence = 74))
+		val second = measured(
+			input(
+				Vector3(3f, 0f, 0f),
+				teacherAt = 86,
+				earliest = 81,
+				latest = 91,
+				generated = 96,
+				now = 101,
+				teacherSequence = 43,
+				predictionSequence = 74,
+			),
+		)
 		assertEquals(first.teacherEpoch, second.teacherEpoch)
 		assertEquals(first.predictionEpoch, second.predictionEpoch)
 		assertNotEquals(first, second)
@@ -185,9 +266,13 @@ class PositionErrorMeasurementTests {
 
 	@Test fun structuralFailureWinsOverEpochStalenessAndNumericOverflow() {
 		val value = input(Vector3(Float.MAX_VALUE, 0f, 0f), Vector3(-Float.MAX_VALUE, 0f, 0f), teacherAt = 0)
-		rejected(value.copy(prediction = PositionPrediction.unavailable(TrackerPosition.HIP)),
-			expected = teacherEpoch(value).copy(sourceEpoch = "new-main"), pairingPolicy = PositionTemporalPairingPolicy(0, 0, 0, 0),
-			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE, structural = "prediction_unavailable")
+		rejected(
+			value.copy(prediction = PositionPrediction.unavailable(TrackerPosition.HIP)),
+			expected = teacherEpoch(value).copy(sourceEpoch = "new-main"),
+			pairingPolicy = PositionTemporalPairingPolicy(0, 0, 0, 0),
+			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
+			structural = "prediction_unavailable",
+		)
 	}
 
 	@Test fun teacherEpochRejectWinsOverNumericOverflow() {
@@ -196,15 +281,21 @@ class PositionErrorMeasurementTests {
 	}
 
 	@Test fun nonfiniteTeacherUsesExistingStructuralDiagnostic() {
-		rejected(input(Vector3(Float.NaN, 0f, 0f)), reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
-			structural = "main_position_invalid")
+		rejected(
+			input(Vector3(Float.NaN, 0f, 0f)),
+			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
+			structural = "main_position_invalid",
+		)
 		assertFailsWith<IllegalArgumentException> { prediction(Vector3(Float.POSITIVE_INFINITY, 0f, 0f)) }
 	}
 
 	@Test fun oldMainMountRejectsEvenAtEqualPositions() {
 		val value = input(zero, zero)
-		rejected(value, teacherEpoch(value).copy(mountCalibration = mount.copy(epoch = "fit:2;content:abc")),
-			reason = PositionTemporalPairingRejectionReason.TEACHER_EPOCH_MISMATCH)
+		rejected(
+			value,
+			teacherEpoch(value).copy(mountCalibration = mount.copy(epoch = "fit:2;content:abc")),
+			reason = PositionTemporalPairingRejectionReason.TEACHER_EPOCH_MISMATCH,
+		)
 	}
 
 	@ParameterizedTest
@@ -219,28 +310,49 @@ class PositionErrorMeasurementTests {
 		}
 		// PREDICTION_EPOCH_MISMATCH is defensive/unreachable after existing preflight;
 		// do not alter 5U precedence to manufacture that reason. HMD here is synthetic.
-		rejected(input(zero, zero).copy(expectedPredictionEpoch = current),
-			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE, structural = "prediction_epoch_mismatch")
+		rejected(
+			input(zero, zero).copy(expectedPredictionEpoch = current),
+			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
+			structural = "prediction_epoch_mismatch",
+		)
 	}
 
 	@Test fun spaceRevisionAndAssignmentChangeRejectOldPair() {
 		val value = input(zero, zero)
-		rejected(value.copy(expectedSpace = space.copy(revision = 8)),
-			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE, structural = "space_mismatch")
-		rejected(value.copy(assignmentGeneration = 4), reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
-			structural = "prediction_epoch_mismatch")
+		rejected(
+			value.copy(expectedSpace = space.copy(revision = 8)),
+			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
+			structural = "space_mismatch",
+		)
+		rejected(
+			value.copy(assignmentGeneration = 4),
+			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
+			structural = "prediction_epoch_mismatch",
+		)
 		val nextEpoch = epoch.copy(assignmentGeneration = 4)
-		val progressed = value.copy(assignmentGeneration = 4, expectedPredictionEpoch = nextEpoch,
-			prediction = prediction(zero, predictionEpoch = nextEpoch))
+		val progressed = value.copy(
+			assignmentGeneration = 4,
+			expectedPredictionEpoch = nextEpoch,
+			prediction = prediction(zero, predictionEpoch = nextEpoch),
+		)
 		rejected(progressed, teacherEpoch(value), reason = PositionTemporalPairingRejectionReason.TEACHER_EPOCH_MISMATCH)
 	}
 
 	@Test fun futureAndBodyReferenceFailuresPropagateStructuralReasons() {
 		rejected(input(teacherAt = 101), reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE, structural = "future_sample")
-		val mountPrediction = PositionPrediction.available(TrackerPosition.HIP, zero, space, PositionBodyReference.TRACKER_MOUNT,
-			prediction().provenance, dependencies)
-		rejected(input().copy(prediction = mountPrediction), reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
-			structural = "body_reference_mismatch")
+		val mountPrediction = PositionPrediction.available(
+			TrackerPosition.HIP,
+			zero,
+			space,
+			PositionBodyReference.TRACKER_MOUNT,
+			prediction().provenance,
+			dependencies,
+		)
+		rejected(
+			input().copy(prediction = mountPrediction),
+			reason = PositionTemporalPairingRejectionReason.STRUCTURAL_INELIGIBLE,
+			structural = "body_reference_mismatch",
+		)
 	}
 
 	@Test fun sourceSnapshotsAreSeparateImmutableVectorsAndInputsAreUnchanged() {
@@ -264,42 +376,74 @@ class PositionErrorMeasurementTests {
 	@Test fun boundaryHasNoDetachedPairableOrPersistentStateAndRejectedHasNoNumericSample() {
 		assertTrue(PositionErrorMeasurement::class.java.declaredFields.all { Modifier.isStatic(it.modifiers) })
 		val evaluate = PositionErrorMeasurement::class.java.declaredMethods.single { it.name == "evaluate" }
-		assertEquals(listOf(PositionCorrectionInput::class.java, PositionTeacherEpoch::class.java,
-			PositionTemporalPairingPolicy::class.java), evaluate.parameterTypes.toList())
-		assertEquals(setOf("reason", "pairingReason", "structuralReason"),
-			PositionErrorMeasurementResult.Rejected::class.java.declaredFields.map { it.name }.toSet())
+		assertEquals(
+			listOf(
+				PositionCorrectionInput::class.java,
+				PositionTeacherEpoch::class.java,
+				PositionTemporalPairingPolicy::class.java,
+			),
+			evaluate.parameterTypes.toList(),
+		)
+		assertEquals(
+			setOf("reason", "pairingReason", "structuralReason"),
+			PositionErrorMeasurementResult.Rejected::class.java.declaredFields.map { it.name }.toSet(),
+		)
 		assertTrue(PositionErrorSample::class.java.declaredFields.all { Modifier.isFinal(it.modifiers) })
 		assertFalse(PoseObservation::class.java.isAssignableFrom(PositionErrorSample::class.java))
 	}
 
 	@Test fun dormantRealImuPredictorAndCalibratedMainChainMeasuresNonzeroErrorWithoutMutation() {
-		val tracker = Tracker(UDPDevice(InetSocketAddress("127.0.0.1", 20000), InetAddress.getLoopbackAddress(), "fixture"),
+		val tracker = Tracker(
+			UDPDevice(InetSocketAddress("127.0.0.1", 20000), InetAddress.getLoopbackAddress(), "fixture"),
 			101, "physical-hip", trackerPosition = TrackerPosition.HIP, hasPosition = false, hasRotation = true,
-			imuType = IMUType.UNKNOWN, allowReset = true, allowMounting = true, allowFiltering = false, trackRotDirection = false)
+			imuType = IMUType.UNKNOWN, allowReset = true, allowMounting = true, allowFiltering = false, trackRotDirection = false,
+		)
 		tracker.status = TrackerStatus.OK
 		tracker.resetsHandler.mountingOrientation = Quaternion.rotationAroundZAxis(.2f)
 		tracker.setRotation(Quaternion.rotationAroundXAxis(.4f))
 		val capture = SlimeIndependentImuOrientationCapture { tracker.correctionOrientationSample()!!.receivedAtSystemNanos + 10 }
 		val boundary = SlimeRawImuProductionBoundary(capture)
-		val imu = assertIs<SlimeRawImuInputResult.Available>(boundary.adapt(tracker, 100,
-			SlimeRawImuCoordinateSpaceBinding("slime:physical-hip", space, true))).input
+		val imu = assertIs<SlimeRawImuInputResult.Available>(
+			boundary.adapt(
+				tracker,
+				100,
+				SlimeRawImuCoordinateSpaceBinding("slime:physical-hip", space, true),
+			),
+		).input
 		val body = assertIs<HipBodyModelSnapshotResult.Available>(HipBodyModelSnapshot.create(.1f, .2f, .3f, .4f, .5f, .6f)).snapshot
-		val hmd = RawHmdPoseInput(RawSourceIdentity("synthetic:hmd", RawSourceKind.RAW_HMD, isHmd = true),
-			Vector3(1f, 4f, -2f), Quaternion.rotationAroundXAxis(.3f), space,
-			ObservationSampleProvenance(1001, 80, "hmd:1", "frame:1", 2, space))
+		val hmd = RawHmdPoseInput(
+			RawSourceIdentity("synthetic:hmd", RawSourceKind.RAW_HMD, isHmd = true),
+			Vector3(1f, 4f, -2f),
+			Quaternion.rotationAroundXAxis(.3f),
+			space,
+			ObservationSampleProvenance(1001, 80, "hmd:1", "frame:1", 2, space),
+		)
 		val fixed = syntheticHeadAnchorCalibration(hmd.source.sourceId, body.identity.modelId, offset = Vector3(.2f, .3f, -.1f))
 		val source = MainDecoupledHipInput(hmd, imu, body, fixed, space, 3, 100, 73)
 		val predictor = PureMainDecoupledHipPredictor(MainDecoupledHipPredictorPolicy(10, 20, 20))
 		val predicted = predictor.predict(source)
 		assertEquals(PredictionValidity.AVAILABLE, predicted.validity)
-		val mountSnapshot = assertIs<MainTrackerMountCalibrationSnapshotResult.Available>(MainTrackerMountCalibrationSnapshot.create(
-			"main-mount", "fit:1", origin.sourceId, Vector3(.1f, -.2f, .3f))).snapshot
-		val rawMain = PoseObservation(origin.sourceId, TrackerPosition.HIP, 100, position = Vector3(.5f, 1f, -.5f),
-			rotation = Quaternion.rotationAroundZAxis(.5f), provenance = ObservationSampleProvenance(42, 85, "main:1", "upstream:2", 5, space))
+		val mountSnapshot = assertIs<MainTrackerMountCalibrationSnapshotResult.Available>(MainTrackerMountCalibrationSnapshot.create("main-mount", "fit:1", origin.sourceId, Vector3(.1f, -.2f, .3f))).snapshot
+		val rawMain = PoseObservation(
+			origin.sourceId,
+			TrackerPosition.HIP,
+			100,
+			position = Vector3(.5f, 1f, -.5f),
+			rotation = Quaternion.rotationAroundZAxis(.5f),
+			provenance = ObservationSampleProvenance(42, 85, "main:1", "upstream:2", 5, space),
+		)
 		val teacher = assertIs<MainHipCenterTeacherResult.Available>(MainTrackerMountToHipCenter.normalize(rawMain, origin, mountSnapshot)).teacher
 		val comparison = PositionCorrectionInput(teacher, predicted, space, source.epoch(), 3, 100)
-		val expected = PositionTeacherEpoch(origin.sourceId, "main:1", "upstream:2", 5, space, 3,
-			PositionBodyReference.HIP_CENTER, mountSnapshot.identity)
+		val expected = PositionTeacherEpoch(
+			origin.sourceId,
+			"main:1",
+			"upstream:2",
+			5,
+			space,
+			3,
+			PositionBodyReference.HIP_CENTER,
+			mountSnapshot.identity,
+		)
 		val sample = measured(comparison, expected, PositionTemporalPairingPolicy(0, 20, 20, 0))
 		assertNotEquals(zero, sample.errorWorld)
 		assertEquals(teacher.position - predicted.position!!, sample.errorWorld)
@@ -313,33 +457,55 @@ class PositionErrorMeasurementTests {
 		assertEquals(predicted.provenance, predictor.predict(source).provenance)
 		assertEquals(sample, measured(comparison, expected, PositionTemporalPairingPolicy(0, 20, 20, 0)))
 		// Continue the actual dormant chain with a SECOND accepted physical IMU sample.
-		val law = PositionCorrectionLearningLaw(PositionCorrectionTuning(1.0, 2.0, 100.0, 5.0, .1, .05,
-			2_000_000_000, 2_000_000_000, 1.0, .1, .1, 1_000_000_000, 2, .001))
+		val law = PositionCorrectionLearningLaw(
+			PositionCorrectionTuning(
+				1.0, 2.0, 100.0, 5.0, .1, .05,
+				2_000_000_000, 2_000_000_000, 1.0, .1, .1, 1_000_000_000, 2, .001,
+			),
+		)
 		assertEquals(PositionCorrectionLearningDecision.SEEDED, law.observe(sample).decision)
 		assertEquals(zero, law.snapshot().correctionWorld)
 		tracker.setRotation(Quaternion.rotationAroundXAxis(.4f))
-		val nextImu = assertIs<SlimeRawImuInputResult.Available>(boundary.adapt(tracker, 1_000_000_100,
-			SlimeRawImuCoordinateSpaceBinding("slime:physical-hip", space, true))).input
+		val nextImu = assertIs<SlimeRawImuInputResult.Available>(
+			boundary.adapt(
+				tracker,
+				1_000_000_100,
+				SlimeRawImuCoordinateSpaceBinding("slime:physical-hip", space, true),
+			),
+		).input
 		val nextHmd = hmd.copy(provenance = hmd.provenance.copy(sequence = 1002, sampleAtNanos = 1_000_000_080))
 		val nextSource = source.copy(rawHmd = nextHmd, rawImu = nextImu, nowNanos = 1_000_000_100, predictionSequence = 74)
 		val nextPrediction = predictor.predict(nextSource)
 		val nextMain = rawMain.copy(provenance = rawMain.provenance!!.copy(sequence = 43, sampleAtNanos = 1_000_000_085))
 		val nextTeacher = assertIs<MainHipCenterTeacherResult.Available>(MainTrackerMountToHipCenter.normalize(nextMain, origin, mountSnapshot)).teacher
-		val nextSample = measured(PositionCorrectionInput(nextTeacher, nextPrediction, space, nextSource.epoch(), 3, 1_000_000_100),
-			expected, PositionTemporalPairingPolicy(0, 20, 20, 0))
+		val nextSample = measured(
+			PositionCorrectionInput(nextTeacher, nextPrediction, space, nextSource.epoch(), 3, 1_000_000_100),
+			expected,
+			PositionTemporalPairingPolicy(0, 20, 20, 0),
+		)
 		assertTrue(nextSample.predictionImuSequence > sample.predictionImuSequence)
 		val learned = law.observe(nextSample)
 		assertEquals(PositionCorrectionLearningDecision.UPDATED, learned.decision)
 		assertTrue(learned.state.correctionWorld.len() > 0f)
 		assertTrue(learned.state.correctionWorld.len() <= .05f)
-
 	}
+
 	@Test fun measurementExactlyRetainsIndependentRawPhysicalSequencesAndTimes() {
 		val value = input()
-		val provenance = value.prediction.provenance!!.copy(inputHmdSequence = 1001, inputImuSequence = 3009,
-			inputHmdSampleAtNanos = 90, inputImuSampleAtNanos = 80)
-		val predicted = PositionPrediction.available(TrackerPosition.HIP, value.prediction.position!!,
-			space, PositionBodyReference.HIP_CENTER, provenance, dependencies)
+		val provenance = value.prediction.provenance!!.copy(
+			inputHmdSequence = 1001,
+			inputImuSequence = 3009,
+			inputHmdSampleAtNanos = 90,
+			inputImuSampleAtNanos = 80,
+		)
+		val predicted = PositionPrediction.available(
+			TrackerPosition.HIP,
+			value.prediction.position!!,
+			space,
+			PositionBodyReference.HIP_CENTER,
+			provenance,
+			dependencies,
+		)
 		val sample = measured(value.copy(prediction = predicted))
 		assertEquals(1001L, sample.predictionHmdSequence)
 		assertEquals(90L, sample.predictionHmdSampleAtNanos)
@@ -347,5 +513,4 @@ class PositionErrorMeasurementTests {
 		assertEquals(80L, sample.predictionImuSampleAtNanos)
 		assertEquals(provenance.predictionSequence, sample.predictionSequence)
 	}
-
 }
