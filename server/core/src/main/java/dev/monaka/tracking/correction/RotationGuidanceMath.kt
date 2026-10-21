@@ -1,7 +1,12 @@
 package dev.monaka.tracking.correction
 
 import io.github.axisangles.ktmath.Quaternion
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.acos
+import kotlin.math.expm1
+import kotlin.math.min
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /** Hamilton quaternions, constructor order wxyz. No wire/config parsing here. */
 object RotationGuidanceMath {
