@@ -172,8 +172,1807 @@
     "server/core/src/main/java/dev/monaka/tracking/MonakaInputConfigurationApi.kt"
   ],
   "validation": {
-    "local": "PENDING",
-    "candidate_github_actions": "PENDING",
+    "local": {
+      "result": "PASS",
+      "jdk": "Microsoft OpenJDK 17.0.20.1+1-LTS",
+      "node": "22.17.0",
+      "pnpm": "10.33.0",
+      "environment": "Windows x64",
+      "command": "gradlew.bat spotlessCheck :server:core:test :server:desktop:test :server:desktop:shadowJar :server:desktop:mtpProcessE2E --no-daemon --console=plain",
+      "spotlessCheck": "PASS",
+      "shadowJar": "PASS",
+      "jvm_suites": {
+        "core": {
+          "counts": {
+            "tests": 2015,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "suites": [
+            {
+              "name": "dev.monaka.tracking.ArchitectureRevisionTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.AssignedImuSampleFreshnessTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.BodyModelPredictorHandoffTests",
+              "tests": 34,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.CalibratedMainTeacherTemporalPairingTests",
+              "tests": 31,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.CommonWorldAuthorityFoundationTests",
+              "tests": 50,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ConstraintPipelineTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ConstraintResolverTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.CorePocHilStdioTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.CorePocHilTests",
+              "tests": 45,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.correction.BodyRotationGuidanceTests",
+              "tests": 35,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.DirectConstraintOutputTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.HipBodyModelSnapshotTests",
+              "tests": 13,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.HipRotationCorrectionTests",
+              "tests": 22,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.HybridDiagnosticStressTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.HybridFoundationTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.LiveHipBodyModelPublicationTests",
+              "tests": 13,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MainTrackerMountCalibrationTests",
+              "tests": 42,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ModeConfigurationTests",
+              "tests": 29,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MonakaResolvedTickSnapshotTests",
+              "tests": 18,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MonakaRuntimeTests",
+              "tests": 17,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MonakaSolverCompositionTests",
+              "tests": 22,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MonakaSourceTickSnapshotTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MtpCorrectionProvenanceTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MtpObservationBackendTests",
+              "tests": 15,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.MtpRotationOnlyDownstreamTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationBackendLifecycleTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationBackendRunnerTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationBackendTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationFreshnessPolicyTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationSourceProfileRegistryTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ObservationSourceProfileTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.OutputContinuityTests",
+              "tests": 12,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.ParallelRegressionTests",
+              "tests": 11,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionApplicationTests",
+              "tests": 79,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionConfigurationTests",
+              "tests": 284,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionLearningLawTests",
+              "tests": 67,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionNonHmdProductionAdapterTests",
+              "tests": 31,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionRuntimeOrchestratorTests",
+              "tests": 46,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionCorrectionSolverContinuityTests",
+              "tests": 113,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionErrorMeasurementTests",
+              "tests": 39,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionPredictionContractTests",
+              "tests": 16,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PositionTemporalPairingTests",
+              "tests": 46,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PredictorFixedCalibrationTests",
+              "tests": 48,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.PureMainDecoupledHipPredictorTests",
+              "tests": 53,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.RecoveryAngularDynamicsTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.LegacyAssignmentMigrationTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.MainFallbackAssignmentSetTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.MainFallbackCandidateValidatorTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.MainFallbackPolicyTests",
+              "tests": 7,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.MainFallbackSelectorTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.revision.PersistentTrackerIdentityTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.RotationCorrectionConfigurationTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.RotationSampleProvenanceTests",
+              "tests": 2,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.SlimeIndependentImuOrientationCaptureTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.SlimeRawImuProductionBoundaryTests",
+              "tests": 53,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.SlimeTrackerPoseObservationAdapterTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.SolverPositionReferenceSemanticsTests",
+              "tests": 41,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.StaticInputSelectionTests",
+              "tests": 13,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.TrustedHmdCommonWorldStreamTests",
+              "tests": 65,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.LegTweaksTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.MountingResetTests",
+              "tests": 65,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIK6DoFTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKCalibrationTargetDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKConvergenceDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKConvergenceTests",
+              "tests": 2,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKDynamicStabilityTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKEffectiveTargetDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKFixedReferenceIterationDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKFootGeometryDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKFootRotationDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKIntegrationTests",
+              "tests": 5,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKIterationBudgetDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKIterationCountDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKMultiConstraintTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKPauseTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKRotationCacheDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKSteadyStateDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKTrackerCorrectionDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKTrackerRotationLimitDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.PositionalIKZeroErrorDiagnosticsTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.ReferenceAdjustmentsTests",
+              "tests": 10,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.SkeletonResetTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.TrackingPauseTests",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.slimevr.unit.TwinExtendedBackTests",
+              "tests": 360,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "io.github.axisangles.ktmath.QuaternionTest",
+              "tests": 37,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ]
+        },
+        "desktop": {
+          "counts": {
+            "tests": 153,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "suites": [
+            {
+              "name": "dev.monaka.tracking.desktop.DirectProtobufTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.HmdProviderEvidenceTransportTests",
+              "tests": 8,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.HybridServerIntegrationTests",
+              "tests": 4,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.InboundTransportSessionTests",
+              "tests": 20,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.MonakaDesktopTests",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.MtpHilCaptureTests",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.RawHmdPoseAdmissionTests",
+              "tests": 49,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.SolverCompositionIntegrationTests",
+              "tests": 11,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.StrongTrustedHmdPolicyTests",
+              "tests": 33,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "dev.monaka.tracking.desktop.TrustedHmdPositionProvenanceTests",
+              "tests": 16,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ]
+        }
+      },
+      "logs": {
+        "formal-integration-jvm.log": {
+          "sha256": "25660b83deaa5984d908b7da332f96e73875e83dbc66fc4252532bc361543b9c",
+          "bytes": 26528,
+          "location": "local task-work evidence; not a historical PR artifact"
+        },
+        "formal-integration-install.log": {
+          "sha256": "77f605c2b86078c5727382ad64b36c0d20e748079116a9fb5529b0e5fe025414",
+          "bytes": 7023,
+          "location": "local task-work evidence; not a historical PR artifact"
+        },
+        "formal-integration-gui-launch-error.log": {
+          "sha256": "b57e5bc58715f2521f2e2154fb9e4b9d0a2a85820a5ee05de72ebcf0845b7809",
+          "bytes": 74,
+          "location": "local task-work evidence; not a historical PR artifact"
+        }
+      },
+      "source_identity": "All 215 source-PR file blobs match assembly 4c8a026f2b657d47027e5bb8b86e9335a87c6d0a and reference PR13. Subsequent candidate commits only edit its two ledger files.",
+      "mtp_process_e2e": {
+        "result": "PASS",
+        "failed_stage": null,
+        "error": null,
+        "passed": [
+          "feature-off-slime-equivalence",
+          "full-registration-existing-ik-protobuf",
+          "rotation-only-none-full-calibration",
+          "duplicate-reorder-age-unchanged",
+          "publisher-source-tracker-identity-isolation",
+          "active-session-and-peer-rejection",
+          "state-loss-timestamp-watermark-metadata-no-revival",
+          "stale-age-and-metadata-do-not-refresh",
+          "source-disappearance-timeout-loss",
+          "restart-session-recovery-and-retired-replay",
+          "receiver-close-unregister-and-port-release"
+        ],
+        "consumer_pid": 24516,
+        "publisher_pids": [
+          24328,
+          55024,
+          45356,
+          39664
+        ],
+        "wire": 2,
+        "steamvr_runtime": "NOT RUN",
+        "hardware": "NOT RUN",
+        "boundary": "Production intake/private IK input/computed tracker/ProtobufBridge bytes; synthetic external publisher and captured transport"
+      },
+      "gui_steps": [
+        {
+          "name": "gui-lint",
+          "result": "PASS",
+          "log": "gui-lint.log",
+          "exit_code": 0,
+          "duration_ms": 15986,
+          "log_sha256": "c3f631b067d0fd15ddab31b219921f6eb895542eadbd74143f869064e58d387f"
+        },
+        {
+          "name": "gui-build",
+          "result": "PASS",
+          "log": "gui-build.log",
+          "exit_code": 0,
+          "duration_ms": 14230,
+          "log_sha256": "7e2aaaa6822220e980037d1caf59c19b43cb4e0dfc21ea852e1bdea73ffa2194"
+        },
+        {
+          "name": "status-types",
+          "result": "PASS",
+          "log": "status-types.log",
+          "exit_code": 0,
+          "duration_ms": 1921,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "status-node",
+          "result": "PASS",
+          "log": "status-node.log",
+          "exit_code": 0,
+          "duration_ms": 382,
+          "log_sha256": "c73c89c9262cfc9cefcb90b30a7d11850e719d6fe820b4d33bcd70fd8d9c692d",
+          "tests": 40
+        },
+        {
+          "name": "mode-types",
+          "result": "PASS",
+          "log": "mode-types.log",
+          "exit_code": 0,
+          "duration_ms": 963,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "mode-node-core-subprocess",
+          "result": "PASS",
+          "log": "mode-node-core-subprocess.log",
+          "exit_code": 0,
+          "duration_ms": 550,
+          "log_sha256": "9a4266a097839c818def63219be91114ff405d4f03b3b38a0e13ff48d54897b4",
+          "tests": 10
+        },
+        {
+          "name": "status-edge",
+          "result": "PASS",
+          "log": "status-edge.log",
+          "exit_code": 0,
+          "duration_ms": 12931,
+          "log_sha256": "eac3b65022fc845084cbc15e60a7a171ce02ed7349d52236ce45a746c9dd2364",
+          "tests": 17
+        },
+        {
+          "name": "mode-edge",
+          "result": "PASS",
+          "log": "mode-edge.log",
+          "exit_code": 0,
+          "duration_ms": 5000,
+          "log_sha256": "0579ea6db5380f0e6bdcfacb0da6f7514e5683984da531ac31e8dbccdfa34eaf",
+          "tests": 3
+        }
+      ],
+      "runner_note": "First GUI attempt failed before test startup because PowerShell passed argv as one string. External runner argument splatting corrected; product/test/config sources unchanged. All eight actual steps then passed.",
+      "localization": {
+        "result": "PASS",
+        "tests": 2,
+        "failures": 0,
+        "skipped": 0,
+        "log_sha256": "def751e710ec84dae5763a6e4ef36c892e7d79329635d4a85d16ad70b1bfbf94"
+      },
+      "dependency_note": "Frozen install succeeded; optional register-scheme native build emitted a failure. Requested GUI gates passed; this does not validate OS scheme integration."
+    },
+    "candidate_github_actions": {
+      "result": "PASS",
+      "candidate_head": "e9a1c509bf72e674de9ae55b4c29ccf514ab5e84",
+      "github_test_merge": "9fb73f89ec2f8bab8db14690b71c22f9c799d2f2",
+      "pull_request": "https://github.com/MonakaVR/MonakaVR/pull/14",
+      "success": 14,
+      "failure": 0,
+      "skipped": [
+        "Finalize Release Draft"
+      ],
+      "runs": [
+        {
+          "id": 39538072317,
+          "head": "e9a1c509bf72e674de9ae55b4c29ccf514ab5e84",
+          "url": "https://github.com/MonakaVR/MonakaVR/actions/runs/39538072317",
+          "jobs": [
+            {
+              "id": 119019245136,
+              "name": "Configure Build Matrix",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run BASE='[{\"os\":\"ubuntu-22.04\",\"platform\":\"linux\"},{\"os\":\"windows-latest\",\"platform\":\"windows\"},{\"os\":\"macos-latest\",\"platform\":\"macos\"}]'",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245348,
+              "name": "Java Checks",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Java Spotless Check",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245362,
+              "name": "Monaka current v2 software release evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-java@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run gradle/actions/setup-gradle@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build and validate clean-HEAD v2 software evidence",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload current v2 evidence (hardware and SteamVR interactive NOT RUN)",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run gradle/actions/setup-gradle@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-java@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v6",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245400,
+              "name": "Gui Checks",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "GUI Lint",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245425,
+              "name": "Build GUI Assets",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build JS",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Tar GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019245456,
+              "name": "Build Desktop Server",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build ShadowJar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Test with Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload Server Jar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019273167,
+              "name": "Build bindings provider for windows-latest",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install GCC",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Get CMake",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Configure",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload artifact",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019273275,
+              "name": "Build bindings provider for ubuntu-22.04",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install GCC",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get CMake",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Configure",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload artifact",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019681289,
+              "name": "Build Android APK",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Extract GUI for Android",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build APK",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Test with Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Prepare APK",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload APK",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Build Google Play release bundle",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Upload the Google Play artifact",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Post Setup Gradle",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up JDK 17",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119020355464,
+              "name": "Package Desktop (windows - windows-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download Server Jar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download bindings provider artifact",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Extract GUI for Electron",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run Electron Builder",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Collect and Rename Artifacts",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload For Release",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119020355473,
+              "name": "Package Desktop (macos - macos-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download Server Jar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download bindings provider artifact",
+                  "status": "completed",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Download GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Extract GUI for Electron",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run Electron Builder",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Collect and Rename Artifacts",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload For Release",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119020355507,
+              "name": "Package Desktop (linux - ubuntu-22.04)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Get tags",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download Server Jar",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download bindings provider artifact",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Download GUI Dist",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Extract GUI for Electron",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run Electron Builder",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Collect and Rename Artifacts",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload For Release",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup Node",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Setup PNPM",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119022010452,
+              "name": "Finalize Release Draft",
+              "status": "completed",
+              "conclusion": "skipped"
+            }
+          ]
+        },
+        {
+          "id": 39538072205,
+          "head": "e9a1c509bf72e674de9ae55b4c29ccf514ab5e84",
+          "url": "https://github.com/MonakaVR/MonakaVR/actions/runs/39538072205",
+          "jobs": [
+            {
+              "id": 119019244604,
+              "name": "fail-closed-validation (windows-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Normal Python release gate regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized Python release gate regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Pinned runtime ingress identity regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized runtime ingress identity regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Bounded capture reader regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized bounded capture reader regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 119019244898,
+              "name": "fail-closed-validation (ubuntu-latest)",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Normal Python release gate regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized Python release gate regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Pinned runtime ingress identity regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized runtime ingress identity regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Bounded capture reader regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Optimized bounded capture reader regressions",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/setup-python@v5",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Run actions/checkout@v4",
+                  "status": "completed",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "release_artifact": {
+        "id": 12317818826,
+        "name": "release-monaka-software-v2",
+        "digest": "sha256:874aed0727d1acd53d6a92e5740c2a0587582283e029dba0d75d94ec6f92991c",
+        "head": "e9a1c509bf72e674de9ae55b4c29ccf514ab5e84",
+        "expired": false
+      },
+      "note": "Existing permanent workflows only; reference-only formatter/component workflows intentionally excluded. Dedicated component checks executed locally with no skips."
+    },
     "hardware_hil_steamvr_jna_dll": "NOT RUN"
   },
   "files": [
@@ -2116,5 +3915,6 @@
       "sha256": "7b699d83e2e9b8de18ad1f2a13be0f685af54d709ee35f9033d17f61f86dc772",
       "matches_pr13": true
     }
-  ]
+  ],
+  "input_blob_manifest_sha256": "8b496a99919fadab856772d71a6346838e330931eba6274210642a618c5653d9"
 }
