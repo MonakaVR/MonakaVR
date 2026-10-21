@@ -101,14 +101,12 @@ class PositionalIKSteadyStateDiagnosticsTests {
 		return "output=[hip=$hip mm, left=$left mm, right=$right mm, max=${maxOf(hip, left, right)} mm]"
 	}
 
-	private fun solverResiduals(fixture: Fixture): String {
-		return constrainedChains(fixture.hpm)
-			.joinToString(", ") { chain ->
-				val tracker = chain.tailConstraint ?: error("Expected positional tail constraint")
-				val residualMm = sqrt(chain.distToTargetSqr) * 1000f
-				"${tracker.trackerPosition}:$residualMm mm"
-			}
-	}
+	private fun solverResiduals(fixture: Fixture): String = constrainedChains(fixture.hpm)
+		.joinToString(", ") { chain ->
+			val tracker = chain.tailConstraint ?: error("Expected positional tail constraint")
+			val residualMm = sqrt(chain.distToTargetSqr) * 1000f
+			"${tracker.trackerPosition}:$residualMm mm"
+		}
 
 	private fun runCase(feetHaveRotation: Boolean): String {
 		val fixture = createMovedFixture(feetHaveRotation)

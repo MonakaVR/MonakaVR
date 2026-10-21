@@ -7,12 +7,16 @@ import dev.monaka.tracking.mtp.MtpPoseAdapter
 import dev.slimevr.tracking.trackers.TrackerPosition
 import org.junit.jupiter.api.Test
 import java.io.File
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 class MtpCorrectionProvenanceTests {
-	private fun fixture() = (MonakaCodec.decodeEnvelope(
-		File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes(),
-	) as DecodeResult.Success).value as MtpPose
+	private fun fixture() = (
+		MonakaCodec.decodeEnvelope(
+			File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes(),
+		) as DecodeResult.Success
+		).value as MtpPose
 
 	@Test fun acceptedPoseKeepsSequenceAgeSessionMappingAndSpaceAcrossReevaluation() {
 		val pose = fixture()
@@ -26,14 +30,25 @@ class MtpCorrectionProvenanceTests {
 		assertEquals(pose.coordinate_space, first.space)
 		assertTrue(first.sourceEpoch.contains(pose.session_id))
 		assertEquals(pose.input.session_id, first.calibrationEpoch)
-		assertEquals(pose.sequence + 1,
-			adapter.adapt(pose.copy(sequence = pose.sequence + 1), TrackerPosition.HIP, 12_000_001).provenance!!.sequence)
-		assertNotEquals(first.sourceEpoch,
-			adapter.adapt(pose.copy(session_id = "new-session"), TrackerPosition.HIP, 12_000_000).provenance!!.sourceEpoch)
-		assertNotEquals(first.mappingRevision,
-			adapter.adapt(pose.copy(mapping_revision = pose.mapping_revision + 1), TrackerPosition.HIP, 12_000_000).provenance!!.mappingRevision)
-		assertNotEquals(first.space,
-			adapter.adapt(pose.copy(coordinate_space = pose.coordinate_space.copy(revision = pose.coordinate_space.revision + 1)),
-				TrackerPosition.HIP, 12_000_000).provenance!!.space)
+		assertEquals(
+			pose.sequence + 1,
+			adapter.adapt(pose.copy(sequence = pose.sequence + 1), TrackerPosition.HIP, 12_000_001).provenance!!.sequence,
+		)
+		assertNotEquals(
+			first.sourceEpoch,
+			adapter.adapt(pose.copy(session_id = "new-session"), TrackerPosition.HIP, 12_000_000).provenance!!.sourceEpoch,
+		)
+		assertNotEquals(
+			first.mappingRevision,
+			adapter.adapt(pose.copy(mapping_revision = pose.mapping_revision + 1), TrackerPosition.HIP, 12_000_000).provenance!!.mappingRevision,
+		)
+		assertNotEquals(
+			first.space,
+			adapter.adapt(
+				pose.copy(coordinate_space = pose.coordinate_space.copy(revision = pose.coordinate_space.revision + 1)),
+				TrackerPosition.HIP,
+				12_000_000,
+			).provenance!!.space,
+		)
 	}
 }

@@ -111,8 +111,10 @@ class PositionalIKRotationCacheDiagnosticsTests {
 			"directPositionOnly=${directPositionOnly.maxMm} mm, fullPositionOnly=${fullPositionOnly.maxMm} mm"
 
 		assertTrue(
-			directSixDof.maxMm < 0.5f && fullSixDof.maxMm < 0.5f &&
-				directPositionOnly.maxMm < 0.5f && fullPositionOnly.maxMm < 0.5f,
+			directSixDof.maxMm < 0.5f &&
+				fullSixDof.maxMm < 0.5f &&
+				directPositionOnly.maxMm < 0.5f &&
+				fullPositionOnly.maxMm < 0.5f,
 			"A zero-error first positional IK solve drifted away from its calibrated pose: $details",
 		)
 	}

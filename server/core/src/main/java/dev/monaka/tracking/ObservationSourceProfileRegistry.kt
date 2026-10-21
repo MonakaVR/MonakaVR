@@ -26,14 +26,12 @@ class ObservationSourceProfileRegistry(
 		profilesById[profile.profileId] = profile
 	}
 
-	fun replace(profile: ObservationSourceProfile): ObservationSourceProfile? =
-		profilesById.put(profile.profileId, profile)
+	fun replace(profile: ObservationSourceProfile): ObservationSourceProfile? = profilesById.put(profile.profileId, profile)
 
 	operator fun get(profileId: String): ObservationSourceProfile? = profilesById[profileId]
 
-	fun require(profileId: String): ObservationSourceProfile =
-		profilesById[profileId]
-			?: throw IllegalArgumentException("Unknown observation source profile '$profileId'")
+	fun require(profileId: String): ObservationSourceProfile = profilesById[profileId]
+		?: throw IllegalArgumentException("Unknown observation source profile '$profileId'")
 
 	fun remove(profileId: String): ObservationSourceProfile? = profilesById.remove(profileId)
 

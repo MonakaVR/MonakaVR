@@ -36,8 +36,7 @@ data class ResolvedTrackingPose(
 	fun ikConstraint() = EffectiveConstraint(target, position, rotation)
 	fun directOutput() = OutputPose(target, space, position, rotation)
 	companion object {
-		fun from(constraint: EffectiveConstraint, space: CoordinateSpace, main: PoseObservation?) =
-			ResolvedTrackingPose(constraint.target, space, constraint.position, constraint.rotation, MainSampleState.from(main))
+		fun from(constraint: EffectiveConstraint, space: CoordinateSpace, main: PoseObservation?) = ResolvedTrackingPose(constraint.target, space, constraint.position, constraint.rotation, MainSampleState.from(main))
 	}
 }
 
@@ -56,7 +55,9 @@ data class OutputPose(
 	val positionOwner get() = position?.sourceId
 	val rotationOwner get() = rotation?.sourceId
 	val modality get() = poseModality(positionValid, rotationValid)
-	init { require((position == null) == (positionSource == OutputPositionSource.NONE)) }
+	init {
+		require((position == null) == (positionSource == OutputPositionSource.NONE))
+	}
 }
 
 private fun poseModality(position: Boolean, rotation: Boolean) = when {

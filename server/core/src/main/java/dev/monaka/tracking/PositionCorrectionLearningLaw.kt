@@ -24,9 +24,18 @@ internal data class PositionCorrectionTuning(
 	val zeroEpsilonMeters: Double,
 ) {
 	init {
-		require(listOf(trackingTauSeconds, recoveryTauSeconds, maxResidualMeters,
-			maxCorrectionMagnitudeMeters, maxCorrectionRateMetersPerSecond, maxUpdateStepMeters,
-			decayTauSeconds, maxDecayRateMetersPerSecond).all { it.isFinite() && it > 0 })
+		require(
+			listOf(
+				trackingTauSeconds,
+				recoveryTauSeconds,
+				maxResidualMeters,
+				maxCorrectionMagnitudeMeters,
+				maxCorrectionRateMetersPerSecond,
+				maxUpdateStepMeters,
+				decayTauSeconds,
+				maxDecayRateMetersPerSecond,
+			).all { it.isFinite() && it > 0 },
+		)
 		require(maxLearningDtNanos > 0 && holdNanos >= 0)
 		require(recoveryResidualMeters.isFinite() && recoveryResidualMeters >= 0 && recoveryResidualMeters <= maxResidualMeters)
 		require(recoveryStableNanos >= 0 && recoverySamples > 0)
@@ -68,15 +77,31 @@ internal data class PositionCorrectionStateSnapshot(
 
 internal enum class PositionCorrectionLearningDecision { SEEDED, UPDATED, DUPLICATE, REJECTED, HELD, DECAYED, EXPIRED, INVALIDATED }
 internal enum class PositionCorrectionLearningReason {
-	FIRST_SAMPLE, UPDATED, DUPLICATE_PHYSICAL_PAIR, TEACHER_SEQUENCE_ROLLBACK,
-	TEACHER_TIME_ROLLBACK, TEACHER_SAMPLE_IDENTITY_MISMATCH,
-	HMD_SEQUENCE_ROLLBACK, HMD_SAMPLE_IDENTITY_MISMATCH, HMD_TIME_ROLLBACK,
-	IMU_SEQUENCE_ROLLBACK, IMU_SAMPLE_IDENTITY_MISMATCH, IMU_TIME_ROLLBACK,
-	PREDICTION_PHYSICAL_PAIR_NOT_ADVANCED, MEASUREMENT_RESIDUAL_OUTLIER,
-	LEARNING_DT_TOO_LARGE, NUMERIC_INVALID, INVALID_SAMPLE,
-	HELD_WITHOUT_MEASUREMENT, DECAYED_WITHOUT_MEASUREMENT, CORRECTION_EXPIRED,
-	TEACHER_EPOCH_CHANGED, PREDICTION_EPOCH_CHANGED, PREDICTION_CONTEXT_UNAVAILABLE,
-	STATE_TIME_ROLLBACK, NO_ACCEPTED_MEASUREMENT,
+	FIRST_SAMPLE,
+	UPDATED,
+	DUPLICATE_PHYSICAL_PAIR,
+	TEACHER_SEQUENCE_ROLLBACK,
+	TEACHER_TIME_ROLLBACK,
+	TEACHER_SAMPLE_IDENTITY_MISMATCH,
+	HMD_SEQUENCE_ROLLBACK,
+	HMD_SAMPLE_IDENTITY_MISMATCH,
+	HMD_TIME_ROLLBACK,
+	IMU_SEQUENCE_ROLLBACK,
+	IMU_SAMPLE_IDENTITY_MISMATCH,
+	IMU_TIME_ROLLBACK,
+	PREDICTION_PHYSICAL_PAIR_NOT_ADVANCED,
+	MEASUREMENT_RESIDUAL_OUTLIER,
+	LEARNING_DT_TOO_LARGE,
+	NUMERIC_INVALID,
+	INVALID_SAMPLE,
+	HELD_WITHOUT_MEASUREMENT,
+	DECAYED_WITHOUT_MEASUREMENT,
+	CORRECTION_EXPIRED,
+	TEACHER_EPOCH_CHANGED,
+	PREDICTION_EPOCH_CHANGED,
+	PREDICTION_CONTEXT_UNAVAILABLE,
+	STATE_TIME_ROLLBACK,
+	NO_ACCEPTED_MEASUREMENT,
 }
 internal data class PositionCorrectionLearningResult(
 	val decision: PositionCorrectionLearningDecision,
@@ -99,8 +124,10 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 	private var recoveryStart: Long? = null
 	private var stableTracking = false
 
-	fun snapshot() = PositionCorrectionStateSnapshot(phase, correction.snapshot(), lineage?.predictionEpoch?.coordinateSpace,
-		lineage, observed, accepted, acceptedPredictionSequence, advanceAt, recoveryGoodSamples, recoveryStart)
+	fun snapshot() = PositionCorrectionStateSnapshot(
+		phase, correction.snapshot(), lineage?.predictionEpoch?.coordinateSpace,
+		lineage, observed, accepted, acceptedPredictionSequence, advanceAt, recoveryGoodSamples, recoveryStart,
+	)
 
 	fun observe(sample: PositionErrorSample): PositionCorrectionLearningResult {
 		val nextLineage = PositionCorrectionLearningLineage(sample.teacherEpoch, sample.predictionEpoch)
@@ -111,26 +138,36 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 			else -> null
 		}
 		if (changed != null) invalidate()
-		if (sample.evaluatedAtNanos < 0 || advanceAt?.let { sample.evaluatedAtNanos < it } == true)
+		if (sample.evaluatedAtNanos < 0 || advanceAt?.let { sample.evaluatedAtNanos < it } == true) {
 			return result(PositionCorrectionLearningDecision.REJECTED, PositionCorrectionLearningReason.STATE_TIME_ROLLBACK)
+		}
 		if (!validSample(sample)) {
 			if (changed != null) return result(PositionCorrectionLearningDecision.INVALIDATED, changed)
 			return reject(sample, PositionCorrectionLearningReason.INVALID_SAMPLE)
 		}
 		lineage = nextLineage
-		val identity = PositionCorrectionPhysicalWatermark(sample.teacherSequence, sample.teacherSampleAtNanos,
-			sample.predictionHmdSequence, sample.predictionHmdSampleAtNanos,
-			sample.predictionImuSequence, sample.predictionImuSampleAtNanos)
+		val identity = PositionCorrectionPhysicalWatermark(
+			sample.teacherSequence,
+			sample.teacherSampleAtNanos,
+			sample.predictionHmdSequence,
+			sample.predictionHmdSampleAtNanos,
+			sample.predictionImuSequence,
+			sample.predictionImuSampleAtNanos,
+		)
 		val previous = observed
 		if (previous != null) {
 			progressionFailure(previous, identity)?.let { return reject(sample, it) }
 			// Update observed only for identity-consistent non-rollback observations, independently of acceptance.
 			observed = identity
-			if (identity.teacherSequence == previous.teacherSequence)
+			if (identity.teacherSequence == previous.teacherSequence) {
 				return reject(sample, PositionCorrectionLearningReason.DUPLICATE_PHYSICAL_PAIR, duplicate = true)
-			if (identity.hmdSequence == previous.hmdSequence && identity.imuSequence == previous.imuSequence)
+			}
+			if (identity.hmdSequence == previous.hmdSequence && identity.imuSequence == previous.imuSequence) {
 				return reject(sample, PositionCorrectionLearningReason.PREDICTION_PHYSICAL_PAIR_NOT_ADVANCED, duplicate = true)
-		} else observed = identity
+			}
+		} else {
+			observed = identity
+		}
 
 		val residual = DVector.from(sample.errorWorld) - correction
 		val residualNorm = residual.norm()
@@ -140,8 +177,10 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 		val last = accepted
 		if (last == null) {
 			seed(sample, identity)
-			return result(if (changed == null) PositionCorrectionLearningDecision.SEEDED else PositionCorrectionLearningDecision.INVALIDATED,
-				changed ?: PositionCorrectionLearningReason.FIRST_SAMPLE)
+			return result(
+				if (changed == null) PositionCorrectionLearningDecision.SEEDED else PositionCorrectionLearningDecision.INVALIDATED,
+				changed ?: PositionCorrectionLearningReason.FIRST_SAMPLE,
+			)
 		}
 		val dt = sample.teacherSampleAtNanos - last.teacherSampleAtNanos
 		if (dt <= 0) return reject(sample, PositionCorrectionLearningReason.TEACHER_TIME_ROLLBACK)
@@ -160,12 +199,14 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 		val alpha = -expm1(-seconds / tau)
 		val rateLimit = tuning.maxCorrectionRateMetersPerSecond * seconds
 		val limit = minOf(tuning.maxUpdateStepMeters, rateLimit)
-		if (!alpha.isFinite() || !rateLimit.isFinite() || !limit.isFinite())
+		if (!alpha.isFinite() || !rateLimit.isFinite() || !limit.isFinite()) {
 			return reject(sample, PositionCorrectionLearningReason.NUMERIC_INVALID)
+		}
 		val step = (residual * alpha).bounded(limit)
 		val candidate = (correction + step).bounded(tuning.maxCorrectionMagnitudeMeters)
-		if (!step.finite() || !candidate.finite() || !candidate.norm().isFinite())
+		if (!step.finite() || !candidate.finite() || !candidate.norm().isFinite()) {
 			return reject(sample, PositionCorrectionLearningReason.NUMERIC_INVALID)
+		}
 		correction = candidate
 		accept(sample, identity)
 		if (!stableTracking) recover(sample.teacherSampleAtNanos, (DVector.from(sample.errorWorld) - correction).norm())
@@ -182,8 +223,9 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 			invalidate()
 			return result(PositionCorrectionLearningDecision.INVALIDATED, PositionCorrectionLearningReason.PREDICTION_EPOCH_CHANGED)
 		}
-		if (advanceAt?.let { nowNanos < it } == true)
+		if (advanceAt?.let { nowNanos < it } == true) {
 			return result(PositionCorrectionLearningDecision.REJECTED, PositionCorrectionLearningReason.STATE_TIME_ROLLBACK)
+		}
 		return gap(nowNanos)
 	}
 
@@ -205,8 +247,9 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 		val seconds = dt / 1e9
 		val alpha = -expm1(-seconds / tuning.decayTauSeconds)
 		val rateLimit = tuning.maxDecayRateMetersPerSecond * seconds
-		if (!alpha.isFinite() || !rateLimit.isFinite())
+		if (!alpha.isFinite() || !rateLimit.isFinite()) {
 			return result(PositionCorrectionLearningDecision.REJECTED, PositionCorrectionLearningReason.NUMERIC_INVALID)
+		}
 		val magnitude = correction.norm()
 		val reduction = minOf(magnitude * alpha, rateLimit)
 		// Scalar reduction along the vector prevents overshoot and preserves direction.
@@ -246,7 +289,10 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 	}
 
 	private fun recover(teacherAt: Long, remaining: Double) {
-		if (remaining > tuning.recoveryResidualMeters) { resetRecovery(); return }
+		if (remaining > tuning.recoveryResidualMeters) {
+			resetRecovery()
+			return
+		}
 		if (recoveryStart == null) recoveryStart = teacherAt
 		if (recoveryGoodSamples < Int.MAX_VALUE) recoveryGoodSamples++
 		if (recoveryGoodSamples >= tuning.recoverySamples && teacherAt - recoveryStart!! >= tuning.recoveryStableNanos) {
@@ -255,7 +301,10 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 		}
 	}
 
-	private fun resetRecovery() { recoveryGoodSamples = 0; recoveryStart = null }
+	private fun resetRecovery() {
+		recoveryGoodSamples = 0
+		recoveryStart = null
+	}
 	private fun invalidate() {
 		correction = DVector.ZERO
 		phase = PositionCorrectionPhase.UNINITIALIZED
@@ -267,8 +316,7 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 		stableTracking = false
 		resetRecovery()
 	}
-	private fun result(decision: PositionCorrectionLearningDecision, reason: PositionCorrectionLearningReason) =
-		PositionCorrectionLearningResult(decision, reason, snapshot())
+	private fun result(decision: PositionCorrectionLearningDecision, reason: PositionCorrectionLearningReason) = PositionCorrectionLearningResult(decision, reason, snapshot())
 
 	private fun progressionFailure(a: PositionCorrectionPhysicalWatermark, b: PositionCorrectionPhysicalWatermark): PositionCorrectionLearningReason? = when {
 		b.teacherSequence < a.teacherSequence -> PositionCorrectionLearningReason.TEACHER_SEQUENCE_ROLLBACK
@@ -283,12 +331,17 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 		else -> null
 	}
 
-	private fun validSample(s: PositionErrorSample): Boolean =
-		s.target == dev.slimevr.tracking.trackers.TrackerPosition.HIP && s.bodyReference == PositionBodyReference.HIP_CENTER &&
-		s.coordinateSpace == s.teacherEpoch.coordinateSpace && s.coordinateSpace == s.predictionEpoch.coordinateSpace &&
-		s.assignmentGeneration == s.teacherEpoch.assignmentGeneration && s.assignmentGeneration == s.predictionEpoch.assignmentGeneration &&
-		s.teacherSequence >= 0 && s.predictionHmdSequence >= 0 && s.predictionImuSequence >= 0 &&
-		s.teacherSampleAtNanos in 0..s.evaluatedAtNanos && s.predictionHmdSampleAtNanos in 0..s.evaluatedAtNanos &&
+	private fun validSample(s: PositionErrorSample): Boolean = s.target == dev.slimevr.tracking.trackers.TrackerPosition.HIP &&
+		s.bodyReference == PositionBodyReference.HIP_CENTER &&
+		s.coordinateSpace == s.teacherEpoch.coordinateSpace &&
+		s.coordinateSpace == s.predictionEpoch.coordinateSpace &&
+		s.assignmentGeneration == s.teacherEpoch.assignmentGeneration &&
+		s.assignmentGeneration == s.predictionEpoch.assignmentGeneration &&
+		s.teacherSequence >= 0 &&
+		s.predictionHmdSequence >= 0 &&
+		s.predictionImuSequence >= 0 &&
+		s.teacherSampleAtNanos in 0..s.evaluatedAtNanos &&
+		s.predictionHmdSampleAtNanos in 0..s.evaluatedAtNanos &&
 		s.predictionImuSampleAtNanos in 0..s.evaluatedAtNanos &&
 		s.predictionInputEarliestAtNanos == minOf(s.predictionHmdSampleAtNanos, s.predictionImuSampleAtNanos) &&
 		s.predictionInputLatestAtNanos == maxOf(s.predictionHmdSampleAtNanos, s.predictionImuSampleAtNanos)
@@ -304,7 +357,11 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 			if (scale == 0.0) return 0.0
 			return scale * sqrt((x / scale) * (x / scale) + (y / scale) * (y / scale) + (z / scale) * (z / scale))
 		}
-		fun bounded(limit: Double): DVector { val n = norm(); return if (n > limit) this * (limit / n) else this }
+		fun bounded(limit: Double): DVector {
+			val n = norm()
+			return if (n > limit) this * (limit / n) else this
+		}
+
 		// Directed Float conversion cannot expand the state sphere or produce Inf at the public snapshot boundary.
 		fun snapshot() = Vector3(component(x), component(y), component(z))
 		companion object {

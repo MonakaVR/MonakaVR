@@ -1,0 +1,197 @@
+
+> slimevr@0.0.0 build <worktree>\gui
+> electron-vite build --config electron.vite.config.ts
+
+Git is dirty because of:
+ M server/core/src/main/java/dev/monaka/tracking/AssignedImuSampleFreshness.kt
+ M server/core/src/main/java/dev/monaka/tracking/BackgroundIkPose.kt
+ M server/core/src/main/java/dev/monaka/tracking/CommonWorldAuthority.kt
+ M server/core/src/main/java/dev/monaka/tracking/ConstraintIkWriteback.kt
+ M server/core/src/main/java/dev/monaka/tracking/ConstraintPipeline.kt
+ M server/core/src/main/java/dev/monaka/tracking/ConstraintResolver.kt
+ M server/core/src/main/java/dev/monaka/tracking/DirectConstraintOutput.kt
+ M server/core/src/main/java/dev/monaka/tracking/FeedbackExclusion.kt
+ M server/core/src/main/java/dev/monaka/tracking/HipBodyModelSnapshot.kt
+ M server/core/src/main/java/dev/monaka/tracking/HipRotationCorrection.kt
+ M server/core/src/main/java/dev/monaka/tracking/HybridTrackingDiagnostics.kt
+ M server/core/src/main/java/dev/monaka/tracking/MainDecoupledHipPredictor.kt
+ M server/core/src/main/java/dev/monaka/tracking/MainTrackerMountCalibration.kt
+ M server/core/src/main/java/dev/monaka/tracking/MonakaConfiguration.kt
+ M server/core/src/main/java/dev/monaka/tracking/MonakaInputConfigurationApi.kt
+ M server/core/src/main/java/dev/monaka/tracking/MonakaInputRpcDispatcher.kt
+ M server/core/src/main/java/dev/monaka/tracking/MonakaRuntime.kt
+ M server/core/src/main/java/dev/monaka/tracking/MonakaSolverComposition.kt
+ M server/core/src/main/java/dev/monaka/tracking/MonakaSourceTickSnapshot.kt
+ M server/core/src/main/java/dev/monaka/tracking/ObservationBackendRunner.kt
+ M server/core/src/main/java/dev/monaka/tracking/ObservationSourceProfileRegistry.kt
+ M server/core/src/main/java/dev/monaka/tracking/ObservationStore.kt
+ M server/core/src/main/java/dev/monaka/tracking/OutputContinuityController.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionCorrectionApplication.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionCorrectionConfig.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionCorrectionConfigJson.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionCorrectionLearningLaw.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionCorrectionNonHmdProductionAdapter.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionCorrectionRuntimeOrchestrator.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionCorrectionSolverContinuity.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionErrorMeasurement.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionPredictionContract.kt
+ M server/core/src/main/java/dev/monaka/tracking/PositionTemporalPairing.kt
+ M server/core/src/main/java/dev/monaka/tracking/PredictorFixedCalibration.kt
+ M server/core/src/main/java/dev/monaka/tracking/ResolvedTrackingPose.kt
+ M server/core/src/main/java/dev/monaka/tracking/SlimeIndependentImuOrientationCapture.kt
+ M server/core/src/main/java/dev/monaka/tracking/SlimeRawImuProductionBoundary.kt
+ M server/core/src/main/java/dev/monaka/tracking/SlimeTrackerObservationBackend.kt
+ M server/core/src/main/java/dev/monaka/tracking/SlimeTrackerPoseObservationAdapter.kt
+ M server/core/src/main/java/dev/monaka/tracking/SolverEffectiveConstraint.kt
+ M server/core/src/main/java/dev/monaka/tracking/TrackerBodyAssignments.kt
+ M server/core/src/main/java/dev/monaka/tracking/TrackerInputCapabilities.kt
+ M server/core/src/main/java/dev/monaka/tracking/TrustedHmdCommonWorldStream.kt
+ M server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilMain.kt
+ M server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilSession.kt
+ M server/core/src/main/java/dev/monaka/tracking/hil/CorePocHilStdioMain.kt
+ M server/core/src/main/java/dev/monaka/tracking/hil/HilValidityGate.kt
+ M server/core/src/main/java/dev/monaka/tracking/mtp/MtpInbox.kt
+ M server/core/src/main/java/dev/monaka/tracking/mtp/MtpObservationBackend.kt
+ M server/core/src/main/java/dev/monaka/tracking/mtp/MtpPoseAdapter.kt
+ M server/core/src/main/java/dev/monaka/tracking/pico/PicoMotionTrackerBridgeBodyAssignments.kt
+ M server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackAssignmentSet.kt
+ M server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackCandidateValidator.kt
+ M server/core/src/main/java/dev/monaka/tracking/revision/MainFallbackSelector.kt
+ M server/core/src/main/java/dev/monaka/tracking/revision/PersistentTrackerIdentity.kt
+ M server/core/src/main/java/dev/slimevr/VRServer.kt
+ M server/core/src/main/java/dev/slimevr/tracking/processor/HumanPoseManager.kt
+ M server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/HumanSkeleton.kt
+ M server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/IKConstraint.kt
+ M server/core/src/main/java/dev/slimevr/tracking/processor/skeleton/IKSolver.kt
+ M server/core/src/main/java/dev/slimevr/tracking/trackers/Tracker.kt
+ M server/core/src/main/java/dev/slimevr/tracking/trackers/TrackerResetsHandler.kt
+ M server/core/src/main/java/dev/slimevr/websocketapi/WebSocketVRBridge.kt
+ M server/core/src/test/java/dev/monaka/tracking/ArchitectureRevisionTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/AssignedImuSampleFreshnessTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/BodyModelPredictorHandoffTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/CalibratedMainTeacherTemporalPairingTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/CommonWorldAuthorityFoundationTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/ConstraintPipelineTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/ConstraintResolverTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/CorePocHilStdioTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/CorePocHilTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/DirectConstraintOutputTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/DynamicGateComparisonProbe.kt
+ M server/core/src/test/java/dev/monaka/tracking/HipBodyModelSnapshotTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/HipRotationCorrectionTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/HybridDiagnosticStressTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/HybridFoundationTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/LiveHipBodyModelPublicationTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/MainTrackerMountCalibrationTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/MonakaResolvedTickSnapshotTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/MonakaRuntimeTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/MonakaSolverCompositionTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/MonakaSourceTickSnapshotTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/MtpCorrectionProvenanceTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/MtpObservationBackendTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/MtpRotationOnlyDownstreamTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/ObservationBackendLifecycleTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/ObservationBackendRunnerTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/ObservationFreshnessPolicyTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/ObservationSourceProfileRegistryTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/OutputContinuityTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PositionCorrectionApplicationTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PositionCorrectionConfigurationTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PositionCorrectionLearningLawTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PositionCorrectionNonHmdProductionAdapterTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PositionCorrectionRuntimeOrchestratorTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PositionCorrectionSolverContinuityTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PositionErrorMeasurementTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PositionPredictionContractTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PositionTemporalPairingTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PredictorFixedCalibrationTestFixtures.kt
+ M server/core/src/test/java/dev/monaka/tracking/PredictorFixedCalibrationTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/PureMainDecoupledHipPredictorTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/RecoveryAngularDynamicsTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/RotationCorrectionConfigurationTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/RotationSampleProvenanceTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/SlimeIndependentImuOrientationCaptureTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/SlimeRawImuProductionBoundaryTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/SolverPositionReferenceSemanticsTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/StaticInputSelectionTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/TrustedHmdCommonWorldStreamTests.kt
+ M server/core/src/test/java/dev/monaka/tracking/pico/PicoMotionTrackerBridgeReceiverProviderTests.kt
+ M server/core/src/test/java/dev/slimevr/unit/PositionalIKCalibrationTargetDiagnosticsTests.kt
+ M server/core/src/test/java/dev/slimevr/unit/PositionalIKConvergenceDiagnosticsTests.kt
+ M server/core/src/test/java/dev/slimevr/unit/PositionalIKEffectiveTargetDiagnosticsTests.kt
+ M server/core/src/test/java/dev/slimevr/unit/PositionalIKFootGeometryDiagnosticsTests.kt
+ M server/core/src/test/java/dev/slimevr/unit/PositionalIKFootRotationDiagnosticsTests.kt
+ M server/core/src/test/java/dev/slimevr/unit/PositionalIKRotationCacheDiagnosticsTests.kt
+ M server/core/src/test/java/dev/slimevr/unit/PositionalIKSteadyStateDiagnosticsTests.kt
+ M server/core/src/test/java/dev/slimevr/unit/PositionalIKZeroErrorDiagnosticsTests.kt
+ M server/desktop/src/main/java/dev/monaka/tracking/desktop/FixedCodecProbe.kt
+ M server/desktop/src/main/java/dev/monaka/tracking/desktop/HmdProviderSampleTransport.kt
+ M server/desktop/src/main/java/dev/monaka/tracking/desktop/MonakaServerIntegration.kt
+ M server/desktop/src/main/java/dev/monaka/tracking/desktop/MtpUdpReceiver.kt
+ M server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdPoseAdmission.kt
+ M server/desktop/src/main/java/dev/monaka/tracking/desktop/RawHmdProviderPoseEvidence.kt
+ M server/desktop/src/main/java/dev/monaka/tracking/desktop/TrustedRawHmdPositionSource.kt
+ M server/desktop/src/main/java/dev/monaka/tracking/pico/desktop/PicoMotionTrackerBridgeServerIntegration.kt
+ M server/desktop/src/main/java/dev/slimevr/desktop/Main.kt
+ M server/desktop/src/main/java/dev/slimevr/desktop/platform/InboundProtobufEnvelope.kt
+ M server/desktop/src/main/java/dev/slimevr/desktop/platform/ProtobufBridge.kt
+ M server/desktop/src/main/java/dev/slimevr/desktop/platform/SteamVRBridge.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/DirectProtobufTests.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/HmdProviderEvidenceTransportTests.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/HybridServerIntegrationTests.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/InboundTransportSessionTests.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/MonakaDesktopTests.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/MonakaInputProcessProbe.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCapture.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpHilCaptureTests.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/MtpProcessE2E.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/RawHmdPoseAdmissionTests.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/SolverCompositionIntegrationTests.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/StrongTrustedHmdPolicyTests.kt
+ M server/desktop/src/test/java/dev/monaka/tracking/desktop/TrustedHmdPositionProvenanceTests.kt
+
+version is a07d0c7b-dirty
+[sentry-vite-plugin] Warning: No auth token provided. Will not create release. Please set the `authToken` option. You can find information on how to generate a Sentry auth token here: https://docs.sentry.io/api/auth/
+[sentry-vite-plugin] Warning: No auth token provided. Will not upload source maps. Please set the `authToken` option. You can find information on how to generate a Sentry auth token here: https://docs.sentry.io/api/auth/
+vite v5.4.21 building SSR bundle for production...
+transforming...
+✓ 16 modules transformed.
+rendering chunks...
+out/main/chunks/Square30x30Logo-CHlqmClk.png   0.70 kB
+out/main/chunks/JavaVersion-mRrLWrXm.jar       0.89 kB
+out/main/chunks/icon-BRhPvPJ6.png             11.88 kB
+out/main/index.js                             39.88 kB
+✓ built in 606ms
+vite v5.4.21 building SSR bundle for production...
+transforming...
+✓ 2 modules transformed.
+rendering chunks...
+out/preload/index.js  3.80 kB
+✓ built in 22ms
+vite v5.4.21 building for production...
+[sentry-vite-plugin] Info: Sending telemetry data on issues and performance to Sentry. To disable telemetry, set `options.telemetry` to `false`.
+transforming...
+[DEPRECATED] jotai/babel/plugin-react-refresh is deprecated and will be removed in v3.
+Please use the `jotai-babel` package instead: https://github.com/jotaijs/jotai-babel
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2235 modules transformed.
+rendering chunks...
+out/renderer/index.html                                               0.68 kB
+out/renderer/assets/1f9cb-DO_VegKU.svg                                4.10 kB
+out/renderer/assets/poppins-latin-ext-700-normal-cby-RkWa.woff2       5.43 kB
+out/renderer/assets/poppins-latin-ext-500-normal-CK-6C4Hw.woff2       5.48 kB
+out/renderer/assets/poppins-latin-ext-700-normal-DctTR6Tg.woff        7.33 kB
+out/renderer/assets/poppins-latin-ext-500-normal-CgAe2rWW.woff        7.37 kB
+out/renderer/assets/poppins-latin-500-normal-C8OXljZJ.woff2           7.75 kB
+out/renderer/assets/poppins-latin-700-normal-Qrb0O0WB.woff2           7.82 kB
+out/renderer/assets/poppins-latin-500-normal-DGXqpDMm.woff           10.37 kB
+out/renderer/assets/poppins-latin-700-normal-BVuQR_eA.woff           10.43 kB
+out/renderer/assets/poppins-devanagari-500-normal-BIdkeU1p.woff2     39.08 kB
+out/renderer/assets/poppins-devanagari-700-normal-O-jipLrW.woff2     39.25 kB
+out/renderer/assets/poppins-devanagari-700-normal-fHs-vx92.woff      52.25 kB
+out/renderer/assets/poppins-devanagari-500-normal-DMPDjHtT.woff      52.42 kB
+out/renderer/assets/index-CLOvGF3_.css                              104.12 kB
+out/renderer/assets/index-C-eH_J2E.js                             5,517.18 kB
+✓ built in 19.20s

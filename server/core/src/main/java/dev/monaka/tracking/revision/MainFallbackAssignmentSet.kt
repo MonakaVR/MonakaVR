@@ -15,20 +15,16 @@ data class MainFallbackAssignmentSet<Target : Any, Tracker : Any> private constr
 		target: Target,
 		main: Tracker,
 		rotationFallback: Tracker? = null,
-	): MainFallbackAssignmentSet<Target, Tracker> =
-		from(entries + (target to MainFallbackAssignment(main, rotationFallback)))
+	): MainFallbackAssignmentSet<Target, Tracker> = from(entries + (target to MainFallbackAssignment(main, rotationFallback)))
 
-	fun unassign(target: Target): MainFallbackAssignmentSet<Target, Tracker> =
-		from(entries - target)
+	fun unassign(target: Target): MainFallbackAssignmentSet<Target, Tracker> = from(entries - target)
 
 	companion object {
-		fun <Target : Any, Tracker : Any> empty(): MainFallbackAssignmentSet<Target, Tracker> =
-			MainFallbackAssignmentSet(emptyMap())
+		fun <Target : Any, Tracker : Any> empty(): MainFallbackAssignmentSet<Target, Tracker> = MainFallbackAssignmentSet(emptyMap())
 
 		fun <Target : Any, Tracker : Any> from(
 			entries: Map<Target, MainFallbackAssignment<Tracker>>,
-		): MainFallbackAssignmentSet<Target, Tracker> =
-			MainFallbackAssignmentSet(entries.toMap())
+		): MainFallbackAssignmentSet<Target, Tracker> = MainFallbackAssignmentSet(entries.toMap())
 
 		/**
 		 * Architecture Revision migration rule: a legacy one-tracker-per-target
@@ -36,7 +32,6 @@ data class MainFallbackAssignmentSet<Target : Any, Tracker : Any> private constr
 		 */
 		fun <Target : Any, Tracker : Any> fromLegacyMainOnly(
 			legacy: Map<Target, Tracker>,
-		): MainFallbackAssignmentSet<Target, Tracker> =
-			from(legacy.mapValues { (_, tracker) -> MainFallbackAssignment(main = tracker) })
+		): MainFallbackAssignmentSet<Target, Tracker> = from(legacy.mapValues { (_, tracker) -> MainFallbackAssignment(main = tracker) })
 	}
 }

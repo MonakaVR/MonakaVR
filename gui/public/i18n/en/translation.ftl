@@ -1715,3 +1715,16 @@ toolbar-unassigned_trackers = {$count} trackers unassigned
 
 # Desktop Bridge controls
 settings-sidebar-monaka-bridge = Monaka Bridge
+
+## Monaka tracking modes and input diagnostics
+monaka-tracking-mode-ik = IK output
+monaka-tracking-mode-direct = Direct 6DoF output
+monaka-tracking-mode-hybrid = Hybrid (Direct + IK fallback)
+monaka-tracking-restart-required = Restart required to apply saved mode
+monaka-tracking-capability = Declared capability
+monaka-tracking-validity = Current input validity
+monaka-tracking-offline = Offline / unavailable
+monaka-tracking-assigned = Assigned source
+monaka-tracking-active = Active mode
+monaka-tracking-pending = Saved, not yet applied
+monaka-tracking-unknown = Unknown / unverified
