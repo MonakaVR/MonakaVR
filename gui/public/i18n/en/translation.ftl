@@ -1714,6 +1714,7 @@ toolbar-assigned_trackers = {$count} trackers assigned
 toolbar-unassigned_trackers = {$count} trackers unassigned
 
 # Desktop Bridge controls
+settings-sidebar-monaka-input = MVIP inputs
 settings-sidebar-monaka-bridge = Monaka Bridge
 
 ## Monaka tracking modes and input diagnostics

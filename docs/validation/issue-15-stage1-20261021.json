@@ -1,0 +1,320 @@
+{
+  "schema": "monakavr.issue-15.stage1.validation.v1",
+  "date": "2026-10-21",
+  "repository": "MonakaVR/MonakaVR",
+  "issue": 15,
+  "base": {
+    "branch": "dev",
+    "sha": "f02f43e935f9ec42387b38a71483583ef8bc2837"
+  },
+  "branch": "feature/issue-15-independent-mvip-settings",
+  "implementation_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a",
+  "pull_request": "https://github.com/MonakaVR/MonakaVR/pull/18",
+  "phase0_reference": {
+    "pull_request": 17,
+    "sha": "7147a2d4c29a378f60353a1d5a0b4d5c1ba31ea8",
+    "merged": false
+  },
+  "route": "/settings/monaka-input",
+  "product_files": [
+    "gui/src/App.tsx",
+    "gui/src/components/settings/SettingsSidebar.tsx",
+    "gui/src/components/settings/SettingsLayout.tsx",
+    "gui/src/components/settings/pages/MonakaBridgeSettings.tsx",
+    "gui/public/i18n/en/translation.ftl",
+    "gui/public/i18n/ja/translation.ftl"
+  ],
+  "unchanged_git_blobs": {
+    "gui/src/components/settings/pages/MonakaInputSettings.tsx": "4a538b7235c841821d87aa1ef794d7cac80e6497",
+    "gui/src/monaka-input/controller.ts": "8b8e48cb244e7ca535e2ce570822bb571a8965d5",
+    "gui/src/monaka-input/socket.ts": "f2d15cde39cce072b94b22aa2a2545324c9d8a2c",
+    "server/core/src/main/java/dev/monaka/tracking/MonakaInputConfigurationApi.kt": "2b4794755b57e282f5c2678475bcfba9fe8ffe9a",
+    "server/core/src/main/java/dev/monaka/tracking/MonakaConfiguration.kt": "36fcc61bbca53668a77ab7340f6cb705c618e7bd"
+  },
+  "local": {
+    "jdk": "Microsoft HotSpot 17.0.20.1 / build 17.0.20.1+1-LTS",
+    "spotless": {
+      "result": "PASS"
+    },
+    "core": {
+      "result": "PASS",
+      "tests": 2015,
+      "failures": 0,
+      "skipped": 0
+    },
+    "desktop": {
+      "result": "PASS",
+      "tests": 153,
+      "failures": 0,
+      "skipped": 0
+    },
+    "mtp_process_e2e": {
+      "result": "PASS",
+      "scenarios": 11,
+      "receipt": "server/desktop/build/mtp-process-e2e/cf1e61c9-8e11-43d6-9b58-a34d9a0538ce/result.json",
+      "boundary": "production ingress / Core / private IK input / computed tracker / ProtobufBridge bytes with synthetic external publisher",
+      "receipt_sha256": "b7be8aff2ec260f1c90fbd843b82e81227942d08661d213cb0b85dc87e32bffd"
+    },
+    "gui_lint": {
+      "result": "PASS"
+    },
+    "gui_build": {
+      "result": "PASS"
+    },
+    "route_types": {
+      "result": "PASS"
+    },
+    "bridge_smoke_types": {
+      "result": "PASS"
+    },
+    "dedicated_prettier": {
+      "result": "PASS"
+    },
+    "route_edge": {
+      "result": "PASS",
+      "tests": 6,
+      "failures": 0,
+      "skipped": 0,
+      "fixture": "public consumer GUI RPC only; actual App/providers/routes"
+    },
+    "isolated_electron": {
+      "result": "PASS",
+      "tests": 1,
+      "failures": 0,
+      "skipped": 0,
+      "bridge_ipc_calls": 0,
+      "production_main": false
+    },
+    "input_bridge_localization_node": {
+      "result": "PASS",
+      "tests": 24,
+      "failures": 0,
+      "skipped": 0,
+      "files": [
+        "input-selection.test.ts",
+        "controller.test.ts",
+        "ipc.test.ts",
+        "parallel-localization.test.ts"
+      ],
+      "service_suite_included": false
+    },
+    "diagnostic_status": {
+      "types": "PASS",
+      "node": 40,
+      "edge": 17,
+      "failures": 0
+    },
+    "mode": {
+      "types": "PASS",
+      "node": 10,
+      "edge": 3,
+      "failures": 0
+    },
+    "legacy_bridge_software_renderer": {
+      "result": "PASS",
+      "tests": 2,
+      "failures": 0,
+      "fixture": "mock API; no native validator"
+    },
+    "native_bridge_validator_service": {
+      "result": "NOT RUN"
+    },
+    "route_final_run": {
+      "started_utc": "2026-10-21T08:17:44.231Z",
+      "duration_ms": 44756.598,
+      "expected": 7,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0
+    }
+  },
+  "screenshots": [
+    {
+      "file": "issue-15-stage1/before-desktop.png",
+      "sha256": "1150e13e13914f6bad6dafdaacc076e31d4b1d4c329f10ef25783d2237ab8ee1",
+      "bytes": 62448,
+      "source_gui_sha": "3840a4cc3729cc60e7f33fe5f049d3596e2f8a11",
+      "gui_equals_base": true
+    },
+    {
+      "file": "issue-15-stage1/after-desktop.png",
+      "sha256": "169977df0e6ed4dfca8669eaf70127f5152396a1ef299a0c257557d80e537376",
+      "bytes": 93637
+    },
+    {
+      "file": "issue-15-stage1/after-mobile.png",
+      "sha256": "6d5cca79c31130064d9d452d6400674512ee27188f50bbd5c540a17a6b913635",
+      "bytes": 66822
+    },
+    {
+      "file": "issue-15-stage1/after-electron.png",
+      "sha256": "330f4540c80c7cef27ed617b25c07bb0aa303e782b59b7511b782ed8d0940233",
+      "bytes": 89501
+    }
+  ],
+  "github_actions": {
+    "status": "PASS",
+    "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a",
+    "full_build": 39567872721,
+    "release_tooling": 39567872610,
+    "pr_merge_checkout_sha": "e50b71f4e4f74919765c7e0e7dbd99e1337e4294",
+    "release_evidence": {
+      "result": "PASS",
+      "job_id": 119114450057,
+      "source_commit": "e50b71f4e4f74919765c7e0e7dbd99e1337e4294",
+      "artifact_id": 12330982216,
+      "github_digest": "sha256:04df8c21e8f2b07671f49c32cc8fdce935ff5c9125eabe2c28611dfdad073f06",
+      "release_archive_sha256": "83c05e81945b21944fac986bcf266c815faec57dd509db5c991cbb48271e162d",
+      "hardware_validation": "NOT RUN",
+      "steamvr_interactive": "NOT RUN"
+    },
+    "full_build_pass": 12,
+    "full_build_fail": 0,
+    "full_build_skip": 1,
+    "release_tooling_pass": 2,
+    "release_tooling_fail": 0,
+    "jobs": [
+      {
+        "id": 119114450057,
+        "name": "Monaka current v2 software release evidence",
+        "conclusion": "success"
+      },
+      {
+        "id": 119114450377,
+        "name": "Build Desktop Server",
+        "conclusion": "success"
+      },
+      {
+        "id": 119114450615,
+        "name": "Build GUI Assets",
+        "conclusion": "success"
+      },
+      {
+        "id": 119114450652,
+        "name": "Gui Checks",
+        "conclusion": "success"
+      },
+      {
+        "id": 119114450670,
+        "name": "Java Checks",
+        "conclusion": "success"
+      },
+      {
+        "id": 119114450695,
+        "name": "Configure Build Matrix",
+        "conclusion": "success"
+      },
+      {
+        "id": 119114481487,
+        "name": "Build bindings provider for ubuntu-22.04",
+        "conclusion": "success"
+      },
+      {
+        "id": 119114481497,
+        "name": "Build bindings provider for windows-latest",
+        "conclusion": "success"
+      },
+      {
+        "id": 119115288535,
+        "name": "Build Android APK",
+        "conclusion": "success"
+      },
+      {
+        "id": 119116052632,
+        "name": "Package Desktop (linux - ubuntu-22.04)",
+        "conclusion": "success"
+      },
+      {
+        "id": 119116052723,
+        "name": "Package Desktop (windows - windows-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 119116052994,
+        "name": "Package Desktop (macos - macos-latest)",
+        "conclusion": "success"
+      },
+      {
+        "id": 119118159033,
+        "name": "Finalize Release Draft",
+        "conclusion": "skipped"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12331295736,
+        "name": "release-macos-macos-latest",
+        "digest": "sha256:9d514276f71ed47af8e5caaee82a80e4851c37d39ec10d464954da74a87bb463",
+        "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a"
+      },
+      {
+        "id": 12331221233,
+        "name": "release-android",
+        "digest": "sha256:03baaf4788a651bb6ed57e68cfd9036d737cbea38643a6ac023e55770d54c0f5",
+        "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a"
+      },
+      {
+        "id": 12331062276,
+        "name": "release-linux-ubuntu-22.04",
+        "digest": "sha256:d06a0f89c87b38175213cda582f232a1943c2130a9b41a7a50315638cebdb8af",
+        "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a"
+      },
+      {
+        "id": 12331007487,
+        "name": "release-windows-windows-latest",
+        "digest": "sha256:e1e3a6d675c2da10e6428e95d8d3878a4f075895f25bb57a929b08aee9799d93",
+        "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a"
+      },
+      {
+        "id": 12330982216,
+        "name": "release-monaka-software-v2",
+        "digest": "sha256:04df8c21e8f2b07671f49c32cc8fdce935ff5c9125eabe2c28611dfdad073f06",
+        "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a"
+      },
+      {
+        "id": 12330841990,
+        "name": "bindings-provider-windows-windows-latest",
+        "digest": "sha256:f90d5ca425a9e659ec1fdce842166588e240da8e66b977a5218c76fc81383ae8",
+        "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a"
+      },
+      {
+        "id": 12330637920,
+        "name": "bindings-provider-linux-ubuntu-22.04",
+        "digest": "sha256:c8ff7162de93dcda6d18ac80acf6ba6fa3ae68449fe964250a52903ac3930c7f",
+        "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a"
+      },
+      {
+        "id": 12330188495,
+        "name": "server-jar",
+        "digest": "sha256:feb6646fc83d281a295f461548f7fb8494e331b592c8784a2e4e87f96a8e6b88",
+        "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a"
+      },
+      {
+        "id": 12330038520,
+        "name": "gui-dist",
+        "digest": "sha256:8155683dd84999a126f142b5a2c68ce733ff6e4eaa6da568c8f25ba8049e41e5",
+        "source_sha": "3dbfd0089c59c910af89ef228ebd0fa2d46d655a"
+      }
+    ],
+    "followup_documentation_commit": "Product and executable tests unchanged; see PR #18 checks and final report for final HEAD."
+  },
+  "architecture_acceptance": {
+    "overall": "NOT SATISFIED",
+    "producer_absent_ui": "PASS within Web/isolated renderer + Core GUI RPC fixture",
+    "two_independent_conforming_producer_implementations": "NOT RUN",
+    "whole_product_startup_no_producer_asset_access": "NOT RUN; retained legacy main/service/IPC debt belongs to Stage #16",
+    "identity_session_space_feedback": "existing software regressions PASS; independent producer/hardware combinations NOT RUN",
+    "new_producer_specific_dependency": false
+  },
+  "not_run": [
+    "two independently implemented conforming MVIP producers",
+    "production Electron main startup independence",
+    "native Bridge validator/service suite",
+    "interactive OS manual operation",
+    "physical HIL",
+    "SteamVR runtime",
+    "JNA DLL execution"
+  ],
+  "merged": false,
+  "stage16_started": false
+}

@@ -800,6 +800,7 @@ unknown_device-modal-forget = 無視する
 
 
 # Desktop Bridge controls
+settings-sidebar-monaka-input = MVIP入力
 settings-sidebar-monaka-bridge = Monaka Bridge
 
 ## Monakaのトラッキングモードと入力診断
