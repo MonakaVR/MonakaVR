@@ -127,6 +127,10 @@ export function SettingsSidebar() {
         <div className="flex flex-col gap-3">
           <Typography variant="section-title" id="settings-sidebar-utils" />
           <div className="flex flex-col gap-2">
+            <SettingsLink
+              to="/settings/monaka-input"
+              id="settings-sidebar-monaka-input"
+            />
             <SettingsLink to="/bridge" id="settings-sidebar-monaka-bridge" />
             <SettingsLink to="/settings/serial" id="settings-sidebar-serial" />
             <SettingsLink
