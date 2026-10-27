@@ -10,8 +10,9 @@ Use the repository's locked pnpm dependencies and build the existing SolarXR
 submodule first. From `gui/`:
 
 ```powershell
-$env:MONAKA_BRIDGE_TEST_VALIDATOR = '<5fbf2a9 build>/monaka_bridge_config.exe'
-$env:MONAKA_BRIDGE_TEST_P2R_VALIDATOR = '<42ec6c8 build>/monaka_bridge_config.exe'
+$env:MONAKA_BRIDGE_TEST_VALIDATOR = '<pinned shared-transaction build>/monaka_bridge_config.exe'
+$env:MONAKA_BRIDGE_TEST_P2R_VALIDATOR = $env:MONAKA_BRIDGE_TEST_VALIDATOR
+$env:MONAKA_BRIDGE_TEST_LEGACY_VALIDATOR = '<pinned pre-P2R build>/monaka_bridge_config.exe'
 $env:MONAKA_DESKTOP_TEST_ELECTRON = '<locked Electron 40.9.1>/electron.exe'
 pnpm test
 pnpm lint
@@ -33,6 +34,15 @@ successes. `bridge-tests.tsconfig.json` compiles real service/controller/IPC
 modules for Node's test runner. Native CLI tests validate actual config files;
 fault injection is explicit in test constructors. `bridge-smoke.tsconfig.json`
 checks browser and native fixtures separately from the existing product lint.
+
+Record each validator's source commit and binary SHA-256 from its build receipt,
+then check the actual file hash before running. Copy the verified executables
+into an isolated test directory; never point these tests at a live configuration.
+All three validator variables above are required by the standard Node suite.
+The old pre-P2R executable belongs only in the legacy negative-control variable;
+it is not a compatible default validator for the current transaction tests.
+Consumer-only tests can be run with `pnpm test:consumer` without native validators,
+but that result does not replace the standard suite or product-startup acceptance.
 
 The browser suite uses installed Edge in an independent headless profile. The
 Electron suite uses the actual product preload, private IPC handler, service,

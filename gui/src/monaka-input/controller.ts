@@ -106,7 +106,8 @@ export class InputSelectionController {
         this.state.error = String(error instanceof Error ? error.message : error);
     } finally {
       this.loading = false;
-      this.state.busy = false;
+      // A save may now own the UI lock; its completion must release it.
+      if (epoch === this.epoch) this.state.busy = false;
       if (this.reloadRequested) {
         this.reloadRequested = false;
         await this.load(true);
