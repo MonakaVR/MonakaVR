@@ -188,3 +188,45 @@ test('another writer generation never overwrites the dirty draft or the saved as
   assert.equal(api.value.assignments[0].qSource, 'publisher-b');
   assert.equal(model.state.needsReload, true);
 });
+
+test('an older metadata request cannot unlock an in-flight save', async () => {
+  const api = new Api();
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectQ('publisher-a');
+  const staleSnapshot = structuredClone(api.value);
+  let finishLoad!: (value: InputSnapshot) => void;
+  let finishSave!: () => void;
+  const request = api.request.bind(api);
+  api.request = async (fields) => {
+    if (fields.action === 'snapshot')
+      return new Promise<InputSnapshot>((resolve) => {
+        finishLoad = resolve;
+      });
+    await new Promise<void>((resolve) => {
+      finishSave = resolve;
+    });
+    return request(fields);
+  };
+  const loading = model.load();
+  const saving = model.save();
+  finishLoad(staleSnapshot);
+  await loading;
+  try {
+    assert.equal(model.state.busy, true);
+    model.selectQ('publisher-b');
+    model.selectSix(null);
+    model.cancel();
+    await model.save();
+    assert.equal(model.state.draft.qSource, 'publisher-a');
+    assert.equal(model.state.draft.sixDofSource, 'publisher-a');
+  } finally {
+    finishSave();
+    await saving;
+  }
+  assert.equal(api.saves.length, 1);
+  assert.equal(model.state.busy, false);
+  assert.equal(model.state.generation, '1');
+  assert.equal(model.state.draft.qSource, 'publisher-a');
+  assert.equal(model.state.dirty, false);
+});
