@@ -32,6 +32,7 @@ import { initStores } from './store';
 import { closeLogger, logger } from './logger';
 
 import { spawn } from 'node:child_process';
+import { ownedChild } from './owned-child';
 import { discordPresence } from './presence';
 import { options } from './cli';
 import { ServerStatusEvent } from 'electron/preload/interface';
@@ -507,20 +508,7 @@ const spawnServer = async () => {
     logger.info('Server process exiting');
   });
 
-  const exited = new Promise<void>((resolve) => serverProcess.once('exit', resolve));
-
-  return {
-    process: serverProcess,
-    close: () => {
-      // Graceful request targets only this retained child. Bound the fallback.
-      serverProcess.stdin?.write('exit\n');
-      const deadline = setTimeout(() => {
-        if (serverProcess.exitCode === null) serverProcess.kill();
-      }, 5000);
-      serverProcess.once('exit', () => clearTimeout(deadline));
-    },
-    waitForExit: () => exited,
-  };
+  return ownedChild(serverProcess);
 };
 
 const createFolders = async () => {
