@@ -190,6 +190,82 @@ test('mobile settings selector has an independent input route', async ({ page })
   expect(fixture.saves).toEqual([]);
 });
 
+test('restart-required snapshot disables editing and saving without losing a draft', async ({
+  page,
+}) => {
+  const fixture = new CoreUiFixture();
+  await fixture.install(page);
+  await page.goto(routeUrl);
+  const q = page.getByLabel('Q Source', { exact: true });
+  await expect(q).toBeEnabled();
+  await q.selectOption('q-only');
+  fixture.snapshot.restartRequired = true;
+  await expect(q).toBeDisabled();
+  await expect(q).toHaveValue('q-only');
+  await expect(page.getByLabel('6DoF Source', { exact: true })).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: 'Save input choices', exact: true })
+  ).toBeDisabled();
+  await expect(page.getByRole('status')).toContainText('Restart required');
+  expect(fixture.saves).toEqual([]);
+});
+
+test('failed snapshot shows unknown usability and preserves a draft through recovery', async ({
+  page,
+}) => {
+  const fixture = new CoreUiFixture();
+  fixture.snapshot.candidates.forEach((row) => (row.qUsableNow = true));
+  await fixture.install(page);
+  await page.goto(routeUrl);
+  const q = page.getByLabel('Q Source', { exact: true });
+  await expect(q).toBeEnabled();
+  await q.selectOption('q-only');
+  fixture.snapshotError = true;
+  await expect(q).toBeDisabled();
+  await expect(q).toHaveValue('q-only');
+  await expect(page.getByLabel('Current input usability')).not.toContainText(
+    'valid now'
+  );
+  await expect(page.getByLabel('Current input usability')).toContainText('unknown');
+  await expect(
+    page.getByRole('button', { name: 'Save input choices', exact: true })
+  ).toBeDisabled();
+  expect(fixture.saves).toEqual([]);
+  fixture.snapshotError = false;
+  await expect(q).toBeEnabled();
+  await expect(q).toHaveValue('q-only');
+  await page.getByRole('button', { name: 'Save input choices', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Save input choices', exact: true })
+  ).toBeDisabled();
+  expect(fixture.saves).toHaveLength(1);
+});
+
+test('Japanese input controls remain operable at a narrow viewport and large text', async ({
+  page,
+}) => {
+  const fixture = new CoreUiFixture();
+  await fixture.install(page, 'ja');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(routeUrl);
+  const q = page.getByLabel('Q入力元', { exact: true });
+  await expect(q).toBeEnabled();
+  await page.addStyleTag({ content: 'html { font-size: 24px; }' });
+  await expect(page.getByRole('heading', { name: 'Qと6DoFの入力元' })).toBeVisible();
+  await q.selectOption('q-only');
+  await page.getByRole('button', { name: '入力の選択を保存', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: '入力の選択を保存', exact: true })
+  ).toBeDisabled();
+  const panel = page.locator('section[aria-labelledby="monaka-input-title"]');
+  expect(await panel.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  await page.screenshot({
+    path: 'build/monaka-input-route/after-japanese-large-text.png',
+    fullPage: true,
+  });
+  expect(fixture.saves).toHaveLength(1);
+});
+
 test('legacy Bridge screen remains accessible without embedding consumer inputs', async ({
   page,
 }) => {
