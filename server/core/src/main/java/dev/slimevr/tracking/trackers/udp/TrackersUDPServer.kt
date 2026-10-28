@@ -31,24 +31,28 @@ import kotlin.coroutines.resume
 /**
  * Receives trackers data by UDP using extended owoTrack protocol.
  */
-class TrackersUDPServer(private val port: Int, name: String, private val trackersConsumer: Consumer<Tracker>) : Thread(name) {
+class TrackersUDPServer @JvmOverloads constructor(private val port: Int, name: String, private val loopbackOnly: Boolean = false, private val trackersConsumer: Consumer<Tracker>) : Thread(name) {
 	private val random = Random()
 	private val connections: MutableList<UDPDevice> = FastList()
 	private val connectionsByAddress: MutableMap<SocketAddress, UDPDevice> = HashMap()
 	private val connectionsByMAC: MutableMap<String, UDPDevice> = HashMap()
-	private val broadcastAddresses: List<InetSocketAddress> = try {
-		NetworkInterface.getNetworkInterfaces().asSequence().filter {
-			// Ignore loopback, PPP, virtual and disabled interfaces
-			!it.isLoopback && it.isUp && !it.isPointToPoint && !it.isVirtual
-		}.flatMap {
-			it.interfaceAddresses.asSequence()
-		}.map {
-			// This ignores IPv6 addresses
-			it.broadcast
-		}.filter { it != null && it.isSiteLocalAddress }.map { InetSocketAddress(it, this.port) }.toList()
-	} catch (e: Exception) {
-		LogManager.severe("[TrackerServer] Can't enumerate network interfaces", e)
+	private val broadcastAddresses: List<InetSocketAddress> = if (loopbackOnly) {
 		emptyList()
+	} else {
+		try {
+			NetworkInterface.getNetworkInterfaces().asSequence().filter {
+				// Ignore loopback, PPP, virtual and disabled interfaces
+				!it.isLoopback && it.isUp && !it.isPointToPoint && !it.isVirtual
+			}.flatMap {
+				it.interfaceAddresses.asSequence()
+			}.map {
+				// This ignores IPv6 addresses
+				it.broadcast
+			}.filter { it != null && it.isSiteLocalAddress }.map { InetSocketAddress(it, this.port) }.toList()
+		} catch (e: Exception) {
+			LogManager.severe("[TrackerServer] Can't enumerate network interfaces", e)
+			emptyList()
+		}
 	}
 	private val parser = UDPProtocolParser()
 
@@ -298,7 +302,7 @@ class TrackersUDPServer(private val port: Int, name: String, private val tracker
 	override fun run() {
 		val serialBuffer2 = StringBuilder()
 		try {
-			socket = DatagramSocket(port)
+			socket = if (loopbackOnly) DatagramSocket(InetSocketAddress("127.0.0.1", port)) else DatagramSocket(port)
 			var prevPacketTime = System.currentTimeMillis()
 			socket.soTimeout = 250
 			while (true) {
