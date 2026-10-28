@@ -10,6 +10,7 @@ internal data class SlimeIndependentImuOrientationSample(
 )
 
 internal enum class SlimeImuCaptureRejection {
+	OUTPUT_SOURCE_NOT_ALLOWED,
 	SAMPLE_UNAVAILABLE,
 	SAMPLE_UNSTABLE,
 	SOURCE_EPOCH_CHANGED,
@@ -43,6 +44,7 @@ internal class SlimeIndependentImuOrientationCapture(
 	private fun captureLocked(tracker: Tracker, observedAtNanos: Long, cutoff: Long?): SlimeImuCaptureResult {
 		require(observedAtNanos >= 0L)
 		fun reject(reason: SlimeImuCaptureRejection) = SlimeImuCaptureResult.Unavailable(reason)
+		if (FeedbackExclusion.isOutputTracker(tracker)) return reject(SlimeImuCaptureRejection.OUTPUT_SOURCE_NOT_ALLOWED)
 		val before = tracker.correctionOrientationSample()
 			?: return reject(SlimeImuCaptureRejection.SAMPLE_UNAVAILABLE)
 		if (cutoff != null && before.receivedAtSystemNanos > cutoff) {

@@ -18,6 +18,7 @@ class DirectConstraintOutput(
 			hasPosition = true, hasRotation = true, isInternal = true, isComputed = true,
 			allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false,
 		).also {
+			FeedbackExclusion.registerOwnedOutput(it)
 			it.monakaOutputPose = OutputPose(body, space)
 			it.status = TrackerStatus.DISCONNECTED
 		}
