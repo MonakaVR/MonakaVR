@@ -25,5 +25,5 @@ if (process.platform === 'linux') {
   program.addOption(noUdevOption);
 }
 
-program.parse(process.argv);
+program.parse(process.argv, { from: 'electron' });
 export const options = program.opts();
