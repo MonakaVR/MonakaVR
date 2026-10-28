@@ -46,23 +46,24 @@ export class CoreUiFixture {
   requests: Record<string, unknown>[] = [];
   connections: WebSocketRoute[] = [];
   restartRequired = false;
+  snapshotError = false;
   connected = true;
-  async install(page: Page) {
-    await page.addInitScript(() => {
+  async install(page: Page, language = 'en') {
+    await page.addInitScript((lang) => {
       localStorage.setItem(
         'config.json',
         JSON.stringify({
           uuid: 'issue-15-software-fixture',
           doneOnboarding: true,
-          lang: 'en',
+          lang,
           errorTracking: false,
           discordPresence: false,
           skeletonPreview: false,
           homeLayout: 'table',
         })
       );
-      localStorage.setItem('i18nextLng', 'en');
-    });
+      localStorage.setItem('i18nextLng', lang);
+    }, language);
     await page.routeWebSocket('ws://127.0.0.1:29992', (socket) => {
       if (!this.connected) {
         socket.close();
@@ -75,6 +76,16 @@ export class CoreUiFixture {
         if (request.type !== 'monaka_inputs_v1') throw new Error('Unexpected text RPC');
         this.requests.push(request);
         const response = { type: request.type, id: request.id };
+        if (request.action === 'snapshot' && this.snapshotError) {
+          socket.send(
+            JSON.stringify({
+              ...response,
+              ok: false,
+              error: 'Core snapshot unavailable',
+            })
+          );
+          return;
+        }
         if (request.action === 'save') {
           if (this.restartRequired || request.generation !== this.snapshot.generation) {
             socket.send(

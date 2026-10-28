@@ -19,7 +19,9 @@ test('isolated Electron loads the real App with zero Bridge IPC', async () => {
     const fixture = new CoreUiFixture();
     fixture.snapshot.candidates = [];
     await fixture.install(page);
-    await page.goto('http://127.0.0.1:4207' + routeUrl);
+    await page.goto(
+      `http://127.0.0.1:${process.env.MONAKA_INPUT_SMOKE_PORT ?? '4207'}` + routeUrl
+    );
     await expect(page.getByLabel('Q Source', { exact: true })).toBeEnabled();
     await expect(page.locator('.settings-layout')).toBeVisible();
     await page.reload();

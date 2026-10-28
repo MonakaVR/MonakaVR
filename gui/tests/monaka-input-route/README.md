@@ -9,7 +9,12 @@ pnpm exec playwright test --config tests/monaka-input-route/playwright.config.ts
 
 The suite loads the real application entry point, providers, layout, routing,
 settings navigation, and unchanged input widget/controller/socket. Edge must be
-installed. The Vite server is owned by Playwright on loopback port 4207.
+installed. The Vite server is owned by Playwright on loopback. Set
+`MONAKA_INPUT_SMOKE_PORT` to an available OS-assigned test port (default 4207).
+The offline runner reserves and releases an ephemeral port immediately before
+launch; strictPort prevents falling through to another port on a race.
+Vite cache stays in this checkout's build directory, including when dependencies
+are shared read-only. The resolved font package is explicitly allowed for serving.
 
 `CoreUiFixture` replaces only the public consumer GUI WebSocket endpoint. It
 accepts the existing `monaka_inputs_v1` JSON RPC; normal SolarXR binary messages

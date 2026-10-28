@@ -230,3 +230,53 @@ test('an older metadata request cannot unlock an in-flight save', async () => {
   assert.equal(model.state.draft.qSource, 'publisher-a');
   assert.equal(model.state.dirty, false);
 });
+
+test('pending Core restart blocks input edits without attempting a write', async () => {
+  const api = new Api();
+  Object.assign(api.value, { restartRequired: true });
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectQ('publisher-a');
+  model.selectSix('publisher-b');
+  await model.save();
+  assert.equal(model.state.draft.qSource, null);
+  assert.equal(model.state.draft.sixDofSource, null);
+  assert.equal(api.saves.length, 0);
+});
+
+test('failed catalog read retains identities but blocks edits and writes until readback', async () => {
+  const api = new Api();
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectQ('publisher-a');
+  const savedRequest = api.request.bind(api);
+  api.request = async (fields) => {
+    if (fields.action === 'snapshot') throw new Error('Core disconnected');
+    return savedRequest(fields);
+  };
+  await model.load();
+  model.selectQ('publisher-b');
+  await model.save();
+  assert.equal(model.state.draft.qSource, 'publisher-a');
+  assert.equal(api.saves.length, 0);
+  assert.equal(Reflect.get(model.state, 'snapshotFresh'), false);
+  api.request = savedRequest;
+  await model.load();
+  assert.equal(Reflect.get(model.state, 'snapshotFresh'), true);
+  assert.equal(model.state.draft.qSource, 'publisher-a');
+  await model.save();
+  assert.equal(api.saves.length, 1);
+});
+
+test('restart notification during a draft preserves it and blocks the write', async () => {
+  const api = new Api();
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectQ('q-only');
+  Object.assign(api.value, { restartRequired: true });
+  await model.load();
+  await model.save();
+  assert.equal(model.state.draft.qSource, 'q-only');
+  assert.equal(model.state.dirty, true);
+  assert.equal(api.saves.length, 0);
+});

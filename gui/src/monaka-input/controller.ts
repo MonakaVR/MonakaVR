@@ -20,6 +20,7 @@ export interface InputAssignment {
 }
 export interface InputSnapshot {
   generation: string;
+  restartRequired?: boolean;
   bodies: string[];
   candidates: InputCandidate[];
   assignments: InputAssignment[];
@@ -30,6 +31,7 @@ export interface InputApi {
 export class InputSelectionController {
   state: {
     snapshot: InputSnapshot | null;
+    snapshotFresh: boolean;
     draft: InputAssignment;
     generation: string;
     dirty: boolean;
@@ -38,6 +40,7 @@ export class InputSelectionController {
     needsReload: boolean;
   } = {
     snapshot: null,
+    snapshotFresh: false,
     draft: {
       body: 'HIP',
       qSource: null,
@@ -57,6 +60,15 @@ export class InputSelectionController {
   private loading = false;
   private reloadRequested = false;
   constructor(private api: InputApi) {}
+  get canEdit() {
+    return (
+      this.state.snapshot !== null &&
+      this.state.snapshotFresh &&
+      !this.state.snapshot.restartRequired &&
+      !this.state.busy &&
+      !this.state.needsReload
+    );
+  }
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -94,6 +106,7 @@ export class InputSelectionController {
       const snapshot = await this.api.request({ action: 'snapshot' });
       if (epoch !== this.epoch) return;
       this.state.snapshot = snapshot;
+      this.state.snapshotFresh = true;
       if (discardDraft || !this.state.dirty) this.reset();
       if (discardDraft) this.state.needsReload = false;
       if (!this.state.needsReload)
@@ -102,8 +115,10 @@ export class InputSelectionController {
             ? 'Assignments changed. Reload before saving.'
             : '';
     } catch (error) {
-      if (epoch === this.epoch)
+      if (epoch === this.epoch) {
+        this.state.snapshotFresh = false;
         this.state.error = String(error instanceof Error ? error.message : error);
+      }
     } finally {
       this.loading = false;
       // A save may now own the UI lock; its completion must release it.
@@ -125,7 +140,7 @@ export class InputSelectionController {
     this.notify();
   }
   selectQ(id: string | null) {
-    if (this.state.busy || !this.state.snapshot) return;
+    if (!this.canEdit || !this.state.snapshot) return;
     const source = this.state.snapshot.candidates.find((x) => x.id === id);
     if (id !== null && !source?.qSelectable) return;
     const draft = { ...this.state.draft, qSource: id };
@@ -139,7 +154,7 @@ export class InputSelectionController {
     this.notify();
   }
   selectSix(id: string | null) {
-    if (this.state.busy || !this.state.snapshot) return;
+    if (!this.canEdit || !this.state.snapshot) return;
     if (
       id !== null &&
       !this.state.snapshot.candidates.find((x) => x.id === id)?.sixDofSelectable
@@ -159,6 +174,7 @@ export class InputSelectionController {
   }
   async save() {
     if (
+      !this.canEdit ||
       !this.state.dirty ||
       this.state.busy ||
       this.state.needsReload ||
@@ -179,8 +195,10 @@ export class InputSelectionController {
         manualSix: this.state.draft.manualSix,
       });
       this.state.snapshot = snapshot;
+      this.state.snapshotFresh = true;
       this.reset();
     } catch (error) {
+      this.state.snapshotFresh = false;
       this.state.needsReload = true;
       this.state.error = `${error instanceof Error ? error.message : String(error)} Reload to confirm the saved state before retrying.`;
     } finally {
