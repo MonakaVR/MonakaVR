@@ -19,6 +19,7 @@ import { readFile, stat } from 'fs/promises';
 import { pathToFileURL } from 'node:url';
 import { getPlatform, handleIpc, isPortAvailable } from './utils';
 import {
+  instance,
   findServerJar,
   findSystemJRE,
   getExeFolder,
@@ -53,6 +54,12 @@ if (process.platform === 'linux') {
 
 app.setPath('userData', getGuiDataFolder());
 app.setPath('sessionData', join(getGuiDataFolder(), 'electron'));
+if (!app.requestSingleInstanceLock()) app.exit(0);
+app.on('second-instance', () => {
+  if (mainWindow?.isMinimized()) mainWindow.restore();
+  mainWindow?.show();
+  mainWindow?.focus();
+});
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -306,7 +313,7 @@ function createWindow() {
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadURL('app://./index.html');
+    mainWindow.loadURL(`app://./index.html?port=${instance.port}`);
   }
 
   mainWindow.on('closed', () => {
@@ -416,7 +423,7 @@ const checkEnvironmentVariables = () => {
   }
 };
 
-const isServerRunning = async () => !(await isPortAvailable(21110));
+const isServerRunning = async () => !(await isPortAvailable(instance.port));
 
 const spawnServer = async () => {
   if (options.skipServerIfRunning && (await isServerRunning())) {
@@ -450,22 +457,31 @@ const spawnServer = async () => {
   if (options.steam) serverArgs.push('--steam');
   if (options.install) serverArgs.push('--install');
   if (options.noUdev) serverArgs.push('--no-udev');
+  if (options.monakaMtp) serverArgs.push('--monaka-mtp');
 
   serverArgs.push('run');
 
   const serverProcess = spawn(javaBin, serverArgs, {
     cwd: sharedDir,
     shell: false,
-    env:
-      platform === 'windows'
+    env: {
+      ...process.env,
+      MONAKA_PROFILE_DIRECTORY: instance.profile,
+      MONAKA_NETWORK_ONLY: String(instance.networkOnly),
+      MONAKA_WEBSOCKET_PORT: String(instance.port),
+      ...(platform === 'windows'
         ? {
-            ...process.env,
-            APPDATA: app.getPath('appData'),
-            LOCALAPPDATA: process.env['USERPROFILE']
-              ? path.join(process.env['USERPROFILE'], 'AppData', 'Local')
-              : undefined,
+            APPDATA: instance.profile
+              ? path.join(instance.profile, 'roaming')
+              : app.getPath('appData'),
+            LOCALAPPDATA: instance.profile
+              ? path.join(instance.profile, 'local')
+              : process.env['USERPROFILE']
+                ? path.join(process.env['USERPROFILE'], 'AppData', 'Local')
+                : undefined,
           }
-        : undefined,
+        : {}),
+    },
   });
 
   const sendToWindow = (event: ServerStatusEvent) => {
@@ -495,7 +511,14 @@ const spawnServer = async () => {
 
   return {
     process: serverProcess,
-    close: () => serverProcess.kill(),
+    close: () => {
+      // Graceful request targets only this retained child. Bound the fallback.
+      serverProcess.stdin?.write('exit\n');
+      const deadline = setTimeout(() => {
+        if (serverProcess.exitCode === null) serverProcess.kill();
+      }, 5000);
+      serverProcess.once('exit', () => clearTimeout(deadline));
+    },
     waitForExit: () => exited,
   };
 };

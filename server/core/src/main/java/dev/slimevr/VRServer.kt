@@ -67,6 +67,7 @@ class VRServer @JvmOverloads constructor(
 	val tryOpenUri: (String) -> Unit = {},
 	acquireMulticastLock: () -> Any? = { null },
 	@JvmField val configManager: ConfigManager,
+	val endpoints: RuntimeEndpoints = RuntimeEndpoints(),
 ) : Thread("VRServer") {
 
 	@JvmField
@@ -154,12 +155,14 @@ class VRServer @JvmOverloads constructor(
 		val computedTrackers = humanPoseManager.computedTrackers
 
 		// Start server for SlimeVR trackers
-		val trackerPort = configManager.vrConfig.server.trackerPort
+		val trackerPort = endpoints.trackerPort ?: configManager.vrConfig.server.trackerPort
 		LogManager.info("Starting the tracker server on port $trackerPort...")
 		trackersServer = TrackersUDPServer(
 			trackerPort,
 			"Sensors UDP server",
-		) { tracker: Tracker -> registerTracker(tracker) }
+			endpoints.loopbackOnly,
+			{ tracker: Tracker -> registerTracker(tracker) },
+		)
 
 		// Start bridges and WebSocket server
 		for (bridge in bridgeProvider(this, computedTrackers) + sequenceOf(WebSocketVRBridge(computedTrackers, this))) {
