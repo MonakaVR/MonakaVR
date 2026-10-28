@@ -113,6 +113,7 @@ internal class SlimeRawImuProductionBoundary(
 
 			is SlimeImuCaptureResult.Unavailable -> return reject(
 				when (result.reason) {
+					SlimeImuCaptureRejection.OUTPUT_SOURCE_NOT_ALLOWED -> SlimeRawImuInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED
 					SlimeImuCaptureRejection.SAMPLE_UNAVAILABLE -> SlimeRawImuInputRejectionReason.SAMPLE_UNAVAILABLE
 					SlimeImuCaptureRejection.SAMPLE_UNSTABLE -> SlimeRawImuInputRejectionReason.SAMPLE_UNSTABLE
 					SlimeImuCaptureRejection.SOURCE_EPOCH_CHANGED -> SlimeRawImuInputRejectionReason.SOURCE_EPOCH_CHANGED
