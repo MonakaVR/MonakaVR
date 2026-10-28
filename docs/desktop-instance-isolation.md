@@ -28,8 +28,12 @@ Malformed values fail before runtime startup. Set child APPDATA/LOCALAPPDATA
 to independent directories when launching the JVM outside Electron.
 
 Electron sends `exit` to its retained JVM stdin and awaits process exit on
-quit; it terminates only that child if the graceful deadline expires. Closing
-the parent pipe (including a parent crash) also requests JVM shutdown. No
+quit; it terminates only that child if the graceful deadline expires. The
+network-only JVM observes its exact parent ProcessHandle/start identity and
+exits when that owner exits, even if inherited OS pipe handles delay EOF. EOF
+also ends a network-only instance; ordinary standalone EOF retains its prior
+server lifetime. An explicit profile with OSC outputs already enabled is rejected
+before runtime construction; acceptance does not enable OSC through the GUI. No
 process is selected for termination by executable name or port ownership.
 
 This is an isolated software acceptance path, not deployment or adoption of
