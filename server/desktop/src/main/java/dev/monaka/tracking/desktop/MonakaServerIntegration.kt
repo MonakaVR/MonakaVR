@@ -40,6 +40,7 @@ class MonakaServerIntegration private constructor(
 	private val onTransition: (OutputTransition) -> Unit,
 	val rotationCorrection: HipRotationCorrection?,
 	private val diagnostics: HybridTrackingDiagnosticRecorder?,
+	private val frames: SameFrameDiagnostics?,
 ) : AutoCloseable {
 	private var closed = false
 	var inputConfiguration: MonakaInputConfigurationApi? = null
@@ -61,10 +62,14 @@ class MonakaServerIntegration private constructor(
 		val rawHip: ResolvedTrackingPose?,
 		val mainSource: String?,
 		val imuSource: String?,
+		val numericBefore: Map<String, Any?>?,
 	)
 	private var pendingFrame: PendingPoseFrame? = null
 	val positionCorrectionGate get() = solverComposition.positionCorrectionGate
 	val lastDiagnosticSnapshot: HybridTrackingDiagnosticSnapshot? get() = diagnostics?.latest
+	var frameDiagnosticFailures = 0L
+		private set
+	private fun <T> diagnostic(action: () -> T): T? = try { action() } catch (_: Exception) { frameDiagnosticFailures++; null }
 	fun tick() {
 		if (closed) return
 		try {
@@ -115,7 +120,8 @@ class MonakaServerIntegration private constructor(
 				resolvedRaw
 			}
 			val ik = resolved.mapValues { it.value.ikConstraint() }
-			check(solverComposition.commitGeneric(tick, ik, runtime.mtp.historyGeneration) is MonakaSolverCommitResult.GenericCommitted)
+			val commit = solverComposition.commitGeneric(tick, ik, runtime.mtp.historyGeneration)
+			check(commit is MonakaSolverCommitResult.GenericCommitted)
 			pendingFrame = PendingPoseFrame(
 				tick,
 				resolved,
@@ -124,6 +130,7 @@ class MonakaServerIntegration private constructor(
 				resolvedRaw[TrackerPosition.HIP],
 				hip?.mainTracker?.observationId,
 				hip?.rotationFallbackTracker?.observationId,
+				if (frames?.accepting == true) diagnostic { frames.before(tick, runtime, resolved, commit, skeleton) } else null,
 			)
 			if (registerAfterPose == null) finishPoseUpdate() else directOutput.applyPoses(emptyMap())
 		} catch (e: Exception) {
@@ -149,6 +156,7 @@ class MonakaServerIntegration private constructor(
 				controller.update(poses.getValue(target), background, now, pending.tick.paused)
 			}
 			directOutput.applyPoses(output, pending.tick.paused)
+			pending.numericBefore?.let { before -> diagnostic { frames?.after(before, skeleton, directOutput.trackers.values, registerAfterPose != null) } }
 			if (diagnostics != null) {
 				val main = pending.main
 				val imu = pending.imu
@@ -190,6 +198,7 @@ class MonakaServerIntegration private constructor(
 	override fun close() {
 		if (closed) return
 		closed = true
+		frames?.close()
 		pendingFrame = null
 		try {
 			registerBeforePose(null)
@@ -228,6 +237,7 @@ class MonakaServerIntegration private constructor(
 			configurationPath: java.nio.file.Path? = null,
 			onTransition: (OutputTransition) -> Unit = {},
 			onDiagnostic: (HybridTrackingDiagnosticEvent) -> Unit = {},
+			frameDiagnostics: () -> SameFrameDiagnostics? = { null },
 		): MonakaServerIntegration? {
 			if (!enabled) return null
 			val config = configuration()
@@ -251,6 +261,7 @@ class MonakaServerIntegration private constructor(
 			var composition: MonakaSolverComposition? = null
 			var direct: DirectConstraintOutput? = null
 			var integration: MonakaServerIntegration? = null
+			var frames: SameFrameDiagnostics? = null
 			try {
 				val owner = MonakaSolverComposition(
 					skeleton,
@@ -263,10 +274,15 @@ class MonakaServerIntegration private constructor(
 				configureDirectOutputs(output.trackers.values.toList())
 				val diagnosticEnabled = config.rotationCorrection != null ||
 					config.assignments.snapshot().targets.values.any { it.outputMode == OutputMode.HYBRID }
+				frames = try { frameDiagnostics() } catch (e: Exception) {
+					java.util.logging.Logger.getLogger("MonakaFrameDiagnostics").warning("Frame diagnostics unavailable: ${e.javaClass.simpleName}")
+					null
+				}
 				val result = MonakaServerIntegration(
 					runtime, receiver, owner, output, skeleton, registerBeforePose, onFailure, registerAfterPose, background,
 					config.continuityTuning, onTransition, config.rotationCorrection?.let { HipRotationCorrection(it.frames, it.tuning) },
 					if (diagnosticEnabled) HybridTrackingDiagnosticRecorder(onDiagnostic) else null,
+					frames,
 				).also { integration = it }
 				result.inputConfiguration = configurationPath?.let { path ->
 					MonakaInputConfigurationApi(config, runtime.mtp, trackers, path)
@@ -286,6 +302,7 @@ class MonakaServerIntegration private constructor(
 				if (integration != null) {
 					cleanup { integration!!.close() }
 				} else {
+					cleanup { frames?.close() }
 					cleanup { receiver.close() }
 					cleanup { direct?.close() }
 					cleanup { composition?.close() }
