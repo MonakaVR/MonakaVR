@@ -1,10 +1,19 @@
 package dev.slimevr.desktop
 
 import dev.slimevr.RuntimeEndpoints
+import dev.slimevr.config.VRConfig
 import java.nio.file.Path
 
 /** An explicit isolated desktop instance; it never infers mode from file names or identities. */
 data class DesktopInstance(val profile: Path?, val networkOnly: Boolean, val endpoints: RuntimeEndpoints) {
+	fun shouldStopForInput(line: String?): Boolean = line == "exit" || (networkOnly && line == null)
+
+	fun validateOutputs(config: VRConfig) {
+		require(!networkOnly || (!config.vrcOSC.enabled && !config.vmc.enabled && !config.oscRouter.enabled)) {
+			"Network-only profile must leave OSC outputs disabled"
+		}
+	}
+
 	companion object {
 		fun fromEnvironment(environment: Map<String, String> = System.getenv()): DesktopInstance {
 			val profile = environment["MONAKA_PROFILE_DIRECTORY"]?.let {

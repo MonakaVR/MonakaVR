@@ -65,6 +65,16 @@ val featureFlags = FeatureFlags()
 
 fun main(args: Array<String>) {
 	val instance = DesktopInstance.fromEnvironment()
+	// ProcessHandle binds the OS parent identity, including its start instant; no PID/name polling.
+	val owner = if (instance.networkOnly) {
+		ProcessHandle.current().parent().orElseThrow {
+			IllegalStateException("Network-only launch requires an observable parent process")
+		}.also {
+			check(it.info().startInstant().isPresent) { "Parent process start identity is unavailable" }
+		}
+	} else {
+		null
+	}
 	if (instance.networkOnly) require(args.none { it in listOf("--install", "-i", "--steam", "-s") }) { "Network-only launch cannot install or enable Steam integration" }
 	System.setProperty("awt.useSystemAAFontSettings", "on")
 	System.setProperty("swing.aatext", "true")
@@ -127,6 +137,7 @@ fun main(args: Array<String>) {
 	LogManager.info("Using log folder: $dir")
 	LogManager.info("Running version $VERSION")
 	LogManager.info("Desktop PID ${ProcessHandle.current().pid()}; network-only=${instance.networkOnly}")
+	owner?.let { LogManager.info("Owned by parent ${it.pid()} started ${it.info().startInstant().get()}") }
 	if (!SystemUtils.isJavaVersionAtLeast(org.apache.commons.lang3.JavaVersion.JAVA_17)) {
 		LogManager.severe("SlimeVR start-up error! A minimum of Java 17 is required.")
 		JOptionPane
@@ -168,6 +179,7 @@ fun main(args: Array<String>) {
 
 	val configManager = ConfigManager(configDir)
 	configManager.loadConfig()
+	instance.validateOutputs(configManager.vrConfig)
 
 	try {
 		DatagramSocket(instance.endpoints.trackerPort ?: configManager.vrConfig.server.trackerPort).close()
@@ -200,6 +212,7 @@ fun main(args: Array<String>) {
 			configManager = configManager,
 			endpoints = instance.endpoints,
 		)
+		owner?.onExit()?.thenRun { vrServer.interrupt() }
 
 		val monakaInputPath = if (mtpEnabled) {
 			System.getProperty("monaka.mtp.config")?.let { Path(it) }
@@ -251,17 +264,18 @@ fun main(args: Array<String>) {
 
 				Keybinding(vrServer)
 			}
-			val scanner = thread {
+			val scanner = thread(isDaemon = instance.networkOnly) {
 				while (true) {
-					if (readlnOrNull().let { it == null || it == "exit" }) {
+					val line = readlnOrNull()
+					if (instance.shouldStopForInput(line)) {
 						vrServer.interrupt()
-						break
 					}
+					if (line == null || line == "exit") break
 				}
 			}
 
 			vrServer.join()
-			scanner.join()
+			if (!instance.networkOnly) scanner.join()
 		} finally {
 			mtpIntegration?.close()
 		}
