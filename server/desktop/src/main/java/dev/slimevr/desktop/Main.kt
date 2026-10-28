@@ -15,6 +15,7 @@ import dev.monaka.tracking.desktop.MtpFeatureGate
 import dev.slimevr.FeatureFlags
 import dev.slimevr.Keybinding
 import dev.slimevr.SLIMEVR_IDENTIFIER
+import dev.slimevr.StubNetworkProfileChecker
 import dev.slimevr.VRServer
 import dev.slimevr.bridge.Bridge
 import dev.slimevr.config.ConfigManager
@@ -28,6 +29,8 @@ import dev.slimevr.desktop.platform.windows.WindowsNamedPipeBridge
 import dev.slimevr.desktop.platform.windows.WindowsNamedPipeRpcBridge
 import dev.slimevr.desktop.serial.DesktopSerialHandler
 import dev.slimevr.desktop.tracking.trackers.hid.DesktopHIDManager
+import dev.slimevr.games.vrchat.VRCConfigHandlerStub
+import dev.slimevr.serial.SerialHandlerStub
 import dev.slimevr.tracking.trackers.Tracker
 import io.eiren.util.OperatingSystem
 import io.eiren.util.OperatingSystem.Companion.currentPlatform
@@ -61,6 +64,8 @@ val VERSION =
 val featureFlags = FeatureFlags()
 
 fun main(args: Array<String>) {
+	val instance = DesktopInstance.fromEnvironment()
+	if (instance.networkOnly) require(args.none { it in listOf("--install", "-i", "--steam", "-s") }) { "Network-only launch cannot install or enable Steam integration" }
 	System.setProperty("awt.useSystemAAFontSettings", "on")
 	System.setProperty("swing.aatext", "true")
 
@@ -111,7 +116,8 @@ fun main(args: Array<String>) {
 		exitProcess(1)
 	}
 
-	val dir = OperatingSystem.resolveLogDirectory(SLIMEVR_IDENTIFIER)?.toFile()?.absoluteFile
+	val dir = instance.profile?.resolve("logs")?.toFile()?.absoluteFile
+		?: OperatingSystem.resolveLogDirectory(SLIMEVR_IDENTIFIER)?.toFile()?.absoluteFile
 		?: File("").absoluteFile
 	try {
 		LogManager.initialize(dir)
@@ -120,6 +126,7 @@ fun main(args: Array<String>) {
 	}
 	LogManager.info("Using log folder: $dir")
 	LogManager.info("Running version $VERSION")
+	LogManager.info("Desktop PID ${ProcessHandle.current().pid()}; network-only=${instance.networkOnly}")
 	if (!SystemUtils.isJavaVersionAtLeast(org.apache.commons.lang3.JavaVersion.JAVA_17)) {
 		LogManager.severe("SlimeVR start-up error! A minimum of Java 17 is required.")
 		JOptionPane
@@ -153,17 +160,20 @@ fun main(args: Array<String>) {
 		installDrivers.runInstaller()
 	}
 
-	val configDir = resolveConfig()
+	val configDir = instance.profile?.let {
+		Files.createDirectories(it)
+		it.resolve(CONFIG_FILENAME).toString()
+	} ?: resolveConfig()
 	LogManager.info("Using config dir: $configDir")
 
 	val configManager = ConfigManager(configDir)
 	configManager.loadConfig()
 
 	try {
-		DatagramSocket(configManager.vrConfig.server.trackerPort).close()
-		ServerSocket(21110).close()
+		DatagramSocket(instance.endpoints.trackerPort ?: configManager.vrConfig.server.trackerPort).close()
+		ServerSocket(instance.endpoints.webSocketPort).close()
 	} catch (e: IOException) {
-		val message = "SlimeVR start-up error! A required port (${configManager.vrConfig.server.trackerPort} and 21110) is busy. " +
+		val message = "SlimeVR start-up error! A required port (${configManager.vrConfig.server.trackerPort} and ${instance.endpoints.webSocketPort}) is busy. " +
 			"Make sure there is no other instance of SlimeVR Server running."
 		LogManager
 			.severe(message)
@@ -179,15 +189,16 @@ fun main(args: Array<String>) {
 	}
 	try {
 		val vrServer = VRServer(
-			::provideBridges,
+			{ server, trackers -> if (instance.networkOnly) emptySequence() else provideBridges(server, trackers) },
 			{ _ -> featureFlags },
-			{ _ -> DesktopSerialHandler() },
-			{ _ -> DesktopSerialFlashingHandler() },
-			{ _ -> DesktopVRCConfigHandler() },
-			{ _ -> DesktopNetworkProfileChecker() },
-			::getRunningProcesses,
+			{ _ -> if (instance.networkOnly) SerialHandlerStub() else DesktopSerialHandler() },
+			{ _ -> if (instance.networkOnly) null else DesktopSerialFlashingHandler() },
+			{ _ -> if (instance.networkOnly) VRCConfigHandlerStub() else DesktopVRCConfigHandler() },
+			{ _ -> if (instance.networkOnly) StubNetworkProfileChecker() else DesktopNetworkProfileChecker() },
+			{ if (instance.networkOnly) emptySequence() else getRunningProcesses() },
 			::tryOpenUri,
 			configManager = configManager,
+			endpoints = instance.endpoints,
 		)
 
 		val monakaInputPath = if (mtpEnabled) {
@@ -232,15 +243,17 @@ fun main(args: Array<String>) {
 			}
 
 			vrServer.start()
-			// Start service for USB HID trackers
-			DesktopHIDManager(
-				"Sensors HID service",
-			) { tracker: Tracker -> vrServer.registerTracker(tracker) }
+			// Native discovery and output are explicit physical boundaries.
+			if (!instance.networkOnly) {
+				DesktopHIDManager(
+					"Sensors HID service",
+				) { tracker: Tracker -> vrServer.registerTracker(tracker) }
 
-			Keybinding(vrServer)
+				Keybinding(vrServer)
+			}
 			val scanner = thread {
 				while (true) {
-					if (readln() == "exit") {
+					if (readlnOrNull().let { it == null || it == "exit" }) {
 						vrServer.interrupt()
 						break
 					}

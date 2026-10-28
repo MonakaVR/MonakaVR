@@ -24,7 +24,12 @@ public class WebsocketAPI extends WebSocketServer implements ProtocolAPIServer {
 	public final ProtocolAPI protocolAPI;
 
 	public WebsocketAPI(VRServer server, ProtocolAPI protocolAPI) {
-		super(new InetSocketAddress(21110), Collections.singletonList(new Draft_6455()));
+		super(
+			server.getEndpoints().getLoopbackOnly()
+				? new InetSocketAddress("127.0.0.1", server.getEndpoints().getWebSocketPort())
+				: new InetSocketAddress(server.getEndpoints().getWebSocketPort()),
+			Collections.singletonList(new Draft_6455())
+		);
 		this.server = server;
 		this.protocolAPI = protocolAPI;
 
