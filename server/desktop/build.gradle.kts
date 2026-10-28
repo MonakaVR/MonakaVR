@@ -65,6 +65,7 @@ allprojects {
 dependencies {
 	implementation(project(":server:core"))
 	implementation(project(":solarxr-protocol"))
+	implementation("com.fasterxml.jackson.core:jackson-databind:2.21.0")
 
 	implementation("commons-cli:commons-cli:1.11.0")
 	implementation("org.apache.commons:commons-lang3:3.20.0")
