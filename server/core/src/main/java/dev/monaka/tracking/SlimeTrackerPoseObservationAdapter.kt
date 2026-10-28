@@ -23,6 +23,8 @@ class SlimeTrackerPoseObservationAdapter(
 		targetOverride: dev.slimevr.tracking.trackers.TrackerPosition? = null,
 	): PoseObservation? {
 		require(observedAtNanos >= 0L) { "observedAtNanos must be non-negative" }
+		// Enforce at the raw value boundary as well as at the runtime's provider filter.
+		if (!FeedbackExclusion.accepts(tracker)) return null
 
 		val target = targetOverride ?: tracker.trackerPosition ?: return null
 		val modality = tracker.sampleModality ?: when {

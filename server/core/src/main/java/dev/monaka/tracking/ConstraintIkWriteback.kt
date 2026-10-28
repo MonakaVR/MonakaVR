@@ -126,6 +126,9 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 					trackerPosition = target, hasPosition = position != null, hasRotation = rotation != null,
 					allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false,
 				)
+				// Internal/computed flags would remove this input from the existing IK solver.
+				// Record its exact owner-created object instead of inferring ownership from its name.
+				FeedbackExclusion.registerOwnedOutput(proxy)
 				proxy.status = TrackerStatus.OK
 				proxies[target] = proxy
 				rebuild = true
