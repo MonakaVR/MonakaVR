@@ -166,9 +166,10 @@ export function useUnifiedAssignment() {
         setNeedsReview(!success);
       }
     } catch (error) {
-      setStatus('partial');
+      // begin() rejection precedes both writers; do not claim a partial save.
+      setStatus(pending ? 'partial' : '');
       setDetail(String(error));
-      setNeedsReview(true);
+      setNeedsReview(!!pending);
     } finally {
       if (pending) transactions.settled(pending.token);
       if (alive.current) setWorking(false);

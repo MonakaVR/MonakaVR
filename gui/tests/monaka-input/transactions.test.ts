@@ -78,9 +78,95 @@ test('storage failure falls back to module-owned memory for route remount', () =
   assert.equal(owner.read('a'), null);
 });
 
+test('physical assignment requires exact recovery persistence before either writer', () => {
+  const id = new TrackerIdT(new DeviceIdT(7), 2);
+  const working = storage();
+  const cases = [
+    undefined,
+    {
+      ...working,
+      setItem() {
+        throw new Error('quota');
+      },
+    },
+    {
+      ...working,
+      setItem() {},
+      getItem() {
+        return null;
+      },
+    },
+    {
+      ...working,
+      setItem() {},
+      getItem() {
+        return 'mismatched';
+      },
+    },
+    {
+      ...working,
+      getItem() {
+        throw new Error('denied');
+      },
+    },
+  ];
+  for (const unavailable of cases) {
+    const owner = new AssignmentTransactions(unavailable);
+    let writes = 0;
+    assert.throws(() => {
+      owner.begin('blocked', draft, [id]);
+      writes++; // The caller can only reach Core/save and legacy dispatch after begin.
+    }, /Recovery storage unavailable/);
+    assert.equal(writes, 0);
+    assert.equal(owner.isActive('blocked'), false, 'no phantom in-flight writer');
+  }
+});
+
+test('verified physical recovery marker survives owner recreation before writes', () => {
+  const persistent = storage();
+  const owner = new AssignmentTransactions(persistent);
+  const id = new TrackerIdT(new DeviceIdT(7), 2);
+  const pending = owner.begin('a', draft, [id]);
+  assert.deepEqual(
+    new AssignmentTransactions(persistent).read('a'),
+    JSON.parse(JSON.stringify(pending))
+  );
+  assert.equal(owner.isActive('a'), true);
+});
+
+test('uncertain recovery writes retain review evidence without starting a writer', () => {
+  const id = new TrackerIdT(new DeviceIdT(7), 2);
+  for (const failure of ['write', 'readback']) {
+    const persistent = storage();
+    let written = false;
+    const uncertain = {
+      ...persistent,
+      setItem(key: string, value: string) {
+        persistent.setItem(key, value);
+        written = true;
+        if (failure === 'write') throw new Error('failed after storing');
+      },
+      getItem(key: string) {
+        if (written && failure === 'readback') throw new Error('readback denied');
+        return persistent.getItem(key);
+      },
+    };
+    const owner = new AssignmentTransactions(uncertain);
+    assert.throws(() => owner.begin('a', draft, [id]), /Recovery storage unavailable/);
+    assert.equal(owner.isActive('a'), false);
+    const pending = owner.read('a');
+    assert.ok(pending, 'current renderer retains review evidence');
+    assert.deepEqual(
+      new AssignmentTransactions(persistent).read('a'),
+      JSON.parse(JSON.stringify(pending)),
+      'persisted marker remains available after renderer recreation'
+    );
+  }
+});
+
 test('review requires a fresh device packet with every affected identity and body info', () => {
   const id = new TrackerIdT(new DeviceIdT(7), 2);
-  const pending = new AssignmentTransactions().begin('a', draft, [id]);
+  const pending = new AssignmentTransactions(storage()).begin('a', draft, [id]);
   const packet = new DataFeedUpdateT();
   assert.equal(assignmentReviewFeed(pending, packet), false, 'empty device feed');
   const device = new DeviceDataT();

@@ -61,13 +61,30 @@ export class AssignmentTransactions {
       requested: { ...requested },
       legacyIds,
     };
+    if (legacyIds.length) {
+      try {
+        if (!this.storage) throw new Error('Storage unavailable');
+        const serialized = JSON.stringify(pending);
+        this.storage.setItem(this.key(endpoint), serialized);
+        if (this.storage.getItem(this.key(endpoint)) !== serialized)
+          throw new Error('Recovery marker readback mismatch');
+      } catch {
+        // A write may have succeeded despite an exception or uncertain readback.
+        // Retain review evidence, but never mark a writer as started.
+        this.memory.set(endpoint, pending);
+        throw new Error(
+          'Recovery storage unavailable. No assignments were saved. Enable session storage, then reload and review before changing physical body assignments.'
+        );
+      }
+    } else {
+      try {
+        this.storage?.setItem(this.key(endpoint), JSON.stringify(pending));
+      } catch {
+        // Core-only operations retain route recovery without a second writer.
+      }
+    }
     this.memory.set(endpoint, pending);
     this.active.add(pending.token);
-    try {
-      this.storage?.setItem(this.key(endpoint), JSON.stringify(pending));
-    } catch {
-      // In-memory fallback: navigation/reconnect safe, full renderer restart unverified.
-    }
     return pending;
   }
   isActive(endpoint: string) {
