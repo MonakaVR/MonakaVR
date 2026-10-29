@@ -104,6 +104,7 @@ export function BodyAssignment({
   highlightedRoles = [],
   onlyAssigned = false,
   dotSize,
+  inputSummaries = {},
 }: {
   assignMode: AssignMode | null;
   mirror: boolean;
@@ -113,6 +114,7 @@ export function BodyAssignment({
   onRoleSelected: (role: BodyPart) => void;
   width?: number;
   dotSize?: number;
+  inputSummaries?: Record<number, string>;
 }) {
   const assignedTrackers = useAtomValue(assignedTrackersAtom);
 
@@ -134,12 +136,14 @@ export function BodyAssignment({
   );
 
   const assignedRoles = useMemo(
-    () =>
-      assignedTrackers.map(
+    () => [
+      ...assignedTrackers.map(
         ({ tracker }) => tracker.info?.bodyPart || BodyPart.NONE,
         {}
       ),
-    [assignedTrackers]
+      ...Object.keys(inputSummaries).map(Number),
+    ],
+    [assignedTrackers, inputSummaries]
   );
 
   const left = +!mirror;

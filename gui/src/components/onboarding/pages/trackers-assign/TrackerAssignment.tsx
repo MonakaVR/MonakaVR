@@ -33,6 +33,10 @@ import { playTapSetupSound } from '@/sounds/sounds';
 import { useBreakpoint } from '@/hooks/breakpoint';
 import { TrackerAssignOptions } from './TrackerAssignOptions';
 import { useAtomValue } from 'jotai';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useUnifiedAssignment } from '@/hooks/unified-assignment';
+import { bodyPartForInput, inputRole } from '@/monaka-input/roles';
+import { InputAssignmentSummaries } from '@/monaka-input/assignment-summary';
 import {
   assignedTrackersAtom,
   FlatDeviceTracker,
@@ -65,6 +69,59 @@ export function TrackersAssignPage() {
   }>({ defaultValues });
   const { mirrorView } = watch();
   const [selectedRole, setSelectRole] = useState<BodyPart>(BodyPart.NONE);
+  const unified = useUnifiedAssignment();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const inputSummaries = useMemo(() => {
+    const snapshot = unified.state.snapshot;
+    const label = (id: string | null) => {
+      const source = snapshot?.candidates.find((c) => c.id === id);
+      return source
+        ? [source.publisher, source.source, source.tracker]
+            .filter(Boolean)
+            .join(' / ')
+        : (id ?? '—');
+    };
+    return Object.fromEntries(
+      (snapshot?.assignments ?? []).flatMap((row) => {
+        const part = bodyPartForInput(row.body);
+        return part === undefined
+          ? []
+          : [
+              [
+                part,
+                `Q: ${label(row.qSource)} · 6DoF: ${label(row.sixDofSource)}`,
+              ],
+            ];
+      })
+    );
+  }, [unified.state.snapshot]);
+
+  const chooseRole = (role: BodyPart) => {
+    if (unified.state.dirty || unified.working || unified.needsReview) return;
+    unified.open(role);
+    setSelectRole(role);
+  };
+  useEffect(() => {
+    const request = location.state?.assignmentRequest;
+    if (request) setSelectRole(request.body);
+  }, [location.state]);
+  useEffect(() => {
+    const role = inputRole(selectedRole, unified.state.snapshot?.bodies ?? []);
+    if (role && role !== unified.state.draft.body && !unified.state.dirty)
+      unified.model.selectBody(role);
+  }, [selectedRole, unified.state.snapshot]);
+  useEffect(() => {
+    const request = location.state?.assignmentRequest;
+    if (!request || !unified.state.snapshot) return;
+    if (unified.open(request.body, request.trackerId, request.clear)) {
+      setSelectRole(request.body);
+      navigate(location.pathname, {
+        replace: true,
+        state: { alonePage: true },
+      });
+    }
+  }, [location.state, unified.state.snapshot]);
 
   const assignedTrackers = useAtomValue(assignedTrackersAtom);
   const trackers = useAtomValue(flatTrackersAtom);
@@ -155,9 +212,10 @@ export function TrackersAssignPage() {
   );
 
   const rolesWithErrors = useMemo(() => {
-    const trackerRoles = trackers.map(
-      ({ tracker }) => tracker.info?.bodyPart || BodyPart.NONE
-    );
+    const trackerRoles = [
+      ...trackers.map(({ tracker }) => tracker.info?.bodyPart || BodyPart.NONE),
+      ...Object.keys(inputSummaries).map(Number),
+    ];
 
     const message = (assignedRole: BodyPart) => {
       const unassignedRoles: [BodyPart | BodyPart[], boolean][] = (
@@ -205,11 +263,13 @@ export function TrackersAssignPage() {
             : undefined,
         };
       }, {} as any);
-  }, [trackers]);
+  }, [trackers, inputSummaries]);
 
   const onTrackerSelected = (
     tracker: FlatDeviceTracker | FlatDeviceTrackerDummy | null
   ) => {
+    if (inputRole(selectedRole, unified.state.snapshot?.bodies ?? [])) return;
+    if (!window.confirm(l10n.getString('assignment-legacy-only'))) return;
     const assign = (
       role: BodyPart,
       rotation: QuatT | null,
@@ -249,6 +309,10 @@ export function TrackersAssignPage() {
     RpcMessage.TapDetectionSetupNotification,
     (tapSetup: TapDetectionSetupNotificationT) => {
       if (selectedRole === BodyPart.NONE || !tapSetup.trackerId) return;
+      if (unified.state.snapshot) {
+        unified.open(selectedRole, tapSetup.trackerId);
+        return;
+      }
       onTrackerSelected({
         tracker: { trackerId: tapSetup.trackerId, info: undefined },
       });
@@ -257,6 +321,7 @@ export function TrackersAssignPage() {
   );
 
   const unassignAll = () => {
+    if (!window.confirm(l10n.getString('assignment-legacy-clear-all'))) return;
     assignedTrackers.forEach((td) => {
       const assignreq = new AssignTrackerRequestT();
       assignreq.bodyPosition = BodyPart.NONE;
@@ -269,7 +334,7 @@ export function TrackersAssignPage() {
 
   const { closeChokerWarning, tryOpenChokerWarning, shouldShowChokerWarn } =
     useChokerWarning({
-      next: setSelectRole,
+      next: chooseRole,
     });
 
   const firstError = Object.values(rolesWithErrors).find((r) => !!r);
@@ -279,8 +344,23 @@ export function TrackersAssignPage() {
       <TrackerSelectionMenu
         bodyPart={selectedRole}
         isOpen={selectedRole !== BodyPart.NONE}
-        onClose={() => setSelectRole(BodyPart.NONE)}
+        onClose={() => {
+          if (unified.working || unified.state.busy || unified.needsReview)
+            return;
+          if (
+            unified.state.dirty &&
+            !window.confirm(l10n.getString('assignment-discard'))
+          )
+            return;
+          unified.model.cancel();
+          setSelectRole(BodyPart.NONE);
+        }}
         onTrackerSelected={onTrackerSelected}
+        unified={
+          inputRole(selectedRole, unified.state.snapshot?.bodies ?? [])
+            ? unified
+            : undefined
+        }
       />
       <NeckWarningModal
         isOpen={shouldShowChokerWarn}
@@ -296,6 +376,13 @@ export function TrackersAssignPage() {
             <Typography variant="main-title" color="accent">
               {l10n.getString('onboarding-assign_trackers-title')}
             </Typography>
+            {Object.keys(inputSummaries).length > 0 && (
+              <p>
+                {l10n.getString('assignment-source-roles', {
+                  count: Object.keys(inputSummaries).length,
+                })}
+              </p>
+            )}
             <Typography>
               {l10n.getString('onboarding-assign_trackers-description')}
             </Typography>
@@ -327,8 +414,10 @@ export function TrackersAssignPage() {
                 <Button
                   variant="secondary"
                   onClick={unassignAll}
-                  id="onboarding-assign_trackers-unassign_all"
-                />
+                  disabled={unified.working || unified.state.dirty}
+                >
+                  {l10n.getString('assignment-legacy-clear-all-button')}
+                </Button>
               )}
               <div className="flex flex-row">
                 {!state.alonePage && (
@@ -355,7 +444,9 @@ export function TrackersAssignPage() {
                       variant="primary"
                       to="/onboarding/mounting/choose"
                       disabled={
-                        assignedTrackers.length === 0 && trackers.length > 0
+                        assignedTrackers.length === 0 &&
+                        Object.keys(inputSummaries).length === 0 &&
+                        trackers.length > 0
                       }
                       className="ml-auto"
                     >
@@ -368,15 +459,18 @@ export function TrackersAssignPage() {
           </div>
           <div className="flex fill-background-50 items-center justify-center flex-grow">
             <div className="md:w-full md:h-full h-full max-w-[770px] flex flex-col overflow-y-clip tall:py-10">
-              <BodyAssignment
-                dotSize={15}
-                onlyAssigned={false}
-                highlightedRoles={firstError?.affectedRoles || []}
-                rolesWithErrors={rolesWithErrors}
-                assignMode={config?.assignMode ?? null}
-                mirror={mirrorView}
-                onRoleSelected={tryOpenChokerWarning}
-              />
+              <InputAssignmentSummaries.Provider value={inputSummaries}>
+                <BodyAssignment
+                  inputSummaries={inputSummaries}
+                  dotSize={15}
+                  onlyAssigned={false}
+                  highlightedRoles={firstError?.affectedRoles || []}
+                  rolesWithErrors={rolesWithErrors}
+                  assignMode={config?.assignMode ?? null}
+                  mirror={mirrorView}
+                  onRoleSelected={tryOpenChokerWarning}
+                />
+              </InputAssignmentSummaries.Provider>
             </div>
           </div>
         </div>
