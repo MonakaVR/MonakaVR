@@ -1,5 +1,17 @@
 import { test, expect, type Page } from '@playwright/test';
 import { CoreUiFixture, forbidBridgeApi } from './fixtures';
+import { Builder, ByteBuffer } from 'flatbuffers';
+import {
+  AssignTrackerRequestT,
+  BodyPart,
+  DeviceIdT,
+  MessageBundle,
+  MessageBundleT,
+  RpcMessage,
+  RpcMessageHeaderT,
+  TapDetectionSetupNotificationT,
+  TrackerIdT,
+} from 'solarxr-protocol';
 
 async function open(page: Page, fixture: CoreUiFixture, language = 'en') {
   await fixture.install(page, language);
@@ -115,4 +127,47 @@ test('Japanese normal picker remains operable at narrow width', async ({ page })
   await page.getByRole('button', { name: '入力の選択を保存', exact: true }).click();
   await expect(page.getByTestId('assignment-readback')).toContainText('publisher-a');
   await page.screenshot({ path: 'build/r4-unified-mobile.png', fullPage: true });
+});
+
+test('unsupported input role keeps actual legacy tap assignment and never writes the previous Core body', async ({
+  page,
+}) => {
+  const fixture = new CoreUiFixture();
+  fixture.snapshot.bodies = ['CHEST'];
+  await fixture.install(page);
+  await page.addInitScript(() => {
+    const config = JSON.parse(localStorage.getItem('config.json')!);
+    localStorage.setItem(
+      'config.json',
+      JSON.stringify({ ...config, assignMode: 'all' })
+    );
+  });
+  await page.goto('/?ip=127.0.0.1&port=29992#/onboarding/trackers-assign');
+  await expect.poll(() => fixture.requests.length).toBeGreaterThan(0);
+  await page.locator('.control#HIP').click();
+  await expect(page.getByTestId('unified-assignment')).toHaveCount(0);
+  await expect(page.getByRole('status')).toContainText('Legacy tracker operation only');
+  page.on('dialog', (dialog) => dialog.accept());
+  const trackerId = new TrackerIdT(new DeviceIdT(7), 2);
+  const message = new MessageBundleT();
+  const header = new RpcMessageHeaderT();
+  header.messageType = RpcMessage.TapDetectionSetupNotification;
+  header.message = new TapDetectionSetupNotificationT(trackerId);
+  message.rpcMsgs = [header];
+  const builder = new Builder(128);
+  builder.finish(message.pack(builder));
+  fixture.connections.forEach((socket) =>
+    socket.send(Buffer.from(builder.asUint8Array()))
+  );
+  const assignments = () =>
+    fixture.binaryRequests.flatMap((bytes) =>
+      MessageBundle.getRootAsMessageBundle(new ByteBuffer(bytes))
+        .unpack()
+        .rpcMsgs.filter((rpc) => rpc.messageType === RpcMessage.AssignTrackerRequest)
+        .map((rpc) => rpc.message as AssignTrackerRequestT)
+    );
+  await expect.poll(() => assignments().length).toBe(1);
+  expect(assignments()[0].bodyPosition).toBe(BodyPart.HIP);
+  expect(assignments()[0].trackerId).toEqual(trackerId);
+  expect(fixture.saves).toHaveLength(0);
 });

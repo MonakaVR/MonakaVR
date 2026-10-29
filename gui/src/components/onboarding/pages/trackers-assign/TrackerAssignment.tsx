@@ -309,7 +309,7 @@ export function TrackersAssignPage() {
     RpcMessage.TapDetectionSetupNotification,
     (tapSetup: TapDetectionSetupNotificationT) => {
       if (selectedRole === BodyPart.NONE || !tapSetup.trackerId) return;
-      if (unified.state.snapshot) {
+      if (inputRole(selectedRole, unified.state.snapshot?.bodies ?? [])) {
         unified.open(selectedRole, tapSetup.trackerId);
         return;
       }
