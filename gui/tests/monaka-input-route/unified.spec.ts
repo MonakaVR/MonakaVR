@@ -37,6 +37,77 @@ async function open(page: Page, fixture: CoreUiFixture, language = 'en') {
 const qName = 'Q Source: publisher-a / opaque-source / same-name';
 const sixName = '6DoF Source: publisher-a / opaque-source / same-name';
 
+test('a later partial operation reviews its current body after recovering a different body', async ({
+  page,
+}) => {
+  const fixture = new CoreUiFixture();
+  await fixture.install(page);
+  await forbidBridgeApi(page);
+  await page.addInitScript(() => {
+    const config = JSON.parse(localStorage.getItem('config.json')!);
+    localStorage.setItem(
+      'config.json',
+      JSON.stringify({ ...config, assignMode: 'all' })
+    );
+    sessionStorage.setItem(
+      'monaka-assignment-review-v1:ws://127.0.0.1:29992/',
+      JSON.stringify({
+        token: 'prior-chest-owner',
+        body: 'CHEST',
+        requested: {
+          body: 'CHEST',
+          qSource: null,
+          sixDofSource: null,
+          manualSix: false,
+          mode: 'ik',
+        },
+        legacyIds: [],
+      })
+    );
+  });
+  await page.goto('/?ip=127.0.0.1&port=29992#/onboarding/trackers-assign');
+  const modal = page.getByTestId('unified-assignment');
+  await expect(modal.getByText(/Partial or unconfirmed/)).toBeVisible();
+  const header = new DataFeedMessageHeaderT();
+  header.messageType = DataFeedMessage.DataFeedUpdate;
+  header.message = new DataFeedUpdateT();
+  const message = new MessageBundleT();
+  message.dataFeedMsgs = [header];
+  const builder = new Builder(128);
+  builder.finish(message.pack(builder));
+  const timer = setInterval(
+    () =>
+      fixture.binaryConnections.forEach((socket) =>
+        socket.send(Buffer.from(builder.asUint8Array()))
+      ),
+    100
+  );
+  try {
+    await modal
+      .getByRole('button', { name: 'Reload input choices', exact: true })
+      .click();
+    await expect(modal.getByRole('radio', { name: qName, exact: true })).toBeEnabled();
+  } finally {
+    clearInterval(timer);
+  }
+  await modal.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.locator('.control#HIP').click();
+  await modal.getByRole('radio', { name: qName, exact: true }).check();
+  fixture.snapshot.generation = '1';
+  await modal.getByRole('button', { name: 'Save input choices', exact: true }).click();
+  await expect(modal.getByRole('alert')).toContainText('generation');
+  await expect(modal.getByRole('radio', { name: qName, exact: true })).toBeDisabled();
+  const recoveryBody = await page.evaluate(
+    () =>
+      JSON.parse(
+        sessionStorage.getItem('monaka-assignment-review-v1:ws://127.0.0.1:29992/')!
+      ).body
+  );
+  expect(recoveryBody).toBe('HIP');
+  await expect(page.getByText(/hip\?$/)).toBeVisible();
+  await expect(page.getByText(/chest\?$/)).toHaveCount(0);
+});
+
 test('normal body picker saves Pos+Q and renders the actual body summary without a settings page', async ({
   page,
 }) => {
@@ -115,6 +186,12 @@ test('pending two-writer recovery survives actual Layout disconnect/remount and 
   const modal = page.getByTestId('unified-assignment');
   await expect(modal.getByText(/Partial or unconfirmed/)).toBeVisible();
   await expect(modal.getByRole('radio', { name: qName, exact: true })).toBeDisabled();
+  const warning = modal.getByTestId('assignment-recovery-warning');
+  await expect(warning).toBeVisible();
+  const panelBox = (await modal.boundingBox())!;
+  const warningBox = (await warning.boundingBox())!;
+  expect(warningBox.y - panelBox.y).toBeLessThan(40);
+  await page.screenshot({ path: 'build/r4-recovery-warning.png', fullPage: true });
   expect(fixture.snapshot.assignments[0].qSource).toBe('publisher-a');
   expect(
     fixture.binaryRequests

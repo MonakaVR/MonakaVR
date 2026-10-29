@@ -245,7 +245,7 @@ export function useUnifiedAssignment() {
     status,
     detail,
     needsReview,
-    reviewBody: restored.current?.body,
+    reviewBody: transactions.read(endpoint)?.body,
     confirmation,
     open,
     save,

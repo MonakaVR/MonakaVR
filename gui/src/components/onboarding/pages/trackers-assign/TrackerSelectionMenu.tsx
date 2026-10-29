@@ -163,6 +163,11 @@ function UnifiedChoices({
       className="w-full max-w-3xl min-h-0 flex flex-col gap-3 overflow-y-auto p-3 rounded-xl bg-background-80 text-background-10"
       data-testid="unified-assignment"
     >
+      {unified.needsReview && (
+        <p role="status" data-testid="assignment-recovery-warning">
+          {text(`status-${unified.status || 'partial'}`)}
+        </p>
+      )}
       <p>{l10n.getString('monaka-input-semantics')}</p>
       <p>{text('select-help')}</p>
       <div className="overflow-x-auto shrink-0">
@@ -301,7 +306,7 @@ function UnifiedChoices({
       {(state.error || unified.detail) && (
         <p role="alert">{state.error || unified.detail}</p>
       )}
-      {unified.status && (!state.dirty || unified.needsReview) && (
+      {unified.status && !state.dirty && !unified.needsReview && (
         <p role="status">{text(`status-${unified.status}`)}</p>
       )}
       {unified.confirmation && (
