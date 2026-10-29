@@ -54,7 +54,12 @@ class MonakaInputConfigurationApi(
 		val qUsableNow: Boolean,
 		val sixDofUsableNow: Boolean,
 		val origin: String,
+		val slimeTrackerId: SlimeTrackerId? = null,
 	)
+
+	/** Ephemeral locator for an actual SolarXR tracker; never a persistent source identity. */
+	data class SlimeTrackerId(val deviceId: SlimeDeviceId?, val trackerNum: Int)
+	data class SlimeDeviceId(val id: Int)
 	data class Snapshot(
 		val generation: Long,
 		val candidates: List<Candidate>,
@@ -80,7 +85,17 @@ class MonakaInputConfigurationApi(
 			)
 		}
 		val adapter = SlimeTrackerPoseObservationAdapter()
-		val slime = trackers().filter(FeedbackExclusion::accepts).filter { it.hasRotation }.groupBy { it.name }.map { (name, matches) ->
+		val liveTrackers = trackers().toList()
+		val locatorCounts = liveTrackers.groupingBy { it.device?.id to it.trackerNum }.eachCount()
+		val nameCounts = liveTrackers.groupingBy { it.name }.eachCount()
+		val slime = liveTrackers.filter(FeedbackExclusion::accepts).filter { it.hasRotation }.groupBy { it.name }.map { (name, matches) ->
+			val tracker = matches.singleOrNull()
+			val locator = tracker?.takeIf {
+				it.trackerNum in 0..255 &&
+					(it.device == null || it.device.id in 0..255) &&
+					nameCounts[name] == 1 &&
+					locatorCounts[it.device?.id to it.trackerNum] == 1
+			}?.let { SlimeTrackerId(it.device?.let { device -> SlimeDeviceId(device.id) }, it.trackerNum) }
 			val sample = matches.singleOrNull()?.let { adapter.adapt(it, now, TrackerPosition.HEAD) }
 			Candidate(
 				TrackerReference.slime(name),
@@ -91,6 +106,7 @@ class MonakaInputConfigurationApi(
 				sample?.rotation != null && sample.rotationQuality.usable,
 				false,
 				"slime_orientation_stream",
+				locator,
 			)
 		}
 		return Snapshot(state.generation, Collections.unmodifiableList(mtp + slime), state.targets)
@@ -296,6 +312,7 @@ class MonakaInputConfigurationApi(
 						"capabilities" to x.capabilities?.components, "conflict" to x.conflict,
 						"qSelectable" to x.qSelectable, "sixDofSelectable" to x.sixDofSelectable,
 						"qUsableNow" to x.qUsableNow, "sixDofUsableNow" to x.sixDofUsableNow, "origin" to x.origin,
+						"slimeTrackerId" to x.slimeTrackerId,
 					)
 				},
 				"assignments" to s.assignments.map { (body, a) ->
