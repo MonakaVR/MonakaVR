@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useAtomValue } from 'jotai';
-import { AssignTrackerRequestT, BodyPart, RpcMessage } from 'solarxr-protocol';
+import {
+  AssignTrackerRequestT,
+  BodyPart,
+  DataFeedMessage,
+  DataFeedUpdateT,
+  RpcMessage,
+} from 'solarxr-protocol';
 import { flatTrackersAtom } from '@/store/app-store';
 import { InputSelectionController } from '@/monaka-input/controller';
 import { MonakaInputSocket } from '@/monaka-input/socket';
@@ -15,6 +21,10 @@ import {
   type Locator,
 } from '@/monaka-input/assignment';
 import { inputRole } from '@/monaka-input/roles';
+import {
+  assignmentTransactions as transactions,
+  assignmentReviewFeed,
+} from '@/monaka-input/transactions';
 import { useWebsocketAPI } from './websocket-api';
 
 export function useUnifiedAssignment() {
@@ -22,18 +32,26 @@ export function useUnifiedAssignment() {
   const ws = useWebsocketAPI();
   const live = useRef({ trackers, ws });
   live.current = { trackers, ws };
-  const { api, model } = useMemo(() => {
+  const { api, model, endpoint } = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
-    const api = new MonakaInputSocket(
+    const endpoint = new URL(
       `ws://${params.get('ip') ?? 'localhost'}:${params.get('port') ?? '21110'}`
-    );
-    return { api, model: new InputSelectionController(api) };
+    ).href;
+    const api = new MonakaInputSocket(endpoint);
+    return { api, model: new InputSelectionController(api), endpoint };
   }, []);
+  const restored = useRef(transactions.read(endpoint));
+  const feedRevision = useRef(0);
+  ws.useDataFeedPacket(DataFeedMessage.DataFeedUpdate, (packet: DataFeedUpdateT) => {
+    const pending = transactions.read(endpoint);
+    if (packet.index === 0 && (!pending || assignmentReviewFeed(pending, packet)))
+      feedRevision.current++;
+  });
   const state = useSyncExternalStore(model.subscribe, () => model.state);
   const [working, setWorking] = useState(false);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(restored.current ? 'partial' : '');
   const [detail, setDetail] = useState('');
-  const [needsReview, setNeedsReview] = useState(false);
+  const [needsReview, setNeedsReview] = useState(!!restored.current);
   const [confirmation, setConfirmation] = useState<AssignmentPlan | null>(null);
   const alive = useRef(true);
   useEffect(() => {
@@ -100,7 +118,13 @@ export function useUnifiedAssignment() {
     setWorking(true);
     setConfirmation(null);
     setDetail('');
+    let pending: ReturnType<typeof transactions.begin> | undefined;
     try {
+      pending = transactions.begin(
+        endpoint,
+        model.state.draft,
+        plan.changes.map((change) => change.id)
+      );
       const result = await executeAssignment(plan, {
         save: () => model.save(),
         current,
@@ -132,14 +156,22 @@ export function useUnifiedAssignment() {
           return false;
         },
       });
-      setStatus(result);
-      if (result === 'partial' || result === 'save-unknown') setNeedsReview(true);
+      transactions.settled(pending.token);
+      if (alive.current) {
+        const success =
+          (result === 'saved' || result === 'legacy-observed') &&
+          live.current.ws.isConnected;
+        if (success) transactions.clear(endpoint, pending.token);
+        setStatus(success ? result : result === 'save-unknown' ? result : 'partial');
+        setNeedsReview(!success);
+      }
     } catch (error) {
       setStatus('partial');
       setDetail(String(error));
       setNeedsReview(true);
     } finally {
-      setWorking(false);
+      if (pending) transactions.settled(pending.token);
+      if (alive.current) setWorking(false);
     }
   };
 
@@ -169,9 +201,38 @@ export function useUnifiedAssignment() {
 
   const reload = async () => {
     if (working) return;
+    const pending = transactions.read(endpoint);
+    if (transactions.isActive(endpoint)) {
+      setDetail(
+        'The previous save is still awaiting its outcome. Reload again after it settles.'
+      );
+      return;
+    }
     setConfirmation(null);
+    const beforeFeed = feedRevision.current;
     await model.load(true);
-    if (model.state.snapshotFresh && !model.state.needsReload) {
+    if (pending && model.state.snapshotFresh && !model.state.busy) {
+      setWorking(true);
+      const deadline = Date.now() + 3000;
+      while (
+        alive.current &&
+        live.current.ws.isConnected &&
+        feedRevision.current === beforeFeed &&
+        Date.now() < deadline
+      )
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      if (alive.current) setWorking(false);
+    }
+    if (
+      alive.current &&
+      live.current.ws.isConnected &&
+      model.state.snapshotFresh &&
+      !model.state.busy &&
+      !model.state.needsReload &&
+      (!pending ||
+        (feedRevision.current > beforeFeed &&
+          transactions.clear(endpoint, pending.token)))
+    ) {
       setNeedsReview(false);
       setStatus('');
       setDetail('');
@@ -184,6 +245,7 @@ export function useUnifiedAssignment() {
     status,
     detail,
     needsReview,
+    reviewBody: restored.current?.body,
     confirmation,
     open,
     save,

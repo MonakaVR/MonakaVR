@@ -4,6 +4,10 @@ import { Builder, ByteBuffer } from 'flatbuffers';
 import {
   AssignTrackerRequestT,
   BodyPart,
+  DataFeedMessage,
+  DataFeedMessageHeaderT,
+  DataFeedUpdateT,
+  DeviceDataT,
   DeviceIdT,
   MessageBundle,
   MessageBundleT,
@@ -11,6 +15,8 @@ import {
   RpcMessageHeaderT,
   TapDetectionSetupNotificationT,
   TrackerIdT,
+  TrackerDataT,
+  TrackerInfoT,
 } from 'solarxr-protocol';
 
 async function open(page: Page, fixture: CoreUiFixture, language = 'en') {
@@ -47,6 +53,114 @@ test('normal body picker saves Pos+Q and renders the actual body summary without
   await expect(page.getByTestId('assignment-summary-HIP')).toContainText('publisher-a');
   expect(page.url()).toContain('/onboarding/trackers-assign');
   expect(errors).toEqual([]);
+});
+
+test('pending two-writer recovery survives actual Layout disconnect/remount and page reload', async ({
+  page,
+}) => {
+  const fixture = new CoreUiFixture();
+  const id = new TrackerIdT(new DeviceIdT(7), 2);
+  fixture.snapshot.candidates.find((c) => c.id === 'slime-q')!.slimeTrackerId = id;
+  fixture.snapshot.assignments = [
+    {
+      body: 'HIP',
+      qSource: 'slime-q',
+      sixDofSource: 'publisher-b',
+      manualSix: true,
+      mode: 'ik',
+    },
+  ];
+  const feed = (index = 0, complete = true) => {
+    const info = new TrackerInfoT();
+    info.editable = true;
+    info.bodyPart = BodyPart.HIP;
+    info.displayName = 'physical fixture';
+    const device = new DeviceDataT();
+    device.id = id.deviceId;
+    device.trackers = [new TrackerDataT(id, info)];
+    const header = new DataFeedMessageHeaderT();
+    header.messageType = DataFeedMessage.DataFeedUpdate;
+    header.message = new DataFeedUpdateT(complete ? [device] : [], [], [], null, index);
+    const message = new MessageBundleT();
+    message.dataFeedMsgs = [header];
+    const builder = new Builder(128);
+    builder.finish(message.pack(builder));
+    fixture.binaryConnections.forEach((socket) =>
+      socket.send(Buffer.from(builder.asUint8Array()))
+    );
+  };
+  await open(page, fixture);
+  feed();
+  await expect(page.getByTestId('unified-assignment')).toContainText(
+    'Physical body observed'
+  );
+  await page.getByRole('radio', { name: qName, exact: true }).check();
+  expect(
+    await page.evaluate(() =>
+      Object.keys(sessionStorage).filter((key) =>
+        key.startsWith('monaka-assignment-review-v1:')
+      )
+    )
+  ).toHaveLength(0);
+  await page.getByRole('button', { name: 'Save input choices', exact: true }).click();
+  fixture.afterSave = () => {
+    fixture.binaryConnections.forEach((socket) => socket.close());
+    fixture.binaryConnections.clear();
+    fixture.afterSave = undefined;
+    return true; // Core saved; no response before the real binary close unmounts Layout.
+  };
+  await page.getByRole('button', { name: 'Confirm and save', exact: true }).click();
+  await expect(page.getByTestId('unified-assignment')).toHaveCount(0);
+  await expect(page.getByTestId('unified-assignment')).toBeVisible({ timeout: 10000 });
+  const modal = page.getByTestId('unified-assignment');
+  await expect(modal.getByText(/Partial or unconfirmed/)).toBeVisible();
+  await expect(modal.getByRole('radio', { name: qName, exact: true })).toBeDisabled();
+  expect(fixture.snapshot.assignments[0].qSource).toBe('publisher-a');
+  expect(
+    fixture.binaryRequests
+      .flatMap(
+        (bytes) =>
+          MessageBundle.getRootAsMessageBundle(new ByteBuffer(bytes)).unpack().rpcMsgs
+      )
+      .filter((rpc) => rpc.messageType === RpcMessage.AssignTrackerRequest)
+  ).toHaveLength(0);
+  fixture.binaryConnections.clear();
+  await page.reload();
+  await expect(modal.getByText(/Partial or unconfirmed/)).toBeVisible();
+  await expect(modal.getByRole('radio', { name: qName, exact: true })).toBeDisabled();
+  fixture.snapshotError = true;
+  await modal
+    .getByRole('button', { name: 'Reload input choices', exact: true })
+    .click();
+  await expect(modal.getByRole('alert')).toContainText('unavailable');
+  await expect(modal.getByRole('radio', { name: qName, exact: true })).toBeDisabled();
+  fixture.snapshotError = false;
+  const incompleteFeed = setInterval(() => {
+    feed(1);
+    feed(0, false);
+  }, 100);
+  try {
+    await modal
+      .getByRole('button', { name: 'Reload input choices', exact: true })
+      .click();
+    await expect(
+      modal.getByRole('button', { name: 'Reload input choices', exact: true })
+    ).toBeEnabled({ timeout: 5000 });
+    await expect(modal.getByRole('radio', { name: qName, exact: true })).toBeDisabled();
+  } finally {
+    clearInterval(incompleteFeed);
+  }
+  const feedTimer = setInterval(feed, 100);
+  try {
+    await modal
+      .getByRole('button', { name: 'Reload input choices', exact: true })
+      .click();
+    await expect(modal.getByRole('radio', { name: qName, exact: true })).toBeEnabled();
+    await expect(modal.getByText(/Partial or unconfirmed/)).toHaveCount(0);
+    expect(fixture.saves).toHaveLength(1);
+  } finally {
+    clearInterval(feedTimer);
+  }
 });
 
 test('Q-only and old-Core Slime association fail closed while manual clear survives metadata reload', async ({

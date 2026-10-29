@@ -68,10 +68,19 @@ export function TrackersAssignPage() {
     mirrorView: boolean;
   }>({ defaultValues });
   const { mirrorView } = watch();
-  const [selectedRole, setSelectRole] = useState<BodyPart>(BodyPart.NONE);
   const unified = useUnifiedAssignment();
+  const [selectedRole, setSelectRole] = useState<BodyPart>(BodyPart.NONE);
   const location = useLocation();
   const navigate = useNavigate();
+  useEffect(() => {
+    const body = bodyPartForInput(unified.reviewBody ?? '');
+    if (
+      unified.needsReview &&
+      body !== undefined &&
+      inputRole(body, unified.state.snapshot?.bodies ?? [])
+    )
+      setSelectRole(body);
+  }, [unified.reviewBody, unified.needsReview, unified.state.snapshot]);
   const inputSummaries = useMemo(() => {
     const snapshot = unified.state.snapshot;
     const label = (id: string | null) => {
@@ -268,6 +277,7 @@ export function TrackersAssignPage() {
   const onTrackerSelected = (
     tracker: FlatDeviceTracker | FlatDeviceTrackerDummy | null
   ) => {
+    if (unified.needsReview || unified.working) return;
     if (inputRole(selectedRole, unified.state.snapshot?.bodies ?? [])) return;
     if (!window.confirm(l10n.getString('assignment-legacy-only'))) return;
     const assign = (
@@ -321,6 +331,7 @@ export function TrackersAssignPage() {
   );
 
   const unassignAll = () => {
+    if (unified.needsReview || unified.working) return;
     if (!window.confirm(l10n.getString('assignment-legacy-clear-all'))) return;
     assignedTrackers.forEach((td) => {
       const assignreq = new AssignTrackerRequestT();
@@ -376,6 +387,18 @@ export function TrackersAssignPage() {
             <Typography variant="main-title" color="accent">
               {l10n.getString('onboarding-assign_trackers-title')}
             </Typography>
+            {unified.needsReview && (
+              <div role="alert" data-testid="assignment-review-required">
+                <p>{l10n.getString('assignment-status-partial')}</p>
+                <Button
+                  variant="secondary"
+                  disabled={unified.working || unified.state.busy}
+                  onClick={() => void unified.reload()}
+                >
+                  {l10n.getString('monaka-input-reload')}
+                </Button>
+              </div>
+            )}
             {Object.keys(inputSummaries).length > 0 && (
               <p>
                 {l10n.getString('assignment-source-roles', {
@@ -414,7 +437,11 @@ export function TrackersAssignPage() {
                 <Button
                   variant="secondary"
                   onClick={unassignAll}
-                  disabled={unified.working || unified.state.dirty}
+                  disabled={
+                    unified.working ||
+                    unified.state.dirty ||
+                    unified.needsReview
+                  }
                 >
                   {l10n.getString('assignment-legacy-clear-all-button')}
                 </Button>
