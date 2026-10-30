@@ -39,6 +39,7 @@ class MtpObservationBackend(
 		var poseSequence = -1L
 		var stateSequence = -1L
 		var mappingRevision = -1L
+		var lastSpace: CoordinateSpace? = null
 		var absentAt = -1L
 		var sample: Sample? = null
 		var context: MtpSourceContextSnapshot? = null
@@ -247,14 +248,26 @@ class MtpObservationBackend(
 		}
 		if (pose != null) device.poseSequence = sequence else device.stateSequence = sequence
 		val space = pose?.coordinate_space ?: state!!.coordinate_space
-		if (space != expectedSpace) {
+		// The output convention is a numeric contract; a world ID/revision is
+		// descriptive provenance, not a calibration-quality authorization gate.
+		if (space.convention != expectedSpace.convention) {
 			if (device.sample != null) historyGeneration++
 			device.sample = null
 			device.context = null
 			removed += key.observationId
-			inbox.count("SpaceMismatch")
+			inbox.count("SpaceConventionMismatch")
 			return
 		}
+		// A changed world descriptor invalidates transient solver/derivative state
+		// but does not clear the user's assignment or reject the new finite pose.
+		if (device.lastSpace != null && device.lastSpace != space) {
+			if (device.sample != null) historyGeneration++
+			device.sample = null
+			device.context = null
+			removed += key.observationId
+			inbox.count("SpaceDescriptorChanged")
+		}
+		device.lastSpace = space
 		val revision = pose?.mapping_revision ?: state!!.mapping_revision
 		if (revision < device.mappingRevision) {
 			inbox.count("OldMappingRevision")
