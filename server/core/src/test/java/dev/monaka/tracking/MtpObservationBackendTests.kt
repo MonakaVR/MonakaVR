@@ -50,7 +50,7 @@ class MtpObservationBackendTests {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = ["clock", "space", "mapping", "absent", "lost", "disconnected", "overflow", "beforeEpoch", "invalidate", "close", "pause"])
+	@ValueSource(strings = ["clock", "mapping", "absent", "lost", "disconnected", "overflow", "beforeEpoch", "invalidate", "close", "pause"])
 	fun contextClearedWheneverCurrentSampleIsInvalidated(case: String) {
 		val p = pose()
 		val inbox = MtpInbox()
@@ -60,7 +60,6 @@ class MtpObservationBackendTests {
 		assertEquals(1, backend.sourceContexts().size)
 		when (case) {
 			"clock" -> submit(inbox, p.copy(sequence = p.sequence + 1, clock_id = "44444444-4444-4444-4444-444444444444"))
-			"space" -> submit(inbox, p.copy(sequence = p.sequence + 1, coordinate_space = p.coordinate_space.copy(revision = p.coordinate_space.revision + 1)))
 			"mapping" -> submit(inbox, state(p.copy(mapping_revision = p.mapping_revision + 1)))
 			"absent" -> submit(inbox, state(p, presence = "absent"))
 			"lost", "disconnected" -> submit(inbox, state(p, tracking = case))
@@ -74,6 +73,22 @@ class MtpObservationBackendTests {
 		assertTrue(backend.samples().isEmpty(), case)
 		assertTrue(backend.sourceContexts().isEmpty(), case)
 		if (case == "overflow") assertEquals(1, inbox.diagnostics()["FloatOverflow"])
+	}
+
+	@Test fun compatibleWorldRevisionIsProvenanceNotOutputPermission() {
+		val p = pose()
+		val inbox = MtpInbox()
+		val backend = MtpObservationBackend(inbox, TrackerBodyAssignments(mapOf(key(p) to TrackerPosition.HIP)), p.coordinate_space)
+		submit(inbox, p)
+		assertEquals(1, backend.poll(1_000_000_000).size)
+		val oldHistory = backend.historyGeneration
+		val newSpace = p.coordinate_space.copy(id = "reconnected-world", revision = p.coordinate_space.revision + 1)
+		val next = p.copy(sequence = p.sequence + 1, coordinate_space = newSpace)
+		submit(inbox, next)
+		assertEquals(1, backend.poll(1_000_000_000).size)
+		assertEquals(newSpace, backend.sourceContexts().getValue(key(p)).coordinateSpace)
+		assertTrue(backend.historyGeneration > oldHistory)
+		assertEquals(0, inbox.diagnostics()["SpaceConventionMismatch"] ?: 0)
 	}
 
 	@Test fun sessionStateInvalidatesUntilAcceptedNewPoseAndRetiredCannotRestore() {
