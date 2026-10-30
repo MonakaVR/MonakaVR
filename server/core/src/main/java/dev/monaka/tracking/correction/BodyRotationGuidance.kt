@@ -25,6 +25,7 @@ data class GuidanceSource(val identity: GuidanceIdentity, val epoch: GuidanceEpo
 data class GuidanceFrames(
 	val mainTrackerToBody: Quaternion,
 	val imuToBody: Quaternion,
+	/** Historical diagnostic labels only; ignored for runtime permission. */
 	val approvalRevision: String,
 	val confirmed: Boolean,
 	val approvedMain: GuidanceSource,
@@ -49,8 +50,8 @@ data class GuidanceReceipt(
 )
 enum class GuidanceOrigin { INDEPENDENT_MAIN_ACCEPTANCE, PHYSICAL_IMU_ACCEPTANCE, POSE_ORIENTATION, OUTPUT }
 
-/** Evidence must come from the acceptance boundary, never reconstructed from a selected pose.
- * These value types are not a production trust provider; no runtime adapter is installed by A1.
+/** Receipt facts come from independent input acceptance, never a selected solver pose.
+ * BodyRotationRuntime connects these values; they are not physical-quality certification.
  */
 data class GuidanceEvidence(
 	val origin: GuidanceOrigin,
@@ -152,7 +153,10 @@ object BodyRotationGuidance {
 		if (input.nowNanos < 0 || previous.lastNowNanos?.let { input.nowNanos < it } == true) {
 			return unavailable(previous, GuidanceReason.CLOCK_ROLLBACK)
 		}
-		val binding = input.binding ?: return unavailable(BodyRotationState(lastNowNanos = input.nowNanos), GuidanceReason.UNASSIGNED)
+		val suppliedBinding = input.binding ?: return unavailable(BodyRotationState(lastNowNanos = input.nowNanos), GuidanceReason.UNASSIGNED)
+		val binding = suppliedBinding.copy(frames = suppliedBinding.frames.copy(
+			approvalRevision = "", confirmed = false, approvedMain = suppliedBinding.main, approvedImu = suppliedBinding.imu,
+		))
 		// Any authority/frame change revokes readiness even when no sample is present.
 		var s = if (binding != previous.binding) BodyRotationState(binding = binding) else previous
 		s = s.copy(lastNowNanos = input.nowNanos)
@@ -332,13 +336,11 @@ object BodyRotationGuidance {
 			!validIdentity(b.imu.identity) ||
 			!validEpoch(b.main.epoch) ||
 			!validEpoch(b.imu.epoch) ||
-			b.main.epoch.space != b.imu.epoch.space -> GuidanceReason.BINDING_INVALID
+			b.main.epoch.space.convention != b.imu.epoch.space.convention -> GuidanceReason.BINDING_INVALID
 
-		!b.frames.confirmed ||
-			b.frames.approvalRevision.isBlank() ||
-			b.frames.approvedMain != b.main ||
-			b.frames.approvedImu != b.imu ||
-			RotationGuidanceMath.normalize(b.frames.mainTrackerToBody) == null ||
+		// These are saved geometric transforms. Historical approval labels and
+		// transport epochs cannot revoke their ordinary runtime use.
+		RotationGuidanceMath.normalize(b.frames.mainTrackerToBody) == null ||
 			RotationGuidanceMath.normalize(b.frames.imuToBody) == null -> GuidanceReason.FRAME_UNAPPROVED
 
 		else -> GuidanceReason.NONE

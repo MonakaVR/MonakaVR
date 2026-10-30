@@ -384,8 +384,9 @@ class ModeConfigurationTests {
 		c.save(path)
 		val before = Files.readAllBytes(path)
 		withApi(c, path) { api ->
-			assertFalse(save(api, snapshot(api), "ik")["ok"].asBoolean())
-			assertContentEquals(before, Files.readAllBytes(path))
+			assertTrue(save(api, snapshot(api), "ik")["ok"].asBoolean())
+			assertEquals(c.rotationCorrection, MonakaConfiguration.load(path).rotationCorrection)
+			assertEquals(OutputMode.HYBRID, c.assignments.snapshot().targets.getValue(TrackerPosition.HIP).outputMode)
 		}
 	}
 

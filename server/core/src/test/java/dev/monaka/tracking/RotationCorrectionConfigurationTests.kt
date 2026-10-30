@@ -58,7 +58,7 @@ class RotationCorrectionConfigurationTests {
 			correctionNode.put("maxImuSampleAgeNanos", tuning().maxImuSampleAgeNanos)
 			(root["rotationCorrection"] as com.fasterxml.jackson.databind.node.ObjectNode).remove("framesConfirmed")
 			ObjectMapper().writeValue(path.toFile(), root)
-			assertFails { MonakaConfiguration.load(path) }
+			assertEquals(false, MonakaConfiguration.load(path).rotationCorrection!!.frames.operatorConfirmed)
 			(root["rotationCorrection"] as com.fasterxml.jackson.databind.node.ObjectNode).put("framesConfirmed", true)
 			(root["rotationCorrection"] as com.fasterxml.jackson.databind.node.ObjectNode).remove("mainTrackerToBodyWxyz")
 			ObjectMapper().writeValue(path.toFile(), root)
@@ -68,31 +68,11 @@ class RotationCorrectionConfigurationTests {
 		}
 	}
 
-	@Test fun enabledCorrectionWithoutSharedSpaceAssertionFailsClosed() {
-		assertFailsWith<IllegalArgumentException> {
-			MonakaConfiguration(space, assignments(), rotationCorrection = RotationCorrectionConfig(RotationCorrectionFrames(Quaternion.IDENTITY, Quaternion.IDENTITY, space, true), tuning()))
-		}
-	}
-
-	@Test fun enabledCorrectionRequiresConfirmedFramesAndPhysicalFallbackAssignment() {
-		assertFailsWith<IllegalArgumentException> {
-			RotationCorrectionFrames(Quaternion.IDENTITY, Quaternion.IDENTITY, space, false)
-		}
-		val wrongAssignment = TrackerBodyAssignments().also {
-			it.configure(
-				TrackerPosition.HIP,
-				TrackerReference.mtp(LogicalTracker("source", "main", "publisher")),
-				TrackerReference.mtp(LogicalTracker("source", "fallback", "publisher")),
-				OutputMode.HYBRID,
-			)
-		}
-		assertFailsWith<IllegalArgumentException> {
-			MonakaConfiguration(
-				space,
-				wrongAssignment,
-				backgroundIkSharedSpace = space,
-				rotationCorrection = RotationCorrectionConfig(RotationCorrectionFrames(Quaternion.IDENTITY, Quaternion.IDENTITY, space, true), tuning()),
-			)
-		}
+	@Test fun savedGeometryDoesNotRequireQualityApprovalOrTransportRevisionMatch() {
+		val frames = RotationCorrectionFrames(Quaternion.IDENTITY, Quaternion.IDENTITY, space.copy(revision = 99), false)
+		val config = MonakaConfiguration(space, assignments(), rotationCorrection = RotationCorrectionConfig(frames, tuning()))
+		assertEquals(frames, config.rotationCorrection!!.frames)
+		val qOnly = TrackerBodyAssignments().also { it.configureSources(TrackerPosition.HIP, TrackerReference.slime("imu"), null, true) }
+		assertEquals(qOnly.snapshot(), config.copy(assignments = qOnly).assignments.snapshot())
 	}
 }

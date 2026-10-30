@@ -2,6 +2,17 @@
 
 This repository owns the producer-independent tracking consumer: public-contract input ingestion, source identity and capability catalog, body assignment, fusion/fallback, IK, and final virtual tracker output.
 
+## 2026-10-30 normal runtime semantics
+
+Issue17 supersedes historical physical-quality approval and coordinate ID/revision
+matching as normal-use permission. Preserve saved geometry and explicit input/body
+choices across reconnects; invalidate short-lived samples/history independently.
+Known conventions and finite valid components still require normal structural,
+identity, replay, freshness and feedback checks. No new proof/approval provider or
+bypass switch is a prerequisite for ordinary tracking or correction. See
+`docs/normal-runtime-correction.md`; historical Task5 mismatched-space/approval
+requirements apply only where they do not conflict with these current semantics.
+
 ## Highest-priority architecture invariant: input-producer independence
 
 **Mandatory for all future changes, including fixes, migration work, UI, tests, scripts, and packaging.** This section overrides historical task documents or existing implementation patterns when they conflict. It applies to **every input transport and format**, not only MVIP.

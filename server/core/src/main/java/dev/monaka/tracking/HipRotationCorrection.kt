@@ -21,6 +21,14 @@ data class RotationCorrectionTuning(
 	val maxDtNanos: Long,
 	val maxImuSampleAgeNanos: Long,
 ) {
+	companion object {
+		/** Existing software learner values from CorePocHilSession, now shared by
+		 * normal explicit input pairs. These tune correction, never pose admission.
+		 */
+		fun normalRuntimeDefaults() = RotationCorrectionTuning(
+			150_000_000, 20_000_000, .1, .2, Math.PI, .2, 2.0, 2, 1_000_000_000, 100_000_000,
+		)
+	}
 	init {
 		require(
 			fullStableNanos > 0 &&
@@ -49,7 +57,6 @@ data class RotationCorrectionFrames(
 	val operatorConfirmed: Boolean,
 ) {
 	init {
-		require(operatorConfirmed) { "Correction requires explicit operator confirmation of both body-frame transforms" }
 		require(validUnit(mainTrackerToBody) && validUnit(fallbackToBody))
 	}
 }
@@ -163,7 +170,7 @@ class HipRotationCorrection(
 		if (ready &&
 			(
 				activeAssignmentGeneration != assignmentGeneration ||
-					expectedSpace != frames.assertedSpace ||
+					expectedSpace.convention != frames.assertedSpace.convention ||
 					(currentImuKey != null && currentImuKey != imuEpochKey)
 				)
 		) {
@@ -201,7 +208,7 @@ class HipRotationCorrection(
 			goodRecoveryPairs = 0
 		}
 		// Application integrity is checked independently of teacher synchronization.
-		if (expectedSpace != frames.assertedSpace || (ip?.space != null && ip.space != expectedSpace)) {
+		if (expectedSpace.convention != frames.assertedSpace.convention || (ip?.space != null && ip.space.convention != expectedSpace.convention)) {
 			return blockApplication("space_mismatch")
 		}
 		if (imu == null || ip == null || currentImuKey == null) return blockApplication("provenance_missing")
@@ -237,7 +244,7 @@ class HipRotationCorrection(
 		} else if (modality != TrackingModality.NONE &&
 			main != null &&
 			mp != null &&
-			(mp.space == null || mp.space == expectedSpace) &&
+			(mp.space == null || mp.space.convention == expectedSpace.convention) &&
 			!FeedbackExclusion.isOutput(main.sourceId)
 		) {
 			tryLearn(main, mp, imuRotation, ip, now, modality)

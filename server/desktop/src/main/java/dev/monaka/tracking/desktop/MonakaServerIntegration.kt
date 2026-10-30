@@ -86,7 +86,7 @@ class MonakaServerIntegration private constructor(
 			check(assignment.targets.filterValues { it.outputMode != OutputMode.IK } == outputAssignments) {
 				"Changing visible output assignment/strategy requires a server restart"
 			}
-			val resolvedRaw = runtime.resolvedTrackingPoses(tick)
+			val resolvedRaw = runtime.correctBodyRotations(tick, runtime.resolvedTrackingPoses(tick))
 			val hip = assignment.targets[TrackerPosition.HIP]
 			val observations = if (rotationCorrection == null && diagnostics == null) {
 				emptyMap()
@@ -244,13 +244,19 @@ class MonakaServerIntegration private constructor(
 			require(config.assignments.snapshot().targets.values.none { it.outputMode == OutputMode.HYBRID } || registerAfterPose != null) {
 				"Hybrid output requires the post-IK server hook"
 			}
+			val legacyHipCorrection = config.rotationCorrection?.takeIf {
+				val hip = config.assignments.snapshot().targets[TrackerPosition.HIP]
+				hip?.mainTracker?.mtp != null && hip.rotationFallbackTracker?.let { q -> q.mtp == null } == true
+			}
 			val runtime = MonakaRuntime(
 				trackers,
 				config.space,
 				config.assignments,
 				clock = clock,
 				timeoutNanos = config.timeoutNanos,
-				maxImuSampleAgeNanos = config.rotationCorrection?.tuning?.maxImuSampleAgeNanos,
+				maxImuSampleAgeNanos = legacyHipCorrection?.tuning?.maxImuSampleAgeNanos,
+				excludedRotationTargets = if (legacyHipCorrection != null) setOf(TrackerPosition.HIP) else emptySet(),
+				rotationReacquireDurationNanos = config.continuityTuning.reacquireDurationNs,
 			)
 			val receiver = try {
 				MtpUdpReceiver(runtime.inbox, clock, config.port)
@@ -270,7 +276,7 @@ class MonakaServerIntegration private constructor(
 					skeleton.humanPoseManager::currentHipBodyModelSnapshot,
 				).also { composition = it }
 				val output = DirectConstraintOutput(config.assignments.snapshot(), config.space, nextTrackerId).also { direct = it }
-				val background = BackgroundIkPoseReader(skeleton, config.backgroundIkSharedSpace?.let(BackgroundIkAlignment::confirmedSameSpace) ?: BackgroundIkAlignment.UNVERIFIED)
+				val background = BackgroundIkPoseReader(skeleton, BackgroundIkAlignment.confirmedSameSpace(config.backgroundIkSharedSpace ?: config.space))
 				configureDirectOutputs(output.trackers.values.toList())
 				val diagnosticEnabled = config.rotationCorrection != null ||
 					config.assignments.snapshot().targets.values.any { it.outputMode == OutputMode.HYBRID }
@@ -280,7 +286,7 @@ class MonakaServerIntegration private constructor(
 				}
 				val result = MonakaServerIntegration(
 					runtime, receiver, owner, output, skeleton, registerBeforePose, onFailure, registerAfterPose, background,
-					config.continuityTuning, onTransition, config.rotationCorrection?.let { HipRotationCorrection(it.frames, it.tuning) },
+					config.continuityTuning, onTransition, legacyHipCorrection?.let { HipRotationCorrection(it.frames, it.tuning) },
 					if (diagnosticEnabled) HybridTrackingDiagnosticRecorder(onDiagnostic) else null,
 					frames,
 				).also { integration = it }

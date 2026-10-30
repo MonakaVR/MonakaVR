@@ -287,7 +287,7 @@ class HybridFoundationTests {
 		assignment.put("outputMode", "hybrid")
 		mapper.writeValue(path.toFile(), json)
 		assertFails { MonakaConfiguration.load(path) }
-		assertFails { MonakaConfiguration(p.coordinate_space, backgroundIkSharedSpace = p.coordinate_space.copy(revision = 1)) }
+		assertEquals(p.coordinate_space.copy(revision = 1), MonakaConfiguration(p.coordinate_space, backgroundIkSharedSpace = p.coordinate_space.copy(revision = 1)).backgroundIkSharedSpace)
 		json.putObject("continuityTuning").put("stableFullDwellMs", -1)
 		mapper.writeValue(path.toFile(), json)
 		assertFails { MonakaConfiguration.load(path) }

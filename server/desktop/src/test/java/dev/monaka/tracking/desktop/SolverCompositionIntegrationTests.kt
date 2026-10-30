@@ -241,7 +241,7 @@ class SolverCompositionIntegrationTests {
 		}
 	}
 
-	@Test fun eightOpaqueSourcesReachSameIkFrameAndRejectOnlyMismatchedSpace() {
+	@Test fun eightOpaqueSourcesReachSameIkFrameAcrossCompatibleSpaceRevisions() {
 		val targets = listOf(hip, TrackerPosition.UPPER_CHEST, TrackerPosition.LEFT_UPPER_LEG,
 			TrackerPosition.RIGHT_UPPER_LEG, TrackerPosition.LEFT_FOOT, TrackerPosition.RIGHT_FOOT,
 			TrackerPosition.LEFT_UPPER_ARM, TrackerPosition.RIGHT_UPPER_ARM)
@@ -265,14 +265,14 @@ class SolverCompositionIntegrationTests {
 			f.now += 10_000_000
 			submit(packets[0].copy(sequence = 2, coordinate_space = seed.coordinate_space.copy(revision = seed.coordinate_space.revision + 1)))
 			f.before!!.run(); f.finish()
-			assertEquals(1, f.integration.runtime.inbox.diagnostics().getValue("SpaceMismatch"))
+			assertEquals(1, f.integration.runtime.inbox.diagnostics().getValue("SpaceDescriptionChanged"))
 			f.now += 10_000_000
 			submit(packets[0].copy(sequence = 3)); f.before!!.run(); f.finish()
 			frames.close(); assertTrue(frames.awaitTermination(2000))
 			assertEquals(3, f.polls); assertEquals(0L, f.integration.frameDiagnosticFailures)
 			val records = bytes.toString(Charsets.UTF_8).lines().filter { it.isNotBlank() }.map { com.fasterxml.jackson.databind.ObjectMapper().readTree(it) }
 			assertEquals(3, records.size)
-			assertEquals(listOf(8, 7, 8), records.map { it["accepted_mvip"].size() })
+			assertEquals(listOf(8, 8, 8), records.map { it["accepted_mvip"].size() })
 			for ((index, target) in targets.withIndex()) {
 				val resolved = records[0]["resolved"].first { it["target"].asText() == target.name }
 				assertEquals(frames.identity(key(packets[index]).observationId), resolved["position_owner"].asText())
@@ -280,8 +280,8 @@ class SolverCompositionIntegrationTests {
 				assertEquals(packets[index].position!!.map { it.toFloat() }, resolved["position"].map { it.floatValue() })
 				assertTrue(records[0]["ik_targets_before"].any { it["target"].asText() == target.name }, target.name)
 				val second = records[1]["resolved"].first { it["target"].asText() == target.name }
-				assertEquals(index == 0, second["position"].isNull)
-				assertEquals(index == 0, second["rotation_xyzw"].isNull)
+				assertFalse(second["position"].isNull)
+				assertFalse(second["rotation_xyzw"].isNull)
 				assertTrue(records[2]["resolved"].first { it["target"].asText() == target.name }["position"].isArray)
 			}
 			for (record in records) {

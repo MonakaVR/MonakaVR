@@ -302,7 +302,7 @@ class MonakaInputConfigurationApi(
 			val data = mapOf(
 				"type" to "monaka_inputs_v1", "id" to id, "ok" to true, "generation" to s.generation.toString(),
 				"readbackToken" to readbackToken(), "restartRequired" to restartPending,
-				"backgroundIkAlignmentConfirmed" to (configuration.backgroundIkSharedSpace == configuration.space),
+				"backgroundIkAlignmentConfirmed" to (configuration.backgroundIkSharedSpace?.convention == configuration.space.convention),
 				"bodies" to TrackerPosition.values().filter { it.name != "NONE" }.map { it.name },
 				"candidates" to s.candidates.map { x ->
 					mapOf(

@@ -8,6 +8,7 @@ import io.github.axisangles.ktmath.Quaternion
 class AssignedImuSampleFreshness(
 	private val assignments: TrackerBodyAssignments,
 	private val maxAgeNanos: Long,
+	private val onlyExplicitPairs: Boolean = false,
 ) {
 	init {
 		require(maxAgeNanos > 0)
@@ -20,15 +21,15 @@ class AssignedImuSampleFreshness(
 		val space: CoordinateSpace?,
 		val assignmentGeneration: Long,
 	)
-	private var epoch: Epoch? = null
-	private var lastSequence: Long? = null
-	private var lastSampleAt: Long? = null
+	private data class Cursor(val epoch: Epoch, val sequence: Long, val sampleAt: Long)
+	private val cursors = linkedMapOf<String, Cursor>()
 
 	fun apply(observation: PoseObservation, now: Long): PoseObservation = apply(observation, now, assignments.snapshot())
 
 	fun apply(observation: PoseObservation, now: Long, assignment: TrackerBodyAssignments.Snapshot): PoseObservation {
-		val fallback = assignment.targets[TrackerPosition.HIP]?.rotationFallbackTracker?.observationId
-		if (observation.target != TrackerPosition.HIP ||
+		val relation = assignment.targets[observation.target]
+		val fallback = relation?.rotationFallbackTracker?.observationId
+		if ((onlyExplicitPairs && relation?.sourceSelection?.sixDofSource == null) ||
 			observation.sourceId != fallback ||
 			!observation.rotationQuality.usable
 		) {
@@ -49,22 +50,17 @@ class AssignedImuSampleFreshness(
 			provenance.space,
 			assignment.generation,
 		)
-		if (epoch != currentEpoch) {
-			epoch = currentEpoch
-			lastSequence = null
-			lastSampleAt = null
-		}
-		if (lastSequence != null &&
+		val old = cursors[observation.sourceId]?.takeIf { it.epoch == currentEpoch }
+		if (old != null &&
 			(
-				provenance.sequence < lastSequence!! ||
-					(provenance.sequence == lastSequence && sampleAt != lastSampleAt) ||
-					(provenance.sequence > lastSequence!! && sampleAt <= lastSampleAt!!)
+				provenance.sequence < old.sequence ||
+					(provenance.sequence == old.sequence && sampleAt != old.sampleAt) ||
+					(provenance.sequence > old.sequence && sampleAt <= old.sampleAt)
 				)
 		) {
 			return observation.copy(rotationQuality = ObservationQuality.STALE)
 		}
-		lastSequence = provenance.sequence
-		lastSampleAt = sampleAt
+		cursors[observation.sourceId] = Cursor(currentEpoch, provenance.sequence, sampleAt)
 		return observation
 	}
 

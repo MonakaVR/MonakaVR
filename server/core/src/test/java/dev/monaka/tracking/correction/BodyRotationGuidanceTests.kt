@@ -383,7 +383,6 @@ class BodyRotationGuidanceTests {
 				b.copy(imu = b.imu.copy(epoch = b.imu.epoch.copy(sourceEpoch = "restart"))),
 				b.copy(imu = b.imu.copy(epoch = b.imu.epoch.copy(calibrationEpoch = "reset"))),
 				b.copy(assignmentRevision = 2),
-				b.copy(frames = b.frames.copy(approvalRevision = "new")),
 				b.copy(frames = b.frames.copy(imuToBody = mainQ)),
 			)
 		for (changed in bindings) {
@@ -414,8 +413,6 @@ class BodyRotationGuidanceTests {
 	@Test fun unconfirmedInvalidMountAndInvalidSpaceFailClosed() {
 		val b = binding()
 		for (frames in listOf(
-			b.frames.copy(confirmed = false),
-			b.frames.copy(approvalRevision = ""),
 			b.frames.copy(mainTrackerToBody = Quaternion(0f, 0f, 0f, 0f)),
 		)) {
 			assertEquals(GuidanceReason.FRAME_UNAPPROVED, advance(i = input(b.copy(frames = frames))).learningReason)
@@ -550,7 +547,7 @@ class BodyRotationGuidanceTests {
 		val newImu = old.imu.copy(epoch = old.imu.epoch.copy(calibrationEpoch = "new-mount"))
 		val changed = old.copy(imu = newImu)
 		val blocked = advance(s, input(changed, 3, 5_000_000))
-		assertEquals(GuidanceReason.FRAME_UNAPPROVED, blocked.learningReason)
+		assertEquals(GuidanceReason.FIRST_PAIR, blocked.learningReason)
 		assertFalse(blocked.state.ready)
 		val approved = changed.copy(frames = changed.frames.copy(approvedImu = newImu, approvalRevision = "approval-2"))
 		val first = advance(blocked.state, input(approved, 4, 6_000_000))

@@ -20,6 +20,35 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class MtpObservationBackendTests {
+	@Test fun compatibleDescriptionIsFreshAfterRestartAndRejectedOldMappingCannotClearHealthyPose() {
+		val p = pose().copy(mapping_revision = 10)
+		val configPath = java.nio.file.Files.createTempFile("retained-assignment", ".json")
+		try {
+			val assignments = TrackerBodyAssignments().also { it.configureSources(TrackerPosition.HIP, TrackerReference.slime("q"), TrackerReference.mtp(key(p)), true) }
+			MonakaConfiguration(p.coordinate_space, assignments, port = 0).save(configPath)
+			val loaded = MonakaConfiguration.load(configPath)
+			val backend = MtpObservationBackend(MtpInbox(), loaded.assignments, loaded.space)
+			assertTrue(backend.samples().isEmpty(), "Restart does not restore dynamic samples")
+			val inbox = MtpInbox()
+			val admitted = MtpObservationBackend(inbox, loaded.assignments, loaded.space)
+			submit(inbox, p)
+			admitted.poll(1_000_000_000)
+			val before = admitted.samples()
+			val context = admitted.sourceContexts()
+			val history = admitted.historyGeneration
+			val changed = p.coordinate_space.copy(id = "new-description", revision = p.coordinate_space.revision + 1)
+			submit(inbox, p.copy(sequence = p.sequence + 1, mapping_revision = 9, coordinate_space = changed))
+			admitted.poll(1_000_000_000)
+			assertEquals(before, admitted.samples())
+			assertEquals(context, admitted.sourceContexts())
+			assertEquals(history, admitted.historyGeneration)
+			submit(inbox, p.copy(sequence = p.sequence + 2, coordinate_space = changed))
+			assertEquals(1, admitted.poll(1_000_000_000).size)
+			assertTrue(admitted.historyGeneration > history)
+			assertEquals(changed, admitted.sourceContexts().getValue(key(p)).coordinateSpace)
+			assertEquals(assignments.snapshot().targets, MonakaConfiguration.load(configPath).assignments.snapshot().targets)
+		} finally { java.nio.file.Files.deleteIfExists(configPath) }
+	}
 	private fun pose() = (MonakaCodec.decodeEnvelope(File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes()) as DecodeResult.Success).value as MtpPose
 	private fun key(p: MtpPose) = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
 	private fun submit(inbox: MtpInbox, envelope: Envelope, at: Long = 1_000_000_000, peer: String = "in-memory") = assertTrue(inbox.receive((MonakaCodec.encodeEnvelope(envelope) as EncodeResult.Success).value, at, peer))
@@ -50,7 +79,7 @@ class MtpObservationBackendTests {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = ["clock", "space", "mapping", "absent", "lost", "disconnected", "overflow", "beforeEpoch", "invalidate", "close", "pause"])
+	@ValueSource(strings = ["clock", "mapping", "absent", "lost", "disconnected", "overflow", "beforeEpoch", "invalidate", "close", "pause"])
 	fun contextClearedWheneverCurrentSampleIsInvalidated(case: String) {
 		val p = pose()
 		val inbox = MtpInbox()
