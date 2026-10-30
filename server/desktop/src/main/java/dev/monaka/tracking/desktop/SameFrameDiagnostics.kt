@@ -115,6 +115,7 @@ class SameFrameDiagnostics internal constructor(
 			"position_correction_detail" to positionCorrection?.let { p -> mapOf(
 				"hmd_available" to p.hmdAvailable, "geometry" to p.geometry,
 				"prediction" to vector(p.prediction), "measured_teacher" to vector(p.measuredTeacher),
+				"correction_world" to vector(p.correctionWorld), "applied_position" to vector(p.appliedPosition),
 				"solver_position" to vector(p.solverPosition), "solver_position_reference" to p.solverPositionReference,
 				"learning" to p.learning, "continuity" to p.continuity) },
 			"body_rotation_guidance" to runtime.bodyRotationResults.map { (target, r) -> mapOf(

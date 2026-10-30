@@ -78,6 +78,7 @@ object NormalRuntimeProcessProbe {
 			"generation" to config.assignments.snapshot().generation.toString(), "accepted" to integration.runtime.inbox.diagnostics(),
 			"position" to integration.lastPositionCorrection?.let { p -> mapOf("geometry" to p.geometry, "hmd_available" to p.hmdAvailable,
 				"prediction" to SameFrameDiagnostics.vector(p.prediction), "measured_teacher" to SameFrameDiagnostics.vector(p.measuredTeacher),
+				"correction_world" to SameFrameDiagnostics.vector(p.correctionWorld), "applied_position" to SameFrameDiagnostics.vector(p.appliedPosition),
 				"solver_position" to SameFrameDiagnostics.vector(p.solverPosition), "reference" to p.solverPositionReference, "continuity" to p.continuity, "learning" to p.learning) },
 			"body_rotation" to integration.runtime.bodyRotationResults.map { (target, r) -> mapOf("target" to target.name, "ready" to r.state.ready, "learning" to r.learning.name) },
 			"virtual_trackers" to hpm.computedTrackers.map { t -> mapOf("id" to t.id, "target" to t.trackerPosition?.name, "position" to SameFrameDiagnostics.vector(t.position), "rotation_xyzw" to SameFrameDiagnostics.quaternion(t.getRotation())) },

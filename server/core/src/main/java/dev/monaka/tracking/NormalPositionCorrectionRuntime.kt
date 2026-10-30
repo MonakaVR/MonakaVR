@@ -14,6 +14,8 @@ data class NormalPositionCorrectionDiagnostics(
 	val solverPositionReference: String,
 	val learning: String,
 	val continuity: String,
+	val correctionWorld: Vector3,
+	val appliedPosition: Vector3?,
 )
 
 /** Normal server composition of the existing position algorithm. Numeric defaults
@@ -108,7 +110,8 @@ internal class NormalPositionCorrectionRuntime(
 		if (result is PositionCorrectionRuntimeTickResult.Processed) {
 			val selected = result.solverConstraints[TrackerPosition.HIP]
 			diagnostics = NormalPositionCorrectionDiagnostics(hmd != null, geometry, result.prediction?.position, teacher?.position,
-				selected?.position?.value, selected?.positionReference.toString(), result.learning.decision.toString(), result.continuity.phase.toString())
+				selected?.position?.value, selected?.positionReference.toString(), result.learning.decision.toString(), result.continuity.phase.toString(),
+				result.learning.state.correctionWorld, (result.application as? PositionCorrectionApplicationResult.Ready)?.candidate?.correctedPosition)
 		}
 		return result
 	}

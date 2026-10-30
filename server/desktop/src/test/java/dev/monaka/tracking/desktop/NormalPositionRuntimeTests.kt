@@ -73,6 +73,7 @@ class NormalPositionRuntimeTests {
 			val full = assertNotNull(it.lastPositionCorrection)
 			assertNotNull(full.prediction)
 			assertNotNull(full.measuredTeacher)
+			assertTrue((full.prediction!! + full.correctionWorld - full.measuredTeacher!!).len() < (full.prediction!! - full.measuredTeacher!!).len(), "Actual learned correction improves the raw prediction; raw prediction remains independent")
 			assertEquals("UPDATED", full.learning)
 			assertEquals("uncalibrated_identity", full.geometry)
 			step("rotation_only")
@@ -83,6 +84,8 @@ class NormalPositionRuntimeTests {
 			assertEquals("FALLBACK_ACTIVE", lost.continuity)
 			assertNull(it.runtime.pipeline.resolve(TrackerPosition.HIP, now).position, "Prediction remains derived; source has no measured P")
 			val fallback = assertNotNull(lost.solverPosition)
+			assertEquals(lost.prediction!! + lost.correctionWorld, lost.appliedPosition)
+			assertEquals(lost.appliedPosition, fallback)
 			val fallbackComputed = hpm.skeleton.computedHipTracker!!.position
 			step(x = .8)
 			val reacquire = assertNotNull(it.lastPositionCorrection)
