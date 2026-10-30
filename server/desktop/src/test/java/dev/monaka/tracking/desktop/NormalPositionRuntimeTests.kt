@@ -1,8 +1,17 @@
 package dev.monaka.tracking.desktop
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import dev.monaka.protocol.v2.*
-import dev.monaka.tracking.*
+import dev.monaka.protocol.v2.Confidence
+import dev.monaka.protocol.v2.DecodeResult
+import dev.monaka.protocol.v2.EncodeResult
+import dev.monaka.protocol.v2.MonakaCodec
+import dev.monaka.protocol.v2.MtpPose
+import dev.monaka.protocol.v2.Validity
+import dev.monaka.tracking.LogicalTracker
+import dev.monaka.tracking.MonakaConfiguration
+import dev.monaka.tracking.RotationCorrectionConfig
+import dev.monaka.tracking.RotationCorrectionFrames
+import dev.monaka.tracking.RotationCorrectionTuning
 import dev.slimevr.desktop.platform.ProtobufBridge
 import dev.slimevr.desktop.platform.ProtobufMessages.*
 import dev.slimevr.tracking.processor.HumanPoseManager
@@ -10,14 +19,18 @@ import dev.slimevr.tracking.trackers.*
 import dev.slimevr.tracking.trackers.udp.IMUType
 import dev.slimevr.tracking.trackers.udp.UDPDevice
 import io.github.axisangles.ktmath.Quaternion
+import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.nio.file.Path
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import dev.slimevr.tracking.trackers.TrackerStatus as LocalStatus
 
 /** Normal RPC/CAS save -> production server tick -> existing position algorithm ->
@@ -31,21 +44,37 @@ class NormalPositionRuntimeTests {
 		val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
 		val path = directory.resolve("monaka-mtp.json")
 		val bridge = NormalHmdCapture()
-		val imu = Tracker(UDPDevice(InetSocketAddress("127.0.0.1", 20001), InetAddress.getLoopbackAddress(), "position-q"), 1, "position-q",
+		val imu = Tracker(
+			UDPDevice(InetSocketAddress("127.0.0.1", 20001), InetAddress.getLoopbackAddress(), "position-q"), 1, "position-q",
 			trackerPosition = TrackerPosition.HIP, trackerNum = 1, hasRotation = true, imuType = IMUType.UNKNOWN, allowFiltering = false,
-			allowReset = true, allowMounting = true, trackRotDirection = false).also { it.status = LocalStatus.OK; it.setRotation(Quaternion.IDENTITY) }
-		val legacy = if (legacyGeometry) RotationCorrectionConfig(
-			RotationCorrectionFrames(Quaternion.IDENTITY, imu.resetsHandler.getCorrectionReferenceRotationFrom(Quaternion.IDENTITY).inv(), p.coordinate_space, false),
-			RotationCorrectionTuning.normalRuntimeDefaults()) else null
+			allowReset = true, allowMounting = true, trackRotDirection = false,
+		).also {
+			it.status = LocalStatus.OK
+			it.setRotation(Quaternion.IDENTITY)
+		}
+		val legacy = if (legacyGeometry) {
+			RotationCorrectionConfig(
+				RotationCorrectionFrames(Quaternion.IDENTITY, imu.resetsHandler.getCorrectionReferenceRotationFrom(Quaternion.IDENTITY).inv(), p.coordinate_space, false),
+				RotationCorrectionTuning.normalRuntimeDefaults(),
+			)
+		} else {
+			null
+		}
 		MonakaConfiguration(p.coordinate_space, port = 0, rotationCorrection = legacy).save(path)
-		val hpm = HumanPoseManager(listOf(bridge.hmd, imu)).also { it.setLegTweaksEnabled(false); it.skeleton.ikSolver.enabled = true; it.update() }
+		val hpm = HumanPoseManager(listOf(bridge.hmd, imu)).also {
+			it.setLegTweaksEnabled(false)
+			it.skeleton.ikSolver.enabled = true
+			it.update()
+		}
 		var before: Runnable? = null
 		var after: Runnable? = null
 		var now = 1_000_000_000L
 		val failures = mutableListOf<Exception>()
-		val integration = MonakaServerIntegration.startIfEnabled(true, { MonakaConfiguration.load(path) }, { listOf(bridge.hmd, imu) }, hpm.skeleton,
+		val integration = MonakaServerIntegration.startIfEnabled(
+			true, { MonakaConfiguration.load(path) }, { listOf(bridge.hmd, imu) }, hpm.skeleton,
 			{ before = it }, { failures += it }, { now }, registerAfterPose = { after = it }, configurationPath = path,
-			rawHmdSource = { tick, space, age, clockDomain -> bridge.currentNormalRawHmdPoseInput(space, tick.nowNanos, tick.trackerReceiptCutoffSystemNanos, age, clockDomain) })!!
+			rawHmdSource = { tick, space, age, clockDomain -> bridge.currentNormalRawHmdPoseInput(space, tick.nowNanos, tick.trackerReceiptCutoffSystemNanos, age, clockDomain) },
+		)!!
 		integration.use {
 			for (tracker in hpm.computedTrackers) bridge.addSharedTracker(tracker)
 			var sequence = 0L
@@ -53,12 +82,27 @@ class NormalPositionRuntimeTests {
 				now += 20_000_000
 				imu.setRotation(Quaternion.IDENTITY)
 				if (hmd) bridge.receiveHead()
-				val pose = p.copy(sequence = ++sequence, modality = mode, position = if (mode == "full") listOf(x, 1.0, .1) else null,
-					orientation = if (mode == "none") null else listOf(0.0, 0.0, 0.0, 1.0), validity = Validity(mode == "full", mode != "none"),
+				val pose = p.copy(
+					sequence = ++sequence,
+					modality = mode,
+					position = if (mode == "full") listOf(x, 1.0, .1) else null,
+					orientation = if (mode == "none") null else listOf(0.0, 0.0, 0.0, 1.0),
+					validity = Validity(mode == "full", mode != "none"),
 					confidence = Confidence(if (mode == "full") 1.0 else 0.0, if (mode == "none") 0.0 else 1.0),
-					tracking_state = if (mode == "full") "tracked" else if (mode == "none") "lost" else "degraded")
+					tracking_state = if (mode == "full") {
+						"tracked"
+					} else if (mode == "none") {
+						"lost"
+					} else {
+						"degraded"
+					},
+				)
 				assertTrue(it.runtime.inbox.receive((MonakaCodec.encodeEnvelope(pose) as EncodeResult.Success).value, now))
-				before!!.run(); hpm.update(); after!!.run(); bridge.dataWrite(); bridge.flush()
+				before!!.run()
+				hpm.update()
+				after!!.run()
+				bridge.dataWrite()
+				bridge.flush()
 				assertTrue(failures.isEmpty(), failures.joinToString())
 			}
 			step()
@@ -123,9 +167,11 @@ class NormalPositionRuntimeTests {
 }
 
 private class NormalHmdCapture : ProtobufBridge("normal-position-test") {
-	val hmd = Tracker(Device(DeviceOrigin.STEAMVR), 0, "normal-head", trackerPosition = TrackerPosition.HEAD, trackerNum = 0,
+	val hmd = Tracker(
+		Device(DeviceOrigin.STEAMVR), 0, "normal-head", trackerPosition = TrackerPosition.HEAD, trackerNum = 0,
 		hasPosition = true, hasRotation = true, isHmd = true, isComputed = true, allowFiltering = false, allowReset = false, allowMounting = false,
-		trackRotDirection = false).also { it.status = LocalStatus.OK }
+		trackRotDirection = false,
+	).also { it.status = LocalStatus.OK }
 	private val handle = openInboundTransportSession()
 	val sent = mutableListOf<ProtobufMessage>()
 	init {
@@ -140,10 +186,16 @@ private class NormalHmdCapture : ProtobufBridge("normal-position-test") {
 		messageReceived(ProtobufMessage.parseFrom(ProtobufMessage.newBuilder().setPosition(p).build().toByteArray()), handle)
 		dataRead()
 	}
-	fun loseHead() { messageReceived(ProtobufMessage.newBuilder().setTrackerStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder().setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.DISCONNECTED)).build(), handle); dataRead() }
+	fun loseHead() {
+		messageReceived(ProtobufMessage.newBuilder().setTrackerStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder().setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.DISCONNECTED)).build(), handle)
+		dataRead()
+	}
 	fun flush() = updateMessageQueue()
 	override fun signalSend() = Unit
-	override fun sendMessageReal(message: ProtobufMessage?): Boolean { sent += ProtobufMessage.parseFrom(requireNotNull(message).toByteArray()); return true }
+	override fun sendMessageReal(message: ProtobufMessage?): Boolean {
+		sent += ProtobufMessage.parseFrom(requireNotNull(message).toByteArray())
+		return true
+	}
 	override fun createNewTracker(trackerAdded: TrackerAdded): Tracker = error("Owned HMD fixture registry")
 	override fun startBridge() = Unit
 	override fun stopBridge() = Unit

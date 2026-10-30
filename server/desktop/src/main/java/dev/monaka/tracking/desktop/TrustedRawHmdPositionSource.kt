@@ -121,6 +121,7 @@ internal class TrustedRawHmdPositionSource(
 	@Volatile private var historicalLatest: AcceptedMessage? = null
 
 	@Volatile private var currentSessionLatest: AcceptedMessage? = null
+
 	@Volatile private var normalCandidate: HmdAcceptedPoseMessageSample? = null
 	private val providerObservations = HmdProviderObservationState()
 
@@ -186,7 +187,10 @@ internal class TrustedRawHmdPositionSource(
 	fun trackingStatusChanged(tracker: Tracker) {
 		if (tracker !== registeredTracker) return
 		usable = tracker.status.sendData
-		if (!usable) { normalCandidate = null; invalidateCurrentCandidate(tracker) }
+		if (!usable) {
+			normalCandidate = null
+			invalidateCurrentCandidate(tracker)
+		}
 	}
 
 	fun currentTrustedPoseSnapshot(activeEpoch: String): HmdAcceptedPoseMessageSample? = trustedCandidate?.takeIf { activeEpoch == trustedTransportEpoch && it.transportSessionEpoch == activeEpoch }
@@ -297,13 +301,22 @@ internal class TrustedRawHmdPositionSource(
 	/** Normal input uses current owned ingress and actual tracking status. Historical
 	 * acceptance and provider certification are deliberately separate diagnostics.
 	 */
-	fun invalidateNormalCandidate(tracker: Tracker) { if (tracker === registeredTracker) normalCandidate = null }
+	fun invalidateNormalCandidate(tracker: Tracker) {
+		if (tracker === registeredTracker) normalCandidate = null
+	}
 
 	fun currentUsablePoseMessageSnapshot(activeEpoch: String): HmdAcceptedPoseMessageSample? {
 		val tracker = registeredTracker ?: return null
-		if (!usable || !tracker.status.sendData || !tracker.isHmd || tracker.device?.origin != DeviceOrigin.STEAMVR ||
-			tracker.isInternal || !FeedbackExclusion.accepts(tracker) || tracker.monakaOutputPose != null
-		) return null
+		if (!usable ||
+			!tracker.status.sendData ||
+			!tracker.isHmd ||
+			tracker.device?.origin != DeviceOrigin.STEAMVR ||
+			tracker.isInternal ||
+			!FeedbackExclusion.accepts(tracker) ||
+			tracker.monakaOutputPose != null
+		) {
+			return null
+		}
 		return normalCandidate?.takeIf {
 			it.transportSessionEpoch == activeEpoch && it.modality == TrackingModality.FULL && it.structuralRejectionReasons.isEmpty()
 		}

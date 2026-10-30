@@ -143,14 +143,16 @@ class MonakaRuntimeTests {
 		}
 	}
 
-	@Test fun spaceMappingAndClockMismatchInvalidateWithoutVendorCorrection() {
+	@Test fun compatibleSpaceRevisionWorksWhileMappingAndClockFaultsRemainRejected() {
 		val clock = Clock()
 		runtime(clock).use { r ->
 			val p = fixture()
 			submit(r, p)
 			r.tick()
+			val history = r.mtp.historyGeneration
 			submit(r, p.copy(sequence = 1, coordinate_space = p.coordinate_space.copy(revision = 1)))
-			assertNull(r.tick()[TrackerPosition.HIP]?.position)
+			assertNotNull(r.tick()[TrackerPosition.HIP]?.position)
+			assertTrue(r.mtp.historyGeneration > history)
 			submit(r, p.copy(sequence = 2))
 			assertNotNull(r.tick()[TrackerPosition.HIP]?.position)
 			submit(r, state(p.copy(mapping_revision = 1)))

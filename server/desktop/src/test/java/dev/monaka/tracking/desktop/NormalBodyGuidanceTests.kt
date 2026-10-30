@@ -1,7 +1,17 @@
 package dev.monaka.tracking.desktop
 
-import dev.monaka.protocol.v2.*
-import dev.monaka.tracking.*
+import dev.monaka.protocol.v2.Confidence
+import dev.monaka.protocol.v2.DecodeResult
+import dev.monaka.protocol.v2.EncodeResult
+import dev.monaka.protocol.v2.MonakaCodec
+import dev.monaka.protocol.v2.MtpPose
+import dev.monaka.protocol.v2.Validity
+import dev.monaka.tracking.LearningDecision
+import dev.monaka.tracking.LogicalTracker
+import dev.monaka.tracking.MonakaConfiguration
+import dev.monaka.tracking.OutputMode
+import dev.monaka.tracking.TrackerBodyAssignments
+import dev.monaka.tracking.TrackerReference
 import dev.slimevr.tracking.processor.HumanPoseManager
 import dev.slimevr.tracking.trackers.*
 import dev.slimevr.tracking.trackers.udp.IMUType
@@ -14,7 +24,12 @@ import java.io.File
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import kotlin.math.abs
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /** Normal configuration, production tick/IK/output; physical input object with real
  * setRotation acceptance receipts. No correction opt-in or approval fixture.
@@ -25,25 +40,41 @@ class NormalBodyGuidanceTests {
 	fun explicitPhysicalQAndSixDofLearnFallbackAndConvergeAtSolverAndVisibleOutput(target: TrackerPosition) {
 		val p = (MonakaCodec.decodeEnvelope(File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes()) as DecodeResult.Success).value as MtpPose
 		val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
-		val head = Tracker(null, 700, "head", trackerPosition = TrackerPosition.HEAD, hasPosition = true, hasRotation = true, isHmd = true,
-			allowFiltering = false, allowReset = false, allowMounting = false).also { it.status = TrackerStatus.OK; it.position = Vector3(0f, 1.7f, 0f) }
+		val head = Tracker(
+			null, 700, "head", trackerPosition = TrackerPosition.HEAD, hasPosition = true, hasRotation = true, isHmd = true,
+			allowFiltering = false, allowReset = false, allowMounting = false,
+		).also {
+			it.status = TrackerStatus.OK
+			it.position = Vector3(0f, 1.7f, 0f)
+		}
 		val device = UDPDevice(InetSocketAddress("127.0.0.1", 20001), InetAddress.getLoopbackAddress(), "guidance-test")
-		val imu = Tracker(device, 701, "normal-q", trackerPosition = target, hasRotation = true, imuType = IMUType.UNKNOWN,
-			allowFiltering = false, allowReset = true, allowMounting = true, trackRotDirection = false).also { it.status = TrackerStatus.OK; it.setRotation(Quaternion.IDENTITY) }
+		val imu = Tracker(
+			device, 701, "normal-q", trackerPosition = target, hasRotation = true, imuType = IMUType.UNKNOWN,
+			allowFiltering = false, allowReset = true, allowMounting = true, trackRotDirection = false,
+		).also {
+			it.status = TrackerStatus.OK
+			it.setRotation(Quaternion.IDENTITY)
+		}
 		val assignment = TrackerBodyAssignments().also {
 			it.configure(target, TrackerReference.mtp(key), TrackerReference.slime(imu.name), OutputMode.HYBRID)
 			it.configureSources(target, TrackerReference.slime(imu.name), TrackerReference.mtp(key), true)
 		}
-		val hpm = HumanPoseManager(listOf(head, imu)).also { it.setLegTweaksEnabled(false); it.skeleton.ikSolver.enabled = true; it.update() }
+		val hpm = HumanPoseManager(listOf(head, imu)).also {
+			it.setLegTweaksEnabled(false)
+			it.skeleton.ikSolver.enabled = true
+			it.update()
+		}
 		var before: Runnable? = null
 		var after: Runnable? = null
 		var now = 1_000_000_000L
 		val failures = mutableListOf<Exception>()
 		val outputs = mutableListOf<Tracker>()
-		val integration = MonakaServerIntegration.startIfEnabled(true,
+		val integration = MonakaServerIntegration.startIfEnabled(
+			true,
 			{ MonakaConfiguration(p.coordinate_space, assignment, port = 0, backgroundIkSharedSpace = p.coordinate_space) },
 			{ listOf(head, imu) }, hpm.skeleton, { before = it }, { failures += it }, { now },
-			configureDirectOutputs = { outputs += it }, registerAfterPose = { after = it })!!
+			configureDirectOutputs = { outputs += it }, registerAfterPose = { after = it },
+		)!!
 		integration.use {
 			assertNull(it.rotationCorrection, "No legacy HIP learner is running")
 			val rawReference = imu.resetsHandler.getCorrectionReferenceRotationFrom(Quaternion.IDENTITY)
@@ -53,16 +84,26 @@ class NormalBodyGuidanceTests {
 				now += 20_000_000
 				imu.setRotation(q ?: Quaternion.IDENTITY)
 				val o = orientation ?: teacher
-				val pose = p.copy(sequence = ++sequence, modality = mode, sent_at_ns = p.timestamp_ns + 5_000_000,
+				val pose = p.copy(
+					sequence = ++sequence, modality = mode, sent_at_ns = p.timestamp_ns + 5_000_000,
 					coordinate_space = p.coordinate_space.copy(revision = revision),
 					position = if (mode == "full") listOf(.1, 1.0, .1) else null,
 					orientation = if (mode == "none") null else listOf(o.x.toDouble(), o.y.toDouble(), o.z.toDouble(), o.w.toDouble()),
 					validity = Validity(mode == "full", mode != "none"), confidence = Confidence(if (mode == "full") 1.0 else 0.0, if (mode == "none") 0.0 else 1.0),
-					tracking_state = if (mode == "full") "tracked" else if (mode == "none") "lost" else "degraded")
+					tracking_state = if (mode == "full") {
+						"tracked"
+					} else if (mode == "none") {
+						"lost"
+					} else {
+						"degraded"
+					},
+				)
 				val encoded = MonakaCodec.encodeEnvelope(pose)
 				assertIs<EncodeResult.Success>(encoded)
 				assertTrue(it.runtime.inbox.receive(encoded.value, now))
-				before!!.run(); hpm.update(); after!!.run()
+				before!!.run()
+				hpm.update()
+				after!!.run()
 				assertTrue(failures.isEmpty(), failures.joinToString())
 			}
 			repeat(60) { tick() }

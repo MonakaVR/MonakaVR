@@ -40,7 +40,10 @@ class InboundTransportSessionTests {
 		bridge.installHmd()
 		var session = bridge.open()
 		fun current(cutoff: Long = 100, maxAge: Long = 500) = bridge.currentNormalRawHmdPoseInput(space, 1_000_000, cutoff, maxAge)
-		fun send(message: ProtobufMessage) { bridge.enqueue(message, session); bridge.dataRead() }
+		fun send(message: ProtobufMessage) {
+			bridge.enqueue(message, session)
+			bridge.dataRead()
+		}
 		send(pose(1f))
 		val fresh = kotlin.test.assertNotNull(current())
 		assertEquals(Vector3(1f, 2f, 3f), fresh.position)
@@ -58,19 +61,31 @@ class InboundTransportSessionTests {
 		)) {
 			send(invalid)
 			assertNull(current(), "Malformed current message cannot reuse an older full pose")
-			send(pose(1f)); kotlin.test.assertNotNull(current())
+			send(pose(1f))
+			kotlin.test.assertNotNull(current())
 		}
-		send(ProtobufMessage.newBuilder().setTrackerStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder()
-			.setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.DISCONNECTED)).build())
+		send(
+			ProtobufMessage.newBuilder().setTrackerStatus(
+				dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder()
+					.setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.DISCONNECTED),
+			).build(),
+		)
 		assertNull(current(), "Actual lost status")
-		send(ProtobufMessage.newBuilder().setTrackerStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder()
-			.setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.OK)).build())
+		send(
+			ProtobufMessage.newBuilder().setTrackerStatus(
+				dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder()
+					.setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.OK),
+			).build(),
+		)
 		assertNull(current(), "Status heartbeat does not restore old sample")
-		send(pose(2f)); kotlin.test.assertNotNull(current())
+		send(pose(2f))
+		kotlin.test.assertNotNull(current())
 		val old = session
-		bridge.close(session); session = bridge.open()
+		bridge.close(session)
+		session = bridge.open()
 		assertNull(current(), "Transport change cannot revive history")
-		bridge.enqueue(pose(9f), old); bridge.dataRead()
+		bridge.enqueue(pose(9f), old)
+		bridge.dataRead()
 		assertNull(current(), "Retired session accepted only by legacy history, never normal predictor")
 		send(pose(3f))
 		assertEquals(3f, kotlin.test.assertNotNull(current()).position.x)

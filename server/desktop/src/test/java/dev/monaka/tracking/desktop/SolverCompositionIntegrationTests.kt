@@ -149,14 +149,16 @@ class SolverCompositionIntegrationTests {
 		val bytes = java.io.ByteArrayOutputStream()
 		val frames = SameFrameDiagnostics(bytes)
 		Fixture(frames = frames).use { f ->
-			f.send(1); f.before!!.run()
+			f.send(1)
+			f.before!!.run()
 			f.send(2) // queued after the captured tick: must not appear in this frame.
 			f.finish()
 			val computed = f.manager.computedTrackers.first { it.trackerPosition == hip }
 			val actualPosition = listOf(computed.position.x, computed.position.y, computed.position.z)
 			val actualRotation = computed.getRotation().let { listOf(it.x, it.y, it.z, it.w) }
 			f.after!!.run() // one post-hook emits once.
-			frames.close(); assertTrue(frames.awaitTermination(2000))
+			frames.close()
+			assertTrue(frames.awaitTermination(2000))
 			val lines = bytes.toString(Charsets.UTF_8).lines().filter { it.isNotBlank() }
 			assertEquals(1, lines.size)
 			val record = com.fasterxml.jackson.databind.ObjectMapper().readTree(lines.single())
@@ -187,16 +189,25 @@ class SolverCompositionIntegrationTests {
 		Fixture(frames = frames).use { f ->
 			for ((index, mode) in listOf("full", "rotation_only", "none", "full").withIndex()) {
 				f.now += 10_000_000
-				val pose = f.p.copy(sequence = (index + 1).toLong(), modality = mode,
+				val pose = f.p.copy(
+					sequence = (index + 1).toLong(),
+					modality = mode,
 					position = if (mode == "full") f.p.position else null,
 					orientation = if (mode == "none") null else f.p.orientation,
 					validity = dev.monaka.protocol.v2.Validity(mode == "full", mode != "none"),
 					confidence = dev.monaka.protocol.v2.Confidence(if (mode == "full") 1.0 else 0.0, if (mode == "none") 0.0 else 1.0),
-					tracking_state = when (mode) { "full" -> "tracked"; "none" -> "lost"; else -> "degraded" })
+					tracking_state = when (mode) {
+						"full" -> "tracked"
+						"none" -> "lost"
+						else -> "degraded"
+					},
+				)
 				assertTrue(f.integration.runtime.inbox.receive((MonakaCodec.encodeEnvelope(pose) as EncodeResult.Success).value, f.now))
-				f.before!!.run(); f.finish()
+				f.before!!.run()
+				f.finish()
 			}
-			frames.close(); assertTrue(frames.awaitTermination(2000))
+			frames.close()
+			assertTrue(frames.awaitTermination(2000))
 			val records = bytes.toString(Charsets.UTF_8).lines().filter { it.isNotBlank() }.map { com.fasterxml.jackson.databind.ObjectMapper().readTree(it) }
 			assertEquals(4, records.size)
 			assertEquals(4, f.polls)
@@ -207,50 +218,80 @@ class SolverCompositionIntegrationTests {
 			assertEquals(listOf(false, true, true, false), records.map { r -> r["resolved"].first { it["target"].asText() == "HIP" }["position"].isNull })
 			assertTrue(records.all { r -> r["resolved"].first { it["target"].asText() == "HIP" }["rotation_xyzw"].isArray }) // explicit IMU fallback
 			val dir = Path.of("build/same-frame-diagnostic-fixtures")
-			Files.createDirectories(dir); Files.writeString(dir.resolve("loss-recovery.jsonl"), bytes.toString(Charsets.UTF_8))
+			Files.createDirectories(dir)
+			Files.writeString(dir.resolve("loss-recovery.jsonl"), bytes.toString(Charsets.UTF_8))
 		}
 	}
 
-	@ParameterizedTest @ValueSource(booleans = [false, true])
+	@ParameterizedTest
+	@ValueSource(booleans = [false, true])
 	fun diagnosticsDoNotChangeSolverOrCalibrationWithCorrectionEnabledOrDisabled(correction: Boolean) {
 		val frames = SameFrameDiagnostics(java.io.ByteArrayOutputStream())
 		Fixture(correction = correction).use { off ->
 			Fixture(correction = correction, frames = frames).use { on ->
 				repeat(3) { index ->
-					for (f in listOf(off, on)) { f.send((index + 1).toLong()); f.before!!.run(); f.finish(); f.now += 10_000_000 }
+					for (f in listOf(off, on)) {
+						f.send((index + 1).toLong())
+						f.before!!.run()
+						f.finish()
+						f.now += 10_000_000
+					}
 					assertEquals(off.manager.computedTrackers.map { it.position }, on.manager.computedTrackers.map { it.position })
 					assertEquals(off.manager.computedTrackers.map { it.getRotation() }, on.manager.computedTrackers.map { it.getRotation() })
 					assertEquals(off.manager.skeleton.ikSolver.calibrationSnapshot(), on.manager.skeleton.ikSolver.calibrationSnapshot())
 				}
-				assertEquals(3, off.polls); assertEquals(3, on.polls)
+				assertEquals(3, off.polls)
+				assertEquals(3, on.polls)
 				assertEquals(0L, on.integration.frameDiagnosticFailures)
 			}
 		}
-		frames.close(); assertTrue(frames.awaitTermination(2000)); assertEquals(3L, frames.written.get())
+		frames.close()
+		assertTrue(frames.awaitTermination(2000))
+		assertEquals(3L, frames.written.get())
 	}
 
 	@Test fun diagnosticIoFailureCannotStopSubsequentSolverTicks() {
-		val frames = SameFrameDiagnostics(object : java.io.OutputStream() { override fun write(b: Int): Unit = throw java.io.IOException("blocked device") })
+		val frames = SameFrameDiagnostics(object : java.io.OutputStream() {
+			override fun write(b: Int): Unit = throw java.io.IOException("blocked device")
+		})
 		Fixture(frames = frames).use { f ->
-			f.send(); f.before!!.run(); f.finish()
+			f.send()
+			f.before!!.run()
+			f.finish()
 			assertTrue(frames.awaitTermination(2000))
 			assertEquals("IOException", frames.failure)
-			f.now += 10_000_000; f.send(2); f.before!!.run(); f.finish()
-			assertEquals(2, f.polls); assertTrue(f.failures.isEmpty())
+			f.now += 10_000_000
+			f.send(2)
+			f.before!!.run()
+			f.finish()
+			assertEquals(2, f.polls)
+			assertTrue(f.failures.isEmpty())
 			assertNotNull(f.manager.skeleton.hipTracker)
 		}
 	}
 
 	@Test fun eightOpaqueSourcesReachSameIkFrameAcrossCompatibleSpaceRevisions() {
-		val targets = listOf(hip, TrackerPosition.UPPER_CHEST, TrackerPosition.LEFT_UPPER_LEG,
-			TrackerPosition.RIGHT_UPPER_LEG, TrackerPosition.LEFT_FOOT, TrackerPosition.RIGHT_FOOT,
-			TrackerPosition.LEFT_UPPER_ARM, TrackerPosition.RIGHT_UPPER_ARM)
+		val targets = listOf(
+			hip,
+			TrackerPosition.UPPER_CHEST,
+			TrackerPosition.LEFT_UPPER_LEG,
+			TrackerPosition.RIGHT_UPPER_LEG,
+			TrackerPosition.LEFT_FOOT,
+			TrackerPosition.RIGHT_FOOT,
+			TrackerPosition.LEFT_UPPER_ARM,
+			TrackerPosition.RIGHT_UPPER_ARM,
+		)
 		val seed = pose()
-		val packets = targets.mapIndexed { index, _ -> seed.copy(
-			publisher_id = "opaque-publisher-${index / 5}", source_id = "opaque-source-$index",
-			tracker_id = "opaque-tracker-$index", sequence = 1,
-			position = listOf(index * .05, 1.0 + index * .02, -.1),
-			input = seed.input.copy(source_id = "opaque-source-$index", device_id = "opaque-device-$index")) }
+		val packets = targets.mapIndexed { index, _ ->
+			seed.copy(
+				publisher_id = "opaque-publisher-${index / 5}",
+				source_id = "opaque-source-$index",
+				tracker_id = "opaque-tracker-$index",
+				sequence = 1,
+				position = listOf(index * .05, 1.0 + index * .02, -.1),
+				input = seed.input.copy(source_id = "opaque-source-$index", device_id = "opaque-device-$index"),
+			)
+		}
 		val bytes = java.io.ByteArrayOutputStream()
 		val frames = SameFrameDiagnostics(bytes)
 		Fixture(hybrid = false, frames = frames, configureAssignments = { a ->
@@ -261,15 +302,22 @@ class SolverCompositionIntegrationTests {
 				assertTrue(encoded is EncodeResult.Success, encoded.toString())
 				assertTrue(f.integration.runtime.inbox.receive(encoded.value, f.now))
 			}
-			packets.forEach(::submit); f.before!!.run(); f.finish()
+			packets.forEach(::submit)
+			f.before!!.run()
+			f.finish()
 			f.now += 10_000_000
 			submit(packets[0].copy(sequence = 2, coordinate_space = seed.coordinate_space.copy(revision = seed.coordinate_space.revision + 1)))
-			f.before!!.run(); f.finish()
+			f.before!!.run()
+			f.finish()
 			assertEquals(1, f.integration.runtime.inbox.diagnostics().getValue("SpaceDescriptionChanged"))
 			f.now += 10_000_000
-			submit(packets[0].copy(sequence = 3)); f.before!!.run(); f.finish()
-			frames.close(); assertTrue(frames.awaitTermination(2000))
-			assertEquals(3, f.polls); assertEquals(0L, f.integration.frameDiagnosticFailures)
+			submit(packets[0].copy(sequence = 3))
+			f.before!!.run()
+			f.finish()
+			frames.close()
+			assertTrue(frames.awaitTermination(2000))
+			assertEquals(3, f.polls)
+			assertEquals(0L, f.integration.frameDiagnosticFailures)
 			val records = bytes.toString(Charsets.UTF_8).lines().filter { it.isNotBlank() }.map { com.fasterxml.jackson.databind.ObjectMapper().readTree(it) }
 			assertEquals(3, records.size)
 			assertEquals(listOf(8, 8, 8), records.map { it["accepted_mvip"].size() })
@@ -290,7 +338,8 @@ class SolverCompositionIntegrationTests {
 				assertTrue(record["computed_trackers"].all { t -> t["position"].isNull || t["position"].all { it.isNumber && it.doubleValue().isFinite() } })
 			}
 			val dir = Path.of("build/same-frame-diagnostic-fixtures")
-			Files.createDirectories(dir); Files.writeString(dir.resolve("eight-source-space-recovery.jsonl"), bytes.toString(Charsets.UTF_8))
+			Files.createDirectories(dir)
+			Files.writeString(dir.resolve("eight-source-space-recovery.jsonl"), bytes.toString(Charsets.UTF_8))
 		}
 	}
 

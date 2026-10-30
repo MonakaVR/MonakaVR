@@ -83,7 +83,8 @@ class MonakaSolverComposition internal constructor(
 		rawHmd: RawHmdPoseInput?,
 	): MonakaSolverCommitResult {
 		val hip = tick.assignment.targets[TrackerPosition.HIP]
-		val pair = hip?.useAsIkConstraint == true && hip.mainTracker.mtp != null &&
+		val pair = hip?.useAsIkConstraint == true &&
+			hip.mainTracker.mtp != null &&
 			hip.rotationFallbackTracker?.let { it.mtp == null } == true &&
 			(hip.sourceSelection == null || hip.sourceSelection.sixDofSource != null)
 		if (!pair || normalPositionFactory == null || tick.paused) {

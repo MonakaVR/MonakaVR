@@ -1,7 +1,9 @@
 package dev.monaka.tracking.desktop
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import dev.monaka.tracking.*
+import dev.monaka.tracking.MonakaConfiguration
+import dev.monaka.tracking.MonakaInputRpcDispatcher
+import dev.monaka.tracking.MonakaRuntime
 import dev.slimevr.desktop.platform.ProtobufBridge
 import dev.slimevr.desktop.platform.ProtobufMessages.*
 import dev.slimevr.tracking.processor.HumanPoseManager
@@ -40,8 +42,12 @@ object NormalRuntimeProcessProbe {
 		Files.createDirectories(evidence)
 		val config = MonakaConfiguration.load(configPath)
 		require(config.port == 0) { "Software fixture requires an ephemeral MVIP port" }
-		val replay = if (args[3] == "-") emptyList() else Files.readAllLines(Path.of(args[3])).filter { it.isNotBlank() }.map {
-			it.toByteArray(Charsets.UTF_8).also { bytes -> require(bytes.size in 1..4096) }
+		val replay = if (args[3] == "-") {
+			emptyList()
+		} else {
+			Files.readAllLines(Path.of(args[3])).filter { it.isNotBlank() }.map {
+				it.toByteArray(Charsets.UTF_8).also { bytes -> require(bytes.size in 1..4096) }
+			}
 		}
 		val duration = args[4].toLong().also { require(it in 1..1800) }
 		val mapper = ObjectMapper()
@@ -49,13 +55,22 @@ object NormalRuntimeProcessProbe {
 		val tasks = ConcurrentLinkedQueue<Runnable>()
 		val executor = Executors.newSingleThreadScheduledExecutor()
 		val virtualBytes = Files.newBufferedWriter(evidence.resolve("virtual-output.ndjson"), Charsets.UTF_8, StandardOpenOption.CREATE_NEW)
-		val transport = NormalProbeTransport { bytes -> virtualBytes.write(java.util.Base64.getEncoder().encodeToString(bytes)); virtualBytes.newLine() }
-		val inputs = listOf(TrackerPosition.HIP, TrackerPosition.UPPER_CHEST).mapIndexed { index, target ->
-			Tracker(UDPDevice(InetSocketAddress("127.0.0.1", 0), InetAddress.getLoopbackAddress(), "explicit-software-imu-$index"), 700 + index,
-				"fixture-imu-${target.name.lowercase()}", trackerPosition = target, trackerNum = index + 1, hasRotation = true,
-				imuType = IMUType.UNKNOWN, allowFiltering = false, allowReset = true, allowMounting = true, trackRotDirection = false).also { it.status = LocalStatus.OK }
+		val transport = NormalProbeTransport { bytes ->
+			virtualBytes.write(java.util.Base64.getEncoder().encodeToString(bytes))
+			virtualBytes.newLine()
 		}
-		val hpm = HumanPoseManager(listOf(transport.hmd) + inputs).also { it.setLegTweaksEnabled(false); it.skeleton.ikSolver.enabled = true; it.update() }
+		val inputs = listOf(TrackerPosition.HIP, TrackerPosition.UPPER_CHEST).mapIndexed { index, target ->
+			Tracker(
+				UDPDevice(InetSocketAddress("127.0.0.1", 0), InetAddress.getLoopbackAddress(), "explicit-software-imu-$index"), 700 + index,
+				"fixture-imu-${target.name.lowercase()}", trackerPosition = target, trackerNum = index + 1, hasRotation = true,
+				imuType = IMUType.UNKNOWN, allowFiltering = false, allowReset = true, allowMounting = true, trackRotDirection = false,
+			).also { it.status = LocalStatus.OK }
+		}
+		val hpm = HumanPoseManager(listOf(transport.hmd) + inputs).also {
+			it.setLegTweaksEnabled(false)
+			it.skeleton.ikSolver.enabled = true
+			it.update()
+		}
 		val frames = SameFrameDiagnostics(Files.newOutputStream(evidence.resolve("same-frame.jsonl"), StandardOpenOption.CREATE_NEW), maxFrames = 65536, maxBytes = 64L * 1024 * 1024)
 		val clock = MonakaRuntime.monotonicClock()
 		var before: Runnable? = null
@@ -67,32 +82,55 @@ object NormalRuntimeProcessProbe {
 		var replayIndex = 0
 		var frame = 0L
 		val sender = DatagramSocket(InetSocketAddress(InetAddress.getLoopbackAddress(), 0))
-		val integration = MonakaServerIntegration.startIfEnabled(true, { config }, { listOf(transport.hmd) + inputs }, hpm.skeleton,
-			{ before = it }, { failure -> failure.printStackTrace(); done.countDown() }, clock,
+		val integration = MonakaServerIntegration.startIfEnabled(
+			true, { config }, { listOf(transport.hmd) + inputs }, hpm.skeleton,
+			{ before = it }, { failure ->
+				failure.printStackTrace()
+				done.countDown()
+			}, clock,
 			configureDirectOutputs = transport::configureDirectOutputs, registerAfterPose = { after = it }, configurationPath = configPath,
-			frameDiagnostics = { frames }, rawHmdSource = { tick, space, age, domain -> transport.currentNormalRawHmdPoseInput(space, tick.nowNanos, tick.trackerReceiptCutoffSystemNanos, age, domain) })!!
+			frameDiagnostics = { frames }, rawHmdSource = { tick, space, age, domain -> transport.currentNormalRawHmdPoseInput(space, tick.nowNanos, tick.trackerReceiptCutoffSystemNanos, age, domain) },
+		)!!
 		for (tracker in hpm.computedTrackers) transport.addSharedTracker(tracker)
 		fun proof(): Map<String, Any?> = mapOf(
 			"frame" to frame, "config_path" to configPath.toString(),
 			"config_sha256" to MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(configPath)).joinToString("") { "%02x".format(it) },
 			"generation" to config.assignments.snapshot().generation.toString(), "accepted" to integration.runtime.inbox.diagnostics(),
-			"position" to integration.lastPositionCorrection?.let { p -> mapOf("geometry" to p.geometry, "hmd_available" to p.hmdAvailable,
-				"prediction" to SameFrameDiagnostics.vector(p.prediction), "measured_teacher" to SameFrameDiagnostics.vector(p.measuredTeacher),
-				"correction_world" to SameFrameDiagnostics.vector(p.correctionWorld), "applied_position" to SameFrameDiagnostics.vector(p.appliedPosition),
-				"solver_position" to SameFrameDiagnostics.vector(p.solverPosition), "reference" to p.solverPositionReference, "continuity" to p.continuity, "learning" to p.learning) },
+			"position" to integration.lastPositionCorrection?.let { p ->
+				mapOf(
+					"geometry" to p.geometry, "hmd_available" to p.hmdAvailable,
+					"prediction" to SameFrameDiagnostics.vector(p.prediction), "measured_teacher" to SameFrameDiagnostics.vector(p.measuredTeacher),
+					"correction_world" to SameFrameDiagnostics.vector(p.correctionWorld), "applied_position" to SameFrameDiagnostics.vector(p.appliedPosition),
+					"solver_position" to SameFrameDiagnostics.vector(p.solverPosition), "reference" to p.solverPositionReference, "continuity" to p.continuity, "learning" to p.learning,
+				)
+			},
 			"body_rotation" to integration.runtime.bodyRotationResults.map { (target, r) -> mapOf("target" to target.name, "ready" to r.state.ready, "learning" to r.learning.name) },
 			"virtual_trackers" to hpm.computedTrackers.map { t -> mapOf("id" to t.id, "target" to t.trackerPosition?.name, "position" to SameFrameDiagnostics.vector(t.position), "rotation_xyzw" to SameFrameDiagnostics.quaternion(t.getRotation())) },
 			"boundary" to "actual consumer/RPC/CAS/IK/output; explicit software HMD/physical-IMU category inputs; captured OS transport",
-			"hardware" to "NOT_RUN", "steamvr_runtime" to "NOT_RUN")
+			"hardware" to "NOT_RUN", "steamvr_runtime" to "NOT_RUN",
+		)
 		val dispatcher = MonakaInputRpcDispatcher({ tasks += it }, { integration::inputRequest })
 		val server = object : WebSocketServer(InetSocketAddress(InetAddress.getLoopbackAddress(), 0)) {
 			override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {}
 			override fun onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) {}
-			override fun onError(conn: WebSocket?, error: Exception) { error.printStackTrace() }
+			override fun onError(conn: WebSocket?, error: Exception) {
+				error.printStackTrace()
+			}
 			override fun onStart() {
-				Files.writeString(readyPath, mapper.writeValueAsString(mapOf("ws_port" to port, "udp_port" to integration.receiver.port,
-					"imu_sources" to inputs.map { "slime:${it.name}" }, "config_path" to configPath.toString(), "evidence" to evidence.toString(),
-					"runtime_artifact" to MonakaServerIntegration::class.java.protectionDomain.codeSource.location.toURI().toString())), StandardOpenOption.CREATE_NEW)
+				Files.writeString(
+					readyPath,
+					mapper.writeValueAsString(
+						mapOf(
+							"ws_port" to port,
+							"udp_port" to integration.receiver.port,
+							"imu_sources" to inputs.map { "slime:${it.name}" },
+							"config_path" to configPath.toString(),
+							"evidence" to evidence.toString(),
+							"runtime_artifact" to MonakaServerIntegration::class.java.protectionDomain.codeSource.location.toURI().toString(),
+						),
+					),
+					StandardOpenOption.CREATE_NEW,
+				)
 			}
 			override fun onMessage(conn: WebSocket, raw: String) {
 				if (dispatcher.receive(raw, conn.remoteSocketAddress.address.isLoopbackAddress, { conn.isOpen }, conn::send)) return
@@ -101,11 +139,23 @@ object NormalRuntimeProcessProbe {
 				tasks += Runnable {
 					when (request["op"]?.asText()) {
 						"proof" -> Unit
+
 						"pause-replay" -> replayEnabled = false
+
 						"resume-replay" -> replayEnabled = true
-						"imu" -> { imuEnabled = request["enabled"]?.asBoolean() ?: true; imuYaw = request["yaw"]?.floatValue() ?: 0f }
-						"hmd" -> { hmdEnabled = request["enabled"]?.asBoolean() ?: true; if (!hmdEnabled) transport.loseHmd() }
+
+						"imu" -> {
+							imuEnabled = request["enabled"]?.asBoolean() ?: true
+							imuYaw = request["yaw"]?.floatValue() ?: 0f
+						}
+
+						"hmd" -> {
+							hmdEnabled = request["enabled"]?.asBoolean() ?: true
+							if (!hmdEnabled) transport.loseHmd()
+						}
+
 						"stop" -> Unit
+
 						else -> error("Unknown explicit fixture operation")
 					}
 					conn.send(mapper.writeValueAsString(mapOf("type" to "normal_fixture_control_v1", "proof" to proof())))
@@ -123,39 +173,61 @@ object NormalRuntimeProcessProbe {
 					}
 					if (imuEnabled) inputs.forEach { it.setRotation(Quaternion.rotationAroundYAxis(imuYaw)) }
 					if (hmdEnabled) transport.feedHmd()
-					before!!.run(); hpm.update(); after!!.run(); transport.dataWrite(); transport.flush(); frame++
-				} catch (e: Exception) { e.printStackTrace(); done.countDown() }
+					before!!.run()
+					hpm.update()
+					after!!.run()
+					transport.dataWrite()
+					transport.flush()
+					frame++
+				} catch (e: Exception) {
+					e.printStackTrace()
+					done.countDown()
+				}
 			}, 0, 20, TimeUnit.MILLISECONDS)
 			server.start()
 			done.await(duration, TimeUnit.SECONDS)
 		} finally {
-			server.stop(1000); executor.shutdown(); check(executor.awaitTermination(5, TimeUnit.SECONDS))
+			server.stop(1000)
+			executor.shutdown()
+			check(executor.awaitTermination(5, TimeUnit.SECONDS))
 			Files.writeString(evidence.resolve("final-proof.json"), mapper.writeValueAsString(proof()), StandardOpenOption.CREATE_NEW)
-			integration.close(); frames.awaitTermination(5000); sender.close(); virtualBytes.close()
+			integration.close()
+			frames.awaitTermination(5000)
+			sender.close()
+			virtualBytes.close()
 			Files.writeString(evidence.resolve("closed.json"), mapper.writeValueAsString(mapOf("receiver_alive" to integration.receiver.isAlive, "frames" to frame)), StandardOpenOption.CREATE_NEW)
 		}
 	}
 }
 
 private class NormalProbeTransport(private val capture: (ByteArray) -> Unit) : ProtobufBridge("normal-runtime-software-fixture") {
-	val hmd = Tracker(Device(DeviceOrigin.STEAMVR), 0, "fixture-hmd", trackerPosition = TrackerPosition.HEAD, trackerNum = 0,
+	val hmd = Tracker(
+		Device(DeviceOrigin.STEAMVR), 0, "fixture-hmd", trackerPosition = TrackerPosition.HEAD, trackerNum = 0,
 		hasPosition = true, hasRotation = true, isHmd = true, isComputed = true, allowFiltering = false, allowReset = false, allowMounting = false,
-		trackRotDirection = false).also { it.status = LocalStatus.OK }
+		trackRotDirection = false,
+	).also { it.status = LocalStatus.OK }
 	private val handle = openInboundTransportSession()
 	init {
 		@Suppress("UNCHECKED_CAST")
 		val registry = ProtobufBridge::class.java.getDeclaredField("remoteTrackersByTrackerId").apply { isAccessible = true }.get(this) as MutableMap<Int, Tracker>
-		registry[0] = hmd; registerTrustedSteamVrHmd(hmd); reconnected()
+		registry[0] = hmd
+		registerTrustedSteamVrHmd(hmd)
+		reconnected()
 	}
 	fun feedHmd() {
 		val p = Position.newBuilder().setTrackerId(0).setX(0f).setY(1.7f).setZ(0f).setQw(1f).setDataSource(Position.DataSource.FULL)
-		messageReceived(ProtobufMessage.parseFrom(ProtobufMessage.newBuilder().setPosition(p).build().toByteArray()), handle); dataRead()
+		messageReceived(ProtobufMessage.parseFrom(ProtobufMessage.newBuilder().setPosition(p).build().toByteArray()), handle)
+		dataRead()
 	}
-	fun loseHmd() { messageReceived(ProtobufMessage.newBuilder().setTrackerStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder().setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.DISCONNECTED)).build(), handle); dataRead() }
+	fun loseHmd() {
+		messageReceived(ProtobufMessage.newBuilder().setTrackerStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder().setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.DISCONNECTED)).build(), handle)
+		dataRead()
+	}
 	fun flush() = updateMessageQueue()
 	override fun signalSend() = Unit
 	override fun sendMessageReal(message: ProtobufMessage?): Boolean {
-		val bytes = requireNotNull(message).toByteArray(); capture(bytes)
+		val bytes = requireNotNull(message).toByteArray()
+		capture(bytes)
 		val decoded = ProtobufMessage.parseFrom(bytes)
 		if (decoded.hasUserAction() && decoded.userAction.name == "${DIRECT_CAPABILITY}?") {
 			messageReceived(ProtobufMessage.newBuilder().setUserAction(decoded.userAction.toBuilder().setName(DIRECT_CAPABILITY)).build(), handle)

@@ -567,11 +567,16 @@ class BodyRotationGuidanceTests {
 		for (n in 1..180) {
 			val at = 1_000_000L + n * 20_000_000L
 			val newTeacher = n % 6 == 0
-			if (newTeacher) { mainSequence++; mainAt = at }
+			if (newTeacher) {
+				mainSequence++
+				mainAt = at
+			}
 			val before = r.state
 			r = advance(before, GuidanceInput(at, b, teacher(b, mainSequence, mainAt), imu(b, n + 1L, at), RotationOwner.MAIN), t)
-			if (newTeacher) { assertEquals(LearningDecision.ACCEPTED, r.learning); learned++ }
-			else {
+			if (newTeacher) {
+				assertEquals(LearningDecision.ACCEPTED, r.learning)
+				learned++
+			} else {
 				assertEquals(GuidanceReason.SAME_PAIR, r.learningReason)
 				assertEquals(before.lastLearnedAtNanos, r.state.lastLearnedAtNanos)
 				assertEquals(before.anchorAtNanos, r.state.anchorAtNanos)

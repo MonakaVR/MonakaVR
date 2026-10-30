@@ -1,7 +1,21 @@
 package dev.monaka.tracking
 
 import dev.monaka.protocol.v2.CoordinateSpace
-import dev.monaka.tracking.correction.*
+import dev.monaka.tracking.correction.BodyRotationGuidance
+import dev.monaka.tracking.correction.BodyRotationResult
+import dev.monaka.tracking.correction.BodyRotationState
+import dev.monaka.tracking.correction.GuidanceBinding
+import dev.monaka.tracking.correction.GuidanceEpoch
+import dev.monaka.tracking.correction.GuidanceEvidence
+import dev.monaka.tracking.correction.GuidanceFrames
+import dev.monaka.tracking.correction.GuidanceIdentity
+import dev.monaka.tracking.correction.GuidanceImu
+import dev.monaka.tracking.correction.GuidanceInput
+import dev.monaka.tracking.correction.GuidanceOrigin
+import dev.monaka.tracking.correction.GuidanceReceipt
+import dev.monaka.tracking.correction.GuidanceSample
+import dev.monaka.tracking.correction.GuidanceSource
+import dev.monaka.tracking.correction.GuidanceTeacher
 import dev.monaka.tracking.revision.RotationOwner
 import dev.slimevr.tracking.trackers.TrackerPosition
 import io.github.axisangles.ktmath.Quaternion
@@ -34,9 +48,10 @@ internal class BodyRotationRuntime(
 			return poses
 		}
 		val active = tick.assignment.targets.filter { (target, relation) ->
-			target !in excludedTargets && relation.sourceSelection?.let {
-				it.sixDofSource != null && it.qSource != null && it.qSource != it.sixDofSource
-			} == true
+			target !in excludedTargets &&
+				relation.sourceSelection?.let {
+					it.sixDofSource != null && it.qSource != null && it.qSource != it.sixDofSource
+				} == true
 		}
 		states.keys.retainAll(active.keys)
 		val updated = poses.toMutableMap()
@@ -56,32 +71,51 @@ internal class BodyRotationRuntime(
 			val imuSource = q?.takeIf { physicalQ }?.let { source(qRef, it.provenance) }
 				?: previous.binding?.imu?.takeIf { it.identity == identity(qRef) }
 			val binding = if (mainSource != null && imuSource != null) {
-				GuidanceBinding(target.name, tick.assignment.generation, mainSource, imuSource,
+				GuidanceBinding(
+					target.name,
+					tick.assignment.generation,
+					mainSource,
+					imuSource,
 					// MVIP is already mapped; physical Q capture includes its saved
 					// reset/mount transform. Uncalibrated extra transforms are Identity.
-					GuidanceFrames(Quaternion.IDENTITY, Quaternion.IDENTITY, "", false, mainSource, imuSource))
-			} else null
+					GuidanceFrames(Quaternion.IDENTITY, Quaternion.IDENTITY, "", false, mainSource, imuSource),
+				)
+			} else {
+				null
+			}
 			val teacherSample = main?.takeIf { mainContext != null }?.let { sample(target, mainRef, it, GuidanceOrigin.INDEPENDENT_MAIN_ACCEPTANCE, mainRef.mtp?.let(sources.mtpSamples::get)) }
 			val imuSample = q?.takeIf { physicalQ }?.let { sample(target, qRef, it, GuidanceOrigin.PHYSICAL_IMU_ACCEPTANCE) }
 			val selected = poses[target]
-			val result = BodyRotationGuidance.advance(previous, GuidanceInput(
-				tick.nowNanos, binding,
-				teacherSample?.let { GuidanceTeacher(it, main!!.modality, main.position,
-					mainRef.mtp?.let { capabilities[it]?.capabilities }, main.positionQuality.usable, main.rotationQuality.usable) },
-				imuSample?.let { GuidanceImu(it, q!!.rotationQuality.usable) },
-				when (selected?.rotationOwner) {
-					qRef.observationId -> RotationOwner.FALLBACK
-					mainRef.observationId -> RotationOwner.MAIN
-					else -> RotationOwner.NONE
-				},
-			), tuning)
+			val result = BodyRotationGuidance.advance(
+				previous,
+				GuidanceInput(
+					tick.nowNanos,
+					binding,
+					teacherSample?.let {
+						GuidanceTeacher(
+							it,
+							main!!.modality,
+							main.position,
+							mainRef.mtp?.let { capabilities[it]?.capabilities },
+							main.positionQuality.usable,
+							main.rotationQuality.usable,
+						)
+					},
+					imuSample?.let { GuidanceImu(it, q!!.rotationQuality.usable) },
+					when (selected?.rotationOwner) {
+						qRef.observationId -> RotationOwner.FALLBACK
+						mainRef.observationId -> RotationOwner.MAIN
+						else -> RotationOwner.NONE
+					},
+				),
+				tuning,
+			)
 			states[target] = result.state
 			diagnostics[target] = result
 			val corrected = result.fallbackCandidate
 			if (corrected != null && selected?.rotationOwner == qRef.observationId && q != null) {
 				updated[target] = selected.copy(rotation = ResolvedComponent(corrected.orientation, q.sourceId, q.rotationQuality, corrected.sampleAtNanos))
 			}
-
 		}
 		results = diagnostics.toMap()
 		return updated
@@ -91,7 +125,10 @@ internal class BodyRotationRuntime(
 	 * corrected component is selected. Both solver and visible output see this value.
 	 */
 	fun recover(tick: MonakaResolvedTickSnapshot, sources: MonakaSourceTickSnapshot, poses: Map<TrackerPosition, ResolvedTrackingPose>): Map<TrackerPosition, ResolvedTrackingPose> {
-		if (tick.paused) { recovery.clear(); return poses }
+		if (tick.paused) {
+			recovery.clear()
+			return poses
+		}
 		val updated = poses.toMutableMap()
 		val active = tick.assignment.targets.filterValues { it.rotationFallbackTracker != null }
 		recovery.keys.retainAll(active.keys)
@@ -111,7 +148,10 @@ internal class BodyRotationRuntime(
 			val current = updated[target]
 			val rotation = current?.rotation
 			if (rotation != null) {
-				if (current.rotationOwner == mainRef.observationId && current.main.modality == TrackingModality.FULL && current.main.positionValid && r.fallback && r.last != null) { r.start = r.last; r.at = tick.nowNanos }
+				if (current.rotationOwner == mainRef.observationId && current.main.modality == TrackingModality.FULL && current.main.positionValid && r.fallback && r.last != null) {
+					r.start = r.last
+					r.at = tick.nowNanos
+				}
 				r.fallback = current.rotationOwner == qRef.observationId
 				if (r.fallback || current.main.modality != TrackingModality.FULL) r.start = null
 				val start = r.start
@@ -121,7 +161,9 @@ internal class BodyRotationRuntime(
 					if (fraction == 1f) r.start = null
 				}
 				r.last = updated[target]?.rotation?.value
-			} else recovery.remove(target)
+			} else {
+				recovery.remove(target)
+			}
 		}
 		return updated
 	}
@@ -131,8 +173,16 @@ internal class BodyRotationRuntime(
 	} ?: GuidanceIdentity("local-input", "physical-imu", ref.observationId)
 
 	private fun source(ref: TrackerReference, p: ObservationSampleProvenance?): GuidanceSource? = p?.let {
-		GuidanceSource(identity(ref), GuidanceEpoch(it.sourceEpoch, it.sourceEpoch, it.calibrationEpoch,
-			it.mappingRevision ?: 0, it.space ?: space))
+		GuidanceSource(
+			identity(ref),
+			GuidanceEpoch(
+				it.sourceEpoch,
+				it.sourceEpoch,
+				it.calibrationEpoch,
+				it.mappingRevision ?: 0,
+				it.space ?: space,
+			),
+		)
 	}
 
 	private fun sample(target: TrackerPosition, ref: TrackerReference, pose: PoseObservation, origin: GuidanceOrigin, mtpSample: dev.monaka.tracking.mtp.MtpObservationBackend.Sample? = null): GuidanceSample? {
@@ -140,9 +190,13 @@ internal class BodyRotationRuntime(
 		val source = source(ref, p) ?: return null
 		val q = pose.correctionRotation ?: return null
 		// sampleAt is mapped once by its accepting backend, never refreshed by poll.
-		val receivedAt = if (ref.mtp == null) p.sampleAtNanos else mtpSample?.takeIf {
-			it.pose.sequence == p.sequence && it.sampleTime == p.sampleAtNanos
-		}?.receivedAtNanos ?: return null
+		val receivedAt = if (ref.mtp == null) {
+			p.sampleAtNanos
+		} else {
+			mtpSample?.takeIf {
+				it.pose.sequence == p.sequence && it.sampleTime == p.sampleAtNanos
+			}?.receivedAtNanos ?: return null
+		}
 		val receipt = GuidanceReceipt(p.sequence, p.sampleAtNanos, receivedAt, source.epoch)
 		return GuidanceSample(target.name, source.identity, q, receipt, GuidanceEvidence(origin, source.identity, receipt, q))
 	}

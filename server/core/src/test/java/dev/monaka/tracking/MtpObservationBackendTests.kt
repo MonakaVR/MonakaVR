@@ -47,7 +47,9 @@ class MtpObservationBackendTests {
 			assertTrue(admitted.historyGeneration > history)
 			assertEquals(changed, admitted.sourceContexts().getValue(key(p)).coordinateSpace)
 			assertEquals(assignments.snapshot().targets, MonakaConfiguration.load(configPath).assignments.snapshot().targets)
-		} finally { java.nio.file.Files.deleteIfExists(configPath) }
+		} finally {
+			java.nio.file.Files.deleteIfExists(configPath)
+		}
 	}
 	private fun pose() = (MonakaCodec.decodeEnvelope(File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes()) as DecodeResult.Success).value as MtpPose
 	private fun key(p: MtpPose) = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)

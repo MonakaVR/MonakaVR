@@ -236,7 +236,10 @@ fun main(args: Array<String>) {
 					val bridge = vrServer.getVRBridge { it is SteamVRBridge && it.getBridgeConfigKey() == "steamvr" } as? SteamVRBridge
 					bridge?.currentNormalRawHmdPoseInput(
 						space,
-						tick.nowNanos, tick.trackerReceiptCutoffSystemNanos, maxAge, clockDomain,
+						tick.nowNanos,
+						tick.trackerReceiptCutoffSystemNanos,
+						maxAge,
+						clockDomain,
 					)
 				},
 				configureDirectOutputs = { trackers ->

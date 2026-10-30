@@ -34,7 +34,6 @@ data class MonakaConfiguration(
 			require(rotationCorrection.frames.assertedSpace.convention == space.convention) {
 				"Rotation correction must use the supported coordinate convention"
 			}
-
 		}
 	}
 

@@ -71,7 +71,12 @@ class MonakaServerIntegration private constructor(
 	val lastDiagnosticSnapshot: HybridTrackingDiagnosticSnapshot? get() = diagnostics?.latest
 	var frameDiagnosticFailures = 0L
 		private set
-	private fun <T> diagnostic(action: () -> T): T? = try { action() } catch (_: Exception) { frameDiagnosticFailures++; null }
+	private fun <T> diagnostic(action: () -> T): T? = try {
+		action()
+	} catch (_: Exception) {
+		frameDiagnosticFailures++
+		null
+	}
 	fun tick() {
 		if (closed) return
 		try {
@@ -283,7 +288,9 @@ class MonakaServerIntegration private constructor(
 				configureDirectOutputs(output.trackers.values.toList())
 				val diagnosticEnabled = config.rotationCorrection != null ||
 					config.assignments.snapshot().targets.values.any { it.outputMode == OutputMode.HYBRID }
-				frames = try { frameDiagnostics() } catch (e: Exception) {
+				frames = try {
+					frameDiagnostics()
+				} catch (e: Exception) {
 					java.util.logging.Logger.getLogger("MonakaFrameDiagnostics").warning("Frame diagnostics unavailable: ${e.javaClass.simpleName}")
 					null
 				}

@@ -514,12 +514,16 @@ class HipRotationCorrectionTests {
 		for (n in 1..180) {
 			val at = 1_000_000L + n * 20_000_000L
 			val newTeacher = n % 6 == 0
-			if (newTeacher) { mainSequence++; mainAt = at }
+			if (newTeacher) {
+				mainSequence++
+				mainAt = at
+			}
 			val learned = c.lastLearnedAtNanos
 			val correction = c.correction
 			c.update(sample(mainId, mainSequence, mainAt, halfYaw, true), sample(imuId, n + 1L, at, identity), mainId, at, 1, space)
-			if (newTeacher) assertEquals(LearningDecision.ACCEPTED, c.learningDecision)
-			else {
+			if (newTeacher) {
+				assertEquals(LearningDecision.ACCEPTED, c.learningDecision)
+			} else {
 				assertEquals(LearningDecision.REJECTED, c.learningDecision)
 				assertEquals(learned, c.lastLearnedAtNanos)
 				assertEquals(correction, c.correction)

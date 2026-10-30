@@ -21,10 +21,8 @@ class MonakaRuntime(
 ) : AutoCloseable {
 	private val bodyRotation = BodyRotationRuntime(expectedSpace, bodyRotationTuning.copy(maxImuSampleAgeNanos = timeoutNanos), excludedRotationTargets, rotationReacquireDurationNanos)
 	val bodyRotationResults get() = bodyRotation.results
-	fun convergeBodyRotations(tick: MonakaResolvedTickSnapshot, poses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>) =
-		bodyRotation.recover(tick, captureSourceSnapshot(tick), poses)
-	fun correctBodyRotations(tick: MonakaResolvedTickSnapshot, poses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>) =
-		bodyRotation.apply(tick, captureSourceSnapshot(tick), poses, mtp.capabilitiesSnapshot())
+	fun convergeBodyRotations(tick: MonakaResolvedTickSnapshot, poses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>) = bodyRotation.recover(tick, captureSourceSnapshot(tick), poses)
+	fun correctBodyRotations(tick: MonakaResolvedTickSnapshot, poses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>) = bodyRotation.apply(tick, captureSourceSnapshot(tick), poses, mtp.capabilitiesSnapshot())
 	private val assignedImuFreshness = AssignedImuSampleFreshness(assignments, timeoutNanos, onlyExplicitPairs = maxImuSampleAgeNanos == null, legacyHipMaxAgeNanos = maxImuSampleAgeNanos)
 	val profiles = ObservationSourceProfileRegistry(
 		listOf(

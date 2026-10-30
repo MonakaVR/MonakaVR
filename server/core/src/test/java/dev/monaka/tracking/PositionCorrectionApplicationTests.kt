@@ -413,14 +413,18 @@ internal class PositionCorrectionApplicationTests {
 		for (forbidden in listOf("System.nanoTime", "System.currentTimeMillis", "Instant.now", "ObservationStore", "ConstraintPipeline", ".observe(", "advanceWithoutMeasurement(")) {
 			assertFalse(source.contains(forbidden), forbidden)
 		}
-		// 6E consumes Ready; only the explicit injected 6G orchestrator may prepare it.
+		// Only the orchestrator may prepare or mutate an application. The normal
+		// composition may read exactly the processed candidate position for diagnostics.
 		Files.walk(root).use { paths ->
 			paths.filter {
 				it.toString().endsWith(".kt") &&
 					it.fileName.toString() !in
 					setOf("PositionCorrectionApplication.kt", "PositionCorrectionSolverContinuity.kt", "PositionCorrectionRuntimeOrchestrator.kt")
 			}.forEach {
-				assertFalse(Files.readString(it).contains("PositionCorrectionApplication"), it.toString())
+				val text = Files.readString(it)
+				val diagnosticRead = Regex("""\(result\.application\s+as\?\s+PositionCorrectionApplicationResult\.Ready\)\?\.candidate\?\.correctedPosition""")
+				val withoutDiagnosticRead = if (it.fileName.toString() == "NormalPositionCorrectionRuntime.kt") diagnosticRead.replace(text, "") else text
+				assertFalse(withoutDiagnosticRead.contains("PositionCorrectionApplication"), it.toString())
 			}
 		}
 		assertFalse(

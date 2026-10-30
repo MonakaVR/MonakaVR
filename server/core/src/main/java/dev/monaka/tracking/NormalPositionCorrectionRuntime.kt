@@ -49,35 +49,57 @@ internal class NormalPositionCorrectionRuntime(
 		val continuityContext = lastMainContext
 		val body = (bodySource() as? HipBodyModelSnapshotResult.Available)?.snapshot
 		val q = sources.observationsBySource[qRef.observationId]?.takeIf {
-			qRef.mtp == null && sources.sourceOwners[it.sourceId] == "slime" && it.rotationQuality.usable &&
-				it.provenance != null && it.correctionRotation != null
+			qRef.mtp == null &&
+				sources.sourceOwners[it.sourceId] == "slime" &&
+				it.rotationQuality.usable &&
+				it.provenance != null &&
+				it.correctionRotation != null
 		}
 		val space = hmd?.space ?: lastSpace ?: return null
 		lastSpace = space
 		val rawImu = q?.let {
 			val p = requireNotNull(it.provenance)
-			if (p.sampleAtNanos > tick.nowNanos || tick.nowNanos - p.sampleAtNanos > (saved?.predictorPolicy?.maxImuSampleAgeNanos ?: RotationCorrectionTuning.normalRuntimeDefaults().maxImuSampleAgeNanos)) null
-			else runCatching { RawImuOrientationInput(RawSourceIdentity(it.sourceId, RawSourceKind.RAW_IMU), requireNotNull(it.correctionRotation), space, p.copy(space = space)) }.getOrNull()
+			if (p.sampleAtNanos > tick.nowNanos || tick.nowNanos - p.sampleAtNanos > (saved?.predictorPolicy?.maxImuSampleAgeNanos ?: RotationCorrectionTuning.normalRuntimeDefaults().maxImuSampleAgeNanos)) {
+				null
+			} else {
+				runCatching { RawImuOrientationInput(RawSourceIdentity(it.sourceId, RawSourceKind.RAW_IMU), requireNotNull(it.correctionRotation), space, p.copy(space = space)) }.getOrNull()
+			}
 		}
 		val mountSaved = saved?.mainMountCalibration?.takeIf { it.sourceId == mainRef.observationId }
 		val mount = mountSaved?.toSnapshot() ?: PositionCorrectionMainMountCalibrationConfig(
-			"consumer-identity-mount", "saved-identity", mainRef.observationId, Vector3.NULL,
+			"consumer-identity-mount",
+			"saved-identity",
+			mainRef.observationId,
+			Vector3.NULL,
 		).toSnapshot()
 		val fixedSaved = saved?.fixedCalibration?.takeIf { it.hmdSourceId == hmd?.source?.sourceId && it.bodyModelId == body?.identity?.modelId }
-		val fixed = if (hmd != null && body != null) fixedSaved?.toSnapshot() ?: PositionCorrectionFixedCalibrationConfig(
-			"consumer-identity-head-anchor", "saved-identity", hmd.source.sourceId, body.identity.modelId, Vector3.NULL, Quaternion.IDENTITY,
-		).toSnapshot() else null
+		val fixed = if (hmd != null && body != null) {
+			fixedSaved?.toSnapshot() ?: PositionCorrectionFixedCalibrationConfig(
+				"consumer-identity-head-anchor",
+				"saved-identity",
+				hmd.source.sourceId,
+				body.identity.modelId,
+				Vector3.NULL,
+				Quaternion.IDENTITY,
+			).toSnapshot()
+		} else {
+			null
+		}
 		val geometry = when {
 			mountSaved != null && fixedSaved != null -> "saved_geometry"
 			saved != null && (mountSaved == null || fixedSaved == null) -> "uncalibrated_identity_other_source_geometry_ignored"
 			else -> "uncalibrated_identity"
 		}
-		val nextContext = if (hmd != null && rawImu != null && body != null && fixed != null) listOf(
-			space, tick.assignment, hmd.provenance.sourceEpoch, hmd.provenance.calibrationEpoch,
-			rawImu.provenance.sourceEpoch, rawImu.provenance.calibrationEpoch, body.identity,
-			fixed.identity, mount.identity, continuityContext?.sourceEpoch, continuityContext?.calibrationEpoch,
-			continuityContext?.mappingRevision, continuityContext?.coordinateSpace,
-		) else null
+		val nextContext = if (hmd != null && rawImu != null && body != null && fixed != null) {
+			listOf(
+				space, tick.assignment, hmd.provenance.sourceEpoch, hmd.provenance.calibrationEpoch,
+				rawImu.provenance.sourceEpoch, rawImu.provenance.calibrationEpoch, body.identity,
+				fixed.identity, mount.identity, continuityContext?.sourceEpoch, continuityContext?.calibrationEpoch,
+				continuityContext?.mappingRevision, continuityContext?.coordinateSpace,
+			)
+		} else {
+			null
+		}
 		if (nextContext != null && nextContext != context) {
 			context = nextContext
 			orchestrator = PositionCorrectionRuntimeOrchestrator(
@@ -101,17 +123,40 @@ internal class NormalPositionCorrectionRuntime(
 			?.let { it as? MainHipCenterTeacherResult.Available }?.teacher
 		val teacherValue = teacher?.let {
 			val p = it.provenance
-			PositionCorrectionTeacherTickValue(it, PositionTeacherEpoch(it.sourceId, p.sourceEpoch, p.calibrationEpoch,
-				p.mappingRevision, space, tick.assignment.generation, PositionBodyReference.HIP_CENTER, mount.identity))
+			PositionCorrectionTeacherTickValue(
+				it,
+				PositionTeacherEpoch(
+					it.sourceId,
+					p.sourceEpoch,
+					p.calibrationEpoch,
+					p.mappingRevision,
+					space,
+					tick.assignment.generation,
+					PositionBodyReference.HIP_CENTER,
+					mount.identity,
+				),
+			)
 		}
 		val predictors = if (hmd != null && rawImu != null && body != null && fixed != null) PositionCorrectionPredictorSources(hmd, rawImu, body, fixed) else null
-		val result = active.process(PositionCorrectionRuntimeTick(tick.tickSequence, tick.nowNanos, tick.resolvedAtNanos,
-			space, tick.assignment, resolved, predictors, teacherValue))
+		val result = active.process(
+			PositionCorrectionRuntimeTick(
+				tick.tickSequence,
+				tick.nowNanos,
+				tick.resolvedAtNanos,
+				space,
+				tick.assignment,
+				resolved,
+				predictors,
+				teacherValue,
+			),
+		)
 		if (result is PositionCorrectionRuntimeTickResult.Processed) {
 			val selected = result.solverConstraints[TrackerPosition.HIP]
-			diagnostics = NormalPositionCorrectionDiagnostics(hmd != null, geometry, result.prediction?.position, teacher?.position,
+			diagnostics = NormalPositionCorrectionDiagnostics(
+				hmd != null, geometry, result.prediction?.position, teacher?.position,
 				selected?.position?.value, selected?.positionReference.toString(), result.learning.decision.toString(), result.continuity.phase.toString(),
-				result.learning.state.correctionWorld, (result.application as? PositionCorrectionApplicationResult.Ready)?.candidate?.correctedPosition)
+				result.learning.state.correctionWorld, (result.application as? PositionCorrectionApplicationResult.Ready)?.candidate?.correctedPosition,
+			)
 		}
 		return result
 	}

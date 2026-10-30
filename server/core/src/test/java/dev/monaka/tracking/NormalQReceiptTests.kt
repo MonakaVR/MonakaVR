@@ -6,13 +6,19 @@ import dev.slimevr.tracking.trackers.TrackerPosition
 import dev.slimevr.tracking.trackers.TrackerStatus
 import io.github.axisangles.ktmath.Quaternion
 import org.junit.jupiter.api.Test
-import kotlin.test.*
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class NormalQReceiptTests {
 	@Test fun normalExternalQUsesActualReceiptWithoutBecomingPhysicalImuEvidence() {
-		val q = Tracker(null, 700, "external-q", trackerPosition = TrackerPosition.HIP, hasRotation = true,
-			allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false).also {
-			it.status = TrackerStatus.OK; it.setRotation(Quaternion.rotationAroundYAxis(.2f))
+		val q = Tracker(
+			null, 700, "external-q", trackerPosition = TrackerPosition.HIP, hasRotation = true,
+			allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false,
+		).also {
+			it.status = TrackerStatus.OK
+			it.setRotation(Quaternion.rotationAroundYAxis(.2f))
 		}
 		val main = LogicalTracker("source", "main", "publisher")
 		val assignments = TrackerBodyAssignments().also { it.configureSources(TrackerPosition.HIP, TrackerReference.slime(q.name), TrackerReference.mtp(main), true) }

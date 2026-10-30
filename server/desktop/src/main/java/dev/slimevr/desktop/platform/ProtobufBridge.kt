@@ -60,15 +60,29 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	): dev.monaka.tracking.RawHmdPoseInput? {
 		if (space.convention != "rh_y_up_neg_z_forward" || nowNanos < 0 || maxAgeNanos < 0) return null
 		val p = currentSessionHmdSample(rawHmdPositions::currentUsablePoseMessageSnapshot) ?: return null
-		val age = try { Math.subtractExact(receiptCutoffSystemNanos, p.receivedAtSystemNanos) } catch (_: ArithmeticException) { return null }
+		val age = try {
+			Math.subtractExact(receiptCutoffSystemNanos, p.receivedAtSystemNanos)
+		} catch (_: ArithmeticException) {
+			return null
+		}
 		if (age < 0 || age > maxAgeNanos || age > nowNanos) return null
 		val key = NormalHmdReceiptKey(p.sourceEpoch, p.transportSessionEpoch, p.sequence)
 		val sampleAt = normalHmdReceiptTimes[runtimeClockDomain]?.takeIf { it.first == key }?.second
 			?: (nowNanos - age).also { normalHmdReceiptTimes[runtimeClockDomain] = key to it }
 		if (sampleAt > nowNanos || nowNanos - sampleAt > maxAgeNanos) return null
-		return dev.monaka.tracking.RawHmdPoseInput(p.ingressIdentity, p.position, p.orientation.unit(), space,
-			dev.monaka.tracking.ObservationSampleProvenance(p.sequence, sampleAt,
-				"${p.sourceEpoch}:${p.transportSessionEpoch}", "consumer-saved-frame", space = space))
+		return dev.monaka.tracking.RawHmdPoseInput(
+			p.ingressIdentity,
+			p.position,
+			p.orientation.unit(),
+			space,
+			dev.monaka.tracking.ObservationSampleProvenance(
+				p.sequence,
+				sampleAt,
+				"${p.sourceEpoch}:${p.transportSessionEpoch}",
+				"consumer-saved-frame",
+				space = space,
+			),
+		)
 	}
 
 	/** Generic production ingress has no authoritative frame reference. No operator override. */

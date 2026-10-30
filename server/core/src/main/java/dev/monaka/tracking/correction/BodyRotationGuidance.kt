@@ -154,9 +154,14 @@ object BodyRotationGuidance {
 			return unavailable(previous, GuidanceReason.CLOCK_ROLLBACK)
 		}
 		val suppliedBinding = input.binding ?: return unavailable(BodyRotationState(lastNowNanos = input.nowNanos), GuidanceReason.UNASSIGNED)
-		val binding = suppliedBinding.copy(frames = suppliedBinding.frames.copy(
-			approvalRevision = "", confirmed = false, approvedMain = suppliedBinding.main, approvedImu = suppliedBinding.imu,
-		))
+		val binding = suppliedBinding.copy(
+			frames = suppliedBinding.frames.copy(
+				approvalRevision = "",
+				confirmed = false,
+				approvedMain = suppliedBinding.main,
+				approvedImu = suppliedBinding.imu,
+			),
+		)
 		// Any authority/frame change revokes readiness even when no sample is present.
 		var s = if (binding != previous.binding) BodyRotationState(binding = binding) else previous
 		s = s.copy(lastNowNanos = input.nowNanos)
@@ -234,7 +239,9 @@ object BodyRotationGuidance {
 				// Intermediate polls may carry one already consumed source. They are
 				// not new pairs and must not restart dwell for asynchronous input rates.
 				last != null && (mp.sequence <= last.mainSequence || ip.sequence <= last.imuSequence) -> GuidanceReason.SAME_PAIR
+
 				kotlin.math.abs(mp.sampleAtNanos - ip.sampleAtNanos) > tuning.pairWindowNanos -> GuidanceReason.PAIR_WINDOW
+
 				else -> GuidanceReason.NONE
 			}
 			if (lr != GuidanceReason.NONE) {

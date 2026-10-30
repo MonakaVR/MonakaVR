@@ -39,7 +39,9 @@ class SlimeTrackerPoseObservationAdapter(
 		val physicalImu = tracker.device != null && tracker.isImu() && !tracker.isInternal && !tracker.isComputed && !tracker.isHmd
 		val sample = if (rotation != null) {
 			(independentImuCapture.capture(tracker, observedAtNanos) as? SlimeImuCaptureResult.Available)?.sample
-		} else null
+		} else {
+			null
+		}
 
 		val provenance = sample?.provenance
 

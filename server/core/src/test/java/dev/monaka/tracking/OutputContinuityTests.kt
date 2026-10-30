@@ -283,12 +283,13 @@ class OutputContinuityTests {
 		assertEquals(ContinuityState.MAIN_DIRECT, c.state)
 	}
 
-	@Test fun alignmentIsNeverInferredFromNumericallySimilarCoordinates() {
+	@Test fun knownConventionAlignmentSurvivesDescriptionChangesAndRejectsUnsupportedAxes() {
 		val pose = SkeletonWorldPose(target, Vector3(1f, 2f, 3f), Quaternion.IDENTITY, 1)
 		assertNull(BackgroundIkAlignment.UNVERIFIED.toMonakaWorld(pose, space))
 		val confirmed = BackgroundIkAlignment.confirmedSameSpace(space)
 		assertEquals(pose.position, confirmed.toMonakaWorld(pose, space)!!.position!!.value)
-		assertNull(confirmed.toMonakaWorld(pose, space.copy(revision = 1)))
-		assertNull(confirmed.toMonakaWorld(pose, space.copy(id = "other")))
+		assertEquals(pose.position, confirmed.toMonakaWorld(pose, space.copy(revision = 1))!!.position!!.value)
+		assertEquals(pose.position, confirmed.toMonakaWorld(pose, space.copy(id = "other"))!!.position!!.value)
+		assertNull(confirmed.toMonakaWorld(pose, space.copy(convention = "unsupported_axes")))
 	}
 }

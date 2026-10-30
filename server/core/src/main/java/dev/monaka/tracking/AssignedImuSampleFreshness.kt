@@ -31,7 +31,8 @@ class AssignedImuSampleFreshness(
 		val relation = assignment.targets[observation.target]
 		// Explicit local Q includes Q-only Main. MVIP keeps its existing source profile.
 		val selected = relation?.sourceSelection?.qSource ?: relation?.rotationFallbackTracker?.takeUnless { onlyExplicitPairs }
-		if (selected == null || selected.mtp != null ||
+		if (selected == null ||
+			selected.mtp != null ||
 			observation.sourceId != selected.observationId ||
 			!observation.rotationQuality.usable
 		) {
