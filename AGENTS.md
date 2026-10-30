@@ -41,7 +41,7 @@ A passive receive/listen/subscribe/reconnect operation performed entirely throug
 
 ### Mandatory review and acceptance gates
 
-For every change affecting input reception, GUI, service startup, configuration, or integration:
+For changes that actually affect input reception, GUI, service startup, configuration, or integration, apply the relevant checks below (not the entire list to every unrelated edit):
 
 1. Confirm the application starts and the public input UI operates with no producer installed or running.
 2. Demonstrate with two distinct conforming test producers that identical public messages take the same consumer path without source-name-specific branches.
@@ -51,6 +51,12 @@ For every change affecting input reception, GUI, service startup, configuration,
 6. Review newly added source paths, imports, IPC, settings, tests, scripts, and packaging for producer-specific dependencies. An exception requires explicit architectural approval; task scope alone is not approval.
 
 Treat a violation as an **architecture defect and release blocker**, not an optional cleanup. Record untested gates as `NOT RUN`; do not claim them as passed.
+
+## Product-software verification and historical audit (2026-10-30)
+
+MonakaVR is a producer-independent SlimeVR 6DoF constraint extension, not a physical-tracker quality certification tool. Normal software PASS must demonstrate actual public-input handling, transforms, IK/fallback/output or the relevant backend function; version/source hashes and historic approvals do not substitute for that behavior.
+
+`scripts/test_revision.ps1` uses `-Mode Quick` and `-Mode Full` for product-software checks and `-Mode Audit` for historical source/release-policy checks. Audit may be used for a relevant release, dependency or policy migration, but must not be imposed as a default per-edit requirement. See `docs/verification-lanes.md`. Software PASS is not hardware HIL PASS. The existing mandatory calibration approval/revision model is a migration target under MonakaVR/MonakaBridge#17, not the intended long-term product acceptance criterion.
 
 ## Current coordinated Architecture Revision
 
