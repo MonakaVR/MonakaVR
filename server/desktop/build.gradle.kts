@@ -152,6 +152,26 @@ tasks.register<JavaExec>("mtpProcessE2E") {
 	}
 }
 
+// Explicit software acceptance entry. Uses normal configuration RPC + composition +
+// existing IK and serialized output, with visibly identified input/OS transport fixtures.
+tasks.register<JavaExec>("normalRuntimeProcessProbe") {
+	group = "verification"
+	description = "Normal RPC/save, exact MVIP UDP/replay, independent IMU fixture, IK and virtual byte capture"
+	dependsOn(tasks.testClasses)
+	classpath = sourceSets["test"].runtimeClasspath
+	mainClass.set("dev.monaka.tracking.desktop.NormalRuntimeProcessProbe")
+	javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+	doFirst {
+		args(
+			providers.gradleProperty("monakaNormalConfig").get(),
+			providers.gradleProperty("monakaNormalReady").get(),
+			providers.gradleProperty("monakaNormalEvidence").get(),
+			providers.gradleProperty("monakaNormalReplay").getOrElse("-"),
+			providers.gradleProperty("monakaNormalSeconds").getOrElse("120"),
+		)
+	}
+}
+
 // Explicit diagnostic receiver; test classpath only, never shipped in the server JAR.
 tasks.register<JavaExec>("mtpHilCapture") {
 	group = "verification"

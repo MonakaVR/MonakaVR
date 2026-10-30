@@ -100,8 +100,9 @@ class SameFrameDiagnostics internal constructor(
 		tick: MonakaResolvedTickSnapshot,
 		runtime: MonakaRuntime,
 		poses: Map<TrackerPosition, ResolvedTrackingPose>,
-		commit: MonakaSolverCommitResult.GenericCommitted,
+		commit: MonakaSolverCommitResult,
 		skeleton: HumanSkeleton,
+		positionCorrection: dev.monaka.tracking.NormalPositionCorrectionDiagnostics? = null,
 	): Map<String, Any?> {
 		val selected = tick.assignment.targets.values.flatMap { listOfNotNull(it.mainTracker?.observationId, it.rotationFallbackTracker?.observationId) }.toSet()
 		return linkedMapOf(
@@ -110,7 +111,17 @@ class SameFrameDiagnostics internal constructor(
 			"clock_domain" to "consumer_monotonic", "assignment_generation" to tick.assignment.generation.toString(),
 			"paused" to tick.paused, "writeback_owner" to commit.owner.name,
 			"writeback_attempted" to commit.writebackAttempted, "writeback_tick" to commit.tickSequence.toString(),
-			"position_correction" to "PRODUCTION_NOT_ENABLED",
+			"position_correction" to if (positionCorrection == null) "INPUTS_UNAVAILABLE_OR_NO_PAIR" else "NORMAL_RUNTIME",
+			"position_correction_detail" to positionCorrection?.let { p -> mapOf(
+				"hmd_available" to p.hmdAvailable, "geometry" to p.geometry,
+				"prediction" to vector(p.prediction), "measured_teacher" to vector(p.measuredTeacher),
+				"solver_position" to vector(p.solverPosition), "solver_position_reference" to p.solverPositionReference,
+				"learning" to p.learning, "continuity" to p.continuity) },
+			"body_rotation_guidance" to runtime.bodyRotationResults.map { (target, r) -> mapOf(
+				"target" to target.name, "ready" to r.state.ready, "phase" to r.state.phase.name,
+				"learning" to r.learning.name, "learning_reason" to r.learningReason.name,
+				"correction_xyzw" to quaternion(r.state.correction),
+				"fallback_xyzw" to quaternion(r.fallbackCandidate?.orientation)) },
 			"observations" to runtime.pipeline.observations(tick.nowNanos, tick.assignment).filter { it.sourceId in selected }.map { o ->
 				mapOf("identity" to identity(o.sourceId), "target" to o.target.name, "modality" to o.modality.name,
 					"position" to vector(o.position), "rotation_xyzw" to quaternion(o.rotation),

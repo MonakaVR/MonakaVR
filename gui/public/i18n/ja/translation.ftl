@@ -809,7 +809,7 @@ monaka-tracking-mode-direct = 6DoF直接出力
 monaka-tracking-mode-hybrid = ハイブリッド（Direct + IKフォールバック）
 monaka-tracking-restart-required = 保存済みモードの反映には再起動が必要
 monaka-input-title = Qと6DoFの入力元
-monaka-input-semantics = 6DoF Mainが使用可能な間は、その位置と回転を使用します。Mainが使えない場合はQ入力元の回転を使用します。回転への対応だけでは独立したIMUであると判断できません。
+monaka-input-semantics = 6DoF Mainが使用可能な間は、その位置と回転を使用します。Mainが使えない場合はQ入力元の回転を使用します。回転への対応だけでは独立したIMUであると判断できません。未校正の入力も使用でき、保存変換がなければ既知の座標規約でIdentityとして扱います。必要に応じて任意に再校正してください。承認操作は不要です。
 monaka-input-unassigned = 未割り当て
 monaka-input-saved-offline = 保存済みの入力元（オフライン）
 monaka-input-support-unknown = 対応機能が不明
@@ -868,3 +868,5 @@ assignment-status-legacy-observed = Core入力を保存しました。物理ト�
 assignment-status-partial = 一部成功または未確認です。Core保存後の物理部位変更が未確認、または操作中に状態が変わりました。両方の状態を再読込してから再試行してください。自動復元は行っていません。
 assignment-status-save-unknown = Core保存に失敗したか、結果が不明です。物理トラッカーの部位変更は送信していません。再読込してから再試行してください。
 assignment-legacy-active = 受信データで確認した物理トラッカーの部位
+
+assignment-active = サーバー再起動までの稼働設定

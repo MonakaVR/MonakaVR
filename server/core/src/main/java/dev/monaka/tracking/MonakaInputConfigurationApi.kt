@@ -151,16 +151,11 @@ class MonakaInputConfigurationApi(
 		require(current.generation == edit.generation && current.generation < Long.MAX_VALUE) { "Assignments changed; reload before saving" }
 		val affected = (current.targets.keys + edit.assignments.keys).filter { current.targets[it] != edit.assignments[it] }
 		if (affected.isEmpty()) return@synchronized current
-		require(
-			affected.none {
-				current.targets[it]?.outputMode?.let { m -> m != OutputMode.IK } == true ||
-					edit.assignments[it]?.outputMode?.let { m -> m != OutputMode.IK } == true
-			} &&
-				configuration.rotationCorrection == null &&
-				configuration.positionCorrection == null,
-		) {
-			"This output/correction assignment requires a server restart"
+		val requiresRestart = affected.any {
+			current.targets[it]?.outputMode?.let { mode -> mode != OutputMode.IK } == true ||
+				edit.assignments[it]?.outputMode?.let { mode -> mode != OutputMode.IK } == true
 		}
+
 		val next = TrackerBodyAssignments().also { it.replaceTargets(edit.assignments) }
 		val candidate = configuration.copy(assignments = next) // All existing configuration validators.
 		commit { stage ->
@@ -179,7 +174,7 @@ class MonakaInputConfigurationApi(
 			document.set<com.fasterxml.jackson.databind.JsonNode>("assignments", assignments)
 			mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(document)
 		}
-		configuration.assignments.replaceTargets(edit.assignments)
+		if (requiresRestart) restartPending = true else configuration.assignments.replaceTargets(edit.assignments)
 		savedAssignments = edit.assignments
 		configuration.assignments.snapshot()
 	}
@@ -320,6 +315,9 @@ class MonakaInputConfigurationApi(
 						"body" to body.name,
 						"qSource" to (a.sourceSelection?.qSource?.observationId ?: if (a.sourceSelection == null) (a.rotationFallbackTracker ?: a.mainTracker).observationId else null),
 						"sixDofSource" to (a.sourceSelection?.sixDofSource?.observationId ?: if (a.sourceSelection == null && a.mainTracker.mtp != null) a.mainTracker.observationId else null),
+						"savedManualSix" to (savedAssignments[body]?.sourceSelection?.sixDofManuallySelected ?: true),
+						"savedQSource" to (savedAssignments[body]?.let { saved -> if (saved.sourceSelection != null) saved.sourceSelection.qSource else saved.rotationFallbackTracker ?: saved.mainTracker }?.observationId),
+						"savedSixDofSource" to (savedAssignments[body]?.let { saved -> if (saved.sourceSelection != null) saved.sourceSelection.sixDofSource else saved.mainTracker.takeIf { it.mtp != null } }?.observationId),
 						"manualSix" to (a.sourceSelection?.sixDofManuallySelected ?: true), "mode" to a.outputMode.name.lowercase(),
 						"activeMode" to a.outputMode.name.lowercase(), "savedMode" to savedAssignments[body]?.outputMode?.name?.lowercase(),
 						"restartRequired" to (savedAssignments[body] != a),

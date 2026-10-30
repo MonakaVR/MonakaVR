@@ -30,7 +30,7 @@ class MtpObservationBackend(
 	override val profileId: String = "mtp",
 ) : ObservationBackend,
 	AssignmentSnapshotAwareObservationBackend {
-	data class Sample(val pose: MtpPose, val sampleTime: Long)
+	data class Sample(val pose: MtpPose, val sampleTime: Long, val receivedAtNanos: Long = sampleTime)
 	private class Lifetime(val session: String, val clock: String, val peer: String, val retired: MutableSet<String>) {
 		var quarantined = false
 		var lastAccepted = -1L
@@ -313,7 +313,7 @@ class MtpObservationBackend(
 			inbox.count("BeforeLocalEpoch")
 			return
 		}
-		device.sample = Sample(pose, received.receivedAtNanos - age)
+		device.sample = Sample(pose, received.receivedAtNanos - age, received.receivedAtNanos)
 		device.context = MtpSourceContextSnapshot(
 			key,
 			"${pose.session_id}:${pose.clock_id}",

@@ -260,7 +260,7 @@ class SlimeRawImuProductionBoundaryTests {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = ["unconfirmed", "mismatch", "blankSource", "blankId", "negativeRevision", "wrongConvention"])
+	@ValueSource(strings = ["mismatch", "blankSource", "blankId", "negativeRevision", "wrongConvention"])
 	fun invalidBindingsFailClosed(case: String) {
 		val t = tracker()
 		val b = binding(t)

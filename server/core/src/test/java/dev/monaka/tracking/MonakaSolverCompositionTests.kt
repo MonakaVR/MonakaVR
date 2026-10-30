@@ -387,7 +387,7 @@ internal class MonakaSolverCompositionTests {
 		val config = if (configured) config() else null
 		MonakaSolverComposition(f.skeleton, config, { error("Dormant tracker capture") }, { error("Dormant body capture") }).use { owner ->
 			assertEquals(
-				if (configured) ProductionPositionCorrectionGate.CONFIGURED_RAW_HMD_BLOCKED else ProductionPositionCorrectionGate.NOT_CONFIGURED,
+				ProductionPositionCorrectionGate.NORMAL_RUNTIME,
 				owner.positionCorrectionGate,
 			)
 			owner.commitGeneric(tick(1), tick(1).constraints)
@@ -403,10 +403,10 @@ internal class MonakaSolverCompositionTests {
 
 	@Test fun sourceOwnershipHasNoRawHmdProbeOrDesktopDependency() {
 		val source = Files.readString(Path.of("src/main/java/dev/monaka/tracking/MonakaSolverComposition.kt"))
-		for (forbidden in listOf("dev.monaka.tracking.desktop", "RawHmdPoseAdmission", "RawHmdPoseInput(", ".capture(", "captureSourceSnapshot", "VRServer")) {
+		for (forbidden in listOf("dev.monaka.tracking.desktop", "RawHmdPoseAdmission", "RawHmdPoseInput(", ".capture(", "VRServer")) {
 			assertFalse(source.contains(forbidden), forbidden)
 		}
 		assertEquals(1, Regex("ConstraintIkWriteback\\(skeleton\\)").findAll(source).count())
-		assertEquals(listOf("NOT_CONFIGURED", "CONFIGURED_RAW_HMD_BLOCKED"), ProductionPositionCorrectionGate.entries.map { it.name })
+		assertEquals(listOf("NOT_CONFIGURED", "CONFIGURED_RAW_HMD_BLOCKED", "NORMAL_RUNTIME"), ProductionPositionCorrectionGate.entries.map { it.name })
 	}
 }

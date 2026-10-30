@@ -53,7 +53,7 @@ class NormalBodyGuidanceTests {
 				now += 20_000_000
 				imu.setRotation(q ?: Quaternion.IDENTITY)
 				val o = orientation ?: teacher
-				val pose = p.copy(sequence = ++sequence, modality = mode,
+				val pose = p.copy(sequence = ++sequence, modality = mode, sent_at_ns = p.timestamp_ns + 5_000_000,
 					coordinate_space = p.coordinate_space.copy(revision = revision),
 					position = if (mode == "full") listOf(.1, 1.0, .1) else null,
 					orientation = if (mode == "none") null else listOf(o.x.toDouble(), o.y.toDouble(), o.z.toDouble(), o.w.toDouble()),
@@ -68,6 +68,9 @@ class NormalBodyGuidanceTests {
 			repeat(60) { tick() }
 			val result = assertNotNull(it.runtime.bodyRotationResults[target])
 			assertTrue(result.state.ready)
+			val receipt = assertNotNull(result.state.mainCursor?.sample?.receipt)
+			assertEquals(now, receipt.receivedAtNanos)
+			assertEquals(now - 5_000_000, receipt.sampleAtNanos)
 			assertEquals(LearningDecision.ACCEPTED, result.learning)
 			val learnedAt = result.state.lastLearnedAtNanos
 			tick()

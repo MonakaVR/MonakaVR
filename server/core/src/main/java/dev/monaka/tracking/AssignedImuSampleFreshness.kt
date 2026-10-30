@@ -9,9 +9,10 @@ class AssignedImuSampleFreshness(
 	private val assignments: TrackerBodyAssignments,
 	private val maxAgeNanos: Long,
 	private val onlyExplicitPairs: Boolean = false,
+	private val legacyHipMaxAgeNanos: Long? = null,
 ) {
 	init {
-		require(maxAgeNanos > 0)
+		require(maxAgeNanos >= 0 && (legacyHipMaxAgeNanos == null || legacyHipMaxAgeNanos >= 0))
 	}
 	private data class Epoch(
 		val source: String,
@@ -28,19 +29,20 @@ class AssignedImuSampleFreshness(
 
 	fun apply(observation: PoseObservation, now: Long, assignment: TrackerBodyAssignments.Snapshot): PoseObservation {
 		val relation = assignment.targets[observation.target]
-		val fallback = relation?.rotationFallbackTracker?.observationId
-		if ((onlyExplicitPairs && relation?.sourceSelection?.sixDofSource == null) ||
-			observation.sourceId != fallback ||
+		// Explicit local Q includes Q-only Main. MVIP keeps its existing source profile.
+		val selected = relation?.sourceSelection?.qSource ?: relation?.rotationFallbackTracker?.takeUnless { onlyExplicitPairs }
+		if (selected == null || selected.mtp != null ||
+			observation.sourceId != selected.observationId ||
 			!observation.rotationQuality.usable
 		) {
 			return observation
 		}
 		val provenance = observation.provenance ?: return observation.copy(rotationQuality = ObservationQuality.STALE)
 		val sampleAt = provenance.sampleAtNanos
+		val maxAge = legacyHipMaxAgeNanos?.takeIf { observation.target == TrackerPosition.HIP && relation?.rotationFallbackTracker == selected } ?: maxAgeNanos
 		val fresh = sampleAt <= now &&
-			now - sampleAt <= maxAgeNanos &&
-			validRotation(observation.rotation) &&
-			validRotation(observation.correctionRotation)
+			now - sampleAt <= maxAge &&
+			validRotation(observation.rotation)
 		if (!fresh) return observation.copy(rotationQuality = ObservationQuality.STALE)
 		val currentEpoch = Epoch(
 			observation.sourceId,

@@ -41,6 +41,7 @@ class MonakaServerIntegration private constructor(
 	val rotationCorrection: HipRotationCorrection?,
 	private val diagnostics: HybridTrackingDiagnosticRecorder?,
 	private val frames: SameFrameDiagnostics?,
+	private val rawHmdSource: (MonakaResolvedTickSnapshot) -> dev.monaka.tracking.RawHmdPoseInput?,
 ) : AutoCloseable {
 	private var closed = false
 	var inputConfiguration: MonakaInputConfigurationApi? = null
@@ -66,6 +67,7 @@ class MonakaServerIntegration private constructor(
 	)
 	private var pendingFrame: PendingPoseFrame? = null
 	val positionCorrectionGate get() = solverComposition.positionCorrectionGate
+	val lastPositionCorrection get() = solverComposition.lastPositionCorrection
 	val lastDiagnosticSnapshot: HybridTrackingDiagnosticSnapshot? get() = diagnostics?.latest
 	var frameDiagnosticFailures = 0L
 		private set
@@ -100,8 +102,8 @@ class MonakaServerIntegration private constructor(
 				null
 			} else {
 				rotationCorrection?.update(
-					main,
-					imu,
+					main.takeIf { hip?.mainTracker?.mtp != null && hip.rotationFallbackTracker?.mtp == null },
+					imu.takeIf { hip?.mainTracker?.mtp != null && hip.rotationFallbackTracker?.mtp == null },
 					resolvedRaw[TrackerPosition.HIP]?.rotationOwner,
 					tick.nowNanos,
 					assignment.generation,
@@ -111,7 +113,7 @@ class MonakaServerIntegration private constructor(
 			val correctedRotation = corrected?.rotation
 			val resolvedHip = resolvedRaw[TrackerPosition.HIP]
 			// One derived component fans out to IK and visible continuity. Never alter Main.
-			val resolved = if (correctedRotation != null &&
+			val correctedPoses = if (correctedRotation != null &&
 				hip?.rotationFallbackTracker?.observationId == correctedRotation.sourceId &&
 				resolvedHip?.rotationOwner == correctedRotation.sourceId
 			) {
@@ -119,9 +121,10 @@ class MonakaServerIntegration private constructor(
 			} else {
 				resolvedRaw
 			}
+			val resolved = runtime.convergeBodyRotations(tick, correctedPoses)
 			val ik = resolved.mapValues { it.value.ikConstraint() }
-			val commit = solverComposition.commitGeneric(tick, ik, runtime.mtp.historyGeneration)
-			check(commit is MonakaSolverCommitResult.GenericCommitted)
+			val commit = solverComposition.commitNormal(tick, ik, runtime, rawHmdSource(tick))
+			check(commit !is MonakaSolverCommitResult.Rejected && commit.writebackAttempted)
 			pendingFrame = PendingPoseFrame(
 				tick,
 				resolved,
@@ -130,7 +133,7 @@ class MonakaServerIntegration private constructor(
 				resolvedRaw[TrackerPosition.HIP],
 				hip?.mainTracker?.observationId,
 				hip?.rotationFallbackTracker?.observationId,
-				if (frames?.accepting == true) diagnostic { frames.before(tick, runtime, resolved, commit, skeleton) } else null,
+				if (frames?.accepting == true) diagnostic { frames.before(tick, runtime, resolved, commit, skeleton, lastPositionCorrection) } else null,
 			)
 			if (registerAfterPose == null) finishPoseUpdate() else directOutput.applyPoses(emptyMap())
 		} catch (e: Exception) {
@@ -238,16 +241,15 @@ class MonakaServerIntegration private constructor(
 			onTransition: (OutputTransition) -> Unit = {},
 			onDiagnostic: (HybridTrackingDiagnosticEvent) -> Unit = {},
 			frameDiagnostics: () -> SameFrameDiagnostics? = { null },
+			rawHmdSource: (MonakaResolvedTickSnapshot, dev.monaka.protocol.v2.CoordinateSpace, Long, Any) -> dev.monaka.tracking.RawHmdPoseInput? = { _, _, _, _ -> null },
 		): MonakaServerIntegration? {
 			if (!enabled) return null
 			val config = configuration()
+			val normalHmdClockDomain = Any()
 			require(config.assignments.snapshot().targets.values.none { it.outputMode == OutputMode.HYBRID } || registerAfterPose != null) {
 				"Hybrid output requires the post-IK server hook"
 			}
-			val legacyHipCorrection = config.rotationCorrection?.takeIf {
-				val hip = config.assignments.snapshot().targets[TrackerPosition.HIP]
-				hip?.mainTracker?.mtp != null && hip.rotationFallbackTracker?.let { q -> q.mtp == null } == true
-			}
+			val legacyHipCorrection = config.rotationCorrection
 			val runtime = MonakaRuntime(
 				trackers,
 				config.space,
@@ -274,6 +276,7 @@ class MonakaServerIntegration private constructor(
 					config.positionCorrection,
 					trackers,
 					skeleton.humanPoseManager::currentHipBodyModelSnapshot,
+					config.continuityTuning.reacquireDurationNs,
 				).also { composition = it }
 				val output = DirectConstraintOutput(config.assignments.snapshot(), config.space, nextTrackerId).also { direct = it }
 				val background = BackgroundIkPoseReader(skeleton, BackgroundIkAlignment.confirmedSameSpace(config.backgroundIkSharedSpace ?: config.space))
@@ -289,6 +292,7 @@ class MonakaServerIntegration private constructor(
 					config.continuityTuning, onTransition, legacyHipCorrection?.let { HipRotationCorrection(it.frames, it.tuning) },
 					if (diagnosticEnabled) HybridTrackingDiagnosticRecorder(onDiagnostic) else null,
 					frames,
+					{ tick -> rawHmdSource(tick, config.space, config.positionCorrection?.predictorPolicy?.maxHmdSampleAgeNanos ?: dev.monaka.tracking.RotationCorrectionTuning.normalRuntimeDefaults().maxImuSampleAgeNanos, normalHmdClockDomain) },
 				).also { integration = it }
 				result.inputConfiguration = configurationPath?.let { path ->
 					MonakaInputConfigurationApi(config, runtime.mtp, trackers, path)

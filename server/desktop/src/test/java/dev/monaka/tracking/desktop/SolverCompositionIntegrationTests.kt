@@ -376,7 +376,7 @@ class SolverCompositionIntegrationTests {
 	fun configOnlyChangesGateAndKeepsGenericNumericsAndDormantProviders(configured: Boolean) {
 		Fixture(configured).use { f ->
 			assertEquals(
-				if (configured) ProductionPositionCorrectionGate.CONFIGURED_RAW_HMD_BLOCKED else ProductionPositionCorrectionGate.NOT_CONFIGURED,
+				ProductionPositionCorrectionGate.NORMAL_RUNTIME,
 				f.integration.positionCorrectionGate,
 			)
 			f.send()
@@ -450,13 +450,13 @@ class SolverCompositionIntegrationTests {
 	@Test fun productionSourceUsesPinnedSnapshotAndNeverCallsFutureCapture() {
 		val s = Files.readString(Path.of("src/main/java/dev/monaka/tracking/desktop/MonakaServerIntegration.kt"))
 		val tick = s.substringAfter("fun tick()").substringBefore("fun finishPoseUpdate()")
-		for (forbidden in listOf("runtime.tick(", "runtime.assignments.snapshot()", "runtime.lastTickNanos", "ConstraintIkWriteback", "captureSourceSnapshot", "commitPositionCorrection", ".capture(")) {
+		for (forbidden in listOf("runtime.tick(", "runtime.assignments.snapshot()", "runtime.lastTickNanos", "ConstraintIkWriteback", "commitPositionCorrection", ".capture(")) {
 			assertFalse(tick.contains(forbidden), forbidden)
 		}
 		assertTrue(tick.contains("runtime.tickSnapshot("))
 		assertTrue(tick.contains("runtime.resolvedTrackingPoses(tick)"))
 		assertTrue(tick.contains("observations(tick.nowNanos, tick.assignment)"))
-		assertEquals(1, Regex("solverComposition.commitGeneric").findAll(tick).count())
+		assertEquals(1, Regex("solverComposition.commitNormal").findAll(tick).count())
 		assertFalse(s.contains("runtime.lastTickNanos"))
 		assertFalse(s.contains("ConstraintIkWriteback"))
 	}

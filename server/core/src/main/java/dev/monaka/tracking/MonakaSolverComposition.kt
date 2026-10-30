@@ -4,7 +4,7 @@ import dev.slimevr.tracking.processor.skeleton.HumanSkeleton
 import dev.slimevr.tracking.trackers.Tracker
 import dev.slimevr.tracking.trackers.TrackerPosition
 
-enum class ProductionPositionCorrectionGate { NOT_CONFIGURED, CONFIGURED_RAW_HMD_BLOCKED }
+enum class ProductionPositionCorrectionGate { NOT_CONFIGURED, CONFIGURED_RAW_HMD_BLOCKED, NORMAL_RUNTIME }
 enum class MonakaSolverCommitOwner { GENERIC_EXISTING, POSITION_CORRECTION }
 enum class MonakaSolverCommitRejection { CLOSED, DUPLICATE_TICK, TICK_SEQUENCE_ROLLBACK, INCOHERENT_TICK, PAUSED, NOT_CONFIGURED }
 
@@ -39,34 +39,66 @@ internal interface MonakaPositionCorrectionSession : AutoCloseable {
 	override fun close() {}
 }
 
-/** Server-thread owner of one solver boundary. Production stays generic until Raw HMD admission
- * exists. Configuration is construction-time state; changing it requires rebuilding this owner.
+/** Server-thread owner of one solver boundary. Normal explicit HIP pairs use the existing
+ * position orchestrator when current ordinary HMD/IMU inputs are available.
  */
 class MonakaSolverComposition internal constructor(
 	private val writeback: ConstraintIkWriteback,
 	val positionCorrectionGate: ProductionPositionCorrectionGate,
 	private val sessionFactory: ((ConstraintIkWriteback) -> MonakaPositionCorrectionSession)? = null,
 	@Suppress("unused") private val nonHmdAdapter: PositionCorrectionNonHmdProductionAdapter? = null,
+	private val normalPositionFactory: ((ConstraintIkWriteback) -> NormalPositionCorrectionRuntime)? = null,
 ) : AutoCloseable {
 	constructor(
 		skeleton: HumanSkeleton,
 		positionCorrection: PositionCorrectionConfig?,
 		trackers: () -> Iterable<Tracker>,
 		bodyModelSource: () -> HipBodyModelSnapshotResult,
+		reacquireDurationNanos: Long = ContinuityTuning().reacquireDurationNs,
 	) :
-		this(skeleton, prepare(positionCorrection, trackers, bodyModelSource))
+		this(skeleton, prepare(positionCorrection, trackers, bodyModelSource), positionCorrection, bodyModelSource, reacquireDurationNanos)
 
-	private constructor(skeleton: HumanSkeleton, prepared: Prepared) : this(
+	private constructor(skeleton: HumanSkeleton, prepared: Prepared, config: PositionCorrectionConfig?, body: () -> HipBodyModelSnapshotResult, reacquire: Long) : this(
 		ConstraintIkWriteback(skeleton),
 		prepared.gate,
 		prepared.factory,
 		prepared.adapter,
+		{ shared -> NormalPositionCorrectionRuntime(config, body, shared, reacquire) },
 	)
 
 	private var closed = false
 	private var lastReservedTickSequence: Long? = null
 	private var wasPaused = false
 	private var session: MonakaPositionCorrectionSession? = null
+	private var normalPosition: NormalPositionCorrectionRuntime? = null
+	val lastPositionCorrection get() = normalPosition?.diagnostics
+
+	/** The normal server tick has exactly one solver commit owner. Saved source
+	 * assignments reach the existing position learner without a separate activation.
+	 */
+	fun commitNormal(
+		tick: MonakaResolvedTickSnapshot,
+		constraints: Map<TrackerPosition, EffectiveConstraint>,
+		runtime: MonakaRuntime,
+		rawHmd: RawHmdPoseInput?,
+	): MonakaSolverCommitResult {
+		val hip = tick.assignment.targets[TrackerPosition.HIP]
+		val pair = hip?.useAsIkConstraint == true && hip.mainTracker.mtp != null &&
+			hip.rotationFallbackTracker?.let { it.mtp == null } == true &&
+			(hip.sourceSelection == null || hip.sourceSelection.sixDofSource != null)
+		if (!pair || normalPositionFactory == null || tick.paused) {
+			if (!pair || tick.paused) normalPosition = null
+			return commitGeneric(tick, constraints, runtime.mtp.historyGeneration)
+		}
+		reserve(tick, MonakaSolverCommitOwner.POSITION_CORRECTION)?.let { return it }
+		val current = normalPosition ?: normalPositionFactory.invoke(writeback).also { normalPosition = it }
+		val result = current.process(tick, runtime.captureSourceSnapshot(tick), constraints, rawHmd)
+		if (result != null) return PositionCorrectionCommitted(tick.tickSequence, result)
+		// No predictor inputs yet: commit the ordinary constraints once, using the
+		// already reserved sequence. Never retry a partially processed orchestrator.
+		writeback.apply(constraints, tick.assignment, runtime.mtp.historyGeneration)
+		return MonakaSolverCommitResult.GenericCommitted(tick.tickSequence)
+	}
 
 	fun commitGeneric(
 		tick: MonakaResolvedTickSnapshot,
@@ -123,6 +155,7 @@ class MonakaSolverComposition internal constructor(
 	}
 
 	private fun dropSession() {
+		normalPosition = null
 		val old = session
 		session = null
 		old?.close()
@@ -149,10 +182,10 @@ class MonakaSolverComposition internal constructor(
 			trackers: () -> Iterable<Tracker>,
 			body: () -> HipBodyModelSnapshotResult,
 		): Prepared {
-			val foundation = config?.toFoundation() ?: return Prepared(ProductionPositionCorrectionGate.NOT_CONFIGURED, null, null)
+			val foundation = config?.toFoundation() ?: return Prepared(ProductionPositionCorrectionGate.NORMAL_RUNTIME, null, null)
 			// Materialize without capturing live providers or constructing an active session.
 			return Prepared(
-				ProductionPositionCorrectionGate.CONFIGURED_RAW_HMD_BLOCKED,
+				ProductionPositionCorrectionGate.NORMAL_RUNTIME,
 				PositionCorrectionNonHmdProductionAdapter(foundation, trackers, body),
 			) { shared ->
 				val orchestrator = PositionCorrectionRuntimeOrchestrator(

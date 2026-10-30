@@ -165,4 +165,22 @@ class MtpObservationBackendTests {
 			assertEquals(context, runtime.mtp.sourceContexts().getValue(key(p)))
 		}
 	}
+
+	@Test fun acceptedRemoteAgeKeepsActualReceiptImmutableAcrossPollAndRejectedReplay() {
+		val p = pose().let { it.copy(sent_at_ns = it.timestamp_ns + 5_000_000) }
+		val a = TrackerBodyAssignments(mapOf(key(p) to TrackerPosition.HIP))
+		var now = 1_000_000_000L
+		MonakaRuntime({ emptyList() }, p.coordinate_space, a, clock = { now }).use { runtime ->
+			submit(runtime.inbox, p, now)
+			val first = runtime.captureSourceSnapshot(runtime.tickSnapshot()).mtpSamples.getValue(key(p))
+			assertEquals(now, first.receivedAtNanos)
+			assertEquals(now - 5_000_000, first.sampleTime)
+			now += 50_000_000
+			val again = runtime.captureSourceSnapshot(runtime.tickSnapshot()).mtpSamples.getValue(key(p))
+			assertEquals(first, again)
+			submit(runtime.inbox, p, now)
+			assertEquals(first, runtime.captureSourceSnapshot(runtime.tickSnapshot()).mtpSamples.getValue(key(p)))
+			assertFailsWith<UnsupportedOperationException> { (runtime.captureSourceSnapshot(runtime.tickSnapshot()).mtpSamples as MutableMap).clear() }
+		}
+	}
 }

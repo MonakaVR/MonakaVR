@@ -232,6 +232,13 @@ fun main(args: Array<String>) {
 				onTransition = { LogManager.info("[Monaka][${it.target}] $it") },
 				onDiagnostic = { LogManager.info(it.compactLine()) },
 				frameDiagnostics = dev.monaka.tracking.desktop.SameFrameDiagnostics::fromSystemProperty,
+				rawHmdSource = { tick, space, maxAge, clockDomain ->
+					val bridge = vrServer.getVRBridge { it is SteamVRBridge && it.getBridgeConfigKey() == "steamvr" } as? SteamVRBridge
+					bridge?.currentNormalRawHmdPoseInput(
+						space,
+						tick.nowNanos, tick.trackerReceiptCutoffSystemNanos, maxAge, clockDomain,
+					)
+				},
 				configureDirectOutputs = { trackers ->
 					if (trackers.isNotEmpty()) {
 						val bridge = vrServer.getVRBridge { it is SteamVRBridge && it.getBridgeConfigKey() == "steamvr" } as? SteamVRBridge

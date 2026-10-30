@@ -95,7 +95,6 @@ internal class SlimeRawImuProductionBoundary(
 		if (!tracker.status.slimeObservationQuality(modality).usable) {
 			return reject(SlimeRawImuInputRejectionReason.STATUS_UNUSABLE)
 		}
-		if (!binding.operatorConfirmed) return reject(SlimeRawImuInputRejectionReason.SPACE_BINDING_UNCONFIRMED)
 		if (binding.sourceId.isBlank() || binding.sourceId != sourceId) {
 			return reject(SlimeRawImuInputRejectionReason.SPACE_BINDING_SOURCE_MISMATCH)
 		}

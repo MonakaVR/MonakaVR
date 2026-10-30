@@ -19,6 +19,9 @@ export interface InputAssignment {
   body: string;
   qSource: string | null;
   sixDofSource: string | null;
+  savedManualSix?: boolean;
+  savedQSource?: string | null;
+  savedSixDofSource?: string | null;
   manualSix: boolean;
   mode: string;
 }
@@ -86,7 +89,13 @@ export class InputSelectionController {
   private reset(body = this.state.draft.body) {
     const saved = this.state.snapshot?.assignments.find((x) => x.body === body);
     this.state.draft = saved
-      ? { ...saved }
+      ? { ...saved,
+          ...(this.state.snapshot?.restartRequired ? {
+            qSource: saved.savedQSource === undefined ? saved.qSource : saved.savedQSource,
+            sixDofSource: saved.savedSixDofSource === undefined ? saved.sixDofSource : saved.savedSixDofSource,
+            manualSix: saved.savedManualSix ?? saved.manualSix,
+          } : {}),
+        }
       : { body, qSource: null, sixDofSource: null, manualSix: false, mode: 'ik' };
     this.autoConsidered = !!saved;
     this.state.generation = this.state.snapshot?.generation ?? '0';
@@ -202,7 +211,13 @@ export class InputSelectionController {
         sixDofSource: this.state.draft.sixDofSource,
         manualSix: this.state.draft.manualSix,
       });
-      const saved = snapshot.assignments.find((x) => x.body === this.state.draft.body);
+      const active = snapshot.assignments.find((x) => x.body === this.state.draft.body);
+      const saved = active && snapshot.restartRequired ? {
+        ...active,
+        qSource: active.savedQSource === undefined ? active.qSource : active.savedQSource,
+        sixDofSource: active.savedSixDofSource === undefined ? active.sixDofSource : active.savedSixDofSource,
+        manualSix: active.savedManualSix ?? active.manualSix,
+      } : active;
       if (
         (saved?.qSource ?? null) !== this.state.draft.qSource ||
         (saved?.sixDofSource ?? null) !== this.state.draft.sixDofSource ||

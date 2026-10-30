@@ -293,9 +293,14 @@ function UnifiedChoices({
           </tbody>
         </table>
       </div>
+      {state.snapshot?.restartRequired && (
+        <p data-testid="assignment-active">
+          {text('active')}: Q = {label(saved?.qSource)}; 6DoF = {label(saved?.sixDofSource)}
+        </p>
+      )}
       <p data-testid="assignment-readback">
-        {text('saved')}: Q = {label(saved?.qSource)}; 6DoF ={' '}
-        {label(saved?.sixDofSource)}
+        {text('saved')}: Q = {label(saved?.savedQSource === undefined ? saved?.qSource : saved.savedQSource)}; 6DoF ={' '}
+        {label(saved?.savedSixDofSource === undefined ? saved?.sixDofSource : saved.savedSixDofSource)}
       </p>
       <p>{l10n.getString('monaka-input-readback')}</p>
       {state.snapshot?.restartRequired && (

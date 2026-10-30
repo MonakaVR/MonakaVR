@@ -66,16 +66,17 @@ internal object PositionCorrectionConfigJson {
 			return null
 		}
 		objectFields(node, setOf("enabled", "rawImuSpace", "mainMountCalibration", "predictorFixedCalibration", "predictorPolicy", "pairingPolicy", "learningTuning", "reacquisitionTuning"))
-		val rawImuSpace = objectFields(node["rawImuSpace"], setOf("sourceId", "confirmed", "space"))
+		val rawImuSpace = requireNotNull(node["rawImuSpace"])
+		require(rawImuSpace.isObject && rawImuSpace.fieldNames().asSequence().toSet() in listOf(setOf("sourceId", "space"), setOf("sourceId", "confirmed", "space")))
 		val mainMountCalibration = objectFields(node["mainMountCalibration"], setOf("calibrationId", "sessionEpoch", "sourceId", "trackerToHipCenterLocalOffsetMeters"))
 		val predictorFixedCalibration = objectFields(node["predictorFixedCalibration"], setOf("calibrationId", "sessionEpoch", "hmdSourceId", "bodyModelId", "hmdToHeadAnchorLocalOffsetMeters", "hmdToHeadAnchorOrientationWxyz"))
 		val predictorPolicy = objectFields(node["predictorPolicy"], setOf("maxInputSkewNanos", "maxHmdSampleAgeNanos", "maxImuSampleAgeNanos"))
 		val pairingPolicy = objectFields(node["pairingPolicy"], setOf("maxTeacherToPredictionInputSkewNanos", "maxTeacherAgeNanos", "maxPredictionInputAgeNanos", "maxPredictionGenerationAgeNanos"))
 		val learningTuning = objectFields(node["learningTuning"], setOf("trackingTauSeconds", "recoveryTauSeconds", "maxResidualMeters", "maxCorrectionMagnitudeMeters", "maxCorrectionRateMetersPerSecond", "maxUpdateStepMeters", "maxLearningDtNanos", "holdNanos", "decayTauSeconds", "maxDecayRateMetersPerSecond", "recoveryResidualMeters", "recoveryStableNanos", "recoverySamples", "zeroEpsilonMeters"))
 		val reacquisitionTuning = objectFields(node["reacquisitionTuning"], setOf("reacquireDurationNanos"))
-		require(rawImuSpace["confirmed"].isBoolean && rawImuSpace["confirmed"].booleanValue()) { "Raw IMU confirmation must be true" }
+		require(!rawImuSpace.has("confirmed") || rawImuSpace["confirmed"].isBoolean) { "Historical confirmation must be boolean when present" }
 		return PositionCorrectionConfig(
-			PositionCorrectionRawImuSpaceConfig(text(rawImuSpace, "sourceId"), space(rawImuSpace["space"]), rawImuSpace["confirmed"].booleanValue()),
+			PositionCorrectionRawImuSpaceConfig(text(rawImuSpace, "sourceId"), space(rawImuSpace["space"]), rawImuSpace["confirmed"]?.booleanValue() ?: false),
 			PositionCorrectionMainMountCalibrationConfig(text(mainMountCalibration, "calibrationId"), text(mainMountCalibration, "sessionEpoch"), text(mainMountCalibration, "sourceId"), vector(mainMountCalibration, "trackerToHipCenterLocalOffsetMeters")),
 			PositionCorrectionFixedCalibrationConfig(text(predictorFixedCalibration, "calibrationId"), text(predictorFixedCalibration, "sessionEpoch"), text(predictorFixedCalibration, "hmdSourceId"), text(predictorFixedCalibration, "bodyModelId"), vector(predictorFixedCalibration, "hmdToHeadAnchorLocalOffsetMeters"), quaternion(predictorFixedCalibration, "hmdToHeadAnchorOrientationWxyz")),
 			PositionCorrectionPredictorPolicyConfig(long(predictorPolicy, "maxInputSkewNanos"), long(predictorPolicy, "maxHmdSampleAgeNanos"), long(predictorPolicy, "maxImuSampleAgeNanos")),

@@ -34,7 +34,7 @@ data class RotationCorrectionTuning(
 			fullStableNanos > 0 &&
 				pairWindowNanos > 0 &&
 				maxDtNanos > 0 &&
-				maxImuSampleAgeNanos > 0 &&
+				maxImuSampleAgeNanos >= 0 &&
 				recoveryPairs > 0,
 		)
 		require(

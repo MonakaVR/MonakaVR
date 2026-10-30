@@ -19,11 +19,13 @@ class MonakaRuntime(
 	excludedRotationTargets: Set<dev.slimevr.tracking.trackers.TrackerPosition> = emptySet(),
 	rotationReacquireDurationNanos: Long = ContinuityTuning().reacquireDurationNs,
 ) : AutoCloseable {
-	private val bodyRotation = BodyRotationRuntime(expectedSpace, bodyRotationTuning, excludedRotationTargets, rotationReacquireDurationNanos)
+	private val bodyRotation = BodyRotationRuntime(expectedSpace, bodyRotationTuning.copy(maxImuSampleAgeNanos = timeoutNanos), excludedRotationTargets, rotationReacquireDurationNanos)
 	val bodyRotationResults get() = bodyRotation.results
+	fun convergeBodyRotations(tick: MonakaResolvedTickSnapshot, poses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>) =
+		bodyRotation.recover(tick, captureSourceSnapshot(tick), poses)
 	fun correctBodyRotations(tick: MonakaResolvedTickSnapshot, poses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>) =
 		bodyRotation.apply(tick, captureSourceSnapshot(tick), poses, mtp.capabilitiesSnapshot())
-	private val assignedImuFreshness = AssignedImuSampleFreshness(assignments, maxImuSampleAgeNanos ?: bodyRotationTuning.maxImuSampleAgeNanos, onlyExplicitPairs = maxImuSampleAgeNanos == null)
+	private val assignedImuFreshness = AssignedImuSampleFreshness(assignments, timeoutNanos, onlyExplicitPairs = maxImuSampleAgeNanos == null, legacyHipMaxAgeNanos = maxImuSampleAgeNanos)
 	val profiles = ObservationSourceProfileRegistry(
 		listOf(
 			ObservationSourceProfile.sixDof("slime", 0, Long.MAX_VALUE, Long.MAX_VALUE),
@@ -111,6 +113,7 @@ class MonakaRuntime(
 			pipeline.observations(tick.nowNanos, tick.assignment).associateBy { it.sourceId },
 			runner.sourceOwnersSnapshot(),
 			mtp.sourceContexts(),
+			mtp.samples(),
 		)
 	}
 

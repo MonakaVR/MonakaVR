@@ -29,7 +29,6 @@ data class MonakaConfiguration(
 		require(space.id.isNotBlank() && space.convention == "rh_y_up_neg_z_forward" && space.revision in 0..4294967295L)
 		require(port in 0..65535 && timeoutNanos >= 0)
 		require(backgroundIkSharedSpace == null || backgroundIkSharedSpace.convention == space.convention) { "Background IK must use the supported coordinate convention" }
-		validateSixDofTeacherSelection()
 		positionCorrection?.validateBinding(space, assignments.snapshot().targets[TrackerPosition.HIP])
 		if (rotationCorrection != null) {
 			require(rotationCorrection.frames.assertedSpace.convention == space.convention) {
@@ -38,14 +37,7 @@ data class MonakaConfiguration(
 
 		}
 	}
-	private fun validateSixDofTeacherSelection() {
-		if (positionCorrection != null) {
-			val selection = assignments.snapshot().targets[TrackerPosition.HIP]?.sourceSelection
-			require(selection == null || selection.sixDofSource != null) {
-				"Correction requires an explicit 6DoF teacher; a Q-only assignment has no position teacher"
-			}
-		}
-	}
+
 	fun save(path: Path) {
 		val absolute = path.toAbsolutePath().normalize()
 		Files.createDirectories(absolute.parent)
@@ -105,7 +97,6 @@ data class MonakaConfiguration(
 
 	/** Only for isolated staging files held by the shared transaction lock. */
 	internal fun saveUnmanaged(path: Path) {
-		validateSixDofTeacherSelection()
 		val assignmentSnapshot = assignments.snapshot()
 		positionCorrection?.validateBinding(space, assignmentSnapshot.targets[TrackerPosition.HIP])
 		fun reference(ref: TrackerReference): Map<String, String> = ref.mtp?.let {
