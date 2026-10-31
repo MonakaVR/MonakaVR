@@ -63,6 +63,9 @@ def promote_distribution(output):
     required = ["SlimeVR.exe", "slimevr.jar", "SlimeVR-Bindings-Provider.exe",
                 "openvr_api.dll", "resources/app.asar"]
     absent = [str(stage / name) for name in required if not (stage / name).is_file()]
+    helper = stage / "resources/app.asar.unpacked/out/main/chunks"
+    if not any(path.is_file() for path in helper.glob("*.jar")):
+        absent.append(str(helper / "*.jar"))
     if absent:
         raise ValueError("Packaged distribution is incomplete: " + ", ".join(absent))
     moved = False
@@ -127,7 +130,7 @@ def main():
         print("Missing build tools: " + ", ".join(missing), file=sys.stderr)
         return 2
     if args.offline:
-        required = [ROOT / "solarxr-protocol/protocol/java/build.gradle.kts",
+        required = [ROOT / "solarxr-protocol/protocol/java/build.gradle",
                     ROOT / "solarxr-protocol/lib/flatbuffers/include/flatbuffers/flatbuffers.h",
                     ROOT / "bindings-provider/openvr/headers/openvr.h",
                     ROOT / "gui/node_modules/electron/dist/electron.exe"]

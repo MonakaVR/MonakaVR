@@ -41,8 +41,15 @@ class PortableRuntimeTests(unittest.TestCase):
         self.temporary.cleanup()
 
     def populate(self):
-        for item in LAUNCHER.preflight("gui")["missing"]:
-            path = Path(item.replace("*.jar", "JavaVersion-fixture.jar"))
+        # Minimal real locked Electron 40 distribution plus the product files.
+        # In particular the official archive does not ship chrome_elf.dll.
+        for item in (
+            "slimevr.jar", "SlimeVR-Bindings-Provider.exe", "openvr_api.dll",
+            "SlimeVR.exe", "resources/app.asar", "ffmpeg.dll", "icudtl.dat",
+            "resources.pak", "v8_context_snapshot.bin", "locales/en-US.pak",
+            "resources/app.asar.unpacked/out/main/chunks/JavaVersion-fixture.jar",
+        ):
+            path = self.runtime / item
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"fixture")
 
@@ -60,6 +67,7 @@ class PortableRuntimeTests(unittest.TestCase):
         with patch.object(LAUNCHER.subprocess, "run", side_effect=AssertionError("process denied")):
             result = LAUNCHER.preflight("gui")
         self.assertEqual(result["missing"], [])
+        self.assertFalse((self.runtime / "chrome_elf.dll").exists())
         self.assertEqual(result["argv"], [str(self.runtime / "SlimeVR.exe"), "--path", str(self.runtime)])
         for key in ("process_started", "configuration_validated", "runtime_readiness_verified", "java_version_verified"):
             self.assertFalse(result[key])
@@ -115,7 +123,7 @@ class PortableRuntimeTests(unittest.TestCase):
         previous.parent.mkdir(parents=True)
         previous.write_bytes(b"old-working-binary")
         stage = output / "package-stage/win-unpacked"
-        for name in ("SlimeVR.exe", "slimevr.jar", "SlimeVR-Bindings-Provider.exe", "openvr_api.dll", "resources/app.asar"):
+        for name in ("SlimeVR.exe", "slimevr.jar", "SlimeVR-Bindings-Provider.exe", "openvr_api.dll", "resources/app.asar", "resources/app.asar.unpacked/out/main/chunks/JavaVersion-fixture.jar"):
             path = stage / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"new-build")
@@ -124,6 +132,42 @@ class PortableRuntimeTests(unittest.TestCase):
         backups = list((output / "previous-success").glob("*/previous.exe"))
         self.assertEqual(len(backups), 1)
         self.assertEqual(backups[0].read_bytes(), b"old-working-binary")
+
+    def test_package_without_unpacked_helper_cannot_replace_previous_runtime(self):
+        output = self.root / "Build/runtime"
+        previous = output / "win-unpacked/previous.exe"
+        previous.parent.mkdir(parents=True)
+        previous.write_bytes(b"old-working-binary")
+        stage = output / "package-stage/win-unpacked"
+        for name in ("SlimeVR.exe", "slimevr.jar", "SlimeVR-Bindings-Provider.exe", "openvr_api.dll", "resources/app.asar"):
+            path = stage / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"new-build-with-packed-helper-only")
+        with self.assertRaisesRegex(ValueError, "app.asar.unpacked"):
+            BUILDER.promote_distribution(output)
+        self.assertEqual(previous.read_bytes(), b"old-working-binary")
+
+    def test_offline_precheck_accepts_exact_pinned_gradle_filename(self):
+        cache = self.root / "Build/Dependencies/gradle"
+        for name in (
+            "solarxr-protocol/protocol/java/build.gradle",
+            "solarxr-protocol/lib/flatbuffers/include/flatbuffers/flatbuffers.h",
+            "bindings-provider/openvr/headers/openvr.h",
+            "gui/node_modules/electron/dist/electron.exe",
+            "Build/Dependencies/gradle/wrapper/dists/gradle-8.14.4-bin/fixture/gradle-8.14.4/bin/gradle.bat",
+        ):
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"fixture")
+        wrapper = self.root / "gradle/wrapper/gradle-wrapper.properties"
+        wrapper.parent.mkdir(parents=True)
+        wrapper.write_text("distributionUrl=https://services.gradle.org/distributions/gradle-8.14.4-bin.zip")
+        with patch.object(BUILDER, "ROOT", self.root), patch.object(BUILDER, "OUTPUT", self.root / "Build/runtime"):
+            with patch.dict(os.environ, {"GRADLE_USER_HOME": str(cache)}), patch.object(BUILDER, "run", return_value=0) as commands:
+                with patch.object(BUILDER, "promote_distribution"), patch.object(BUILDER, "executable", return_value=str(self.java)), patch.object(BUILDER, "cmake_executable", return_value=str(self.java)):
+                    with patch.object(BUILDER.sys, "argv", ["build_runtime.py", "--offline"]), redirect_stdout(io.StringIO()):
+                        self.assertEqual(BUILDER.main(), 0)
+        self.assertTrue(commands.called)
 
     def test_output_outside_repository_is_rejected_before_file_or_rename_work(self):
         repository = self.root / "consumer-repository"
