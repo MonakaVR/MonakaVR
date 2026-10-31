@@ -8,9 +8,9 @@ and rebuilds only the dependency lifecycle packages listed in
 `pnpm-workspace.yaml`: `@parcel/watcher`, `@sentry/cli`, `@swc/core`, `electron`,
 `electron-winstaller`, `esbuild`, `register-scheme`, and `unrs-resolver`.
 The command-local Gradle cache defaults to `Build/Dependencies/gradle`.
-`Build_Runtime.cmd --offline` performs no submodule update, network install or
-dependency postinstall; it requires the pinned source and Electron runtime
-already present and uses pnpm/Gradle offline modes. Missing dependencies fail
+`Build_Runtime.cmd --offline` requires pinned sources, prepared JavaScript
+dependencies, the Electron runtime and tool caches. It skips submodule updates,
+pnpm install and dependency rebuilds, and passes `--offline` to Gradle. Missing dependencies fail
 visibly. The explicit local package is unsigned, uses the already installed
 Electron distribution, and disables Sentry build uploads.
 

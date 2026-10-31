@@ -108,12 +108,9 @@ def main():
     commands = []
     if not args.offline:
         commands.append(("submodules", ["git", "submodule", "update", "--init", "--recursive"], ROOT))
-    install = [pnpm or "pnpm.cmd", "install", "--frozen-lockfile", "--ignore-scripts",
-               "--store-dir", str(OUTPUT.parent / "Dependencies/pnpm")]
-    if args.offline:
-        install.append("--offline")
-    commands.append(("dependencies", install, ROOT))
-    if not args.offline:
+        install = [pnpm or "pnpm.cmd", "install", "--frozen-lockfile", "--ignore-scripts",
+                   "--store-dir", str(OUTPUT.parent / "Dependencies/pnpm")]
+        commands.append(("dependencies", install, ROOT))
         commands.append(("dependency-scripts", [pnpm or "pnpm.cmd", "--recursive", "rebuild", *rebuild], ROOT))
     commands += [
         ("desktop", [str(ROOT / "gradlew.bat"), ":server:desktop:shadowJar", ":server:desktop:dependencies", "--configuration", "runtimeClasspath", "--no-daemon", "--console=plain", "--max-workers=2"] + (["--offline"] if args.offline else []), ROOT),

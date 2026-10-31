@@ -94,19 +94,31 @@ class PortableRuntimeTests(unittest.TestCase):
                     with patch.object(BUILDER.sys, "argv", ["build_runtime.py", "--offline"]), redirect_stderr(io.StringIO()):
                         self.assertEqual(BUILDER.main(), 2)
 
-    def test_offline_plan_has_no_fetch_or_dependency_postinstall(self):
+    def test_offline_plan_preserves_prepared_dependencies_without_install(self):
         output = io.StringIO()
         with patch.object(BUILDER.sys, "argv", ["build_runtime.py", "--offline", "--plan"]), redirect_stdout(output):
             self.assertEqual(BUILDER.main(), 0)
         import json
         commands = json.loads(output.getvalue())["commands"]
         self.assertNotIn("submodules", [item["name"] for item in commands])
+        self.assertNotIn("dependencies", [item["name"] for item in commands])
         self.assertNotIn("dependency-scripts", [item["name"] for item in commands])
-        install = next(item["argv"] for item in commands if item["name"] == "dependencies")
         desktop = next(item["argv"] for item in commands if item["name"] == "desktop")
-        self.assertIn("--offline", install)
-        self.assertIn("--ignore-scripts", install)
         self.assertIn("--offline", desktop)
+        self.assertFalse(any(token in ("install", "submodule", "rebuild") for item in commands for token in item["argv"]))
+
+    def test_online_plan_retains_pinned_dependency_preparation(self):
+        output = io.StringIO()
+        with patch.object(BUILDER.sys, "argv", ["build_runtime.py", "--plan"]), redirect_stdout(output):
+            self.assertEqual(BUILDER.main(), 0)
+        import json
+        commands = json.loads(output.getvalue())["commands"]
+        self.assertEqual([item["name"] for item in commands[:3]], ["submodules", "dependencies", "dependency-scripts"])
+        self.assertEqual(commands[0]["argv"], ["git", "submodule", "update", "--init", "--recursive"])
+        self.assertIn("--frozen-lockfile", commands[1]["argv"])
+        self.assertIn("--ignore-scripts", commands[1]["argv"])
+        self.assertNotIn("--offline", commands[1]["argv"])
+        self.assertEqual(commands[2]["argv"][1:3], ["--recursive", "rebuild"])
 
     def test_incomplete_package_keeps_previous_runtime(self):
         output = self.root / "Build/runtime"
