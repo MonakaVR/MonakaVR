@@ -21,7 +21,9 @@ same directory. No launcher edits, dated package, artifact catalog or historical
 receipt are needed. The build does not start, install or register the products.
 
 The desktop Gradle intermediate is `Build/gradle/server/desktop`; the native
-provider intermediate is `Build/runtime/bindings-provider` for this command.
+provider intermediate is `Build/bindings-provider/win-x64`, matching the shared
+packager and CI input. The local package configuration inherits the shared
+artifact inputs without appending another `extraFiles` list.
 Electron compiles into `gui/Build/out`, preserving resolution through the GUI's
 local Node dependencies. Its packaged `main` is `out/main/index.js`, mapped from
 that compiler stage. Ordinary distribution packaging uses `Build/Artifacts`;

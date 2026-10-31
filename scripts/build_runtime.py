@@ -114,8 +114,8 @@ def main():
         commands.append(("dependency-scripts", [pnpm or "pnpm.cmd", "--recursive", "rebuild", *rebuild], ROOT))
     commands += [
         ("desktop", [str(ROOT / "gradlew.bat"), ":server:desktop:shadowJar", ":server:desktop:dependencies", "--configuration", "runtimeClasspath", "--no-daemon", "--console=plain", "--max-workers=2"] + (["--offline"] if args.offline else []), ROOT),
-        ("bindings-configure", [cmake or "cmake.exe", "-S", str(ROOT / "bindings-provider"), "-B", str(OUTPUT / "bindings-provider"), "-A", "x64"], ROOT),
-        ("bindings-build", [cmake or "cmake.exe", "--build", str(OUTPUT / "bindings-provider"), "--config", "Release"], ROOT),
+        ("bindings-configure", [cmake or "cmake.exe", "-S", str(ROOT / "bindings-provider"), "-B", str(ROOT / "Build/bindings-provider/win-x64"), "-A", "x64"], ROOT),
+        ("bindings-build", [cmake or "cmake.exe", "--build", str(ROOT / "Build/bindings-provider/win-x64"), "--config", "Release"], ROOT),
         ("protocol", [pnpm or "pnpm.cmd", "run", "update-solarxr"], ROOT),
         ("gui", [pnpm or "pnpm.cmd", "--dir", "gui", "build"], ROOT),
         ("package", [pnpm or "pnpm.cmd", "--dir", "gui", "exec", "electron-builder", "--dir", "--win", "--x64", "--config", str(ROOT / "scripts/electron-builder.runtime.cjs"), "--publish", "never"], ROOT),
