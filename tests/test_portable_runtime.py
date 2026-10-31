@@ -81,7 +81,7 @@ class PortableRuntimeTests(unittest.TestCase):
         self.populate()
         result = LAUNCHER.preflight("server")
         self.assertEqual(result["missing"], [])
-        self.assertEqual(result["argv"], [str(self.java.resolve()), "-Xmx128M", "-jar", str(self.runtime / "slimevr.jar"), "run"])
+        self.assertEqual(result["argv"], [str(self.java.resolve()), "-jar", str(self.runtime / "slimevr.jar"), "run"])
         self.assertEqual(result["cwd"], str(self.runtime))
 
     def test_offline_missing_cache_stops_before_any_external_command(self):
