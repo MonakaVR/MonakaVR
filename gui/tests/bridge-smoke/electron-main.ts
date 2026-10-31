@@ -28,7 +28,7 @@ app.whenReady().then(async () => {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: resolve('out/preload/index.js'),
+      preload: resolve('Build/out/preload/index.js'),
     },
   });
   const handle = bridgeControlHandler(

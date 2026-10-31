@@ -209,7 +209,7 @@ def run(policy):
     parser.add_argument("--cmake", default="cmake")
     parser.add_argument("--java-home", type=Path, default=os.environ.get("JAVA_HOME"))
     parser.add_argument("--gradle", default="gradle")
-    parser.add_argument("--openvr-sdk", type=Path, default=ROOT / "build/openvr-sdk")
+    parser.add_argument("--openvr-sdk", type=Path, default=ROOT / "Build/Dependencies/openvr-sdk")
     parser.add_argument("--verify", type=Path, help="Recheck an existing release against this clean HEAD; does not build")
     args = parser.parse_args()
     if args.verify:
@@ -217,9 +217,9 @@ def run(policy):
         return
     require(os.name == "nt", "F10 release profile is Windows x64; other platforms are NOT RUN")
     token = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
-    work = ROOT / "build/release-v2" / token
+    work = ROOT / "Build/release-v2" / token
     work.mkdir(parents=True)
-    latest = ROOT / "dist/release-v2/latest.json"
+    latest = ROOT / "Build/Distributions/release-v2/latest.json"
     status = {"result": "RUNNING", "run": token, "hardware_validation": "NOT RUN", "steamvr_interactive": "NOT RUN"}
     save(latest, status)
     try:
@@ -298,7 +298,7 @@ def run(policy):
                   "files_sha256": {n: sha(b) for n, b in entries.items()}}
         check_receipt(report, source, policy["required_steps"], [t["required"] for t in policy["test_groups"]])
         entries["evidence/release.json"] = encoded(report)
-        directory = ROOT / "dist/release-v2" / source["commit"] / token
+        directory = ROOT / "Build/Distributions/release-v2" / source["commit"] / token
         directory.mkdir(parents=True)
         path = directory / (policy["repo"] + "-software-v2.zip")
         external = write_archive(path, entries, source["commit"])

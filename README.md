@@ -73,3 +73,8 @@ okay with this and that you are authorized to provide the above licenses.
 
 
 *if you read this, u cute*
+# Local Windows desktop build
+
+See [the fixed local runtime instructions](docs/portable-runtime.md) for
+`Build_Runtime.cmd`, the `Build/runtime/win-unpacked` output, and the separate
+GUI/server launchers. Launchers do not build or install products on startup.

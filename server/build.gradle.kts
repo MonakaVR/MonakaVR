@@ -3,6 +3,11 @@ plugins {
 }
 
 allprojects {
+	// Desktop intermediates have a fixed repository-owned location. Android
+	// retains its established APK/AAB output layout.
+	if (path != ":server:android") {
+		layout.buildDirectory.set(rootProject.layout.projectDirectory.dir("Build/gradle" + path.replace(':', '/')))
+	}
 	repositories {
 		mavenCentral()
 		maven("https://jitpack.io")

@@ -56,7 +56,7 @@ for (const [key, value] of Object.entries(process.env))
     env[key] = value;
 env.MONAKA_STARTUP_ROOT = root;
 if (mode === 'unpackaged-production')
-  env.MONAKA_STARTUP_PRODUCT = resolve('out/main/index.js');
+  env.MONAKA_STARTUP_PRODUCT = resolve('Build/out/main/index.js');
 else delete env.MONAKA_STARTUP_PRODUCT;
 const wrapper = resolve(
   'tests/bridge-supplemental/isolated-production-main.mjs'
@@ -148,7 +148,7 @@ try {
         guard,
         pageErrors,
         productionMainSha256: createHash('sha256')
-          .update(await readFile(resolve('out/main/index.js')))
+          .update(await readFile(resolve('Build/out/main/index.js')))
           .digest('hex'),
         limits:
           'Guarded test entry imports unchanged production code. Not unrestricted normal/release launch; no manual OS click or Core/HIL/output validation.',

@@ -4,7 +4,7 @@ productName: SlimeVR
 artifactName: "${productName}-${version}-${os}-${arch}.${ext}"
 
 directories:
-  output: dist/artifacts/${os}
+  output: ../Build/Artifacts/${os}
 
 asar: true
 asarUnpack:
@@ -13,8 +13,13 @@ asarUnpack:
 electronLanguages:
   - en-US
 
+extraMetadata:
+  main: out/main/index.js
+
 files:
-  - out/**/*
+  - from: Build/out
+    to: out
+    filter: ["**/*"]
   - index.html
   - package.json
   - node_modules/**
@@ -33,11 +38,11 @@ linux:
     - target: deb
     - target: rpm
   extraFiles:
-    - from: "../server/desktop/build/libs/slimevr.jar"
+    - from: "../Build/gradle/server/desktop/libs/slimevr.jar"
       to: "."
-    - from: "../bindings-provider/build/linux-${arch}/slimevr-bindings-provider"
+    - from: "../Build/bindings-provider/linux-${arch}/slimevr-bindings-provider"
       to: "."
-    - from: "../bindings-provider/build/linux-${arch}/libopenvr_api.so"
+    - from: "../Build/bindings-provider/linux-${arch}/libopenvr_api.so"
       to: "."
     - from: "./electron/resources/69-slimevr-devices.rules"
       to: "."
@@ -58,14 +63,14 @@ win:
   target: zip
   icon: "./electron/resources/icons/icon.ico"
   extraFiles:
-    - from: "../server/desktop/build/libs/slimevr.jar"
+    - from: "../Build/gradle/server/desktop/libs/slimevr.jar"
       to: "."
     - from: "../server/core/resources"
       to: "."
       filter: ["**/*"]
-    - from: "../bindings-provider/build/${os}-${arch}/Release/SlimeVR-Bindings-Provider.exe"
+    - from: "../Build/bindings-provider/${os}-${arch}/Release/SlimeVR-Bindings-Provider.exe"
       to: "."
-    - from: "../bindings-provider/build/${os}-${arch}/openvr_api.dll"
+    - from: "../Build/bindings-provider/${os}-${arch}/openvr_api.dll"
       to: "."
 
 mac:
@@ -74,5 +79,5 @@ mac:
   x64ArchFiles: "**/register-protocol-handler.node"
   icon: "./electron/resources/icons/icon.icns"
   extraFiles:
-    - from: "../server/desktop/build/libs/slimevr.jar"
+    - from: "../Build/gradle/server/desktop/libs/slimevr.jar"
       to: "Resources/slimevr.jar"

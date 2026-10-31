@@ -57,3 +57,6 @@ __pycache__/
 
 # Local compiler diagnostic retained outside versioned evidence.
 /build-revision-compile.log
+
+# Canonical desktop products, dependencies and intermediate build outputs
+/Build/

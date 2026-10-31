@@ -51,18 +51,18 @@ jobs:
       - name: Get CMake
         uses: lukka/get-cmake@latest
       - name: Configure
-        run: cmake -S bindings-provider/ -B bindings-provider/build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S bindings-provider/ -B Build/bindings-provider -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build bindings-provider/build --config Release -j6
+        run: cmake --build Build/bindings-provider --config Release -j6
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: bindings-provider-${{ matrix.platform }}-${{ matrix.os }}
           path: |
-            bindings-provider/build/slimevr-bindings-provider
-            bindings-provider/build/libopenvr_api.so
-            bindings-provider/build/Release/SlimeVR-Bindings-Provider.exe
-            bindings-provider/build/openvr_api.dll
+            Build/bindings-provider/slimevr-bindings-provider
+            Build/bindings-provider/libopenvr_api.so
+            Build/bindings-provider/Release/SlimeVR-Bindings-Provider.exe
+            Build/bindings-provider/openvr_api.dll
 
   gui-checks:
     name: Gui Checks
@@ -129,7 +129,7 @@ jobs:
         with:
           name: server-jar
           path: |
-              server/desktop/build/libs/slimevr.jar
+              Build/gradle/server/desktop/libs/slimevr.jar
               server/core/resources
 
   build-gui-frontend:
@@ -154,7 +154,7 @@ jobs:
             SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: pnpm i && cd gui && pnpm run build
       - name: Tar GUI Dist
-        run: tar -czf slimevr-gui-dist.tar.gz -C gui/out .
+        run: tar -czf slimevr-gui-dist.tar.gz -C gui/Build/out .
       - name: Upload GUI Dist
         uses: actions/upload-artifact@v7
         with:
@@ -186,28 +186,28 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: server-jar
-          path: server
+          path: .
       - if: contains(fromJson(needs.setup-matrix.outputs.matrix-cpp).include.*.os, matrix.os)
         name: Download bindings provider artifact
         uses: actions/download-artifact@v8
         with:
           name: bindings-provider-${{ matrix.platform }}-${{ matrix.os }}
-          path: bindings-provider/build/${{ matrix.platform == 'windows' && 'win' || 'linux' }}-${{ endsWith(matrix.os, '-arm') && 'arm64' || 'x64' }}
+          path: Build/bindings-provider/${{ matrix.platform == 'windows' && 'win' || 'linux' }}-${{ endsWith(matrix.os, '-arm') && 'arm64' || 'x64' }}
       - name: Download GUI Dist
         uses: actions/download-artifact@v8
         with:
           name: gui-dist
       - name: Extract GUI for Electron
         shell: bash
-        run: mkdir -p gui/out && tar -xzf slimevr-gui-dist.tar.gz -C gui/out
+        run: mkdir -p gui/Build/out && tar -xzf slimevr-gui-dist.tar.gz -C gui/Build/out
       - name: Run Electron Builder
         shell: bash
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
-          mkdir -p gui/dist/artifacts/linux/ \
-                   gui/dist/artifacts/win \
-                   gui/dist/artifacts/mac
+          mkdir -p Build/Artifacts/linux/ \
+                   Build/Artifacts/win \
+                   Build/Artifacts/mac
           VERSION=$(git --no-pager tag --sort -taggerdate --points-at HEAD | head -1)
           [ -z "$VERSION" ] && VERSION="0.0.0"
           VERSION="${VERSION#v}"
@@ -221,8 +221,8 @@ jobs:
       - name: Collect and Rename Artifacts
         shell: bash
         run: |
-          SRC_DIR="${{ github.workspace }}/gui/dist/artifacts"
-          DEST_DIR="${{ github.workspace }}/release-out"
+          SRC_DIR="${{ github.workspace }}/Build/Artifacts"
+          DEST_DIR="${{ github.workspace }}/Build/Distributions/release-out"
           mkdir -p "$DEST_DIR"
 
           if [ "${{ matrix.platform }}" == "windows" ]; then
@@ -247,7 +247,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.platform }}-${{ matrix.os }}
-          path: release-out/*
+          path: Build/Distributions/release-out/*
 
   bundle-android:
     name: Build Android APK
@@ -272,7 +272,7 @@ jobs:
         with:
           name: gui-dist
       - name: Extract GUI for Android
-        run: mkdir -p gui/out && tar -xzf slimevr-gui-dist.tar.gz -C gui/out
+        run: mkdir -p gui/Build/out && tar -xzf slimevr-gui-dist.tar.gz -C gui/Build/out
       - name: Build APK
         run: ./gradlew :server:android:build --build-cache
         env:
@@ -329,19 +329,19 @@ jobs:
         run: |
           python scripts/release_v2.py --java-home "$env:JAVA_HOME" --cmake (Get-Command cmake).Source
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $release = Get-Content dist/release-v2/latest.json -Raw | ConvertFrom-Json
+          $release = Get-Content Build/Distributions/release-v2/latest.json -Raw | ConvertFrom-Json
           if ($release.result -ne 'PASS') { throw 'Current release gate did not pass' }
           python -O scripts/release_v2.py --verify $release.directory
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          New-Item -ItemType Directory -Force build/release-upload | Out-Null
-          Copy-Item -LiteralPath (Join-Path $release.directory 'MonakaVR-software-v2.zip') build/release-upload/
-          Copy-Item -LiteralPath (Join-Path $release.directory 'handoff.json') build/release-upload/MonakaVR-software-v2.handoff.json
-          Copy-Item -LiteralPath (Join-Path $release.directory 'release.json') build/release-upload/MonakaVR-software-v2.receipt.json
+          New-Item -ItemType Directory -Force Build/Distributions/release-upload | Out-Null
+          Copy-Item -LiteralPath (Join-Path $release.directory 'MonakaVR-software-v2.zip') Build/Distributions/release-upload/
+          Copy-Item -LiteralPath (Join-Path $release.directory 'handoff.json') Build/Distributions/release-upload/MonakaVR-software-v2.handoff.json
+          Copy-Item -LiteralPath (Join-Path $release.directory 'release.json') Build/Distributions/release-upload/MonakaVR-software-v2.receipt.json
       - name: Upload current v2 evidence (hardware and SteamVR interactive NOT RUN)
         uses: actions/upload-artifact@v7
         with:
           name: release-monaka-software-v2
-          path: build/release-upload/*
+          path: Build/Distributions/release-upload/*
           if-no-files-found: error
 
   create-release:
@@ -354,13 +354,13 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           pattern: release-*
-          path: release-out
+          path: Build/Distributions/release-out
           merge-multiple: true
       - name: Download Server Jar
         uses: actions/download-artifact@v8
         with:
           name: server-jar
-          path: server
+          path: .
       - name: Download GUI Dist
         uses: actions/download-artifact@v8
         with:
@@ -371,6 +371,6 @@ jobs:
           draft: true
           generate_release_notes: true
           files: |
-            release-out/*
-            server/desktop/build/libs/slimevr.jar
+            Build/Distributions/release-out/*
+            Build/gradle/server/desktop/libs/slimevr.jar
             slimevr-gui-dist.tar.gz

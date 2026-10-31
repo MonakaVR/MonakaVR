@@ -118,5 +118,5 @@
     "vite": "^5.4.8",
     "yup": "^1.4.0"
   },
-  "main": "./out/main/index.js"
+  "main": "./Build/out/main/index.js"
 }
