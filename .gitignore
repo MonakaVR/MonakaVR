@@ -60,3 +60,7 @@ __pycache__/
 
 # Canonical desktop products, dependencies and intermediate build outputs
 /Build/
+
+# Normal operational launchers live in the sibling launchers directory.
+/Start_*.cmd
+/scripts/runtime_launcher.py

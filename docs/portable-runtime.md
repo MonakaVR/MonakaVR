@@ -37,20 +37,22 @@ complete package is promoted to the fixed runtime. Any previous runtime is
 preserved under `Build/runtime/previous-success`; that backup is never a launch
 fallback. A failed compile/package leaves the previous runtime in place.
 
-`Start_MonakaGUI.cmd` opens the built desktop, which owns its normal server
-lifetime. `Start_MonakaVR.cmd` runs the same directory's production desktop JAR
-without opening Electron. Both accept only optional `--check`: it lists missing
-files and the planned command without executing the GUI, server or Java.
+The workspace's `launchers/Start_MonakaVR.cmd` is the single normal entry.
+It opens the built desktop, which owns its normal server lifetime. The launcher
+and its private helper live outside this repository and locate this checkout
+relative to their own location. There is no separate normal server launcher.
+The entry accepts only optional `--check`: it lists missing files and the planned
+command without executing the GUI, server or Java.
 `FILES_PRESENT` reports file prerequisites only, not configured input, validated
 settings, running services, output readiness or physical validation.
 
-The launchers use the existing consumer data directory and never copy old
-configuration or control input producers. Java is found through `MONAKA_JAVA`
+The launcher uses the existing consumer data directory and never copies old
+configuration or controls input producers. Java is found through `MONAKA_JAVA`
 (executable path), `JAVA_HOME`, or PATH; the GUI receives that Java home only in
 its child environment. Java 17+ is required; `--check` does not execute a version
-probe. Python 3 is found by the shared repository entry through `MONAKA_PYTHON`
-(executable path), PATH `python.exe`, or `py.exe -3`, with a safe Python-major
-probe before running the script. An explicit invalid override fails closed.
+probe. The shared external bootstrap discovers Python through `MONAKA_PYTHON`
+or PATH. An explicit invalid override fails closed. The repository's
+`scripts/python_entry.cmd` remains an explicit-build helper.
 
 Build tool overrides are `MONAKA_CMAKE`, `MONAKA_PNPM` and `MONAKA_JAVA`.
 CMake can also be discovered beneath an installed Visual Studio location derived

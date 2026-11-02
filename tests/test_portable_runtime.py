@@ -1,4 +1,4 @@
-"""File-only launcher checks; no GUI, server, native runtime or device is started."""
+"""Explicit builder and promotion tests; operational launcher tests live outside this repository."""
 
 import importlib.util
 import os
@@ -12,9 +12,6 @@ import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location("runtime_launcher", ROOT / "scripts/runtime_launcher.py")
-LAUNCHER = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(LAUNCHER)
 BUILD_SPEC = importlib.util.spec_from_file_location("build_runtime", ROOT / "scripts/build_runtime.py")
 BUILDER = importlib.util.module_from_spec(BUILD_SPEC)
 BUILD_SPEC.loader.exec_module(BUILDER)
@@ -26,63 +23,16 @@ class PortableRuntimeTests(unittest.TestCase):
         temporary_root.mkdir(parents=True, exist_ok=True)
         self.temporary = tempfile.TemporaryDirectory(prefix="runtime with spaces ", dir=temporary_root)
         self.root = Path(self.temporary.name)
-        self.runtime = self.root / "Build/runtime/win-unpacked"
         self.java = self.root / "jdk/bin/java.exe"
         self.java.parent.mkdir(parents=True)
         self.java.write_bytes(b"fixture-not-executable")
         self.environment = patch.dict(os.environ, {"MONAKA_JAVA": str(self.java)})
         self.environment.start()
-        self.runtime_patch = patch.object(LAUNCHER, "RUNTIME", self.runtime)
-        self.runtime_patch.start()
 
     def tearDown(self):
-        self.runtime_patch.stop()
         self.environment.stop()
         self.temporary.cleanup()
 
-    def populate(self):
-        # Minimal real locked Electron 40 distribution plus the product files.
-        # In particular the official archive does not ship chrome_elf.dll.
-        for item in (
-            "slimevr.jar", "SlimeVR-Bindings-Provider.exe", "openvr_api.dll",
-            "SlimeVR.exe", "resources/app.asar", "ffmpeg.dll", "icudtl.dat",
-            "resources.pak", "v8_context_snapshot.bin", "locales/en-US.pak",
-            "resources/app.asar.unpacked/out/main/chunks/JavaVersion-fixture.jar",
-        ):
-            path = self.runtime / item
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(b"fixture")
-
-    def test_missing_files_are_reported_without_running_or_writing(self):
-        before = sorted(str(path) for path in self.root.rglob("*"))
-        with patch.object(LAUNCHER.subprocess, "run", side_effect=AssertionError("process denied")):
-            result = LAUNCHER.preflight("gui")
-        self.assertEqual(result["status"], "MISSING")
-        self.assertIn(str(self.runtime / "SlimeVR.exe"), result["missing"])
-        self.assertFalse(result["process_started"])
-        self.assertEqual(before, sorted(str(path) for path in self.root.rglob("*")))
-
-    def test_file_presence_is_distinct_from_runtime_or_configuration_readiness(self):
-        self.populate()
-        with patch.object(LAUNCHER.subprocess, "run", side_effect=AssertionError("process denied")):
-            result = LAUNCHER.preflight("gui")
-        self.assertEqual(result["missing"], [])
-        self.assertFalse((self.runtime / "chrome_elf.dll").exists())
-        self.assertEqual(result["argv"], [str(self.runtime / "SlimeVR.exe"), "--path", str(self.runtime)])
-        for key in ("process_started", "configuration_validated", "runtime_readiness_verified", "java_version_verified"):
-            self.assertFalse(result[key])
-
-    def test_bad_explicit_java_does_not_fall_back_to_path(self):
-        with patch.dict(os.environ, {"MONAKA_JAVA": str(self.root / "missing.exe")}):
-            with patch.object(LAUNCHER.shutil, "which", side_effect=AssertionError("fallback denied")):
-                self.assertIsNone(LAUNCHER.java_executable())
-
-    def test_server_uses_the_same_fixed_distribution_as_gui(self):
-        self.populate()
-        result = LAUNCHER.preflight("server")
-        self.assertEqual(result["missing"], [])
-        self.assertEqual(result["argv"], [str(self.java.resolve()), "-jar", str(self.runtime / "slimevr.jar"), "run"])
-        self.assertEqual(result["cwd"], str(self.runtime))
 
     def test_offline_missing_cache_stops_before_any_external_command(self):
         wrapper = self.root / "gradle/wrapper/gradle-wrapper.properties"

@@ -76,5 +76,5 @@ okay with this and that you are authorized to provide the above licenses.
 # Local Windows desktop build
 
 See [the fixed local runtime instructions](docs/portable-runtime.md) for
-`Build_Runtime.cmd`, the `Build/runtime/win-unpacked` output, and the separate
-GUI/server launchers. Launchers do not build or install products on startup.
+`Build_Runtime.cmd`, the `Build/runtime/win-unpacked` output, and the external
+`../launchers/Start_MonakaVR.cmd` desktop entry. Startup never builds or installs products.
