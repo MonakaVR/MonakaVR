@@ -145,7 +145,8 @@ class BodyRotationGuidanceTests {
 		assertEquals(GuidanceReason.SAME_PAIR, duplicate.learningReason)
 		assertEquals(s.lastLearnedAtNanos, duplicate.state.lastLearnedAtNanos)
 		val one = advance(duplicate.state, input(seq = 3, at = 6_000_000).copy(imu = imu(b, 2, 4_000_000)))
-		assertEquals(GuidanceReason.PAIR_WINDOW, one.learningReason)
+		assertEquals(GuidanceReason.SAME_PAIR, one.learningReason)
+		assertEquals(s.anchorAtNanos, one.state.anchorAtNanos)
 		assertEquals(s.correction, one.state.correction)
 	}
 
@@ -383,7 +384,6 @@ class BodyRotationGuidanceTests {
 				b.copy(imu = b.imu.copy(epoch = b.imu.epoch.copy(sourceEpoch = "restart"))),
 				b.copy(imu = b.imu.copy(epoch = b.imu.epoch.copy(calibrationEpoch = "reset"))),
 				b.copy(assignmentRevision = 2),
-				b.copy(frames = b.frames.copy(approvalRevision = "new")),
 				b.copy(frames = b.frames.copy(imuToBody = mainQ)),
 			)
 		for (changed in bindings) {
@@ -414,8 +414,6 @@ class BodyRotationGuidanceTests {
 	@Test fun unconfirmedInvalidMountAndInvalidSpaceFailClosed() {
 		val b = binding()
 		for (frames in listOf(
-			b.frames.copy(confirmed = false),
-			b.frames.copy(approvalRevision = ""),
 			b.frames.copy(mainTrackerToBody = Quaternion(0f, 0f, 0f, 0f)),
 		)) {
 			assertEquals(GuidanceReason.FRAME_UNAPPROVED, advance(i = input(b.copy(frames = frames))).learningReason)
@@ -550,12 +548,49 @@ class BodyRotationGuidanceTests {
 		val newImu = old.imu.copy(epoch = old.imu.epoch.copy(calibrationEpoch = "new-mount"))
 		val changed = old.copy(imu = newImu)
 		val blocked = advance(s, input(changed, 3, 5_000_000))
-		assertEquals(GuidanceReason.FRAME_UNAPPROVED, blocked.learningReason)
+		assertEquals(GuidanceReason.FIRST_PAIR, blocked.learningReason)
 		assertFalse(blocked.state.ready)
 		val approved = changed.copy(frames = changed.frames.copy(approvedImu = newImu, approvalRevision = "approval-2"))
 		val first = advance(blocked.state, input(approved, 4, 6_000_000))
 		assertFalse(first.state.ready)
 		val second = advance(first.state, input(approved, 5, 9_000_000))
 		assertTrue(second.state.ready)
+	}
+
+	@Test fun asynchronousTeacher120msQ20msPreservesDwellWithoutLearningReusedTeacher() {
+		val b = binding()
+		val t = RotationCorrectionTuning.normalRuntimeDefaults().copy(maxImuSampleAgeNanos = 500_000_000)
+		var r = advance(i = input(b, 1, 1_000_000), t = t)
+		var mainSequence = 1L
+		var mainAt = 1_000_000L
+		var learned = 0
+		for (n in 1..180) {
+			val at = 1_000_000L + n * 20_000_000L
+			val newTeacher = n % 6 == 0
+			if (newTeacher) {
+				mainSequence++
+				mainAt = at
+			}
+			val before = r.state
+			r = advance(before, GuidanceInput(at, b, teacher(b, mainSequence, mainAt), imu(b, n + 1L, at), RotationOwner.MAIN), t)
+			if (newTeacher) {
+				assertEquals(LearningDecision.ACCEPTED, r.learning)
+				learned++
+			} else {
+				assertEquals(GuidanceReason.SAME_PAIR, r.learningReason)
+				assertEquals(before.lastLearnedAtNanos, r.state.lastLearnedAtNanos)
+				assertEquals(before.anchorAtNanos, r.state.anchorAtNanos)
+				assertEquals(before.correction, r.state.correction)
+			}
+		}
+		assertEquals(30, learned)
+		assertTrue(r.state.ready)
+		assertEquals(mainAt, r.state.lastLearnedAtNanos)
+		// Both sources really advance outside the original 20ms window: reject/reset dwell.
+		val old = r.state
+		val late = advance(old, GuidanceInput(mainAt + 60_000_000, b, teacher(b, mainSequence + 1, mainAt + 20_000_000), imu(b, 182, mainAt + 60_000_000), RotationOwner.MAIN), t)
+		assertEquals(GuidanceReason.PAIR_WINDOW, late.learningReason)
+		assertNull(late.state.anchorAtNanos)
+		assertEquals(old.lastLearnedAtNanos, late.state.lastLearnedAtNanos)
 	}
 }

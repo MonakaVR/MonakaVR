@@ -1,0 +1,66 @@
+import { BodyPart } from 'solarxr-protocol';
+
+// Explicit TrackerPosition.bodyPart mapping; never use ordinal or numeric equality.
+// server/core/.../tracking/trackers/TrackerPosition.kt:117-166.
+export const INPUT_ROLES: Partial<Record<BodyPart, string>> = {
+  [BodyPart.HEAD]: 'HEAD',
+  [BodyPart.NECK]: 'NECK',
+  [BodyPart.UPPER_CHEST]: 'UPPER_CHEST',
+  [BodyPart.CHEST]: 'CHEST',
+  [BodyPart.WAIST]: 'WAIST',
+  [BodyPart.HIP]: 'HIP',
+  [BodyPart.LEFT_UPPER_LEG]: 'LEFT_UPPER_LEG',
+  [BodyPart.RIGHT_UPPER_LEG]: 'RIGHT_UPPER_LEG',
+  [BodyPart.LEFT_LOWER_LEG]: 'LEFT_LOWER_LEG',
+  [BodyPart.RIGHT_LOWER_LEG]: 'RIGHT_LOWER_LEG',
+  [BodyPart.LEFT_FOOT]: 'LEFT_FOOT',
+  [BodyPart.RIGHT_FOOT]: 'RIGHT_FOOT',
+  [BodyPart.LEFT_UPPER_ARM]: 'LEFT_UPPER_ARM',
+  [BodyPart.RIGHT_UPPER_ARM]: 'RIGHT_UPPER_ARM',
+  [BodyPart.LEFT_LOWER_ARM]: 'LEFT_LOWER_ARM',
+  [BodyPart.RIGHT_LOWER_ARM]: 'RIGHT_LOWER_ARM',
+  [BodyPart.LEFT_HAND]: 'LEFT_HAND',
+  [BodyPart.RIGHT_HAND]: 'RIGHT_HAND',
+  [BodyPart.LEFT_SHOULDER]: 'LEFT_SHOULDER',
+  [BodyPart.RIGHT_SHOULDER]: 'RIGHT_SHOULDER',
+  [BodyPart.LEFT_THUMB_METACARPAL]: 'LEFT_THUMB_METACARPAL',
+  [BodyPart.LEFT_THUMB_PROXIMAL]: 'LEFT_THUMB_PROXIMAL',
+  [BodyPart.LEFT_THUMB_DISTAL]: 'LEFT_THUMB_DISTAL',
+  [BodyPart.LEFT_INDEX_PROXIMAL]: 'LEFT_INDEX_PROXIMAL',
+  [BodyPart.LEFT_INDEX_INTERMEDIATE]: 'LEFT_INDEX_INTERMEDIATE',
+  [BodyPart.LEFT_INDEX_DISTAL]: 'LEFT_INDEX_DISTAL',
+  [BodyPart.LEFT_MIDDLE_PROXIMAL]: 'LEFT_MIDDLE_PROXIMAL',
+  [BodyPart.LEFT_MIDDLE_INTERMEDIATE]: 'LEFT_MIDDLE_INTERMEDIATE',
+  [BodyPart.LEFT_MIDDLE_DISTAL]: 'LEFT_MIDDLE_DISTAL',
+  [BodyPart.LEFT_RING_PROXIMAL]: 'LEFT_RING_PROXIMAL',
+  [BodyPart.LEFT_RING_INTERMEDIATE]: 'LEFT_RING_INTERMEDIATE',
+  [BodyPart.LEFT_RING_DISTAL]: 'LEFT_RING_DISTAL',
+  [BodyPart.LEFT_LITTLE_PROXIMAL]: 'LEFT_LITTLE_PROXIMAL',
+  [BodyPart.LEFT_LITTLE_INTERMEDIATE]: 'LEFT_LITTLE_INTERMEDIATE',
+  [BodyPart.LEFT_LITTLE_DISTAL]: 'LEFT_LITTLE_DISTAL',
+  [BodyPart.RIGHT_THUMB_METACARPAL]: 'RIGHT_THUMB_METACARPAL',
+  [BodyPart.RIGHT_THUMB_PROXIMAL]: 'RIGHT_THUMB_PROXIMAL',
+  [BodyPart.RIGHT_THUMB_DISTAL]: 'RIGHT_THUMB_DISTAL',
+  [BodyPart.RIGHT_INDEX_PROXIMAL]: 'RIGHT_INDEX_PROXIMAL',
+  [BodyPart.RIGHT_INDEX_INTERMEDIATE]: 'RIGHT_INDEX_INTERMEDIATE',
+  [BodyPart.RIGHT_INDEX_DISTAL]: 'RIGHT_INDEX_DISTAL',
+  [BodyPart.RIGHT_MIDDLE_PROXIMAL]: 'RIGHT_MIDDLE_PROXIMAL',
+  [BodyPart.RIGHT_MIDDLE_INTERMEDIATE]: 'RIGHT_MIDDLE_INTERMEDIATE',
+  [BodyPart.RIGHT_MIDDLE_DISTAL]: 'RIGHT_MIDDLE_DISTAL',
+  [BodyPart.RIGHT_RING_PROXIMAL]: 'RIGHT_RING_PROXIMAL',
+  [BodyPart.RIGHT_RING_INTERMEDIATE]: 'RIGHT_RING_INTERMEDIATE',
+  [BodyPart.RIGHT_RING_DISTAL]: 'RIGHT_RING_DISTAL',
+  [BodyPart.RIGHT_LITTLE_PROXIMAL]: 'RIGHT_LITTLE_PROXIMAL',
+  [BodyPart.RIGHT_LITTLE_INTERMEDIATE]: 'RIGHT_LITTLE_INTERMEDIATE',
+  [BodyPart.RIGHT_LITTLE_DISTAL]: 'RIGHT_LITTLE_DISTAL',
+};
+
+export function inputRole(body: BodyPart, available: string[]): string | null {
+  const role = INPUT_ROLES[body];
+  return role && available.includes(role) ? role : null;
+}
+
+export function bodyPartForInput(role: string): BodyPart | undefined {
+  const entry = Object.entries(INPUT_ROLES).find(([, name]) => name === role);
+  return entry ? Number(entry[0]) : undefined;
+}

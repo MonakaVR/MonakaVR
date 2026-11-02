@@ -159,7 +159,7 @@ class ParallelRegressionTests {
 			val reader = BackgroundIkPoseReader(hpm.skeleton, BackgroundIkAlignment.confirmedSameSpace(p.coordinate_space))
 			MonakaRuntime({ listOfNotNull(head, imu, visible) }, p.coordinate_space, assignments, clock = { clock.now }).use { r ->
 				MonakaSolverComposition(hpm.skeleton, null, { error("Unexpected capture") }, { error("Unexpected body capture") }).use { solver ->
-					assertEquals(ProductionPositionCorrectionGate.NOT_CONFIGURED, solver.positionCorrectionGate)
+					assertEquals(ProductionPositionCorrectionGate.NORMAL_RUNTIME, solver.positionCorrectionGate)
 					for ((seq, modality) in listOf("full", "rotation_only", "none", "full").withIndex()) {
 						clock.advance()
 						send(r, pose(p, seq.toLong(), modality))
@@ -320,7 +320,7 @@ class ParallelRegressionTests {
 		}
 	}
 
-	@Test fun currentDirectAssignmentRequiresRestartBeforeSourceEdit(@TempDir dir: Path) {
+	@Test fun directSourceChoicePersistsWithRestartWhileActiveAssignmentIsPreserved(@TempDir dir: Path) {
 		val p = fixture()
 		val a = TrackerBodyAssignments().also { it.configure(hip, ref(p), outputMode = OutputMode.DIRECT) }
 		val c = MonakaConfiguration(p.coordinate_space, a)
@@ -333,10 +333,13 @@ class ParallelRegressionTests {
 			val before = Files.readAllBytes(path)
 			val saved = a.snapshot()
 			val clear = api.editSources(hip, null, null, true, saved.generation, r.clock())
-			val error = assertFailsWith<IllegalArgumentException> { api.saveAndApply(clear) }
-			assertTrue(error.message!!.contains("restart"))
-			assertEquals(saved, a.snapshot())
-			assertContentEquals(before, Files.readAllBytes(path))
+			assertEquals(saved, api.saveAndApply(clear))
+			assertEquals(saved, a.snapshot(), "Active Direct topology is unchanged until restart")
+			assertFalse(before.contentEquals(Files.readAllBytes(path)))
+			assertTrue(MonakaConfiguration.load(path).assignments.snapshot().targets.isEmpty(), "Saved clear restores after restart")
+			val receipt = ObjectMapper().readTree(api.handleJson("""{"type":"monaka_inputs_v1","id":"restart-readback","action":"snapshot"}""", r.clock()))
+			assertTrue(receipt["restartRequired"].asBoolean())
+			assertFailsWith<IllegalArgumentException> { api.saveAndApply(clear) }
 		}
 	}
 

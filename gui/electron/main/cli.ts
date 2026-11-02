@@ -2,6 +2,13 @@ import { Option, program } from 'commander';
 
 program
   .option('-p, --path <path>', 'set launch path')
+  .option('--profile <directory>', 'use an explicit independent application profile')
+  .option('--server-port <port>', 'use an explicit WebSocket listen port')
+  .option(
+    '--network-only',
+    'disable native device discovery and native output integration'
+  )
+  .option('--monaka-mtp', 'enable public MVIP input')
   .option('-s, --steam', 'steam mode')
   .option('-i, --install', 'run the driver installer')
   .option(
@@ -18,5 +25,5 @@ if (process.platform === 'linux') {
   program.addOption(noUdevOption);
 }
 
-program.parse(process.argv);
+program.parse(process.argv, { from: 'electron' });
 export const options = program.opts();

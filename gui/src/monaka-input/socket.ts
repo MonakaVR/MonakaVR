@@ -1,4 +1,4 @@
-import type { InputApi, InputSnapshot } from './controller';
+import type { InputApi, InputSnapshot } from './controller.js';
 
 /** Existing Core GUI WebSocket, separate text namespace; never starts a runtime. */
 export class MonakaInputSocket implements InputApi {
@@ -11,6 +11,7 @@ export class MonakaInputSocket implements InputApi {
       resolve: (x: InputSnapshot) => void;
       reject: (x: Error) => void;
       timer: ReturnType<typeof setTimeout>;
+      socket: WebSocket;
     }
   >();
   constructor(private url: string) {}
@@ -26,12 +27,22 @@ export class MonakaInputSocket implements InputApi {
       }, 5000);
       socket.onopen = () => {
         clearTimeout(timer);
+        if (this.socket !== socket) {
+          reject(new Error('Core connection superseded'));
+          socket.close();
+          return;
+        }
         this.opening = null;
         resolve(socket);
       };
       socket.onerror = () => {
         clearTimeout(timer);
+        if (this.socket === socket) {
+          this.socket = null;
+          this.opening = null;
+        }
         reject(new Error('Core connection failed'));
+        socket.close();
       };
       socket.onclose = () => {
         clearTimeout(timer);
@@ -40,11 +51,12 @@ export class MonakaInputSocket implements InputApi {
           this.opening = null;
         }
         reject(new Error('Core disconnected'));
-        for (const entry of this.pending.values()) {
+        for (const [id, entry] of this.pending) {
+          if (entry.socket !== socket) continue;
+          this.pending.delete(id);
           clearTimeout(entry.timer);
           entry.reject(new Error('Core disconnected; saved result may be unknown'));
         }
-        this.pending.clear();
       };
       socket.onmessage = (event) => {
         if (typeof event.data !== 'string' || event.data.length > 2 * 1024 * 1024)
@@ -55,9 +67,15 @@ export class MonakaInputSocket implements InputApi {
         } catch {
           return;
         }
-        if (value.type !== 'monaka_inputs_v1' || typeof value.id !== 'string') return;
+        if (
+          value === null ||
+          typeof value !== 'object' ||
+          value.type !== 'monaka_inputs_v1' ||
+          typeof value.id !== 'string'
+        )
+          return;
         const entry = this.pending.get(value.id);
-        if (!entry) return;
+        if (!entry || entry.socket !== socket) return;
         this.pending.delete(value.id);
         clearTimeout(entry.timer);
         if (value.ok !== true)
@@ -87,7 +105,7 @@ export class MonakaInputSocket implements InputApi {
         this.pending.delete(id);
         reject(new Error('Core request timed out; saved result may be unknown'));
       }, 8000);
-      this.pending.set(id, { resolve, reject, timer });
+      this.pending.set(id, { resolve, reject, timer, socket });
       try {
         socket.send(JSON.stringify({ ...fields, type: 'monaka_inputs_v1', id }));
       } catch (error) {

@@ -31,9 +31,10 @@ data class RawSourceIdentity(
 }
 
 /**
- * Structural value contract, not proof of trusted desktop ingress admission.
- * Production desktop generation must use ProtobufBridge.currentRawHmdPoseAdmission(); direct
- * construction in core fixtures cannot establish frame/session/receipt-freshness evidence.
+ * Structural value contract. Normal desktop generation uses the registered input owner,
+ * current transport, complete same-message components and mapped receipt freshness.
+ * Optional provider evidence is separate from ordinary tracking permission; core fixtures
+ * do not by themselves establish desktop ingestion.
  * Values never reference a mutable Tracker, HumanSkeleton or computed pose.
  */
 data class RawHmdPoseInput(

@@ -19,12 +19,12 @@ fun interface BackgroundIkAlignment {
 
 		/** Explicit operator assertion; not automatic calibration or an HIL PASS. */
 		fun confirmedSameSpace(space: CoordinateSpace) = BackgroundIkAlignment { pose, requested ->
-			if (space != requested) {
+			if (space.convention != requested.convention) {
 				null
 			} else {
 				OutputPose(
 					pose.target,
-					space,
+					requested,
 					ResolvedComponent(pose.position, "monaka-solver:${pose.target.name}", ObservationQuality.TRACKED, pose.evaluatedAt),
 					ResolvedComponent(pose.rotation, "monaka-solver:${pose.target.name}", ObservationQuality.TRACKED, pose.evaluatedAt),
 					OutputPositionSource.BACKGROUND_IK,

@@ -30,12 +30,13 @@ class MtpObservationBackend(
 	override val profileId: String = "mtp",
 ) : ObservationBackend,
 	AssignmentSnapshotAwareObservationBackend {
-	data class Sample(val pose: MtpPose, val sampleTime: Long)
+	data class Sample(val pose: MtpPose, val sampleTime: Long, val receivedAtNanos: Long = sampleTime)
 	private class Lifetime(val session: String, val clock: String, val peer: String, val retired: MutableSet<String>) {
 		var quarantined = false
 		var lastAccepted = -1L
 	}
 	private class Device {
+		var space: CoordinateSpace? = null
 		var poseSequence = -1L
 		var stateSequence = -1L
 		var mappingRevision = -1L
@@ -247,7 +248,9 @@ class MtpObservationBackend(
 		}
 		if (pose != null) device.poseSequence = sequence else device.stateSequence = sequence
 		val space = pose?.coordinate_space ?: state!!.coordinate_space
-		if (space != expectedSpace) {
+		// Space identity/revision describe a source generation, not permission to use
+		// a numerically valid pose. The public convention remains mandatory.
+		if (space.convention != expectedSpace.convention) {
 			if (device.sample != null) historyGeneration++
 			device.sample = null
 			device.context = null
@@ -278,6 +281,14 @@ class MtpObservationBackend(
 			return
 		}
 		device.capabilities = declaration
+		if (device.space != null && device.space != space) {
+			historyGeneration++
+			device.sample = null
+			device.context = null
+			removed += key.observationId
+			inbox.count("SpaceDescriptionChanged")
+		}
+		device.space = space
 		if (pose == null) {
 			if (state!!.presence == "absent" || state.tracking_state in listOf("lost", "disconnected")) {
 				device.absentAt = maxOf(device.absentAt, state.timestamp_ns)
@@ -302,7 +313,7 @@ class MtpObservationBackend(
 			inbox.count("BeforeLocalEpoch")
 			return
 		}
-		device.sample = Sample(pose, received.receivedAtNanos - age)
+		device.sample = Sample(pose, received.receivedAtNanos - age, received.receivedAtNanos)
 		device.context = MtpSourceContextSnapshot(
 			key,
 			"${pose.session_id}:${pose.clock_id}",

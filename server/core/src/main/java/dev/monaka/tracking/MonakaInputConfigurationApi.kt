@@ -54,7 +54,12 @@ class MonakaInputConfigurationApi(
 		val qUsableNow: Boolean,
 		val sixDofUsableNow: Boolean,
 		val origin: String,
+		val slimeTrackerId: SlimeTrackerId? = null,
 	)
+
+	/** Ephemeral locator for an actual SolarXR tracker; never a persistent source identity. */
+	data class SlimeTrackerId(val deviceId: SlimeDeviceId?, val trackerNum: Int)
+	data class SlimeDeviceId(val id: Int)
 	data class Snapshot(
 		val generation: Long,
 		val candidates: List<Candidate>,
@@ -80,7 +85,17 @@ class MonakaInputConfigurationApi(
 			)
 		}
 		val adapter = SlimeTrackerPoseObservationAdapter()
-		val slime = trackers().filter(FeedbackExclusion::accepts).filter { it.hasRotation }.groupBy { it.name }.map { (name, matches) ->
+		val liveTrackers = trackers().toList()
+		val locatorCounts = liveTrackers.groupingBy { it.device?.id to it.trackerNum }.eachCount()
+		val nameCounts = liveTrackers.groupingBy { it.name }.eachCount()
+		val slime = liveTrackers.filter(FeedbackExclusion::accepts).filter { it.hasRotation }.groupBy { it.name }.map { (name, matches) ->
+			val tracker = matches.singleOrNull()
+			val locator = tracker?.takeIf {
+				it.trackerNum in 0..255 &&
+					(it.device == null || it.device.id in 0..255) &&
+					nameCounts[name] == 1 &&
+					locatorCounts[it.device?.id to it.trackerNum] == 1
+			}?.let { SlimeTrackerId(it.device?.let { device -> SlimeDeviceId(device.id) }, it.trackerNum) }
 			val sample = matches.singleOrNull()?.let { adapter.adapt(it, now, TrackerPosition.HEAD) }
 			Candidate(
 				TrackerReference.slime(name),
@@ -91,6 +106,7 @@ class MonakaInputConfigurationApi(
 				sample?.rotation != null && sample.rotationQuality.usable,
 				false,
 				"slime_orientation_stream",
+				locator,
 			)
 		}
 		return Snapshot(state.generation, Collections.unmodifiableList(mtp + slime), state.targets)
@@ -135,16 +151,11 @@ class MonakaInputConfigurationApi(
 		require(current.generation == edit.generation && current.generation < Long.MAX_VALUE) { "Assignments changed; reload before saving" }
 		val affected = (current.targets.keys + edit.assignments.keys).filter { current.targets[it] != edit.assignments[it] }
 		if (affected.isEmpty()) return@synchronized current
-		require(
-			affected.none {
-				current.targets[it]?.outputMode?.let { m -> m != OutputMode.IK } == true ||
-					edit.assignments[it]?.outputMode?.let { m -> m != OutputMode.IK } == true
-			} &&
-				configuration.rotationCorrection == null &&
-				configuration.positionCorrection == null,
-		) {
-			"This output/correction assignment requires a server restart"
+		val requiresRestart = affected.any {
+			current.targets[it]?.outputMode?.let { mode -> mode != OutputMode.IK } == true ||
+				edit.assignments[it]?.outputMode?.let { mode -> mode != OutputMode.IK } == true
 		}
+
 		val next = TrackerBodyAssignments().also { it.replaceTargets(edit.assignments) }
 		val candidate = configuration.copy(assignments = next) // All existing configuration validators.
 		commit { stage ->
@@ -163,7 +174,7 @@ class MonakaInputConfigurationApi(
 			document.set<com.fasterxml.jackson.databind.JsonNode>("assignments", assignments)
 			mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(document)
 		}
-		configuration.assignments.replaceTargets(edit.assignments)
+		if (requiresRestart) restartPending = true else configuration.assignments.replaceTargets(edit.assignments)
 		savedAssignments = edit.assignments
 		configuration.assignments.snapshot()
 	}
@@ -286,7 +297,7 @@ class MonakaInputConfigurationApi(
 			val data = mapOf(
 				"type" to "monaka_inputs_v1", "id" to id, "ok" to true, "generation" to s.generation.toString(),
 				"readbackToken" to readbackToken(), "restartRequired" to restartPending,
-				"backgroundIkAlignmentConfirmed" to (configuration.backgroundIkSharedSpace == configuration.space),
+				"backgroundIkAlignmentConfirmed" to (configuration.backgroundIkSharedSpace?.convention == configuration.space.convention),
 				"bodies" to TrackerPosition.values().filter { it.name != "NONE" }.map { it.name },
 				"candidates" to s.candidates.map { x ->
 					mapOf(
@@ -296,6 +307,7 @@ class MonakaInputConfigurationApi(
 						"capabilities" to x.capabilities?.components, "conflict" to x.conflict,
 						"qSelectable" to x.qSelectable, "sixDofSelectable" to x.sixDofSelectable,
 						"qUsableNow" to x.qUsableNow, "sixDofUsableNow" to x.sixDofUsableNow, "origin" to x.origin,
+						"slimeTrackerId" to x.slimeTrackerId,
 					)
 				},
 				"assignments" to s.assignments.map { (body, a) ->
@@ -303,6 +315,9 @@ class MonakaInputConfigurationApi(
 						"body" to body.name,
 						"qSource" to (a.sourceSelection?.qSource?.observationId ?: if (a.sourceSelection == null) (a.rotationFallbackTracker ?: a.mainTracker).observationId else null),
 						"sixDofSource" to (a.sourceSelection?.sixDofSource?.observationId ?: if (a.sourceSelection == null && a.mainTracker.mtp != null) a.mainTracker.observationId else null),
+						"savedManualSix" to (savedAssignments[body]?.sourceSelection?.sixDofManuallySelected ?: true),
+						"savedQSource" to (savedAssignments[body]?.let { saved -> if (saved.sourceSelection != null) saved.sourceSelection.qSource else saved.rotationFallbackTracker ?: saved.mainTracker }?.observationId),
+						"savedSixDofSource" to (savedAssignments[body]?.let { saved -> if (saved.sourceSelection != null) saved.sourceSelection.sixDofSource else saved.mainTracker.takeIf { it.mtp != null } }?.observationId),
 						"manualSix" to (a.sourceSelection?.sixDofManuallySelected ?: true), "mode" to a.outputMode.name.lowercase(),
 						"activeMode" to a.outputMode.name.lowercase(), "savedMode" to savedAssignments[body]?.outputMode?.name?.lowercase(),
 						"restartRequired" to (savedAssignments[body] != a),

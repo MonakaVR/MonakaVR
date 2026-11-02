@@ -71,6 +71,8 @@ class SolverCompositionIntegrationTests {
 		configured: Boolean = false,
 		hybrid: Boolean = true,
 		correction: Boolean = false,
+		frames: SameFrameDiagnostics? = null,
+		configureAssignments: (TrackerBodyAssignments) -> Unit = {},
 		val mutate: (TrackerBodyAssignments) -> Unit = {},
 	) : AutoCloseable {
 		val p = pose()
@@ -90,6 +92,7 @@ class SolverCompositionIntegrationTests {
 		val manager = HumanPoseManager(listOf(head, imu))
 		val assignments = TrackerBodyAssignments().also {
 			it.configure(hip, TrackerReference.mtp(key(p)), TrackerReference.slime(imu.name), if (hybrid) OutputMode.HYBRID else OutputMode.IK)
+			configureAssignments(it)
 		}
 		var before: Runnable? = null
 		var after: Runnable? = null
@@ -128,6 +131,7 @@ class SolverCompositionIntegrationTests {
 				}, manager.skeleton,
 				{ before = it }, { failures += it }, { now }, configureDirectOutputs = {}, nextTrackerId = { 300 },
 				registerAfterPose = { after = it }, onTransition = { transitions++ },
+				frameDiagnostics = { frames },
 			)!!
 		}
 		fun send(sequence: Long = 1) {
@@ -139,6 +143,204 @@ class SolverCompositionIntegrationTests {
 			assertTrue(failures.isEmpty(), failures.joinToString())
 		}
 		override fun close() = integration.close()
+	}
+
+	@Test fun numericCapturePinsAcceptedSampleAndMatchesActualComputedPose() {
+		val bytes = java.io.ByteArrayOutputStream()
+		val frames = SameFrameDiagnostics(bytes)
+		Fixture(frames = frames).use { f ->
+			f.send(1)
+			f.before!!.run()
+			f.send(2) // queued after the captured tick: must not appear in this frame.
+			f.finish()
+			val computed = f.manager.computedTrackers.first { it.trackerPosition == hip }
+			val actualPosition = listOf(computed.position.x, computed.position.y, computed.position.z)
+			val actualRotation = computed.getRotation().let { listOf(it.x, it.y, it.z, it.w) }
+			f.after!!.run() // one post-hook emits once.
+			frames.close()
+			assertTrue(frames.awaitTermination(2000))
+			val lines = bytes.toString(Charsets.UTF_8).lines().filter { it.isNotBlank() }
+			assertEquals(1, lines.size)
+			val record = com.fasterxml.jackson.databind.ObjectMapper().readTree(lines.single())
+			assertEquals("0", record["tick"].asText())
+			assertEquals(record["tick"], record["writeback_tick"])
+			assertEquals("1", record["accepted_mvip"].single()["sequence"].asText())
+			assertEquals(1, f.polls)
+			assertEquals(0L, f.integration.frameDiagnosticFailures)
+			val result = record["computed_trackers"].first { it["target"].asText() == "HIP" }
+			assertEquals(actualPosition, result["position"].map { it.floatValue() })
+			assertEquals(actualRotation, result["rotation_xyzw"].map { it.floatValue() })
+			assertTrue(record["ik_targets_before"].any { it["target"].asText() == "HIP" })
+			val before = record["bones_before"].associate { it["bone"].asText() to it["length"].floatValue() }
+			val after = record["bones_after"].associate { it["bone"].asText() to it["length"].floatValue() }
+			assertEquals(before, after)
+			assertFalse(record["steamvr_observed"].booleanValue())
+			assertTrue(record["post_ik_hook"].booleanValue())
+			for (identity in listOf(f.p.publisher_id, f.p.source_id, f.p.tracker_id, f.p.session_id, f.imu.name)) assertFalse(lines.single().contains(identity), identity)
+			val dir = Path.of("build/same-frame-diagnostic-fixtures")
+			Files.createDirectories(dir)
+			Files.writeString(dir.resolve("pinned-frame.jsonl"), bytes.toString(Charsets.UTF_8))
+		}
+	}
+
+	@Test fun fullRotationNoneFullRecordsNullableComponentsWithoutRepolling() {
+		val bytes = java.io.ByteArrayOutputStream()
+		val frames = SameFrameDiagnostics(bytes)
+		Fixture(frames = frames).use { f ->
+			for ((index, mode) in listOf("full", "rotation_only", "none", "full").withIndex()) {
+				f.now += 10_000_000
+				val pose = f.p.copy(
+					sequence = (index + 1).toLong(),
+					modality = mode,
+					position = if (mode == "full") f.p.position else null,
+					orientation = if (mode == "none") null else f.p.orientation,
+					validity = dev.monaka.protocol.v2.Validity(mode == "full", mode != "none"),
+					confidence = dev.monaka.protocol.v2.Confidence(if (mode == "full") 1.0 else 0.0, if (mode == "none") 0.0 else 1.0),
+					tracking_state = when (mode) {
+						"full" -> "tracked"
+						"none" -> "lost"
+						else -> "degraded"
+					},
+				)
+				assertTrue(f.integration.runtime.inbox.receive((MonakaCodec.encodeEnvelope(pose) as EncodeResult.Success).value, f.now))
+				f.before!!.run()
+				f.finish()
+			}
+			frames.close()
+			assertTrue(frames.awaitTermination(2000))
+			val records = bytes.toString(Charsets.UTF_8).lines().filter { it.isNotBlank() }.map { com.fasterxml.jackson.databind.ObjectMapper().readTree(it) }
+			assertEquals(4, records.size)
+			assertEquals(4, f.polls)
+			assertEquals(0L, f.integration.frameDiagnosticFailures)
+			assertEquals(listOf("1", "2", "3", "4"), records.map { it["accepted_mvip"].single()["sequence"].asText() })
+			assertEquals(listOf(true, false, false, true), records.map { it["accepted_mvip"].single()["validity"]["position"].booleanValue() })
+			assertEquals(listOf(true, true, false, true), records.map { it["accepted_mvip"].single()["validity"]["orientation"].booleanValue() })
+			assertEquals(listOf(false, true, true, false), records.map { r -> r["resolved"].first { it["target"].asText() == "HIP" }["position"].isNull })
+			assertTrue(records.all { r -> r["resolved"].first { it["target"].asText() == "HIP" }["rotation_xyzw"].isArray }) // explicit IMU fallback
+			val dir = Path.of("build/same-frame-diagnostic-fixtures")
+			Files.createDirectories(dir)
+			Files.writeString(dir.resolve("loss-recovery.jsonl"), bytes.toString(Charsets.UTF_8))
+		}
+	}
+
+	@ParameterizedTest
+	@ValueSource(booleans = [false, true])
+	fun diagnosticsDoNotChangeSolverOrCalibrationWithCorrectionEnabledOrDisabled(correction: Boolean) {
+		val frames = SameFrameDiagnostics(java.io.ByteArrayOutputStream())
+		Fixture(correction = correction).use { off ->
+			Fixture(correction = correction, frames = frames).use { on ->
+				repeat(3) { index ->
+					for (f in listOf(off, on)) {
+						f.send((index + 1).toLong())
+						f.before!!.run()
+						f.finish()
+						f.now += 10_000_000
+					}
+					assertEquals(off.manager.computedTrackers.map { it.position }, on.manager.computedTrackers.map { it.position })
+					assertEquals(off.manager.computedTrackers.map { it.getRotation() }, on.manager.computedTrackers.map { it.getRotation() })
+					assertEquals(off.manager.skeleton.ikSolver.calibrationSnapshot(), on.manager.skeleton.ikSolver.calibrationSnapshot())
+				}
+				assertEquals(3, off.polls)
+				assertEquals(3, on.polls)
+				assertEquals(0L, on.integration.frameDiagnosticFailures)
+			}
+		}
+		frames.close()
+		assertTrue(frames.awaitTermination(2000))
+		assertEquals(3L, frames.written.get())
+	}
+
+	@Test fun diagnosticIoFailureCannotStopSubsequentSolverTicks() {
+		val frames = SameFrameDiagnostics(object : java.io.OutputStream() {
+			override fun write(b: Int): Unit = throw java.io.IOException("blocked device")
+		})
+		Fixture(frames = frames).use { f ->
+			f.send()
+			f.before!!.run()
+			f.finish()
+			assertTrue(frames.awaitTermination(2000))
+			assertEquals("IOException", frames.failure)
+			f.now += 10_000_000
+			f.send(2)
+			f.before!!.run()
+			f.finish()
+			assertEquals(2, f.polls)
+			assertTrue(f.failures.isEmpty())
+			assertNotNull(f.manager.skeleton.hipTracker)
+		}
+	}
+
+	@Test fun eightOpaqueSourcesReachSameIkFrameAcrossCompatibleSpaceRevisions() {
+		val targets = listOf(
+			hip,
+			TrackerPosition.UPPER_CHEST,
+			TrackerPosition.LEFT_UPPER_LEG,
+			TrackerPosition.RIGHT_UPPER_LEG,
+			TrackerPosition.LEFT_FOOT,
+			TrackerPosition.RIGHT_FOOT,
+			TrackerPosition.LEFT_UPPER_ARM,
+			TrackerPosition.RIGHT_UPPER_ARM,
+		)
+		val seed = pose()
+		val packets = targets.mapIndexed { index, _ ->
+			seed.copy(
+				publisher_id = "opaque-publisher-${index / 5}",
+				source_id = "opaque-source-$index",
+				tracker_id = "opaque-tracker-$index",
+				sequence = 1,
+				position = listOf(index * .05, 1.0 + index * .02, -.1),
+				input = seed.input.copy(source_id = "opaque-source-$index", device_id = "opaque-device-$index"),
+			)
+		}
+		val bytes = java.io.ByteArrayOutputStream()
+		val frames = SameFrameDiagnostics(bytes)
+		Fixture(hybrid = false, frames = frames, configureAssignments = { a ->
+			for ((index, target) in targets.withIndex()) a.configure(target, TrackerReference.mtp(key(packets[index])))
+		}).use { f ->
+			fun submit(p: MtpPose) {
+				val encoded = MonakaCodec.encodeEnvelope(p)
+				assertTrue(encoded is EncodeResult.Success, encoded.toString())
+				assertTrue(f.integration.runtime.inbox.receive(encoded.value, f.now))
+			}
+			packets.forEach(::submit)
+			f.before!!.run()
+			f.finish()
+			f.now += 10_000_000
+			submit(packets[0].copy(sequence = 2, coordinate_space = seed.coordinate_space.copy(revision = seed.coordinate_space.revision + 1)))
+			f.before!!.run()
+			f.finish()
+			assertEquals(1, f.integration.runtime.inbox.diagnostics().getValue("SpaceDescriptionChanged"))
+			f.now += 10_000_000
+			submit(packets[0].copy(sequence = 3))
+			f.before!!.run()
+			f.finish()
+			frames.close()
+			assertTrue(frames.awaitTermination(2000))
+			assertEquals(3, f.polls)
+			assertEquals(0L, f.integration.frameDiagnosticFailures)
+			val records = bytes.toString(Charsets.UTF_8).lines().filter { it.isNotBlank() }.map { com.fasterxml.jackson.databind.ObjectMapper().readTree(it) }
+			assertEquals(3, records.size)
+			assertEquals(listOf(8, 8, 8), records.map { it["accepted_mvip"].size() })
+			for ((index, target) in targets.withIndex()) {
+				val resolved = records[0]["resolved"].first { it["target"].asText() == target.name }
+				assertEquals(frames.identity(key(packets[index]).observationId), resolved["position_owner"].asText())
+				assertEquals(resolved["position_owner"], resolved["rotation_owner"])
+				assertEquals(packets[index].position!!.map { it.toFloat() }, resolved["position"].map { it.floatValue() })
+				assertTrue(records[0]["ik_targets_before"].any { it["target"].asText() == target.name }, target.name)
+				val second = records[1]["resolved"].first { it["target"].asText() == target.name }
+				assertFalse(second["position"].isNull)
+				assertFalse(second["rotation_xyzw"].isNull)
+				assertTrue(records[2]["resolved"].first { it["target"].asText() == target.name }["position"].isArray)
+			}
+			for (record in records) {
+				assertEquals(record["tick"], record["writeback_tick"])
+				assertEquals(record["bones_before"].map { it["length"] }, record["bones_after"].map { it["length"] })
+				assertTrue(record["computed_trackers"].all { t -> t["position"].isNull || t["position"].all { it.isNumber && it.doubleValue().isFinite() } })
+			}
+			val dir = Path.of("build/same-frame-diagnostic-fixtures")
+			Files.createDirectories(dir)
+			Files.writeString(dir.resolve("eight-source-space-recovery.jsonl"), bytes.toString(Charsets.UTF_8))
+		}
 	}
 
 	@Test fun currentWritebackUsesAssignmentAButNextTickUsesB() {
@@ -223,7 +425,7 @@ class SolverCompositionIntegrationTests {
 	fun configOnlyChangesGateAndKeepsGenericNumericsAndDormantProviders(configured: Boolean) {
 		Fixture(configured).use { f ->
 			assertEquals(
-				if (configured) ProductionPositionCorrectionGate.CONFIGURED_RAW_HMD_BLOCKED else ProductionPositionCorrectionGate.NOT_CONFIGURED,
+				ProductionPositionCorrectionGate.NORMAL_RUNTIME,
 				f.integration.positionCorrectionGate,
 			)
 			f.send()
@@ -297,13 +499,13 @@ class SolverCompositionIntegrationTests {
 	@Test fun productionSourceUsesPinnedSnapshotAndNeverCallsFutureCapture() {
 		val s = Files.readString(Path.of("src/main/java/dev/monaka/tracking/desktop/MonakaServerIntegration.kt"))
 		val tick = s.substringAfter("fun tick()").substringBefore("fun finishPoseUpdate()")
-		for (forbidden in listOf("runtime.tick(", "runtime.assignments.snapshot()", "runtime.lastTickNanos", "ConstraintIkWriteback", "captureSourceSnapshot", "commitPositionCorrection", ".capture(")) {
+		for (forbidden in listOf("runtime.tick(", "runtime.assignments.snapshot()", "runtime.lastTickNanos", "ConstraintIkWriteback", "commitPositionCorrection", ".capture(")) {
 			assertFalse(tick.contains(forbidden), forbidden)
 		}
 		assertTrue(tick.contains("runtime.tickSnapshot("))
 		assertTrue(tick.contains("runtime.resolvedTrackingPoses(tick)"))
 		assertTrue(tick.contains("observations(tick.nowNanos, tick.assignment)"))
-		assertEquals(1, Regex("solverComposition.commitGeneric").findAll(tick).count())
+		assertEquals(1, Regex("solverComposition.commitNormal").findAll(tick).count())
 		assertFalse(s.contains("runtime.lastTickNanos"))
 		assertFalse(s.contains("ConstraintIkWriteback"))
 	}

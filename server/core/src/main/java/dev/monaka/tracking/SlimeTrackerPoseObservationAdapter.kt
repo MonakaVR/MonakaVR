@@ -23,6 +23,8 @@ class SlimeTrackerPoseObservationAdapter(
 		targetOverride: dev.slimevr.tracking.trackers.TrackerPosition? = null,
 	): PoseObservation? {
 		require(observedAtNanos >= 0L) { "observedAtNanos must be non-negative" }
+		// Enforce at the raw value boundary as well as at the runtime's provider filter.
+		if (!FeedbackExclusion.accepts(tracker)) return null
 
 		val target = targetOverride ?: tracker.trackerPosition ?: return null
 		val modality = tracker.sampleModality ?: when {
@@ -34,11 +36,13 @@ class SlimeTrackerPoseObservationAdapter(
 		val position = if (tracker.hasPosition && modality == TrackingModality.FULL) tracker.position else null
 		val rotation = if (tracker.hasRotation && modality != TrackingModality.NONE) tracker.getRotation() else null
 		// Both observation and raw predictor boundaries use the same physical capture contract.
-		val sample = if (tracker.device != null && tracker.isImu() && rotation != null) {
+		val physicalImu = tracker.device != null && tracker.isImu() && !tracker.isInternal && !tracker.isComputed && !tracker.isHmd
+		val sample = if (rotation != null) {
 			(independentImuCapture.capture(tracker, observedAtNanos) as? SlimeImuCaptureResult.Available)?.sample
 		} else {
 			null
 		}
+
 		val provenance = sample?.provenance
 
 		return PoseObservation(
@@ -52,7 +56,7 @@ class SlimeTrackerPoseObservationAdapter(
 			rotationQuality = if (rotation != null) statusQuality else ObservationQuality.UNAVAILABLE,
 			modality = modality,
 			provenance = provenance,
-			correctionRotation = sample?.orientation,
+			correctionRotation = sample?.orientation?.takeIf { physicalImu },
 		)
 	}
 }

@@ -1,5 +1,12 @@
 import classNames from 'classnames';
-import { MouseEventHandler, useEffect, useMemo, useState } from 'react';
+import {
+  MouseEventHandler,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { InputAssignmentSummaries } from '@/monaka-input/assignment-summary';
 import { BodyPart, TrackerDataT } from 'solarxr-protocol';
 import { useTracker } from '@/hooks/tracker';
 import { Typography } from '@/components/commons/Typography';
@@ -48,6 +55,7 @@ export function TrackerPartCard({
   onClick?: MouseEventHandler<HTMLDivElement>;
 }) {
   const { isXs } = useBreakpoint('xs');
+  const summary = useContext(InputAssignmentSummaries)[role];
   const { l10n } = useLocalization();
   const [velocities, setVelocities] = useState<number[]>([]);
 
@@ -72,8 +80,9 @@ export function TrackerPartCard({
   );
 
   const showCard = useMemo(
-    () => (onlyAssigned && td && td.length > 0) || !onlyAssigned,
-    [onlyAssigned, td]
+    () =>
+      (onlyAssigned && ((td && td.length > 0) || !!summary)) || !onlyAssigned,
+    [onlyAssigned, td, summary]
   );
 
   return (
@@ -114,7 +123,15 @@ export function TrackerPartCard({
             updateVelocity={(vel) => updateVelocity(vel)}
           />
         ))}
-        {!td && (
+        {summary && (
+          <p
+            className="text-xs break-all max-w-48"
+            data-testid={`assignment-summary-${BodyPart[role]}`}
+          >
+            {summary}
+          </p>
+        )}
+        {!td && !summary && (
           <Typography color="text-background-30">
             {l10n.getString('tracker-part_card-unassigned')}
           </Typography>

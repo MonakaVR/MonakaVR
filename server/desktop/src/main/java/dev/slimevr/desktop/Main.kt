@@ -15,6 +15,7 @@ import dev.monaka.tracking.desktop.MtpFeatureGate
 import dev.slimevr.FeatureFlags
 import dev.slimevr.Keybinding
 import dev.slimevr.SLIMEVR_IDENTIFIER
+import dev.slimevr.StubNetworkProfileChecker
 import dev.slimevr.VRServer
 import dev.slimevr.bridge.Bridge
 import dev.slimevr.config.ConfigManager
@@ -28,6 +29,8 @@ import dev.slimevr.desktop.platform.windows.WindowsNamedPipeBridge
 import dev.slimevr.desktop.platform.windows.WindowsNamedPipeRpcBridge
 import dev.slimevr.desktop.serial.DesktopSerialHandler
 import dev.slimevr.desktop.tracking.trackers.hid.DesktopHIDManager
+import dev.slimevr.games.vrchat.VRCConfigHandlerStub
+import dev.slimevr.serial.SerialHandlerStub
 import dev.slimevr.tracking.trackers.Tracker
 import io.eiren.util.OperatingSystem
 import io.eiren.util.OperatingSystem.Companion.currentPlatform
@@ -61,6 +64,18 @@ val VERSION =
 val featureFlags = FeatureFlags()
 
 fun main(args: Array<String>) {
+	val instance = DesktopInstance.fromEnvironment()
+	// ProcessHandle binds the OS parent identity, including its start instant; no PID/name polling.
+	val owner = if (instance.networkOnly) {
+		ProcessHandle.current().parent().orElseThrow {
+			IllegalStateException("Network-only launch requires an observable parent process")
+		}.also {
+			check(it.info().startInstant().isPresent) { "Parent process start identity is unavailable" }
+		}
+	} else {
+		null
+	}
+	if (instance.networkOnly) require(args.none { it in listOf("--install", "-i", "--steam", "-s") }) { "Network-only launch cannot install or enable Steam integration" }
 	System.setProperty("awt.useSystemAAFontSettings", "on")
 	System.setProperty("swing.aatext", "true")
 
@@ -111,7 +126,8 @@ fun main(args: Array<String>) {
 		exitProcess(1)
 	}
 
-	val dir = OperatingSystem.resolveLogDirectory(SLIMEVR_IDENTIFIER)?.toFile()?.absoluteFile
+	val dir = instance.profile?.resolve("logs")?.toFile()?.absoluteFile
+		?: OperatingSystem.resolveLogDirectory(SLIMEVR_IDENTIFIER)?.toFile()?.absoluteFile
 		?: File("").absoluteFile
 	try {
 		LogManager.initialize(dir)
@@ -120,6 +136,8 @@ fun main(args: Array<String>) {
 	}
 	LogManager.info("Using log folder: $dir")
 	LogManager.info("Running version $VERSION")
+	LogManager.info("Desktop PID ${ProcessHandle.current().pid()}; network-only=${instance.networkOnly}")
+	owner?.let { LogManager.info("Owned by parent ${it.pid()} started ${it.info().startInstant().get()}") }
 	if (!SystemUtils.isJavaVersionAtLeast(org.apache.commons.lang3.JavaVersion.JAVA_17)) {
 		LogManager.severe("SlimeVR start-up error! A minimum of Java 17 is required.")
 		JOptionPane
@@ -153,17 +171,21 @@ fun main(args: Array<String>) {
 		installDrivers.runInstaller()
 	}
 
-	val configDir = resolveConfig()
+	val configDir = instance.profile?.let {
+		Files.createDirectories(it)
+		it.resolve(CONFIG_FILENAME).toString()
+	} ?: resolveConfig()
 	LogManager.info("Using config dir: $configDir")
 
 	val configManager = ConfigManager(configDir)
 	configManager.loadConfig()
+	instance.validateOutputs(configManager.vrConfig)
 
 	try {
-		DatagramSocket(configManager.vrConfig.server.trackerPort).close()
-		ServerSocket(21110).close()
+		DatagramSocket(instance.endpoints.trackerPort ?: configManager.vrConfig.server.trackerPort).close()
+		ServerSocket(instance.endpoints.webSocketPort).close()
 	} catch (e: IOException) {
-		val message = "SlimeVR start-up error! A required port (${configManager.vrConfig.server.trackerPort} and 21110) is busy. " +
+		val message = "SlimeVR start-up error! A required port (${configManager.vrConfig.server.trackerPort} and ${instance.endpoints.webSocketPort}) is busy. " +
 			"Make sure there is no other instance of SlimeVR Server running."
 		LogManager
 			.severe(message)
@@ -179,16 +201,18 @@ fun main(args: Array<String>) {
 	}
 	try {
 		val vrServer = VRServer(
-			::provideBridges,
+			{ server, trackers -> if (instance.networkOnly) emptySequence() else provideBridges(server, trackers) },
 			{ _ -> featureFlags },
-			{ _ -> DesktopSerialHandler() },
-			{ _ -> DesktopSerialFlashingHandler() },
-			{ _ -> DesktopVRCConfigHandler() },
-			{ _ -> DesktopNetworkProfileChecker() },
-			::getRunningProcesses,
+			{ _ -> if (instance.networkOnly) SerialHandlerStub() else DesktopSerialHandler() },
+			{ _ -> if (instance.networkOnly) null else DesktopSerialFlashingHandler() },
+			{ _ -> if (instance.networkOnly) VRCConfigHandlerStub() else DesktopVRCConfigHandler() },
+			{ _ -> if (instance.networkOnly) StubNetworkProfileChecker() else DesktopNetworkProfileChecker() },
+			{ if (instance.networkOnly) emptySequence() else getRunningProcesses() },
 			::tryOpenUri,
 			configManager = configManager,
+			endpoints = instance.endpoints,
 		)
+		owner?.onExit()?.thenRun { vrServer.interrupt() }
 
 		val monakaInputPath = if (mtpEnabled) {
 			System.getProperty("monaka.mtp.config")?.let { Path(it) }
@@ -207,6 +231,17 @@ fun main(args: Array<String>) {
 				registerAfterPose = { vrServer.afterPoseUpdate = it },
 				onTransition = { LogManager.info("[Monaka][${it.target}] $it") },
 				onDiagnostic = { LogManager.info(it.compactLine()) },
+				frameDiagnostics = dev.monaka.tracking.desktop.SameFrameDiagnostics::fromSystemProperty,
+				rawHmdSource = { tick, space, maxAge, clockDomain ->
+					val bridge = vrServer.getVRBridge { it is SteamVRBridge && it.getBridgeConfigKey() == "steamvr" } as? SteamVRBridge
+					bridge?.currentNormalRawHmdPoseInput(
+						space,
+						tick.nowNanos,
+						tick.trackerReceiptCutoffSystemNanos,
+						maxAge,
+						clockDomain,
+					)
+				},
 				configureDirectOutputs = { trackers ->
 					if (trackers.isNotEmpty()) {
 						val bridge = vrServer.getVRBridge { it is SteamVRBridge && it.getBridgeConfigKey() == "steamvr" } as? SteamVRBridge
@@ -231,23 +266,26 @@ fun main(args: Array<String>) {
 			}
 
 			vrServer.start()
-			// Start service for USB HID trackers
-			DesktopHIDManager(
-				"Sensors HID service",
-			) { tracker: Tracker -> vrServer.registerTracker(tracker) }
+			// Native discovery and output are explicit physical boundaries.
+			if (!instance.networkOnly) {
+				DesktopHIDManager(
+					"Sensors HID service",
+				) { tracker: Tracker -> vrServer.registerTracker(tracker) }
 
-			Keybinding(vrServer)
-			val scanner = thread {
+				Keybinding(vrServer)
+			}
+			val scanner = thread(isDaemon = instance.networkOnly) {
 				while (true) {
-					if (readln() == "exit") {
+					val line = readlnOrNull()
+					if (instance.shouldStopForInput(line)) {
 						vrServer.interrupt()
-						break
 					}
+					if (line == null || line == "exit") break
 				}
 			}
 
 			vrServer.join()
-			scanner.join()
+			if (!instance.networkOnly) scanner.join()
 		} finally {
 			mtpIntegration?.close()
 		}

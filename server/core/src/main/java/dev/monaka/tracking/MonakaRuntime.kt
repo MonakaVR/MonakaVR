@@ -15,8 +15,15 @@ class MonakaRuntime(
 	timeoutNanos: Long = 500_000_000,
 	maxImuSampleAgeNanos: Long? = null,
 	private val trackerReceiptClock: () -> Long = System::nanoTime,
+	private val bodyRotationTuning: RotationCorrectionTuning = RotationCorrectionTuning.normalRuntimeDefaults(),
+	excludedRotationTargets: Set<dev.slimevr.tracking.trackers.TrackerPosition> = emptySet(),
+	rotationReacquireDurationNanos: Long = ContinuityTuning().reacquireDurationNs,
 ) : AutoCloseable {
-	private val assignedImuFreshness = maxImuSampleAgeNanos?.let { AssignedImuSampleFreshness(assignments, it) }
+	private val bodyRotation = BodyRotationRuntime(expectedSpace, bodyRotationTuning.copy(maxImuSampleAgeNanos = timeoutNanos), excludedRotationTargets, rotationReacquireDurationNanos)
+	val bodyRotationResults get() = bodyRotation.results
+	fun convergeBodyRotations(tick: MonakaResolvedTickSnapshot, poses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>) = bodyRotation.recover(tick, captureSourceSnapshot(tick), poses)
+	fun correctBodyRotations(tick: MonakaResolvedTickSnapshot, poses: Map<dev.slimevr.tracking.trackers.TrackerPosition, ResolvedTrackingPose>) = bodyRotation.apply(tick, captureSourceSnapshot(tick), poses, mtp.capabilitiesSnapshot())
+	private val assignedImuFreshness = AssignedImuSampleFreshness(assignments, timeoutNanos, onlyExplicitPairs = maxImuSampleAgeNanos == null, legacyHipMaxAgeNanos = maxImuSampleAgeNanos)
 	val profiles = ObservationSourceProfileRegistry(
 		listOf(
 			ObservationSourceProfile.sixDof("slime", 0, Long.MAX_VALUE, Long.MAX_VALUE),
@@ -104,6 +111,7 @@ class MonakaRuntime(
 			pipeline.observations(tick.nowNanos, tick.assignment).associateBy { it.sourceId },
 			runner.sourceOwnersSnapshot(),
 			mtp.sourceContexts(),
+			mtp.samples(),
 		)
 	}
 

@@ -34,6 +34,62 @@ import kotlin.test.assertTrue
 import dev.slimevr.tracking.trackers.TrackerStatus as LocalStatus
 
 class InboundTransportSessionTests {
+	@Test fun normalHmdUsesCurrentFiniteCompleteMessageReceiptAndRejectsLostTransportAndHistory() {
+		val space = CoordinateSpace("uncalibrated", "rh_y_up_neg_z_forward", 0)
+		val bridge = Capture()
+		bridge.installHmd()
+		var session = bridge.open()
+		fun current(cutoff: Long = 100, maxAge: Long = 500) = bridge.currentNormalRawHmdPoseInput(space, 1_000_000, cutoff, maxAge)
+		fun send(message: ProtobufMessage) {
+			bridge.enqueue(message, session)
+			bridge.dataRead()
+		}
+		send(pose(1f))
+		val fresh = kotlin.test.assertNotNull(current())
+		assertEquals(Vector3(1f, 2f, 3f), fresh.position)
+		assertEquals(1_000_000, fresh.provenance.sampleAtNanos)
+		val reread = kotlin.test.assertNotNull(bridge.currentNormalRawHmdPoseInput(space, 1_000_100, 201, 500))
+		assertEquals(fresh.provenance, reread.provenance, "A second tick never remaps the same accepted sample")
+		assertNull(bridge.currentNormalRawHmdPoseInput(space, 1_000_501, 600, 500), "Mapped sample also expires without new input")
+		assertNull(current(cutoff = 99), "Future receipt")
+		assertNull(current(cutoff = 601), "Polling cannot refresh age")
+		for (invalid in listOf(
+			pose(1f).toBuilder().setPosition(pose(1f).position.toBuilder().clearY()).build(),
+			pose(Float.NaN),
+			pose(1f).toBuilder().setPosition(pose(1f).position.toBuilder().setQw(0f)).build(),
+			pose(1f).toBuilder().setPosition(pose(1f).position.toBuilder().clearX()).build(),
+		)) {
+			send(invalid)
+			assertNull(current(), "Malformed current message cannot reuse an older full pose")
+			send(pose(1f))
+			kotlin.test.assertNotNull(current())
+		}
+		send(
+			ProtobufMessage.newBuilder().setTrackerStatus(
+				dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder()
+					.setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.DISCONNECTED),
+			).build(),
+		)
+		assertNull(current(), "Actual lost status")
+		send(
+			ProtobufMessage.newBuilder().setTrackerStatus(
+				dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.newBuilder()
+					.setTrackerId(0).setStatus(dev.slimevr.desktop.platform.ProtobufMessages.TrackerStatus.Status.OK),
+			).build(),
+		)
+		assertNull(current(), "Status heartbeat does not restore old sample")
+		send(pose(2f))
+		kotlin.test.assertNotNull(current())
+		val old = session
+		bridge.close(session)
+		session = bridge.open()
+		assertNull(current(), "Transport change cannot revive history")
+		bridge.enqueue(pose(9f), old)
+		bridge.dataRead()
+		assertNull(current(), "Retired session accepted only by legacy history, never normal predictor")
+		send(pose(3f))
+		assertEquals(3f, kotlin.test.assertNotNull(current()).position.x)
+	}
 	private fun pose(x: Float) = ProtobufMessage.newBuilder().setPosition(
 		Position.newBuilder()
 			.setTrackerId(0).setX(x).setY(2f).setZ(3f).setQw(1f).setDataSource(Position.DataSource.FULL),

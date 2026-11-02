@@ -6,11 +6,15 @@ import { spawn } from 'node:child_process';
 import javaVersionJar from '../resources/java-version/JavaVersion.jar?asset&asarUnpack';
 import { existsSync } from 'node:fs';
 import { options } from './cli';
+import { desktopInstance } from './desktop-instance';
+
+export const instance = desktopInstance(options);
 
 const javaBin = getPlatform() === 'windows' ? 'java.exe' : 'java';
 export const CONFIG_IDENTIFIER = 'dev.slimevr.SlimeVR';
 
 export const getGuiDataFolder = () => {
+  if (instance.profile) return join(instance.profile, 'gui');
   const platform = getPlatform();
 
   switch (platform) {
@@ -32,6 +36,7 @@ export const getGuiDataFolder = () => {
 };
 
 export const getServerDataFolder = () => {
+  if (instance.profile) return instance.profile;
   const platform = getPlatform();
 
   switch (platform) {

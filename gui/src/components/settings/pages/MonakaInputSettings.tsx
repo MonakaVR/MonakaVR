@@ -2,6 +2,7 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { InputSelectionController } from '@/monaka-input/controller';
 import { MonakaInputSocket } from '@/monaka-input/socket';
 import { Button } from '@/components/commons/Button';
+import { useLocalization } from '@fluent/react';
 
 export function MonakaInputPanel({
   model,
@@ -9,14 +10,18 @@ export function MonakaInputPanel({
   model: InputSelectionController;
 }) {
   const state = useSyncExternalStore(model.subscribe, () => model.state);
+  const { l10n } = useLocalization();
+  const text = (key: string) => l10n.getString(`monaka-input-${key}`);
   const { snapshot, draft, busy, dirty } = state;
   const options = (kind: 'q' | 'six') => {
     const selected = kind === 'q' ? draft.qSource : draft.sixDofSource;
     return (
       <>
-        <option value="">Unassigned</option>
+        <option value="">{text('unassigned')}</option>
         {selected && !snapshot?.candidates.some((x) => x.id === selected) && (
-          <option value={selected}>Saved source (offline): {selected}</option>
+          <option value={selected}>
+            {text('saved-offline')}: {selected}
+          </option>
         )}
         {snapshot?.candidates.map((source) => (
           <option
@@ -29,7 +34,8 @@ export function MonakaInputPanel({
             {[source.publisher, source.source, source.tracker]
               .filter(Boolean)
               .join(' / ')}{' '}
-            — {source.capabilities?.join(', ') || 'support unknown'}
+            — {source.capabilities?.join(', ') || text('support-unknown')}
+            {source.conflict ? ` — ${text('conflict')}` : ''}
           </option>
         ))}
       </>
@@ -38,21 +44,17 @@ export function MonakaInputPanel({
   return (
     <section
       aria-labelledby="monaka-input-title"
-      className="bg-background-70 text-background-10 rounded-lg p-5 space-y-4"
+      className="bg-background-70 text-background-10 rounded-lg p-5 space-y-4 min-w-0 break-words"
     >
       <h2 id="monaka-input-title" className="text-xl font-bold">
-        Q and 6DoF sources
+        {text('title')}
       </h2>
-      <p>
-        6DoF Main supplies its paired pose while usable. The Q source provides
-        rotation when Main is unavailable. Orientation support does not
-        establish an independent IMU.
-      </p>
+      <p>{text('semantics')}</p>
       <label className="block">
-        Body target{' '}
+        {text('body')}{' '}
         <select
-          className="bg-background-80 text-background-10 rounded px-2 py-1"
-          aria-label="Input body target"
+          className="bg-background-80 text-background-10 rounded px-2 py-1 max-w-full"
+          aria-label={text('body-label')}
           value={draft.body}
           disabled={!snapshot || busy || dirty}
           onChange={(e) => model.selectBody(e.target.value)}
@@ -63,69 +65,88 @@ export function MonakaInputPanel({
         </select>
       </label>
       <label className="block">
-        Q Source{' '}
+        {text('q')}{' '}
         <select
-          className="bg-background-80 text-background-10 rounded px-2 py-1"
-          aria-label="Q Source"
+          className="bg-background-80 text-background-10 rounded px-2 py-1 max-w-full"
+          aria-label={text('q')}
           value={draft.qSource ?? ''}
-          disabled={!snapshot || busy}
+          disabled={!model.canEdit}
           onChange={(e) => model.selectQ(e.target.value || null)}
         >
           {options('q')}
         </select>
       </label>
       <label className="block">
-        6DoF Source{' '}
+        {text('six')}{' '}
         <select
-          className="bg-background-80 text-background-10 rounded px-2 py-1"
-          aria-label="6DoF Source"
+          className="bg-background-80 text-background-10 rounded px-2 py-1 max-w-full"
+          aria-label={text('six')}
           value={draft.sixDofSource ?? ''}
-          disabled={!snapshot || busy}
+          disabled={!model.canEdit}
           onChange={(e) => model.selectSix(e.target.value || null)}
         >
           {options('six')}
         </select>
       </label>
-      <p>
-        On the first Q selection, a confirmed Pos+Q source also fills 6DoF.
-        Manual choices and cleared fields remain saved through loss and
-        reconnect.
-      </p>
-      <div className="flex gap-3">
+      <p>{text('selection-help')}</p>
+      <div className="flex flex-wrap gap-3">
         <Button
           variant="primary"
-          disabled={!dirty || busy || state.needsReload}
+          disabled={!dirty || !model.canEdit}
           onClick={() => void model.save()}
         >
-          Save input choices
+          {text('save')}
         </Button>
         <Button
           variant="secondary"
           disabled={!dirty || busy || state.needsReload}
           onClick={() => model.cancel()}
         >
-          Cancel input changes
+          {text('cancel')}
         </Button>
         <Button
           variant="secondary"
           disabled={busy}
           onClick={() => void model.load(true)}
         >
-          Reload input choices
+          {text('reload')}
         </Button>
       </div>
       {state.error && <p role="alert">{state.error}</p>}
-      {!snapshot && (
-        <p>Waiting for the explicitly enabled Monaka input runtime.</p>
+      <p>{text('readback')}</p>
+      {snapshot?.restartRequired && (
+        <p role="status">
+          {l10n.getString('monaka-tracking-restart-required')}
+        </p>
       )}
-      <ul aria-label="Current input usability">
+      {snapshot && !state.snapshotFresh && <p role="status">{text('stale')}</p>}
+      {!snapshot && <p>{text('waiting')}</p>}
+      <ul aria-label={text('usability')}>
         {snapshot?.candidates.map((source) => (
           <li key={source.id}>
             {[source.publisher, source.source, source.tracker]
               .filter(Boolean)
               .join(' / ')}
-            : Q {source.qUsableNow ? 'valid now' : 'invalid now'}, 6DoF{' '}
-            {source.sixDofUsableNow ? 'valid now' : 'invalid now'}
+            : Q{' '}
+            {text(
+              !state.snapshotFresh
+                ? 'unknown'
+                : source.qUsableNow
+                  ? 'valid'
+                  : 'invalid'
+            )}
+            , 6DoF{' '}
+            {text(
+              !state.snapshotFresh
+                ? 'unknown'
+                : source.sixDofUsableNow
+                  ? 'valid'
+                  : 'invalid'
+            )}
+            {source.conflict ? ` — ${text('conflict')}` : ''}
+            {source.capabilities === null
+              ? ` — ${text('support-unknown')}`
+              : ''}
           </li>
         ))}
       </ul>

@@ -10,16 +10,24 @@ export interface InputCandidate {
   qUsableNow: boolean;
   sixDofUsableNow: boolean;
   origin: string;
+  slimeTrackerId?: {
+    deviceId: { id: number } | null;
+    trackerNum: number;
+  } | null;
 }
 export interface InputAssignment {
   body: string;
   qSource: string | null;
   sixDofSource: string | null;
+  savedManualSix?: boolean;
+  savedQSource?: string | null;
+  savedSixDofSource?: string | null;
   manualSix: boolean;
   mode: string;
 }
 export interface InputSnapshot {
   generation: string;
+  restartRequired?: boolean;
   bodies: string[];
   candidates: InputCandidate[];
   assignments: InputAssignment[];
@@ -30,14 +38,17 @@ export interface InputApi {
 export class InputSelectionController {
   state: {
     snapshot: InputSnapshot | null;
+    snapshotFresh: boolean;
     draft: InputAssignment;
     generation: string;
     dirty: boolean;
     busy: boolean;
     error: string;
     needsReload: boolean;
+    qEdited: boolean;
   } = {
     snapshot: null,
+    snapshotFresh: false,
     draft: {
       body: 'HIP',
       qSource: null,
@@ -50,6 +61,7 @@ export class InputSelectionController {
     busy: false,
     error: '',
     needsReload: false,
+    qEdited: false,
   };
   private listeners = new Set<() => void>();
   private epoch = 0;
@@ -57,6 +69,15 @@ export class InputSelectionController {
   private loading = false;
   private reloadRequested = false;
   constructor(private api: InputApi) {}
+  get canEdit() {
+    return (
+      this.state.snapshot !== null &&
+      this.state.snapshotFresh &&
+      !this.state.snapshot.restartRequired &&
+      !this.state.busy &&
+      !this.state.needsReload
+    );
+  }
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -68,11 +89,18 @@ export class InputSelectionController {
   private reset(body = this.state.draft.body) {
     const saved = this.state.snapshot?.assignments.find((x) => x.body === body);
     this.state.draft = saved
-      ? { ...saved }
+      ? { ...saved,
+          ...(this.state.snapshot?.restartRequired ? {
+            qSource: saved.savedQSource === undefined ? saved.qSource : saved.savedQSource,
+            sixDofSource: saved.savedSixDofSource === undefined ? saved.sixDofSource : saved.savedSixDofSource,
+            manualSix: saved.savedManualSix ?? saved.manualSix,
+          } : {}),
+        }
       : { body, qSource: null, sixDofSource: null, manualSix: false, mode: 'ik' };
     this.autoConsidered = !!saved;
     this.state.generation = this.state.snapshot?.generation ?? '0';
     this.state.dirty = false;
+    this.state.qEdited = false;
   }
   async load(discardDraft = false) {
     if (this.loading) {
@@ -94,6 +122,7 @@ export class InputSelectionController {
       const snapshot = await this.api.request({ action: 'snapshot' });
       if (epoch !== this.epoch) return;
       this.state.snapshot = snapshot;
+      this.state.snapshotFresh = true;
       if (discardDraft || !this.state.dirty) this.reset();
       if (discardDraft) this.state.needsReload = false;
       if (!this.state.needsReload)
@@ -102,11 +131,14 @@ export class InputSelectionController {
             ? 'Assignments changed. Reload before saving.'
             : '';
     } catch (error) {
-      if (epoch === this.epoch)
+      if (epoch === this.epoch) {
+        this.state.snapshotFresh = false;
         this.state.error = String(error instanceof Error ? error.message : error);
+      }
     } finally {
       this.loading = false;
-      this.state.busy = false;
+      // A save may now own the UI lock; its completion must release it.
+      if (epoch === this.epoch) this.state.busy = false;
       if (this.reloadRequested) {
         this.reloadRequested = false;
         await this.load(true);
@@ -124,7 +156,7 @@ export class InputSelectionController {
     this.notify();
   }
   selectQ(id: string | null) {
-    if (this.state.busy || !this.state.snapshot) return;
+    if (!this.canEdit || !this.state.snapshot) return;
     const source = this.state.snapshot.candidates.find((x) => x.id === id);
     if (id !== null && !source?.qSelectable) return;
     const draft = { ...this.state.draft, qSource: id };
@@ -134,11 +166,12 @@ export class InputSelectionController {
       this.autoConsidered = true;
     }
     this.state.draft = draft;
+    this.state.qEdited = true;
     this.state.dirty = true;
     this.notify();
   }
   selectSix(id: string | null) {
-    if (this.state.busy || !this.state.snapshot) return;
+    if (!this.canEdit || !this.state.snapshot) return;
     if (
       id !== null &&
       !this.state.snapshot.candidates.find((x) => x.id === id)?.sixDofSelectable
@@ -156,14 +189,15 @@ export class InputSelectionController {
     this.state.error = '';
     this.notify();
   }
-  async save() {
+  async save(): Promise<boolean> {
     if (
+      !this.canEdit ||
       !this.state.dirty ||
       this.state.busy ||
       this.state.needsReload ||
       !this.state.snapshot
     )
-      return;
+      return false;
     this.epoch++;
     this.state.busy = true;
     this.state.error = '';
@@ -177,11 +211,28 @@ export class InputSelectionController {
         sixDofSource: this.state.draft.sixDofSource,
         manualSix: this.state.draft.manualSix,
       });
+      const active = snapshot.assignments.find((x) => x.body === this.state.draft.body);
+      const saved = active && snapshot.restartRequired ? {
+        ...active,
+        qSource: active.savedQSource === undefined ? active.qSource : active.savedQSource,
+        sixDofSource: active.savedSixDofSource === undefined ? active.sixDofSource : active.savedSixDofSource,
+        manualSix: active.savedManualSix ?? active.manualSix,
+      } : active;
+      if (
+        (saved?.qSource ?? null) !== this.state.draft.qSource ||
+        (saved?.sixDofSource ?? null) !== this.state.draft.sixDofSource ||
+        (!!saved && saved.manualSix !== this.state.draft.manualSix)
+      )
+        throw new Error('Core saved readback differs from the requested choices.');
       this.state.snapshot = snapshot;
+      this.state.snapshotFresh = true;
       this.reset();
+      return true;
     } catch (error) {
+      this.state.snapshotFresh = false;
       this.state.needsReload = true;
       this.state.error = `${error instanceof Error ? error.message : String(error)} Reload to confirm the saved state before retrying.`;
+      return false;
     } finally {
       this.state.busy = false;
       this.notify();

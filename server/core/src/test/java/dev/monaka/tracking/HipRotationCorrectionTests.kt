@@ -504,4 +504,34 @@ class HipRotationCorrectionTests {
 		assertEquals(ApplicationDecision.NOT_REQUESTED, c.applicationDecision)
 		assertEquals("owner_not_fallback", c.applicationReason)
 	}
+
+	@Test fun legacyTeacher120msQ20msLearnsOnlyNewPairsAcrossIntermediatePolls() {
+		val t = RotationCorrectionTuning.normalRuntimeDefaults().copy(maxImuSampleAgeNanos = 500_000_000)
+		val c = controller(t)
+		step(c, 1, 1_000_000)
+		var mainSequence = 1L
+		var mainAt = 1_000_000L
+		for (n in 1..180) {
+			val at = 1_000_000L + n * 20_000_000L
+			val newTeacher = n % 6 == 0
+			if (newTeacher) {
+				mainSequence++
+				mainAt = at
+			}
+			val learned = c.lastLearnedAtNanos
+			val correction = c.correction
+			c.update(sample(mainId, mainSequence, mainAt, halfYaw, true), sample(imuId, n + 1L, at, identity), mainId, at, 1, space)
+			if (newTeacher) {
+				assertEquals(LearningDecision.ACCEPTED, c.learningDecision)
+			} else {
+				assertEquals(LearningDecision.REJECTED, c.learningDecision)
+				assertEquals(learned, c.lastLearnedAtNanos)
+				assertEquals(correction, c.correction)
+			}
+		}
+		assertTrue(c.ready)
+		assertEquals(mainAt, c.lastLearnedAtNanos)
+		c.update(sample(mainId, mainSequence + 1, mainAt + 20_000_000, halfYaw, true), sample(imuId, 182, mainAt + 60_000_000, identity), mainId, mainAt + 60_000_000, 1, space)
+		assertEquals("pair_time_invalid", c.learningReason)
+	}
 }

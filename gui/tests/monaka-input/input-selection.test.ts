@@ -55,6 +55,23 @@ class Api implements InputApi {
     return structuredClone(this.value);
   }
 }
+test('pending restart verifies persisted choices separately from the active runtime', async () => {
+  const api = new Api();
+  api.value.assignments = [{ body: 'HIP', qSource: 'q-only', sixDofSource: 'publisher-a', manualSix: true, mode: 'hybrid' }];
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectSix('publisher-b');
+  api.request = async (fields) => {
+    assert.equal(fields.action, 'save');
+    return { ...structuredClone(api.value), restartRequired: true,
+      assignments: [{ ...api.value.assignments[0], savedQSource: 'q-only', savedSixDofSource: 'publisher-b', savedManualSix: true }] };
+  };
+  assert.equal(await model.save(), true);
+  assert.equal(model.state.snapshot!.assignments[0].sixDofSource, 'publisher-a');
+  assert.equal(model.state.draft.sixDofSource, 'publisher-b');
+  assert.equal(model.canEdit, false);
+  assert.equal(await model.save(), false);
+});
 test('explicit reload blocks editing and survives an in-flight metadata request', async () => {
   const api = new Api();
   const model = new InputSelectionController(api);
@@ -187,4 +204,96 @@ test('another writer generation never overwrites the dirty draft or the saved as
   await model.save();
   assert.equal(api.value.assignments[0].qSource, 'publisher-b');
   assert.equal(model.state.needsReload, true);
+});
+
+test('an older metadata request cannot unlock an in-flight save', async () => {
+  const api = new Api();
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectQ('publisher-a');
+  const staleSnapshot = structuredClone(api.value);
+  let finishLoad!: (value: InputSnapshot) => void;
+  let finishSave!: () => void;
+  const request = api.request.bind(api);
+  api.request = async (fields) => {
+    if (fields.action === 'snapshot')
+      return new Promise<InputSnapshot>((resolve) => {
+        finishLoad = resolve;
+      });
+    await new Promise<void>((resolve) => {
+      finishSave = resolve;
+    });
+    return request(fields);
+  };
+  const loading = model.load();
+  const saving = model.save();
+  finishLoad(staleSnapshot);
+  await loading;
+  try {
+    assert.equal(model.state.busy, true);
+    model.selectQ('publisher-b');
+    model.selectSix(null);
+    model.cancel();
+    await model.save();
+    assert.equal(model.state.draft.qSource, 'publisher-a');
+    assert.equal(model.state.draft.sixDofSource, 'publisher-a');
+  } finally {
+    finishSave();
+    await saving;
+  }
+  assert.equal(api.saves.length, 1);
+  assert.equal(model.state.busy, false);
+  assert.equal(model.state.generation, '1');
+  assert.equal(model.state.draft.qSource, 'publisher-a');
+  assert.equal(model.state.dirty, false);
+});
+
+test('pending Core restart blocks input edits without attempting a write', async () => {
+  const api = new Api();
+  Object.assign(api.value, { restartRequired: true });
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectQ('publisher-a');
+  model.selectSix('publisher-b');
+  await model.save();
+  assert.equal(model.state.draft.qSource, null);
+  assert.equal(model.state.draft.sixDofSource, null);
+  assert.equal(api.saves.length, 0);
+});
+
+test('failed catalog read retains identities but blocks edits and writes until readback', async () => {
+  const api = new Api();
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectQ('publisher-a');
+  const savedRequest = api.request.bind(api);
+  api.request = async (fields) => {
+    if (fields.action === 'snapshot') throw new Error('Core disconnected');
+    return savedRequest(fields);
+  };
+  await model.load();
+  model.selectQ('publisher-b');
+  await model.save();
+  assert.equal(model.state.draft.qSource, 'publisher-a');
+  assert.equal(api.saves.length, 0);
+  assert.equal(Reflect.get(model.state, 'snapshotFresh'), false);
+  api.request = savedRequest;
+  await model.load();
+  assert.equal(Reflect.get(model.state, 'snapshotFresh'), true);
+  assert.equal(model.state.draft.qSource, 'publisher-a');
+  await model.save();
+  assert.equal(api.saves.length, 1);
+});
+
+test('restart notification during a draft preserves it and blocks the write', async () => {
+  const api = new Api();
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectQ('q-only');
+  Object.assign(api.value, { restartRequired: true });
+  await model.load();
+  await model.save();
+  assert.equal(model.state.draft.qSource, 'q-only');
+  assert.equal(model.state.dirty, true);
+  assert.equal(api.saves.length, 0);
 });

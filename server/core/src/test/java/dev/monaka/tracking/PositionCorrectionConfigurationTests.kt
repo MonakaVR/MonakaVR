@@ -155,7 +155,7 @@ class PositionCorrectionConfigurationTests {
 	}
 
 	@TestFactory fun missingEveryFieldFailsClosed(): List<DynamicTest> = objects(document()).flatMap { (path, obj) ->
-		obj.fieldNames().asSequence().map { field ->
+		obj.fieldNames().asSequence().filter { !(path == "/positionCorrection/rawImuSpace" && it == "confirmed") }.map { field ->
 			DynamicTest.dynamicTest("missing $path/$field") {
 				reject(path) { it.remove(field) }
 			}
@@ -190,7 +190,9 @@ class PositionCorrectionConfigurationTests {
 			reject("/positionCorrection") { it.set<JsonNode>("enabled", value) }
 			reject("/positionCorrection/rawImuSpace") { it.set<JsonNode>("confirmed", value) }
 		}
-		reject("/positionCorrection/rawImuSpace") { it.put("confirmed", false) }
+		val unconfirmed = document()
+		node(unconfirmed, "/positionCorrection/rawImuSpace").put("confirmed", false)
+		assertFalse(load(unconfirmed).positionCorrection!!.rawImuSpace.operatorConfirmed)
 		val root = document(null)
 		root.putObject("positionCorrection").put("enabled", false).put("staleCalibration", "forbidden")
 		assertFails { load(root) }
@@ -294,10 +296,11 @@ class PositionCorrectionConfigurationTests {
 	}
 
 	@Test fun sourceAndExactSpaceBindingsFailClosed() {
-		reject("/positionCorrection/rawImuSpace") { it.put("sourceId", "slime:other") }
-		reject("/positionCorrection/mainMountCalibration") { it.put("sourceId", "mtp:other") }
-		reject("/positionCorrection/rawImuSpace/space") { it.put("id", "other") }
-		reject("/positionCorrection/rawImuSpace/space") { it.put("revision", space.revision + 1) }
+		val retained = document()
+		node(retained, "/positionCorrection/rawImuSpace").put("sourceId", "slime:other")
+		node(retained, "/positionCorrection/mainMountCalibration").put("sourceId", "mtp:other")
+		node(retained, "/positionCorrection/rawImuSpace/space").put("id", "other").put("revision", space.revision + 1)
+		assertEquals("mtp:other", load(retained).positionCorrection!!.mainMountCalibration.sourceId)
 		reject("/positionCorrection/rawImuSpace/space") { it.put("convention", "other") }
 		reject("/positionCorrection/rawImuSpace/space") { it.put("revision", 4294967296L) }
 	}
@@ -312,7 +315,7 @@ class PositionCorrectionConfigurationTests {
 			TrackerBodyAssignments().also { it.configure(TrackerPosition.HIP, main, TrackerReference.slime("other")) },
 			TrackerBodyAssignments().also { it.configure(TrackerPosition.HIP, TrackerReference.mtp(LogicalTracker("other", "m", "p")), fallback) },
 		)
-		invalid.forEach { assertFails { MonakaConfiguration(space, it, positionCorrection = correction()) } }
+		invalid.forEach { assertNotNull(MonakaConfiguration(space, it, positionCorrection = correction()).positionCorrection) }
 	}
 
 	@Test fun outputModesAreNotOverconstrainedAndRotationRemainsIndependent() {
@@ -331,7 +334,7 @@ class PositionCorrectionConfigurationTests {
 		}
 		assertEquals(original.rotationCorrection, loaded.rotationCorrection)
 		assertEquals(original.positionCorrection, loaded.positionCorrection)
-		assertFails { MonakaConfiguration(space, assignments(), rotationCorrection = rotation(), positionCorrection = correction()) }
+		assertNotNull(MonakaConfiguration(space, assignments(), rotationCorrection = rotation(), positionCorrection = correction()).positionCorrection)
 		// Position-only does not infer or require Rotation Correction's separate alignment assertion.
 		assertNotNull(MonakaConfiguration(space, assignments(), positionCorrection = correction()).positionCorrection)
 	}
@@ -352,7 +355,7 @@ class PositionCorrectionConfigurationTests {
 		assertFails { explicit.fixedCalibration.copy(hmdToHeadAnchorOrientationWxyz = Quaternion(Float.NaN, 0f, 0f, 0f)) }
 		assertFails { explicit.fixedCalibration.copy(hmdToHeadAnchorLocalOffsetMeters = Vector3(Float.POSITIVE_INFINITY, 0f, 0f)) }
 		assertFails { explicit.mainMountCalibration.copy(trackerToHipCenterLocalOffsetMeters = Vector3(Float.NaN, 0f, 0f)) }
-		assertFails { explicit.rawImuSpace.copy(operatorConfirmed = false) }
+		assertFalse(explicit.rawImuSpace.copy(operatorConfirmed = false).operatorConfirmed)
 		assertFails { explicit.learningTuning.copy(trackingTauSeconds = Double.NaN) }
 		assertFails { explicit.predictorPolicy.copy(maxHmdSampleAgeNanos = -1) }
 		assertFails { explicit.pairingPolicy.copy(maxTeacherAgeNanos = -1) }
@@ -430,8 +433,9 @@ class PositionCorrectionConfigurationTests {
 		config.save(path)
 		val before = Files.readAllBytes(path)
 		config.assignments.configure(TrackerPosition.HIP, main, TrackerReference.slime("changed"), OutputMode.HYBRID)
-		assertFails { config.save(path) }
-		assertContentEquals(before, Files.readAllBytes(path))
+		config.save(path)
+		assertEquals("slime:changed", MonakaConfiguration.load(path).assignments.snapshot().targets.getValue(TrackerPosition.HIP).rotationFallbackTracker!!.observationId)
+		assertEquals(config.positionCorrection, MonakaConfiguration.load(path).positionCorrection)
 		assertFalse(Files.exists(path.resolveSibling("config.json.pending")))
 	}
 

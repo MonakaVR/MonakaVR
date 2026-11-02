@@ -30,6 +30,8 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	private val hmdPositionReceiptClock: () -> Long = System::nanoTime,
 ) : ISteamVRBridge {
 	private val rawHmdPositions = dev.monaka.tracking.desktop.TrustedRawHmdPositionSource(bridgeName)
+	private data class NormalHmdReceiptKey(val sourceEpoch: String, val transportEpoch: String?, val sequence: Long)
+	private val normalHmdReceiptTimes = java.util.WeakHashMap<Any, Pair<NormalHmdReceiptKey, Long>>()
 
 	/** Creation-boundary registration, not classification by HEAD role or isComputed alone. */
 	@VRServerThread
@@ -44,6 +46,44 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	/** Active-session acceptance candidate only; does not establish structural usability or freshness. */
 	fun acceptedCurrentSessionHmdPositionSample() = currentSessionHmdSample(rawHmdPositions::currentPositionSnapshot)
 	fun acceptedCurrentSessionHmdPoseMessageSample() = currentSessionHmdSample(rawHmdPositions::currentPoseMessageSnapshot)
+
+	/** Current same-message P/Q with mapped host receipt age. No physical frame
+	 * certification is implied: the consumer's saved coordinate interpretation applies.
+	 */
+	@VRServerThread
+	fun currentNormalRawHmdPoseInput(
+		space: dev.monaka.protocol.v2.CoordinateSpace,
+		nowNanos: Long,
+		receiptCutoffSystemNanos: Long,
+		maxAgeNanos: Long,
+		runtimeClockDomain: Any = this,
+	): dev.monaka.tracking.RawHmdPoseInput? {
+		if (space.convention != "rh_y_up_neg_z_forward" || nowNanos < 0 || maxAgeNanos < 0) return null
+		val p = currentSessionHmdSample(rawHmdPositions::currentUsablePoseMessageSnapshot) ?: return null
+		val age = try {
+			Math.subtractExact(receiptCutoffSystemNanos, p.receivedAtSystemNanos)
+		} catch (_: ArithmeticException) {
+			return null
+		}
+		if (age < 0 || age > maxAgeNanos || age > nowNanos) return null
+		val key = NormalHmdReceiptKey(p.sourceEpoch, p.transportSessionEpoch, p.sequence)
+		val sampleAt = normalHmdReceiptTimes[runtimeClockDomain]?.takeIf { it.first == key }?.second
+			?: (nowNanos - age).also { normalHmdReceiptTimes[runtimeClockDomain] = key to it }
+		if (sampleAt > nowNanos || nowNanos - sampleAt > maxAgeNanos) return null
+		return dev.monaka.tracking.RawHmdPoseInput(
+			p.ingressIdentity,
+			p.position,
+			p.orientation.unit(),
+			space,
+			dev.monaka.tracking.ObservationSampleProvenance(
+				p.sequence,
+				sampleAt,
+				"${p.sourceEpoch}:${p.transportSessionEpoch}",
+				"consumer-saved-frame",
+				space = space,
+			),
+		)
+	}
 
 	/** Generic production ingress has no authoritative frame reference. No operator override. */
 	fun rawHmdPoseInputCapability(): RawHmdPoseInputCapability = rawHmdPositions.rawHmdPoseInputCapability
@@ -330,7 +370,10 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 			}
 			tracker.sampleModality = modality
 			val isCurrentSession = transportSession != null && transportSession === currentInboundTransportSession()
-			if (isCurrentSession && !positionMessage.hasX()) rawHmdPositions.invalidateCurrentCandidate(tracker, discardTransportEvidence = true)
+			if (isCurrentSession && !positionMessage.hasX()) {
+				rawHmdPositions.invalidateCurrentCandidate(tracker, discardTransportEvidence = true)
+				rawHmdPositions.invalidateNormalCandidate(tracker)
+			}
 			if (positionMessage.hasX()) {
 				val acceptedPosition = Vector3(
 					positionMessage.x,

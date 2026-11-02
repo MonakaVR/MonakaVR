@@ -181,10 +181,10 @@ class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) 
 			config.space,
 			config.operatorConfirmedBodyFrames,
 		),
-		RotationCorrectionTuning(
-			150_000_000, 20_000_000,
-			config.rotationTrackingTauSeconds, config.rotationRecoveryTauSeconds, Math.PI, .2,
-			config.maxAngularCorrectionRate, 2, 1_000_000_000, 100_000_000,
+		RotationCorrectionTuning.normalRuntimeDefaults().copy(
+			trackingTauSeconds = config.rotationTrackingTauSeconds,
+			recoveryTauSeconds = config.rotationRecoveryTauSeconds,
+			maxRadiansPerSecond = config.maxAngularCorrectionRate,
 		),
 	)
 	private val background = BackgroundIkPoseReader(poseManager.skeleton, BackgroundIkAlignment.confirmedSameSpace(config.space))
