@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Quick', 'Full')]
+    [ValidateSet('Quick', 'Full', 'Audit')]
     [string]$Mode = 'Quick',
     [string]$ResultsDir = ''
 )
@@ -71,6 +71,12 @@ if ($Mode -eq 'Quick') {
             '--tests','dev.monaka.tracking.ConstraintResolverTests',
             '--tests','dev.monaka.tracking.SlimeTrackerPoseObservationAdapterTests',
             '--tests','dev.monaka.tracking.revision.*',
+            '--tests','dev.monaka.tracking.MtpObservationBackendTests',
+            '--tests','dev.monaka.tracking.MtpRotationOnlyDownstreamTests',
+            '--tests','dev.monaka.tracking.OutputContinuityTests',
+            '--tests','dev.monaka.tracking.SolverPositionReferenceSemanticsTests',
+            '--tests','dev.slimevr.unit.PositionalIK6DoFTests',
+            '--tests','dev.slimevr.unit.PositionalIKMultiConstraintTests',
             '--no-daemon'
         )
     }
@@ -88,6 +94,13 @@ else {
     }
 }
 
+# Product Quick/Full: executable behavior, IK, and synthetic process E2E.
+# Audit: historical source/kit and release-tooling checks (not hardware HIL).
+if ($Mode -ne 'Audit') {
+    $AuditOnly = @('release-tooling', 'release-tooling-optimized', 'protocol-v2-kit')
+    $Steps = @($Steps | Where-Object { $_.Name -notin $AuditOnly })
+}
+
 foreach ($step in $Steps) {
     if (-not (Invoke-RevisionStep -Name $step.Name -FilePath $step.File -Arguments $step.Args)) {
         $FailedStep = $step.Name
@@ -102,6 +115,9 @@ $summary = [ordered]@{
     repo = 'MonakaVR/MonakaVR'
     head = $head
     mode = $Mode
+    validation_lane = $(if ($Mode -eq 'Audit') { 'HISTORICAL_SOURCE_POLICY_AUDIT' } else { 'PRODUCT_SOFTWARE' })
+    source_scope_checks = $(if ($Mode -eq 'Audit') { 'INCLUDED' } else { 'NOT_RUN_SEPARATE_AUDIT' })
+    calibration_policy_migration = 'NOT_VERIFIED - see MonakaVR/MonakaBridge issue #17'
     result = $result
     failed_step = $FailedStep
     started_utc = $StartedUtc.ToString('o')
