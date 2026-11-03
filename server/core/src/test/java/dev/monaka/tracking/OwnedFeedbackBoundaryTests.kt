@@ -46,7 +46,7 @@ class OwnedFeedbackBoundaryTests {
 			null, id, name, trackerPosition = TrackerPosition.HIP,
 			hasPosition = true, hasRotation = true, trackRotDirection = false,
 		).also { it.status = TrackerStatus.OK }
-		for (name in listOf("opaque", "unrelated:tracker", "日本語", "reused-id")) {
+		for (name in listOf("opaque", "unrelated:tracker", "日本語", "reused-id", "monaka-direct:opaque", "monaka-solver:opaque", "monaka-private:opaque", "human://opaque")) {
 			val owned = tracker(name)
 			val external = tracker(name)
 			assertTrue(FeedbackExclusion.accepts(owned))
@@ -92,4 +92,37 @@ class OwnedFeedbackBoundaryTests {
 		assertFalse(FeedbackExclusion.isOwnedOutput(hmd))
 		assertNotNull(SlimeTrackerPoseObservationAdapter().adapt(hmd, 100))
 	}
+	@Test fun retainedDirectOutputCannotBeReusedAfterCloseAndDoesNotPoisonIdenticalExternalIds() {
+		val assignments = TrackerBodyAssignments().also {
+			it.configure(TrackerPosition.HIP, TrackerReference.slime("physical"), outputMode = OutputMode.DIRECT)
+		}
+		val output = DirectConstraintOutput(assignments.snapshot(), space) { 42 }
+		val retained = output.trackers.getValue(TrackerPosition.HIP)
+		output.close()
+		val external = Tracker(null, retained.id, retained.name, trackerPosition = TrackerPosition.HIP, hasPosition = true, hasRotation = true).also { it.status = TrackerStatus.OK }
+		repeat(3) {
+			assertTrue(FeedbackExclusion.isOwnedOutput(retained))
+			assertNull(SlimeTrackerPoseObservationAdapter().adapt(retained, 100))
+			assertEquals(
+				SlimeImuCaptureRejection.OUTPUT_SOURCE_NOT_ALLOWED,
+				assertIs<SlimeImuCaptureResult.Unavailable>(SlimeIndependentImuOrientationCapture { error("Output must not sample capture clock") }.capture(retained, 100)).reason,
+			)
+			assertNotNull(SlimeTrackerPoseObservationAdapter().adapt(external, 100))
+		}
+	}
+
+	@Test fun explicitLocalOutputPoseIsExcludedEvenWithoutRegistryOrSpecialName() {
+		val tracker = Tracker(null, 22, "opaque", trackerPosition = TrackerPosition.HIP, hasPosition = true, hasRotation = true).also {
+			it.status = TrackerStatus.OK
+			it.monakaOutputPose = OutputPose(TrackerPosition.HIP, space)
+		}
+		assertFalse(FeedbackExclusion.isOwnedOutput(tracker))
+		assertFalse(FeedbackExclusion.accepts(tracker))
+		assertNull(SlimeTrackerPoseObservationAdapter().adapt(tracker, 100))
+		assertEquals(
+			SlimeImuCaptureRejection.OUTPUT_SOURCE_NOT_ALLOWED,
+			assertIs<SlimeImuCaptureResult.Unavailable>(SlimeIndependentImuOrientationCapture { error("Output must not sample capture clock") }.capture(tracker, 100)).reason,
+		)
+	}
+
 }

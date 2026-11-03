@@ -10,7 +10,6 @@ import dev.monaka.tracking.ConstraintResolver
 import dev.monaka.tracking.ContinuityPolicy
 import dev.monaka.tracking.ContinuityTuning
 import dev.monaka.tracking.EffectiveConstraint
-import dev.monaka.tracking.FeedbackExclusion
 import dev.monaka.tracking.HipBodyModelSnapshotResult
 import dev.monaka.tracking.HipRotationCorrection
 import dev.monaka.tracking.MainDecoupledHipInput
@@ -88,7 +87,7 @@ data class CorePocHilConfig(
 ) {
 	init {
 		require(listOf(mainSourceId, imuSourceId, hmdSourceId).distinct().size == 3)
-		require(listOf(mainSourceId, imuSourceId, hmdSourceId).all { it.isNotBlank() && !FeedbackExclusion.isOutput(it) })
+		require(listOf(mainSourceId, imuSourceId, hmdSourceId).all { it.isNotBlank() })
 		require(space.convention == "rh_y_up_neg_z_forward")
 		require(sameTrackerCanonicalIdentity == null || sameTrackerCanonicalIdentity.isNotBlank())
 	}
@@ -181,10 +180,10 @@ class CorePocHilSession(val config: CorePocHilConfig, hilMode: Boolean = false) 
 			config.space,
 			config.operatorConfirmedBodyFrames,
 		),
-		RotationCorrectionTuning(
-			150_000_000, 20_000_000,
-			config.rotationTrackingTauSeconds, config.rotationRecoveryTauSeconds, Math.PI, .2,
-			config.maxAngularCorrectionRate, 2, 1_000_000_000, 100_000_000,
+		RotationCorrectionTuning.normalRuntimeDefaults().copy(
+			trackingTauSeconds = config.rotationTrackingTauSeconds,
+			recoveryTauSeconds = config.rotationRecoveryTauSeconds,
+			maxRadiansPerSecond = config.maxAngularCorrectionRate,
 		),
 	)
 	private val background = BackgroundIkPoseReader(poseManager.skeleton, BackgroundIkAlignment.confirmedSameSpace(config.space))

@@ -158,7 +158,7 @@ class StaticInputSelectionTests {
 		val p = q(fixture())
 		val at = 1_000_000_000L
 		val slime = Tracker(null, 123, "legacy-q", trackerPosition = null, hasRotation = true)
-		val feedback = Tracker(null, 124, "monaka-direct:excluded", trackerPosition = null, hasRotation = true)
+		val feedback = Tracker(null, 124, "ordinary-output", trackerPosition = null, hasRotation = true).also(FeedbackExclusion::registerOwnedOutput)
 		val c = MonakaConfiguration(p.coordinate_space)
 		val path = dir.resolve("inputs.json")
 		c.save(path)

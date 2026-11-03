@@ -5,6 +5,7 @@ import rendererConfig from './vite.config'; // Import your existing React config
 export default defineConfig({
   main: {
     build: {
+      outDir: resolve(__dirname, 'Build/out/main'),
       rollupOptions: {
         input: resolve(__dirname, 'electron/main/index.ts'),
         external: ['pino', 'pino-pretty', 'pino-roll', 'commander', 'open'],
@@ -13,6 +14,7 @@ export default defineConfig({
   },
   preload: {
     build: {
+      outDir: resolve(__dirname, 'Build/out/preload'),
       rollupOptions: {
         input: resolve(__dirname, 'electron/preload/index.ts'),
         output: {
@@ -26,6 +28,7 @@ export default defineConfig({
     ...rendererConfig,
     root: '.',
     build: {
+      outDir: resolve(__dirname, 'Build/out/renderer'),
       commonjsOptions: {
         // Force Rollup to treat the protocol directory as CommonJS
         // even though it's not in node_modules

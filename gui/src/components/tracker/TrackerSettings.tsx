@@ -3,7 +3,8 @@ import classNames from 'classnames';
 import { IPv4 } from 'ip-num';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { INPUT_ROLES } from '@/monaka-input/roles';
 import {
   AssignTrackerRequestT,
   BoardType,
@@ -53,6 +54,7 @@ const rotationsLabels: [Quaternion, string][] = [
 ];
 
 export function TrackerSettingsPage() {
+  const navigate = useNavigate();
   const { l10n } = useLocalization();
 
   const { sendRPCPacket } = useWebsocketAPI();
@@ -92,6 +94,22 @@ export function TrackerSettingsPage() {
 
   const onRoleSelected = (role: BodyPart) => {
     if (!tracker) return;
+    const target =
+      role === BodyPart.NONE ? tracker.tracker.info?.bodyPart : role;
+    if (target !== undefined && INPUT_ROLES[target]) {
+      navigate('/onboarding/trackers-assign', {
+        state: {
+          alonePage: true,
+          assignmentRequest: {
+            body: target,
+            trackerId: tracker.tracker.trackerId,
+            clear: role === BodyPart.NONE,
+          },
+        },
+      });
+      return;
+    }
+    if (!window.confirm(l10n.getString('assignment-legacy-only'))) return;
 
     const assignreq = new AssignTrackerRequestT();
     assignreq.bodyPosition = role;

@@ -10,18 +10,17 @@ data class LogicalTracker(val sourceId: String, val trackerId: String, val publi
 	// Length prefixes prevent separator/Unicode/concatenation collisions.
 	val observationId: String get() = "mtp:${publisherId.length}:$publisherId${sourceId.length}:$sourceId${trackerId.length}:$trackerId"
 	val lifetimeId: String get() = "${publisherId.length}:$publisherId$sourceId"
-	val isFeedback: Boolean get() = FeedbackExclusion.isOutput(publisherId) || FeedbackExclusion.isOutput(sourceId) || FeedbackExclusion.isOutput(trackerId)
 }
 
 data class TrackerReference(val observationId: String, val mtp: LogicalTracker? = null) {
 	init {
-		require(observationId.isNotBlank() && !FeedbackExclusion.isOutput(observationId))
-		require(mtp == null || (!mtp.isFeedback && mtp.observationId == observationId))
+		require(observationId.isNotBlank())
+		require(mtp == null || mtp.observationId == observationId)
 	}
 	companion object {
 		fun mtp(key: LogicalTracker) = TrackerReference(key.observationId, key)
 		fun slime(persistentName: String): TrackerReference {
-			require(persistentName.isNotBlank() && !FeedbackExclusion.isOutput(persistentName))
+			require(persistentName.isNotBlank())
 			return TrackerReference("slime:$persistentName")
 		}
 	}
@@ -170,7 +169,6 @@ class TrackerBodyAssignments(initial: Map<LogicalTracker, TrackerPosition> = emp
 	}
 	companion object {
 		private fun migrate(entries: Map<LogicalTracker, TrackerPosition>): Map<TrackerPosition, MainTrackerAssignment> {
-			require(entries.keys.none { it.isFeedback })
 			require(entries.values.distinct().size == entries.size) { "Ambiguous legacy assignment: select one Main and explicit fallback" }
 			val migrated = dev.monaka.tracking.revision.LegacyAssignmentMigration.migrate(entries.map { it.key to it.value })
 			require(migrated is dev.monaka.tracking.revision.LegacyAssignmentMigrationResult.Success)

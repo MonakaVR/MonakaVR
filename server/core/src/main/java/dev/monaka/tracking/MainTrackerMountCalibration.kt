@@ -115,9 +115,7 @@ internal object MainTrackerMountToHipCenter {
 		rawOrigin: RawSourceIdentity,
 		calibration: MainTrackerMountCalibrationSnapshot,
 	): MainHipCenterTeacherResult {
-		if (FeedbackExclusion.isOutput(observation.sourceId) ||
-			FeedbackExclusion.isOutput(rawOrigin.sourceId) ||
-			rawOrigin.isInternal ||
+		if (rawOrigin.isInternal ||
 			rawOrigin.isComputed ||
 			rawOrigin.kind in
 			setOf(RawSourceKind.COMPUTED_TRACKER, RawSourceKind.DERIVED_OUTPUT)

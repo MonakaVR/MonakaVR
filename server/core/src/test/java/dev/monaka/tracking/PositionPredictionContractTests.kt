@@ -352,21 +352,16 @@ class PositionPredictionContractTests {
 		}
 	}
 
-	@Test fun outputNamespacesAndComputedIdentitiesCannotEnterRawPredictorInputs() {
+	@Test fun rawOriginUsesTypedFactsAndOpaqueNamesRemainUnclassified() {
 		for (prefix in listOf("monaka-direct:", "monaka-solver:", "monaka-private:", "human://")) {
-			assertFailsWith<IllegalArgumentException> { input().copy(rawHmd = input().rawHmd.copy(source = hmdIdentity.copy(sourceId = "${prefix}head"))) }
-			assertFailsWith<IllegalArgumentException> { input().copy(rawImu = input().rawImu.copy(source = imuIdentity.copy(sourceId = "${prefix}imu"))) }
-			assertEquals(
-				"main_not_raw_backend",
-				PositionCorrectionTeacherEligibility.check(
-					teacher(
-						origin = mainIdentity.copy(sourceId = "${prefix}main"),
-						main = teacher().mainTeacher.copy(sourceId = "${prefix}main"),
-					),
-				).reason,
-			)
+			assertTrue(hmdIdentity.copy(sourceId = "${prefix}head").isRawHmd())
+			assertTrue(imuIdentity.copy(sourceId = "${prefix}imu").isRawImu())
+			assertTrue(mainIdentity.copy(sourceId = "${prefix}main").isRawBackend())
 		}
-		assertFailsWith<IllegalArgumentException> { input().copy(rawHmd = input().rawHmd.copy(source = hmdIdentity.copy(kind = RawSourceKind.COMPUTED_TRACKER))) }
+		for (kind in listOf(RawSourceKind.COMPUTED_TRACKER, RawSourceKind.DERIVED_OUTPUT)) {
+			assertFailsWith<IllegalArgumentException> { input().copy(rawHmd = input().rawHmd.copy(source = hmdIdentity.copy(kind = kind))) }
+			assertFailsWith<IllegalArgumentException> { input().copy(rawImu = input().rawImu.copy(source = imuIdentity.copy(kind = kind))) }
+		}
 		assertFailsWith<IllegalArgumentException> { input().copy(rawImu = input().rawImu.copy(source = imuIdentity.copy(isComputed = true))) }
 		assertEquals("main_not_raw_backend", PositionCorrectionTeacherEligibility.check(teacher(origin = mainIdentity.copy(isComputed = true))).reason)
 	}

@@ -91,7 +91,6 @@ internal class MainEffectiveHipTarget private constructor(
 				!relation.useAsIkConstraint ||
 				p == null ||
 				p.sourceId != relation.mainTracker.observationId ||
-				FeedbackExclusion.isOutput(p.sourceId) ||
 				!p.quality.usable ||
 				p.observedAtNanos !in 0..now
 			) {

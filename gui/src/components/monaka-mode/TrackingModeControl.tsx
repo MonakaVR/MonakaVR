@@ -94,14 +94,14 @@ export function TrackingModeControl({
         </li>
         <li>
           {modeLabel('hybrid')}: Main FULL output; fallback requires
-          current-tick background IK explicitly approved in the same world
-          space. Reacquisition uses existing sample dwell and interpolation.
+          current-tick background IK in the configured coordinate convention. Reacquisition uses existing sample dwell and interpolation.
         </li>
       </ul>
       {!state.snapshot?.backgroundIkAlignmentConfirmed && (
         <p role="status">
-          Shared-world alignment is unconfirmed. Hybrid background IK positional
-          fallback is unavailable. Saving Hybrid does not approve alignment.
+          Uncalibrated: background IK uses the saved coordinate interpretation or
+          Identity. Tracking remains available; observe alignment and recalibrate
+          when needed.
         </p>
       )}
       <p>

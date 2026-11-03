@@ -75,7 +75,7 @@ internal class SlimeRawImuProductionBoundary(
 		require(observedAtNanos >= 0L)
 		fun reject(reason: SlimeRawImuInputRejectionReason) = SlimeRawImuInputResult.Unavailable(reason)
 		val sourceId = "$sourcePrefix:${tracker.name}"
-		if (FeedbackExclusion.isOutput(tracker.name) || FeedbackExclusion.isOutput(sourceId)) {
+		if (FeedbackExclusion.isOutputTracker(tracker)) {
 			return reject(SlimeRawImuInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED)
 		}
 		if (tracker.device == null) return reject(SlimeRawImuInputRejectionReason.TRACKER_NOT_PHYSICAL)
@@ -95,7 +95,6 @@ internal class SlimeRawImuProductionBoundary(
 		if (!tracker.status.slimeObservationQuality(modality).usable) {
 			return reject(SlimeRawImuInputRejectionReason.STATUS_UNUSABLE)
 		}
-		if (!binding.operatorConfirmed) return reject(SlimeRawImuInputRejectionReason.SPACE_BINDING_UNCONFIRMED)
 		if (binding.sourceId.isBlank() || binding.sourceId != sourceId) {
 			return reject(SlimeRawImuInputRejectionReason.SPACE_BINDING_SOURCE_MISMATCH)
 		}

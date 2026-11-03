@@ -98,9 +98,8 @@ internal object PositionCorrectionApplication {
 		}
 		val provenance = prediction.provenance!!
 		val epoch = provenance.epoch
-		if (FeedbackExclusion.isOutput(epoch.hmdSourceId) || FeedbackExclusion.isOutput(epoch.imuSourceId)) {
-			return reject(PositionCorrectionApplicationRejectionReason.PREDICTION_FEEDBACK_SOURCE)
-		}
+		// The typed prediction dependency check above establishes eligible local inputs.
+		// Epoch IDs bind samples; their spelling cannot establish output origin.
 		if (provenance.generatedAtNanos != applicationAtNanos) {
 			return reject(PositionCorrectionApplicationRejectionReason.PREDICTION_NOT_CURRENT_FRAME)
 		}
@@ -137,9 +136,6 @@ internal object PositionCorrectionApplication {
 		if (baseConstraint.target != TrackerPosition.HIP) return reject(PositionCorrectionApplicationRejectionReason.BASE_TARGET_MISMATCH)
 		if (baseConstraint.position != null) return reject(PositionCorrectionApplicationRejectionReason.BASE_POSITION_ALREADY_PRESENT)
 		val rotation = baseConstraint.rotation ?: return reject(PositionCorrectionApplicationRejectionReason.BASE_ROTATION_UNAVAILABLE)
-		if (FeedbackExclusion.isOutput(rotation.sourceId)) {
-			return reject(PositionCorrectionApplicationRejectionReason.BASE_ROTATION_FEEDBACK_SOURCE)
-		}
 		if (fallback.observationId != rotation.sourceId || rotation.sourceId != epoch.imuSourceId) {
 			return reject(PositionCorrectionApplicationRejectionReason.BASE_ROTATION_SOURCE_MISMATCH)
 		}

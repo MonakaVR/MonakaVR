@@ -2,7 +2,6 @@ package dev.monaka.tracking.correction
 
 import dev.monaka.protocol.v2.CoordinateSpace
 import dev.monaka.tracking.DeclaredTrackerCapabilities
-import dev.monaka.tracking.FeedbackExclusion
 import dev.monaka.tracking.LearningDecision
 import dev.monaka.tracking.RotationCorrectionTuning
 import dev.monaka.tracking.TrackingModality
@@ -25,6 +24,7 @@ data class GuidanceSource(val identity: GuidanceIdentity, val epoch: GuidanceEpo
 data class GuidanceFrames(
 	val mainTrackerToBody: Quaternion,
 	val imuToBody: Quaternion,
+	/** Historical diagnostic labels only; ignored for runtime permission. */
 	val approvalRevision: String,
 	val confirmed: Boolean,
 	val approvedMain: GuidanceSource,
@@ -49,8 +49,8 @@ data class GuidanceReceipt(
 )
 enum class GuidanceOrigin { INDEPENDENT_MAIN_ACCEPTANCE, PHYSICAL_IMU_ACCEPTANCE, POSE_ORIENTATION, OUTPUT }
 
-/** Evidence must come from the acceptance boundary, never reconstructed from a selected pose.
- * These value types are not a production trust provider; no runtime adapter is installed by A1.
+/** Receipt facts come from independent input acceptance, never a selected solver pose.
+ * BodyRotationRuntime connects these values; they are not physical-quality certification.
  */
 data class GuidanceEvidence(
 	val origin: GuidanceOrigin,
@@ -152,7 +152,15 @@ object BodyRotationGuidance {
 		if (input.nowNanos < 0 || previous.lastNowNanos?.let { input.nowNanos < it } == true) {
 			return unavailable(previous, GuidanceReason.CLOCK_ROLLBACK)
 		}
-		val binding = input.binding ?: return unavailable(BodyRotationState(lastNowNanos = input.nowNanos), GuidanceReason.UNASSIGNED)
+		val suppliedBinding = input.binding ?: return unavailable(BodyRotationState(lastNowNanos = input.nowNanos), GuidanceReason.UNASSIGNED)
+		val binding = suppliedBinding.copy(
+			frames = suppliedBinding.frames.copy(
+				approvalRevision = "",
+				confirmed = false,
+				approvedMain = suppliedBinding.main,
+				approvedImu = suppliedBinding.imu,
+			),
+		)
 		// Any authority/frame change revokes readiness even when no sample is present.
 		var s = if (binding != previous.binding) BodyRotationState(binding = binding) else previous
 		s = s.copy(lastNowNanos = input.nowNanos)
@@ -227,8 +235,12 @@ object BodyRotationGuidance {
 			val pairAt = maxOf(mp.sampleAtNanos, ip.sampleAtNanos)
 			val last = s.lastPair
 			lr = when {
-				kotlin.math.abs(mp.sampleAtNanos - ip.sampleAtNanos) > tuning.pairWindowNanos -> GuidanceReason.PAIR_WINDOW
+				// Intermediate polls may carry one already consumed source. They are
+				// not new pairs and must not restart dwell for asynchronous input rates.
 				last != null && (mp.sequence <= last.mainSequence || ip.sequence <= last.imuSequence) -> GuidanceReason.SAME_PAIR
+
+				kotlin.math.abs(mp.sampleAtNanos - ip.sampleAtNanos) > tuning.pairWindowNanos -> GuidanceReason.PAIR_WINDOW
+
 				else -> GuidanceReason.NONE
 			}
 			if (lr != GuidanceReason.NONE) {
@@ -314,7 +326,6 @@ object BodyRotationGuidance {
 	)
 	private fun finite(p: Vector3?) = p != null && listOf(p.x, p.y, p.z).all { it.isFinite() }
 	private fun validIdentity(id: GuidanceIdentity) = listOf(id.publisher, id.source, id.tracker).all { it.isNotBlank() }
-	private fun feedback(id: GuidanceIdentity) = listOf(id.publisher, id.source, id.tracker).any(FeedbackExclusion::isOutput)
 	private fun validEpoch(e: GuidanceEpoch) = e.session.isNotBlank() &&
 		e.sourceEpoch.isNotBlank() &&
 		e.calibrationEpoch.isNotBlank() &&
@@ -323,8 +334,6 @@ object BodyRotationGuidance {
 		e.space.revision >= 0 &&
 		e.space.convention == "rh_y_up_neg_z_forward"
 	private fun validateBinding(b: GuidanceBinding): GuidanceReason = when {
-		feedback(b.main.identity) || feedback(b.imu.identity) -> GuidanceReason.FEEDBACK
-
 		b.bodyId.isBlank() ||
 			b.assignmentRevision < 0 ||
 			b.main.identity == b.imu.identity ||
@@ -332,13 +341,11 @@ object BodyRotationGuidance {
 			!validIdentity(b.imu.identity) ||
 			!validEpoch(b.main.epoch) ||
 			!validEpoch(b.imu.epoch) ||
-			b.main.epoch.space != b.imu.epoch.space -> GuidanceReason.BINDING_INVALID
+			b.main.epoch.space.convention != b.imu.epoch.space.convention -> GuidanceReason.BINDING_INVALID
 
-		!b.frames.confirmed ||
-			b.frames.approvalRevision.isBlank() ||
-			b.frames.approvedMain != b.main ||
-			b.frames.approvedImu != b.imu ||
-			RotationGuidanceMath.normalize(b.frames.mainTrackerToBody) == null ||
+		// These are saved geometric transforms. Historical approval labels and
+		// transport epochs cannot revoke their ordinary runtime use.
+		RotationGuidanceMath.normalize(b.frames.mainTrackerToBody) == null ||
 			RotationGuidanceMath.normalize(b.frames.imuToBody) == null -> GuidanceReason.FRAME_UNAPPROVED
 
 		else -> GuidanceReason.NONE
@@ -353,7 +360,8 @@ object BodyRotationGuidance {
 		cursor: GuidanceCursor?,
 	): GuidanceReason {
 		if (sample == null) return GuidanceReason.SAMPLE_MISSING
-		if (feedback(sample.identity)) return GuidanceReason.FEEDBACK
+		// Local ingress constructs evidence after exact output-object exclusion.
+		// Receipt/origin bindings below are evidence; opaque identity text is not.
 		if (sample.identity != expected.identity || sample.bodyId != body) return GuidanceReason.IDENTITY_MISMATCH
 		val p = sample.receipt ?: return GuidanceReason.PROVENANCE_MISSING
 		if (p.epoch != expected.epoch) return GuidanceReason.EPOCH_MISMATCH

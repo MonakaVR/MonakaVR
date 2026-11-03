@@ -10,11 +10,18 @@ export interface InputCandidate {
   qUsableNow: boolean;
   sixDofUsableNow: boolean;
   origin: string;
+  slimeTrackerId?: {
+    deviceId: { id: number } | null;
+    trackerNum: number;
+  } | null;
 }
 export interface InputAssignment {
   body: string;
   qSource: string | null;
   sixDofSource: string | null;
+  savedManualSix?: boolean;
+  savedQSource?: string | null;
+  savedSixDofSource?: string | null;
   manualSix: boolean;
   mode: string;
 }
@@ -38,6 +45,7 @@ export class InputSelectionController {
     busy: boolean;
     error: string;
     needsReload: boolean;
+    qEdited: boolean;
   } = {
     snapshot: null,
     snapshotFresh: false,
@@ -53,6 +61,7 @@ export class InputSelectionController {
     busy: false,
     error: '',
     needsReload: false,
+    qEdited: false,
   };
   private listeners = new Set<() => void>();
   private epoch = 0;
@@ -80,11 +89,18 @@ export class InputSelectionController {
   private reset(body = this.state.draft.body) {
     const saved = this.state.snapshot?.assignments.find((x) => x.body === body);
     this.state.draft = saved
-      ? { ...saved }
+      ? { ...saved,
+          ...(this.state.snapshot?.restartRequired ? {
+            qSource: saved.savedQSource === undefined ? saved.qSource : saved.savedQSource,
+            sixDofSource: saved.savedSixDofSource === undefined ? saved.sixDofSource : saved.savedSixDofSource,
+            manualSix: saved.savedManualSix ?? saved.manualSix,
+          } : {}),
+        }
       : { body, qSource: null, sixDofSource: null, manualSix: false, mode: 'ik' };
     this.autoConsidered = !!saved;
     this.state.generation = this.state.snapshot?.generation ?? '0';
     this.state.dirty = false;
+    this.state.qEdited = false;
   }
   async load(discardDraft = false) {
     if (this.loading) {
@@ -150,6 +166,7 @@ export class InputSelectionController {
       this.autoConsidered = true;
     }
     this.state.draft = draft;
+    this.state.qEdited = true;
     this.state.dirty = true;
     this.notify();
   }
@@ -172,7 +189,7 @@ export class InputSelectionController {
     this.state.error = '';
     this.notify();
   }
-  async save() {
+  async save(): Promise<boolean> {
     if (
       !this.canEdit ||
       !this.state.dirty ||
@@ -180,7 +197,7 @@ export class InputSelectionController {
       this.state.needsReload ||
       !this.state.snapshot
     )
-      return;
+      return false;
     this.epoch++;
     this.state.busy = true;
     this.state.error = '';
@@ -194,13 +211,28 @@ export class InputSelectionController {
         sixDofSource: this.state.draft.sixDofSource,
         manualSix: this.state.draft.manualSix,
       });
+      const active = snapshot.assignments.find((x) => x.body === this.state.draft.body);
+      const saved = active && snapshot.restartRequired ? {
+        ...active,
+        qSource: active.savedQSource === undefined ? active.qSource : active.savedQSource,
+        sixDofSource: active.savedSixDofSource === undefined ? active.sixDofSource : active.savedSixDofSource,
+        manualSix: active.savedManualSix ?? active.manualSix,
+      } : active;
+      if (
+        (saved?.qSource ?? null) !== this.state.draft.qSource ||
+        (saved?.sixDofSource ?? null) !== this.state.draft.sixDofSource ||
+        (!!saved && saved.manualSix !== this.state.draft.manualSix)
+      )
+        throw new Error('Core saved readback differs from the requested choices.');
       this.state.snapshot = snapshot;
       this.state.snapshotFresh = true;
       this.reset();
+      return true;
     } catch (error) {
       this.state.snapshotFresh = false;
       this.state.needsReload = true;
       this.state.error = `${error instanceof Error ? error.message : String(error)} Reload to confirm the saved state before retrying.`;
+      return false;
     } finally {
       this.state.busy = false;
       this.notify();

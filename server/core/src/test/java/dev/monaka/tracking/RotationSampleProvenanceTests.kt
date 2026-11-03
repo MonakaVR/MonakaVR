@@ -11,6 +11,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class RotationSampleProvenanceTests {
@@ -69,6 +70,10 @@ class RotationSampleProvenanceTests {
 		)
 		tracker.status = TrackerStatus.OK
 		tracker.setRotation(Quaternion.IDENTITY)
-		assertNull(SlimeTrackerPoseObservationAdapter().adapt(tracker, 1_000_000_000)!!.provenance)
+		val ordinary = SlimeTrackerPoseObservationAdapter().adapt(tracker, 1_000_000_000)!!
+		assertNotNull(ordinary.provenance, "Finite normal Q keeps its actual acceptance receipt")
+		assertNull(ordinary.correctionRotation, "Normal receipt does not confer independent physical learner eligibility")
+		FeedbackExclusion.registerOwnedOutput(tracker)
+		assertNull(SlimeTrackerPoseObservationAdapter().adapt(tracker, 1_000_000_000), "Owned output remains excluded even for ordinary Q")
 	}
 }

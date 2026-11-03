@@ -46,11 +46,13 @@ export default defineConfig({
     i18nHotReload(),
     visualizer() as PluginOption,
     sentryVitePlugin({
+      disable: process.env.MONAKA_LOCAL_RUNTIME_BUILD === '1',
       org: 'slimevr',
       project: 'slimevr-server-gui-react',
     }),
   ],
   build: {
+    outDir: path.resolve(__dirname, 'Build/out/renderer'),
     target: 'es2022',
     emptyOutDir: true,
 

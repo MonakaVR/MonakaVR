@@ -44,6 +44,9 @@ export class CoreUiFixture {
     assignments: [],
   };
   requests: Record<string, unknown>[] = [];
+  binaryRequests: Uint8Array[] = [];
+  binaryConnections = new Set<WebSocketRoute>();
+  afterSave?: () => boolean;
   connections: WebSocketRoute[] = [];
   restartRequired = false;
   snapshotError = false;
@@ -71,7 +74,11 @@ export class CoreUiFixture {
       }
       this.connections.push(socket);
       socket.onMessage((raw) => {
-        if (typeof raw !== 'string') return; // Unchanged normal SolarXR channel.
+        if (typeof raw !== 'string') {
+          this.binaryConnections.add(socket);
+          this.binaryRequests.push(new Uint8Array(raw));
+          return; // Unchanged normal SolarXR channel.
+        }
         const request = JSON.parse(raw);
         if (request.type !== 'monaka_inputs_v1') throw new Error('Unexpected text RPC');
         this.requests.push(request);
@@ -111,6 +118,7 @@ export class CoreUiFixture {
             assignment,
           ];
           this.snapshot.generation = String(BigInt(this.snapshot.generation) + 1n);
+          if (this.afterSave?.()) return;
         } else if (request.action !== 'snapshot') {
           throw new Error('Unexpected input action');
         }

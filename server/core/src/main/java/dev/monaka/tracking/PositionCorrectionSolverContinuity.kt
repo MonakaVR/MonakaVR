@@ -153,8 +153,7 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 			val p = base.position
 			val r = base.rotation
 			val main = relation.mainTracker.observationId
-			if (FeedbackExclusion.isOutput(p.sourceId) ||
-				p.sourceId != main ||
+			if (p.sourceId != main ||
 				!p.quality.usable ||
 				p.observedAtNanos !in 0..now ||
 				r == null ||
@@ -254,7 +253,6 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 			provenance.predictionSequence != candidate.predictionSequence ||
 			provenance.inputLatestAtNanos !in provenance.inputEarliestAtNanos..now ||
 			candidate.predictionEpoch.imuSourceId != fallbackSource ||
-			FeedbackExclusion.isOutput(candidate.predictionEpoch.hmdSourceId) ||
 			candidate.baseRotation != base.rotation ||
 			!validRotation(candidate.baseRotation, fallbackSource, now)
 		) {
@@ -310,8 +308,7 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 	private fun validRotation(r: ResolvedComponent<Quaternion>, owner: String, now: Long): Boolean {
 		val q = r.value
 		val norm = q.lenSq()
-		return !FeedbackExclusion.isOutput(r.sourceId) &&
-			r.sourceId == owner &&
+		return r.sourceId == owner &&
 			r.quality.usable &&
 			r.observedAtNanos in 0..now &&
 			listOf(q.w, q.x, q.y, q.z).all(Float::isFinite) &&

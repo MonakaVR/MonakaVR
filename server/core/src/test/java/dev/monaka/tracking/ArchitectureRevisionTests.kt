@@ -30,7 +30,7 @@ class ArchitectureRevisionTests {
 		assertTrue(r.inbox.receive(wire, r.clock(), peer))
 	}
 
-	@Test fun oneTrackerSpaceFaultCannotRemoveSiblingOrSameNameUnderOtherPublisher() {
+	@Test fun compatibleSpaceDescriptionPreservesSiblingsAndClockFaultRemainsLocal() {
 		val p = pose()
 		val sibling = p.copy(tracker_id = "other")
 		val remote = p.copy(publisher_id = "other-publisher")
@@ -40,9 +40,11 @@ class ArchitectureRevisionTests {
 			send(r, sibling)
 			send(r, remote)
 			r.tick()
-			send(r, p.copy(sequence = 1, coordinate_space = p.coordinate_space.copy(id = "bad")))
+			val history = r.mtp.historyGeneration
+			send(r, p.copy(sequence = 1, coordinate_space = p.coordinate_space.copy(id = "new-description")))
 			val result = r.tick()
-			assertNull(result[TrackerPosition.HIP]?.position)
+			assertNotNull(result[TrackerPosition.HIP]?.position)
+			assertTrue(r.mtp.historyGeneration > history, "Compatible description change resets transient history")
 			assertNotNull(result[TrackerPosition.LEFT_FOOT]?.position)
 			assertNotNull(result[TrackerPosition.RIGHT_FOOT]?.position)
 			send(r, p.copy(sequence = 2))

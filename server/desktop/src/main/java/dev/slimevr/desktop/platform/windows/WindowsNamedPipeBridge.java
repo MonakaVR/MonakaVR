@@ -2,6 +2,7 @@ package dev.slimevr.desktop.platform.windows;
 
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import dev.monaka.tracking.desktop.SameFrameDiagnostics;
 import dev.slimevr.VRServer;
 import dev.slimevr.bridge.BridgeThread;
 import dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage;
@@ -27,6 +28,7 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 	// connection is reused.
 	private TransportSessionHandle transportSession = null;
 	private final byte[] buf = new byte[2048];
+	private final SameFrameDiagnostics outputDiagnostics;
 
 	public WindowsNamedPipeBridge(
 		VRServer server,
@@ -44,6 +46,7 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 		);
 		this.pipeName = pipeName;
 		this.bridgeSettingsKey = bridgeSettingsKey;
+		this.outputDiagnostics = SameFrameDiagnostics.outputForBridge(bridgeSettingsKey, pipeName);
 	}
 
 	@Override
@@ -93,9 +96,14 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 		} finally {
 			closeTransportSession();
 			LogManager.info("[" + bridgeName + "] Bridge thread exiting");
-			if (pipe != null) {
-				pipe.close();
-				pipe = null;
+			try {
+				if (pipe != null) {
+					pipe.close();
+					pipe = null;
+				}
+			} finally {
+				if (outputDiagnostics != null)
+					outputDiagnostics.close();
 			}
 		}
 	}
@@ -156,7 +164,19 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 			buf[2] = (byte) ((size >> 16) & 0xFF);
 			buf[3] = (byte) ((size >> 24) & 0xFF);
 
-			return connection.sendBuffer(buf, size);
+			boolean completed = connection.sendBuffer(buf, size);
+			if (completed && outputDiagnostics != null) {
+				// sendBuffer confirms the complete pipe write, not driver consumption.
+				// Observability must never change the successful output result.
+				try {
+					outputDiagnostics.recordCompletedPipeWrite(
+						message, bridgeSettingsKey, pipeName, transportSession, size
+					);
+				} catch (Throwable ignored) {
+					// No logging failure owns transport or tracking.
+				}
+			}
+			return completed;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

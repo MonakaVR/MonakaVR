@@ -28,34 +28,15 @@ data class MonakaConfiguration(
 	init {
 		require(space.id.isNotBlank() && space.convention == "rh_y_up_neg_z_forward" && space.revision in 0..4294967295L)
 		require(port in 0..65535 && timeoutNanos >= 0)
-		require(backgroundIkSharedSpace == null || backgroundIkSharedSpace == space) { "Background IK shared-space assertion must match the configured MTP space/revision" }
-		validateSixDofTeacherSelection()
+		require(backgroundIkSharedSpace == null || backgroundIkSharedSpace.convention == space.convention) { "Background IK must use the supported coordinate convention" }
 		positionCorrection?.validateBinding(space, assignments.snapshot().targets[TrackerPosition.HIP])
 		if (rotationCorrection != null) {
-			require(backgroundIkSharedSpace == space && rotationCorrection.frames.assertedSpace == space) {
-				"Rotation correction requires explicit shared-space assertion"
-			}
-			val hip = assignments.snapshot().targets[TrackerPosition.HIP]
-			require(hip?.outputMode == OutputMode.HYBRID && hip.rotationFallbackTracker != null && hip.useAsIkConstraint) {
-				"Rotation correction requires assigned HIP Hybrid Main and rotation fallback"
-			}
-			require(
-				hip.mainTracker.mtp != null &&
-					hip.rotationFallbackTracker.mtp == null &&
-					hip.rotationFallbackTracker.observationId.startsWith("slime:"),
-			) {
-				"Phase 1 requires MTP Main and explicitly assigned physical Slime IMU fallback"
+			require(rotationCorrection.frames.assertedSpace.convention == space.convention) {
+				"Rotation correction must use the supported coordinate convention"
 			}
 		}
 	}
-	private fun validateSixDofTeacherSelection() {
-		if (rotationCorrection != null || positionCorrection != null) {
-			val selection = assignments.snapshot().targets[TrackerPosition.HIP]?.sourceSelection
-			require(selection == null || selection.sixDofSource != null) {
-				"Correction requires an explicit 6DoF teacher; a Q-only assignment has no position teacher"
-			}
-		}
-	}
+
 	fun save(path: Path) {
 		val absolute = path.toAbsolutePath().normalize()
 		Files.createDirectories(absolute.parent)
@@ -115,7 +96,6 @@ data class MonakaConfiguration(
 
 	/** Only for isolated staging files held by the shared transaction lock. */
 	internal fun saveUnmanaged(path: Path) {
-		validateSixDofTeacherSelection()
 		val assignmentSnapshot = assignments.snapshot()
 		positionCorrection?.validateBinding(space, assignmentSnapshot.targets[TrackerPosition.HIP])
 		fun reference(ref: TrackerReference): Map<String, String> = ref.mtp?.let {
@@ -356,13 +336,10 @@ data class MonakaConfiguration(
 						it.asDouble()
 					}
 						?: error("Missing $name")
-					require(node["framesConfirmed"]?.isBoolean == true && node["framesConfirmed"].booleanValue()) {
-						"rotationCorrection.framesConfirmed must be explicitly true"
-					}
 					val recoveryPairs = node["recoveryPairs"]
 					require(recoveryPairs != null && recoveryPairs.isIntegralNumber && recoveryPairs.canConvertToInt()) { "recoveryPairs must be an integer" }
 					RotationCorrectionConfig(
-						RotationCorrectionFrames(quat("mainTrackerToBodyWxyz"), quat("fallbackToBodyWxyz"), expectedSpace, true),
+						RotationCorrectionFrames(quat("mainTrackerToBodyWxyz"), quat("fallbackToBodyWxyz"), expectedSpace, node["framesConfirmed"]?.asBoolean() ?: false),
 						RotationCorrectionTuning(
 							long("fullStableNanos"), long("pairWindowNanos"), double("trackingTauSeconds"),
 							double("recoveryTauSeconds"), double("maxResidualRadians"), double("recoveryResidualRadians"),

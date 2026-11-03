@@ -55,6 +55,23 @@ class Api implements InputApi {
     return structuredClone(this.value);
   }
 }
+test('pending restart verifies persisted choices separately from the active runtime', async () => {
+  const api = new Api();
+  api.value.assignments = [{ body: 'HIP', qSource: 'q-only', sixDofSource: 'publisher-a', manualSix: true, mode: 'hybrid' }];
+  const model = new InputSelectionController(api);
+  await model.load();
+  model.selectSix('publisher-b');
+  api.request = async (fields) => {
+    assert.equal(fields.action, 'save');
+    return { ...structuredClone(api.value), restartRequired: true,
+      assignments: [{ ...api.value.assignments[0], savedQSource: 'q-only', savedSixDofSource: 'publisher-b', savedManualSix: true }] };
+  };
+  assert.equal(await model.save(), true);
+  assert.equal(model.state.snapshot!.assignments[0].sixDofSource, 'publisher-a');
+  assert.equal(model.state.draft.sixDofSource, 'publisher-b');
+  assert.equal(model.canEdit, false);
+  assert.equal(await model.save(), false);
+});
 test('explicit reload blocks editing and survives an in-flight metadata request', async () => {
   const api = new Api();
   const model = new InputSelectionController(api);

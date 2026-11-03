@@ -52,7 +52,8 @@ class AssignedImuSampleFreshnessTests {
 	@Test fun futureOrUnknownPhysicalSampleFailsClosedButLegacyUnassignedIsUnchanged() {
 		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, 21), 20).rotationQuality)
 		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, null), 20).rotationQuality)
-		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, 20).copy(correctionRotation = Quaternion(Float.NaN, 0f, 0f, 0f)), 20).rotationQuality)
+		assertEquals(ObservationQuality.TRACKED, filter.apply(imu(20, 20).copy(correctionRotation = Quaternion(Float.NaN, 0f, 0f, 0f)), 20).rotationQuality)
+		assertEquals(ObservationQuality.STALE, filter.apply(imu(20, 20).copy(rotation = Quaternion(Float.NaN, 0f, 0f, 0f)), 20).rotationQuality)
 		val unrelated = imu(20, null).copy(target = TrackerPosition.LEFT_FOOT)
 		assertEquals(ObservationQuality.TRACKED, filter.apply(unrelated, 100).rotationQuality)
 	}
@@ -70,5 +71,33 @@ class AssignedImuSampleFreshnessTests {
 		assertNull(p.resolve(TrackerPosition.HIP, 22).rotation)
 		p.ingest(imu(23, 23, 3))
 		assertEquals(imuId, p.resolve(TrackerPosition.HIP, 23).rotation?.sourceId)
+	}
+
+	@Test fun explicitQOnlyUsesNormalAgeAndReceiptCursorIncludingZeroTimeout() {
+		val a = TrackerBodyAssignments().also { it.configureSources(TrackerPosition.HIP, TrackerReference.slime("imu"), null, true) }
+		val normal = AssignedImuSampleFreshness(a, 500, onlyExplicitPairs = true, legacyHipMaxAgeNanos = 100)
+		assertEquals(ObservationQuality.TRACKED, normal.apply(imu(100, 100), 100).rotationQuality)
+		assertEquals(ObservationQuality.TRACKED, normal.apply(imu(400, 100), 400).rotationQuality, "Q-only does not inherit legacy HIP paired age")
+		assertEquals(ObservationQuality.STALE, normal.apply(imu(601, 100), 601).rotationQuality)
+		assertEquals(ObservationQuality.STALE, normal.apply(imu(601, 602, 2), 601).rotationQuality)
+		assertEquals(ObservationQuality.STALE, normal.apply(imu(601, 601), 601).rotationQuality, "Same sequence cannot regenerate sample time")
+		assertEquals(ObservationQuality.TRACKED, normal.apply(imu(602, 602, 2), 602).rotationQuality)
+		val zero = AssignedImuSampleFreshness(a, 0, onlyExplicitPairs = true)
+		assertEquals(ObservationQuality.TRACKED, zero.apply(imu(10, 10), 10).rotationQuality)
+		assertEquals(ObservationQuality.STALE, zero.apply(imu(11, 10), 11).rotationQuality)
+		MonakaRuntime({ emptyList() }, dev.monaka.protocol.v2.CoordinateSpace("zero", "rh_y_up_neg_z_forward", 0), a, timeoutNanos = 0).use { it.tickSnapshot() }
+	}
+
+	@Test fun legacyHipAgeDoesNotNarrowOtherBodyOrMtpQ() {
+		val a = TrackerBodyAssignments().also {
+			it.configureSources(TrackerPosition.HIP, TrackerReference.slime("imu"), TrackerReference.mtp(LogicalTracker("s", "hip", "p")), true)
+			it.configureSources(TrackerPosition.UPPER_CHEST, TrackerReference.slime("chest"), TrackerReference.mtp(LogicalTracker("s", "chest", "p")), true)
+		}
+		val normal = AssignedImuSampleFreshness(a, 500, onlyExplicitPairs = true, legacyHipMaxAgeNanos = 100)
+		assertEquals(ObservationQuality.STALE, normal.apply(imu(300, 100), 300).rotationQuality)
+		assertEquals(ObservationQuality.TRACKED, normal.apply(imu(300, 100).copy(sourceId = "slime:chest", target = TrackerPosition.UPPER_CHEST), 300).rotationQuality)
+		val mtp = TrackerReference.mtp(LogicalTracker("s", "q", "p"))
+		a.configureSources(TrackerPosition.LEFT_FOOT, mtp, null, true)
+		assertEquals(ObservationQuality.TRACKED, normal.apply(imu(1000, null).copy(sourceId = mtp.observationId, target = TrackerPosition.LEFT_FOOT), 1000).rotationQuality, "MTP retains its existing source profile freshness")
 	}
 }

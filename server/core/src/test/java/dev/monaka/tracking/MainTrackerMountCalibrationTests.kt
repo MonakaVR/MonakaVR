@@ -190,13 +190,14 @@ class MainTrackerMountCalibrationTests {
 		rejected(MainHipCenterTeacherRejectionReason.SOURCE_IDENTITY_MISMATCH, rawOrigin = origin.copy(sourceId = "mtp:B"))
 	}
 
-	@Test fun allFeedbackNamespacesRejectedOnEitherIdentity() {
+	@Test fun opaqueIdentitySpellingDoesNotChangeAdmittedRawTeacherGeometry() {
 		for (prefix in listOf("monaka-direct:", "monaka-solver:", "monaka-private:", "human://")) {
-			rejected(
-				MainHipCenterTeacherRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED,
-				observation().copy(sourceId = prefix + "hip"),
+			val id = prefix + "hip"
+			val result = assertIs<MainHipCenterTeacherResult.Available>(
+				MainTrackerMountToHipCenter.normalize(observation().copy(sourceId = id), origin.copy(sourceId = id), calibration(sourceId = id)),
 			)
-			rejected(MainHipCenterTeacherRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED, rawOrigin = origin.copy(sourceId = prefix + "hip"))
+			assertEquals(p, result.teacher.position)
+			assertEquals(id, result.teacher.sourceId)
 		}
 	}
 

@@ -112,7 +112,7 @@
       "command": [
         "{JAVA}",
         "-jar",
-        "server/desktop/build/libs/slimevr.jar",
+        "Build/gradle/server/desktop/libs/slimevr.jar",
         "--help"
       ]
     },
@@ -130,7 +130,7 @@
         "--work",
         "{WORK}/interop",
         "--jar",
-        "{ROOT}/server/desktop/build/libs/slimevr.jar"
+        "{ROOT}/Build/gradle/server/desktop/libs/slimevr.jar"
       ]
     }
   ],
@@ -153,8 +153,8 @@
     {
       "name": "application",
       "paths": [
-        "{ROOT}/server/core/build/test-results/test/TEST-*.xml",
-        "{ROOT}/server/desktop/build/test-results/test/TEST-*.xml"
+        "{ROOT}/Build/gradle/server/core/test-results/test/TEST-*.xml",
+        "{ROOT}/Build/gradle/server/desktop/test-results/test/TEST-*.xml"
       ],
       "required": [
         "oneTrackerSpaceFaultCannotRemoveSiblingOrSameNameUnderOtherPublisher()",
@@ -181,7 +181,7 @@
   "artifacts": [
     {
       "name": "runtime/slimevr.jar",
-      "path": "{ROOT}/server/desktop/build/libs/slimevr.jar"
+      "path": "{ROOT}/Build/gradle/server/desktop/libs/slimevr.jar"
     }
   ],
   "evidence": [

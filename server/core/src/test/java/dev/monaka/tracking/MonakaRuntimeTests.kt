@@ -143,14 +143,16 @@ class MonakaRuntimeTests {
 		}
 	}
 
-	@Test fun spaceMappingAndClockMismatchInvalidateWithoutVendorCorrection() {
+	@Test fun compatibleSpaceRevisionWorksWhileMappingAndClockFaultsRemainRejected() {
 		val clock = Clock()
 		runtime(clock).use { r ->
 			val p = fixture()
 			submit(r, p)
 			r.tick()
+			val history = r.mtp.historyGeneration
 			submit(r, p.copy(sequence = 1, coordinate_space = p.coordinate_space.copy(revision = 1)))
-			assertNull(r.tick()[TrackerPosition.HIP]?.position)
+			assertNotNull(r.tick()[TrackerPosition.HIP]?.position)
+			assertTrue(r.mtp.historyGeneration > history)
 			submit(r, p.copy(sequence = 2))
 			assertNotNull(r.tick()[TrackerPosition.HIP]?.position)
 			submit(r, state(p.copy(mapping_revision = 1)))
@@ -246,19 +248,21 @@ class MonakaRuntimeTests {
 		}
 	}
 
-	@Test fun bothRouteExcludesDirectSolverAndPrivateButRetainsRealHmd() {
+	@Test fun ownedOutputsAreExcludedWhileOpaqueWireIdsAndRealHmdRemainInputs() {
 		val clock = Clock()
 		val trackers = TestTrackerSet()
-		val outputs = listOf("monaka-direct:x", "monaka-solver:x", "human://WAIST", "monaka-private:HIP").mapIndexed { i, name ->
-			Tracker(null, 100 + i, name, trackerPosition = TrackerPosition.HIP, hasPosition = true, hasRotation = true).also { it.status = TrackerStatus.OK }
+		val outputs = listOf("ordinary-output", "renamed-output", "human://WAIST", "monaka-private:HIP").mapIndexed { i, name ->
+			Tracker(null, 100 + i, name, trackerPosition = TrackerPosition.HIP, hasPosition = true, hasRotation = true).also {
+				it.status = TrackerStatus.OK
+				FeedbackExclusion.registerOwnedOutput(it)
+			}
 		}
 		runtime(clock) { outputs + trackers.head }.use { r ->
-			submit(r, fixture())
-			for (o in outputs) submit(r, fixture().copy(tracker_id = o.name))
-			submit(r, fixture().copy(input = fixture().input.copy(device_id = "monaka-direct:physical-mirror")))
+			val p = fixture().let { it.copy(input = it.input.copy(device_id = "monaka-direct:opaque-device")) }
+			submit(r, p)
 			r.tick()
 			assertEquals(setOf("slime:${trackers.head.name}", key.observationId), r.pipeline.observations().map { it.sourceId }.toSet())
-			assertEquals(5, r.inbox.diagnostics().getValue("FeedbackExcluded"))
+			assertEquals(1, r.inbox.diagnostics().getValue("PoseAccepted"))
 		}
 	}
 

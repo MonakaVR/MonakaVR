@@ -131,8 +131,6 @@ class TrustedHmdPositionProvenanceTests {
 		for (candidate in listOf(
 			tracker(remoteId = 1, hmd = false), tracker(internal = true), tracker(origin = null),
 			tracker(origin = DeviceOrigin.UDP), tracker(hmd = false),
-			tracker(name = "monaka-direct:head"), tracker(name = "monaka-solver:head"),
-			tracker(name = "monaka-private:head"), tracker(name = "human://Head"),
 		)) {
 			val rejected = Capture { 100 }
 			rejected.install(candidate)
@@ -459,4 +457,17 @@ class TrustedHmdPositionProvenanceTests {
 		override fun setAutomaticSharedTrackers(value: Boolean) = Unit
 		override fun getBridgeConfigKey() = "trusted-hmd-test"
 	}
+	@Test fun opaqueHmdNamesUseTheSameRegisteredIngressAndAcceptedReceipt() {
+		for (prefix in listOf("monaka-direct:", "monaka-solver:", "monaka-private:", "human://")) {
+			val bridge = Capture { 100 }
+			val external = tracker(name = prefix + "head")
+			bridge.install(external)
+			bridge.accept(position())
+			val accepted = assertNotNull(bridge.acceptedHmdPoseMessageSample())
+			assertTrue(accepted.ingressIdentity.isRawHmd())
+			assertEquals(100, accepted.receivedAtSystemNanos)
+			assertEquals(Vector3(1f, 2f, 3f), accepted.position)
+		}
+	}
+
 }
