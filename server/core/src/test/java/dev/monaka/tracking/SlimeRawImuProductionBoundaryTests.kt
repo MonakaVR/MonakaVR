@@ -260,7 +260,7 @@ class SlimeRawImuProductionBoundaryTests {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = ["unconfirmed", "mismatch", "blankSource", "blankId", "negativeRevision", "wrongConvention"])
+	@ValueSource(strings = ["mismatch", "blankSource", "blankId", "negativeRevision", "wrongConvention"])
 	fun invalidBindingsFailClosed(case: String) {
 		val t = tracker()
 		val b = binding(t)
@@ -332,14 +332,12 @@ class SlimeRawImuProductionBoundaryTests {
 
 	@ParameterizedTest
 	@ValueSource(strings = ["monaka-direct:", "monaka-solver:", "monaka-private:", "human://"])
-	fun outputNamespacesAreRejectedBeforeSlimePrefixCanHideThem(prefix: String) {
-		rejected(tracker(name = "${prefix}output"), SlimeRawImuInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED)
-		val t = tracker()
-		val result = SlimeRawImuProductionBoundary(capture(t), "${prefix}output").adapt(t, 100, binding(t))
-		assertEquals(
-			SlimeRawImuInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED,
-			assertIs<SlimeRawImuInputResult.Unavailable>(result).reason,
-		)
+	fun opaqueNamesDoNotChangePhysicalCaptureAndExactOwnedObjectsAreRejected(prefix: String) {
+		val t = tracker(name = "${prefix}output")
+		val input = available(t)
+		assertEquals("slime:${t.name}", input.source.sourceId)
+		FeedbackExclusion.registerOwnedOutput(t)
+		rejected(t, SlimeRawImuInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED, during = { error("Owned output must not read capture clock") })
 	}
 
 	@Test fun sourcePrefixRespectsExistingAdapterConvention() {
@@ -349,7 +347,7 @@ class SlimeRawImuProductionBoundaryTests {
 		assertEquals(bound.sourceId, input.source.sourceId)
 		val result = SlimeRawImuProductionBoundary(capture(t), "monaka-direct").adapt(t, 100, binding(t))
 		assertEquals(
-			SlimeRawImuInputRejectionReason.FEEDBACK_SOURCE_NOT_ALLOWED,
+			SlimeRawImuInputRejectionReason.SPACE_BINDING_SOURCE_MISMATCH,
 			assertIs<SlimeRawImuInputResult.Unavailable>(result).reason,
 		)
 	}

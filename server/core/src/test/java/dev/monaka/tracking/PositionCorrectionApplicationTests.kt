@@ -167,15 +167,13 @@ internal class PositionCorrectionApplicationTests {
 		if (phase == PositionCorrectionPhase.EXPIRED) assertEquals(prediction().position, position.value)
 	}
 
-	@Test fun privateDerivedPositionCannotBecomeRawAssignmentImuHmdOrTeacher() {
-		val id = ready().positionSourceId
-		assertEquals("monaka-private:position-correction-v1:HIP", id)
-		assertTrue(FeedbackExclusion.isOutput(id))
-		assertFailsWith<IllegalArgumentException> { TrackerReference(id) }
-		assertFailsWith<IllegalArgumentException> { TrackerReference.slime(id) }
-		assertFalse(RawSourceIdentity(id, RawSourceKind.RAW_IMU).isRawImu())
-		assertFalse(RawSourceIdentity(id, RawSourceKind.RAW_HMD, isHmd = true).isRawHmd())
-		assertFalse(RawSourceIdentity(id, RawSourceKind.RAW_BACKEND).isRawBackend())
+	@Test fun derivedKindCannotBecomeRawImuHmdOrTeacherEvenWithAnExternalLookingName() {
+		for (id in listOf(ready().positionSourceId, "ordinary-external-name")) {
+			val source = RawSourceIdentity(id, RawSourceKind.DERIVED_OUTPUT)
+			assertFalse(source.isRawImu())
+			assertFalse(source.copy(isHmd = true).isRawHmd())
+			assertFalse(source.isRawBackend())
+		}
 	}
 
 	@Test fun assignmentAndBaseStructuralGatesAreFailClosed() {
@@ -217,9 +215,9 @@ internal class PositionCorrectionApplicationTests {
 
 	@ParameterizedTest
 	@ValueSource(strings = ["monaka-private:x", "monaka-solver:x", "human://x", "monaka-direct:x"])
-	fun feedbackRotationRejectsBeforeSourceMismatch(id: String) {
+	fun opaqueRotationIdentityStillRequiresExactAssignedSource(id: String) {
 		rejected(
-			PositionCorrectionApplicationRejectionReason.BASE_ROTATION_FEEDBACK_SOURCE,
+			PositionCorrectionApplicationRejectionReason.BASE_ROTATION_SOURCE_MISMATCH,
 			prepare(b = base().copy(rotation = base().rotation!!.copy(sourceId = id))),
 		)
 	}
@@ -350,9 +348,9 @@ internal class PositionCorrectionApplicationTests {
 
 	@ParameterizedTest
 	@ValueSource(booleans = [true, false])
-	fun rawEpochSourcesCannotUsePrivateOutputNamespace(hmd: Boolean) {
+	fun opaqueEpochChangesStillRequireMatchingLearningLineage(hmd: Boolean) {
 		val next = if (hmd) epoch.copy(hmdSourceId = "monaka-private:x") else epoch.copy(imuSourceId = "monaka-solver:x")
-		rejected(PositionCorrectionApplicationRejectionReason.PREDICTION_FEEDBACK_SOURCE, prepare(p = prediction(context = next)))
+		rejected(PositionCorrectionApplicationRejectionReason.STATE_PREDICTION_EPOCH_MISMATCH, prepare(p = prediction(context = next)))
 	}
 
 	@ParameterizedTest
@@ -413,14 +411,18 @@ internal class PositionCorrectionApplicationTests {
 		for (forbidden in listOf("System.nanoTime", "System.currentTimeMillis", "Instant.now", "ObservationStore", "ConstraintPipeline", ".observe(", "advanceWithoutMeasurement(")) {
 			assertFalse(source.contains(forbidden), forbidden)
 		}
-		// 6E consumes Ready; only the explicit injected 6G orchestrator may prepare it.
+		// Only the orchestrator may prepare or mutate an application. The normal
+		// composition may read exactly the processed candidate position for diagnostics.
 		Files.walk(root).use { paths ->
 			paths.filter {
 				it.toString().endsWith(".kt") &&
 					it.fileName.toString() !in
 					setOf("PositionCorrectionApplication.kt", "PositionCorrectionSolverContinuity.kt", "PositionCorrectionRuntimeOrchestrator.kt")
 			}.forEach {
-				assertFalse(Files.readString(it).contains("PositionCorrectionApplication"), it.toString())
+				val text = Files.readString(it)
+				val diagnosticRead = Regex("""\(result\.application\s+as\?\s+PositionCorrectionApplicationResult\.Ready\)\?\.candidate\?\.correctedPosition""")
+				val withoutDiagnosticRead = if (it.fileName.toString() == "NormalPositionCorrectionRuntime.kt") diagnosticRead.replace(text, "") else text
+				assertFalse(withoutDiagnosticRead.contains("PositionCorrectionApplication"), it.toString())
 			}
 		}
 		assertFalse(
@@ -504,7 +506,7 @@ internal class PositionCorrectionApplicationTests {
 			assertEquals(ConstraintIkWriteback.ComponentMask(true, true), writeback.masks().getValue(TrackerPosition.HIP))
 			val proxy = assertNotNull(manager.skeleton.hipTracker)
 			assertNotSame(trackers.hip, proxy)
-			assertTrue(FeedbackExclusion.isOutput(proxy.name))
+			assertTrue(FeedbackExclusion.isOwnedOutput(proxy))
 			assertFalse(FeedbackExclusion.accepts(proxy))
 			assertFalse(proxy.isInternal)
 			assertTrue(proxy.hasPosition && proxy.hasRotation)

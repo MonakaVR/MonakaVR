@@ -334,10 +334,7 @@ class RawHmdPoseAdmissionTests {
 
 	@Test fun outputInternalAndNonRawHmdIdentitiesCannotAdmit() {
 		for (identity in listOf(
-			source.copy(sourceId = "monaka-direct:head"),
-			source.copy(sourceId = "monaka-solver:head"),
-			source.copy(sourceId = "monaka-private:head"),
-			source.copy(sourceId = "human://head"),
+			source.copy(kind = RawSourceKind.COMPUTED_TRACKER),
 			source.copy(isInternal = true),
 			source.copy(kind = RawSourceKind.DERIVED_OUTPUT),
 			source.copy(isHmd = false),

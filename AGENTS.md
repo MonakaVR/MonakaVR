@@ -2,6 +2,17 @@
 
 This repository owns the producer-independent tracking consumer: public-contract input ingestion, source identity and capability catalog, body assignment, fusion/fallback, IK, and final virtual tracker output.
 
+## 2026-10-30 normal runtime semantics
+
+Issue17 supersedes historical physical-quality approval and coordinate ID/revision
+matching as normal-use permission. Preserve saved geometry and explicit input/body
+choices across reconnects; invalidate short-lived samples/history independently.
+Known conventions and finite valid components still require normal structural,
+identity, replay, freshness and feedback checks. No new proof/approval provider or
+bypass switch is a prerequisite for ordinary tracking or correction. See
+`docs/normal-runtime-correction.md`; historical Task5 mismatched-space/approval
+requirements apply only where they do not conflict with these current semantics.
+
 ## Highest-priority architecture invariant: input-producer independence
 
 **Mandatory for all future changes, including fixes, migration work, UI, tests, scripts, and packaging.** This section overrides historical task documents or existing implementation patterns when they conflict. It applies to **every input transport and format**, not only MVIP.
@@ -94,3 +105,7 @@ A managed local branch named `work` may not expose or fetch ordinary remote refs
 Before continuing work on an existing branch, incorporate the current producer-independence instructions using a history-preserving update or an explicitly reviewed, documentation-only backport. Do not rewrite frozen review or HIL baselines and do not merge unrelated changes simply to propagate this file.
 
 If working-tree state, the current protocol kit, or historical task documents conflict with this file, report the conflict and stop at the affected boundary rather than changing behavior without authorization.
+
+## Fixed local build entry
+
+- Normal launch resolves the repository-owned fixed `Build/runtime` output relative to the script. Do not use `task-work`, dated packages, artifact catalogs, or per-build launcher rewriting as runtime dependencies. Build/update that fixed output only through the explicit repository build command; normal launch must not build, install, or register products. Fixed absolute drive, user-profile, and external-tool installation paths in launch scripts are prohibited; discover tools through environment/configuration or PATH.

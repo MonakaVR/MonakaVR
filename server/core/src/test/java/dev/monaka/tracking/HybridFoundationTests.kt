@@ -160,7 +160,7 @@ class HybridFoundationTests {
 							assertEquals(identity, Triple(visible.id, visible.name, visible.trackerPosition))
 							assertSame(visible, output.trackers.getValue(TrackerPosition.HIP))
 							assertFalse(FeedbackExclusion.accepts(visible))
-							assertTrue(runtime.pipeline.observations(now).none { FeedbackExclusion.isOutput(it.sourceId.removePrefix("slime:")) })
+							assertTrue(runtime.pipeline.observations(now).none { it.sourceId == "slime:${visible!!.name}" })
 							return main to composed
 						}
 						fun send(sequence: Long, modality: String, x: Float = baseline.x): Pair<ResolvedTrackingPose, OutputPose> {
@@ -287,7 +287,7 @@ class HybridFoundationTests {
 		assignment.put("outputMode", "hybrid")
 		mapper.writeValue(path.toFile(), json)
 		assertFails { MonakaConfiguration.load(path) }
-		assertFails { MonakaConfiguration(p.coordinate_space, backgroundIkSharedSpace = p.coordinate_space.copy(revision = 1)) }
+		assertEquals(p.coordinate_space.copy(revision = 1), MonakaConfiguration(p.coordinate_space, backgroundIkSharedSpace = p.coordinate_space.copy(revision = 1)).backgroundIkSharedSpace)
 		json.putObject("continuityTuning").put("stableFullDwellMs", -1)
 		mapper.writeValue(path.toFile(), json)
 		assertFails { MonakaConfiguration.load(path) }

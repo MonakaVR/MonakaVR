@@ -65,6 +65,7 @@ allprojects {
 dependencies {
 	implementation(project(":server:core"))
 	implementation(project(":solarxr-protocol"))
+	implementation("com.fasterxml.jackson.core:jackson-databind:2.21.0")
 
 	implementation("commons-cli:commons-cli:1.11.0")
 	implementation("org.apache.commons:commons-lang3:3.20.0")
@@ -148,6 +149,26 @@ tasks.register<JavaExec>("mtpProcessE2E") {
 		val output = providers.gradleProperty("monakaE2EOutput").orNull
 			?: layout.buildDirectory.dir("mtp-process-e2e/${UUID.randomUUID()}").get().asFile.absolutePath
 		args(rootProject.file(output).absolutePath)
+	}
+}
+
+// Explicit software acceptance entry. Uses normal configuration RPC + composition +
+// existing IK and serialized output, with visibly identified input/OS transport fixtures.
+tasks.register<JavaExec>("normalRuntimeProcessProbe") {
+	group = "verification"
+	description = "Normal RPC/save, exact MVIP UDP/replay, independent IMU fixture, IK and virtual byte capture"
+	dependsOn(tasks.testClasses)
+	classpath = sourceSets["test"].runtimeClasspath
+	mainClass.set("dev.monaka.tracking.desktop.NormalRuntimeProcessProbe")
+	javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+	doFirst {
+		args(
+			providers.gradleProperty("monakaNormalConfig").get(),
+			providers.gradleProperty("monakaNormalReady").get(),
+			providers.gradleProperty("monakaNormalEvidence").get(),
+			providers.gradleProperty("monakaNormalReplay").getOrElse("-"),
+			providers.gradleProperty("monakaNormalSeconds").getOrElse("120"),
+		)
 	}
 }
 

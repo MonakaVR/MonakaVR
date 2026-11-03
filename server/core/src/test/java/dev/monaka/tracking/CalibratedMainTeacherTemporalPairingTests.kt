@@ -281,8 +281,8 @@ class CalibratedMainTeacherTemporalPairingTests {
 			structural(input(normalized.copy(rawOrigin = bad)), "main_not_raw_backend")
 		}
 		for (prefix in listOf("monaka-direct:", "monaka-solver:", "monaka-private:", "human://")) {
-			val bad = origin.copy(sourceId = "${prefix}main")
-			structural(input(normalized.copy(sourceId = bad.sourceId, rawOrigin = bad)), "main_not_raw_backend")
+			val opaque = origin.copy(sourceId = "${prefix}main")
+			assertTrue(opaque.isRawBackend())
 		}
 	}
 

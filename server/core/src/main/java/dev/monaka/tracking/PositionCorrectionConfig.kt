@@ -4,8 +4,9 @@ import dev.monaka.protocol.v2.CoordinateSpace
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 
-/** Explicit operator/config inputs, not HIL tuned defaults. Null in MonakaConfiguration means opt-out.
- * Persistence DTOs do not confer live source authority or activate tracking. Every value is mandatory.
+/** Optional saved geometry/numerical overrides, not HIL tuning or usage permission.
+ * Null in MonakaConfiguration uses normal runtime Identity geometry/default tuning.
+ * Stored identities bind only the corresponding geometric override, never ordinary Pose admission.
  */
 data class PositionCorrectionConfig(
 	val rawImuSpace: PositionCorrectionRawImuSpaceConfig,
@@ -16,18 +17,10 @@ data class PositionCorrectionConfig(
 	val learningTuning: PositionCorrectionLearningTuningConfig,
 	val reacquisitionTuning: PositionCorrectionReacquisitionTuningConfig,
 ) {
-	internal fun validateBinding(space: CoordinateSpace, assignment: MainTrackerAssignment?) {
-		require(rawImuSpace.space == space) { "Raw IMU space must match id, revision and convention exactly" }
-		require(assignment != null && assignment.useAsIkConstraint && assignment.rotationFallbackTracker != null) {
-			"Position correction requires HIP IK participation and explicit rotation fallback"
-		}
-		val fallback = assignment.rotationFallbackTracker
-		require(fallback.mtp == null && fallback.observationId.startsWith("slime:")) {
-			"Position correction requires an explicitly assigned physical Slime IMU fallback"
-		}
-		require(assignment.mainTracker.mtp != null) { "Position correction teacher requires raw MTP Main" }
-		require(rawImuSpace.sourceId == fallback.observationId) { "Raw IMU confirmation belongs to another source" }
-		require(mainMountCalibration.sourceId == assignment.mainTracker.observationId) { "Main mount belongs to another source" }
+	internal fun validateBinding(space: CoordinateSpace, @Suppress("UNUSED_PARAMETER") assignment: MainTrackerAssignment?) {
+		require(rawImuSpace.space.convention == space.convention) { "Raw IMU convention is unsupported" }
+		// Saved geometric source bindings are checked where that override is used.
+		// Changing ordinary assignments cannot revoke the rest of the configuration.
 	}
 
 	/** Pure materialization; no live inputs, clock, assignment acquisition, learner or writeback. */
@@ -48,7 +41,7 @@ data class PositionCorrectionRawImuSpaceConfig(
 	val operatorConfirmed: Boolean,
 ) {
 	init {
-		require(sourceId.isNotBlank() && operatorConfirmed) { "Raw IMU space must be explicitly source-confirmed" }
+		require(sourceId.isNotBlank()) { "Raw IMU source identity must be present" }
 		require(space.id.isNotBlank() && space.revision in 0..4294967295L && space.convention == "rh_y_up_neg_z_forward")
 	}
 	internal fun toBinding() = SlimeRawImuCoordinateSpaceBinding(sourceId, space, operatorConfirmed)

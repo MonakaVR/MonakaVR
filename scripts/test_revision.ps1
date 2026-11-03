@@ -11,7 +11,7 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 $StartedUtc = (Get-Date).ToUniversalTime()
 $RunId = $StartedUtc.ToString('yyyyMMdd-HHmmss')
 if ([string]::IsNullOrWhiteSpace($ResultsDir)) {
-    $ResultsDir = Join-Path $RepoRoot ("build/revision-test-results/{0}-{1}" -f $RunId, $Mode.ToLowerInvariant())
+    $ResultsDir = Join-Path $RepoRoot ("Build/revision-test-results/{0}-{1}" -f $RunId, $Mode.ToLowerInvariant())
 }
 New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
 

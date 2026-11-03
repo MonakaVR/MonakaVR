@@ -369,7 +369,15 @@ class ModeConfigurationTests {
 			val path = dir.resolve("$mode.json")
 			c.save(path)
 			withApi(c, path) { api ->
-				assertFails { api.saveAndApply(api.editSources(TrackerPosition.HIP, q, null, true, c.assignments.snapshot().generation, 1)) }
+				val active = c.assignments.snapshot()
+				api.saveAndApply(api.editSources(TrackerPosition.HIP, q, null, true, active.generation, 1))
+				assertEquals(active, c.assignments.snapshot())
+				val readback = snapshot(api)
+				assertTrue(readback["restartRequired"].asBoolean())
+				assertEquals(main.observationId, readback["assignments"][0]["sixDofSource"].asText())
+				assertTrue(readback["assignments"][0]["savedSixDofSource"].isNull)
+				assertEquals(null, MonakaConfiguration.load(path).assignments.snapshot().targets.getValue(TrackerPosition.HIP).sourceSelection!!.sixDofSource)
+				assertFails { api.editSources(TrackerPosition.HIP, q, main, true, active.generation, 1) }
 			}
 		}
 		val c = config(OutputMode.HYBRID, aligned = true).let {
@@ -384,8 +392,9 @@ class ModeConfigurationTests {
 		c.save(path)
 		val before = Files.readAllBytes(path)
 		withApi(c, path) { api ->
-			assertFalse(save(api, snapshot(api), "ik")["ok"].asBoolean())
-			assertContentEquals(before, Files.readAllBytes(path))
+			assertTrue(save(api, snapshot(api), "ik")["ok"].asBoolean())
+			assertEquals(c.rotationCorrection, MonakaConfiguration.load(path).rotationCorrection)
+			assertEquals(OutputMode.HYBRID, c.assignments.snapshot().targets.getValue(TrackerPosition.HIP).outputMode)
 		}
 	}
 

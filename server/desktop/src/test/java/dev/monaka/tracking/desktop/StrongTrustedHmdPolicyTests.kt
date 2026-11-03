@@ -607,12 +607,11 @@ class StrongTrustedHmdPolicyTests {
 		assertFalse(state.establish(f.context.copy(providerSessionEpoch = "synthetic-provider-fresh")))
 	}
 
-	@Test fun completeEvidenceStillCannotAdmitFeedbackIdentity() {
+	@Test fun completeEvidenceStillCannotAdmitTypedDerivedOutput() {
 		val f = Fixture()
 		val pose = f.pose()!!
 		val output = pose.copy(
-			ingressIdentity = pose.ingressIdentity.copy(sourceId = "monaka-direct:head"),
-			providerEvidence = pose.providerEvidence!!.copy(sourceIdentity = "monaka-direct:head"),
+			ingressIdentity = pose.ingressIdentity.copy(kind = dev.monaka.tracking.RawSourceKind.DERIVED_OUTPUT),
 		)
 		assertTrue(FEEDBACK_SOURCE_NOT_ALLOWED in assertIs<RawHmdPoseInputCapability.Unavailable>(deriveRawHmdPoseInputCapability(output, f.context, policy)).reasons)
 		rejected(FEEDBACK_SOURCE_NOT_ALLOWED, admitRawHmdPoseInput(f.capability(), { f.handle }, { output }, { f.now }, { f.context }))

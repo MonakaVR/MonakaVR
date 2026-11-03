@@ -179,13 +179,12 @@ internal class PositionCorrectionSolverContinuityTests {
 		val r = c.select(i)
 		val p = r.constraint.position!!
 		assertEquals("monaka-private:position-correction-reacquire-v1:HIP", p.sourceId)
-		assertTrue(FeedbackExclusion.isOutput(p.sourceId))
 		assertEquals(ObservationQuality.DEGRADED, p.quality)
 		assertEquals(minOf(70L, mainAt), p.observedAtNanos)
 		assertSame(i.baseHipConstraint.rotation, r.constraint.rotation)
-		assertFailsWith<IllegalArgumentException> { TrackerReference(p.sourceId) }
-		assertFalse(RawSourceIdentity(p.sourceId, RawSourceKind.RAW_IMU).isRawImu())
-		assertFalse(RawSourceIdentity(p.sourceId, RawSourceKind.RAW_HMD, isHmd = true).isRawHmd())
+		// The derived kind, rather than its display identity, excludes this local value.
+		assertFalse(RawSourceIdentity(p.sourceId, RawSourceKind.DERIVED_OUTPUT).isRawImu())
+		assertFalse(RawSourceIdentity(p.sourceId, RawSourceKind.DERIVED_OUTPUT, isHmd = true).isRawHmd())
 	}
 
 	@ParameterizedTest
@@ -599,7 +598,7 @@ internal class PositionCorrectionSolverContinuityTests {
 		assertNull(c.snapshot().lastFallbackAnchor)
 	}
 
-	@Test fun feedbackEpochCannotGrantFallbackAuthority() {
+	@Test fun opaqueHmdEpochWithConsistentLineageKeepsFallbackAuthority() {
 		val i = fallback()
 		val e = epoch.copy(hmdSourceId = "monaka-private:x")
 		val l = lineage.copy(predictionEpoch = e)
@@ -610,13 +609,14 @@ internal class PositionCorrectionSolverContinuityTests {
 				predictionProvenance = it.predictionProvenance.copy(epoch = e),
 			)
 		}
-		invalid(
-			controller(),
+		val selected = controller().select(
 			i.copy(
 				correctionState = i.correctionState.copy(lineage = l),
 				fallbackApplication = PositionCorrectionApplicationResult.Ready(candidate),
 			),
 		)
+		assertEquals(PositionCorrectionSolverContinuityPhase.FALLBACK_ACTIVE, selected.phase)
+		assertEquals(candidate.solverConstraint(), selected.constraint)
 	}
 
 	@Test fun unavailableGapAlsoPreventsReusingAnOldReadyBundle() {
@@ -726,7 +726,7 @@ internal class PositionCorrectionSolverContinuityTests {
 				assertEquals(r.constraint.position!!.value, current.position)
 				assertEquals(r.constraint.rotation!!.value, current.getRotation())
 				assertNotSame(trackers.hip, current)
-				assertTrue(FeedbackExclusion.isOutput(current.name))
+				assertTrue(FeedbackExclusion.isOwnedOutput(current))
 				val viewMethod = ConstraintIkWriteback::class.java.getDeclaredMethod("inputView", List::class.java).also { it.isAccessible = true }
 				val view = viewMethod.invoke(writeback, listOf(trackers.head, trackers.hip)) as SkeletonInputView
 				assertEquals(listOf(current), view.constraints.filter { it.trackerPosition == TrackerPosition.HIP })

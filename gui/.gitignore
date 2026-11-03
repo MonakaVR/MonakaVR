@@ -39,3 +39,6 @@ electron.vite.config.*.mjs
 
 # electron
 out/
+
+# Electron compiler stage (keeps GUI-local Node dependency resolution)
+/Build/

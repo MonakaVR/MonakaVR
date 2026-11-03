@@ -38,6 +38,17 @@ class IKSolver(private val root: Bone) {
 	internal fun effectivePositionTargetFor(trackerName: String, bodyPart: Int?) = chainList.asSequence().flatMap { it.positionalInputs().asSequence() }
 		.firstOrNull { key(it.tracker) == (trackerName to bodyPart) }?.getPosition()
 
+	/** Read-only actual calibrated positional inputs. Never source-selection authority. */
+	fun diagnosticPositionTargets(): List<DiagnosticPositionTarget> = chainList.flatMap { it.positionalInputs() }.map {
+		DiagnosticPositionTarget(it.tracker.name, it.tracker.trackerPosition, it.getPosition())
+	}
+
+	data class DiagnosticPositionTarget(
+		val trackerIdentity: String,
+		val target: dev.slimevr.tracking.trackers.TrackerPosition?,
+		val position: io.github.axisangles.ktmath.Vector3,
+	)
+
 	/**
 	 * Any time the skeleton is rebuilt or trackers are assigned / unassigned the chains
 	 * should be rebuilt.

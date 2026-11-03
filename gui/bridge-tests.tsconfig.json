@@ -12,6 +12,8 @@
   },
   "include": [
     "tests/bridge/**/*.ts",
+    "tests/monaka-input/**/*.ts",
+    "tests/localization/**/*.ts",
     "src/bridge/**/*.ts",
     "electron/bridge-types.ts",
     "electron/bridge-health.ts",
