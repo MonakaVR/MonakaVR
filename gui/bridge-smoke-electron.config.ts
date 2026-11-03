@@ -12,4 +12,14 @@ export default {
       },
     },
   }),
+  preload: defineConfig({
+    build: {
+      outDir: 'build/bridge-native',
+      emptyOutDir: false,
+      rollupOptions: {
+        input: resolve(__dirname, 'tests/bridge-smoke/legacy-preload.ts'),
+        output: { format: 'cjs', entryFileNames: 'legacy-preload.cjs' },
+      },
+    },
+  }),
 };

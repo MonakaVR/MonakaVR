@@ -266,16 +266,20 @@ test('Japanese input controls remain operable at a narrow viewport and large tex
   expect(fixture.saves).toHaveLength(1);
 });
 
-test('legacy Bridge screen remains accessible without embedding consumer inputs', async ({
+test('retired producer control route and settings entry are absent', async ({
   page,
 }) => {
   const fixture = new CoreUiFixture();
   await fixture.install(page);
+  await page.goto(routeUrl);
+  await expect(page.getByLabel('Q Source', { exact: true })).toBeEnabled();
+  await expect(page.locator('a[href="#/bridge"]')).toHaveCount(0);
   await page.goto('/?ip=127.0.0.1&port=29992#/bridge');
   await expect(
     page.getByRole('heading', { name: 'Monaka Bridge', exact: true })
-  ).toBeVisible();
-  await expect(page.getByLabel('Q Source', { exact: true })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Return to MonakaVR' })).toBeVisible();
-  expect(fixture.requests).toEqual([]);
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Apply output policy', exact: true })
+  ).toHaveCount(0);
+  expect(fixture.saves).toEqual([]);
 });

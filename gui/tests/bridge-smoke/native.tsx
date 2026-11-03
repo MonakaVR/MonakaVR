@@ -1,4 +1,4 @@
-// Test-only renderer. Uses the real preload IPC and temporary native config.
+// Historical fixture renderer. Uses preserved legacy IPC and temporary native config.
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')!).render(
         SOFTWARE TEST MODE - real Desktop IPC, temporary config only; no Core,
         backend or tracking output
       </p>
-      <MonakaBridgeSettings />
+      <MonakaBridgeSettings api={Reflect.get(window.electronAPI, 'bridge')} />
     </MemoryRouter>
   </React.StrictMode>
 );

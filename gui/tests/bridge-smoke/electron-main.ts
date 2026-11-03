@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { bridgeControlHandler } from '../../electron/main/monaka-bridge-ipc';
 import { MonakaBridgeService } from '../../electron/main/monaka-bridge-service';
 import { bridgeTrayEntry } from '../../electron/main/monaka-bridge-tray';
-import { IPC_CHANNELS } from '../../electron/shared';
+import { IPC_CHANNELS } from './legacy-shared';
 
 const fixtureRoot = process.env.MONAKA_DESKTOP_E2E_ROOT;
 const validator = process.env.MONAKA_BRIDGE_TEST_P2R_VALIDATOR;
@@ -28,7 +28,7 @@ app.whenReady().then(async () => {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: resolve('out/preload/index.js'),
+      preload: resolve('build/bridge-native/legacy-preload.cjs'),
     },
   });
   const handle = bridgeControlHandler(
