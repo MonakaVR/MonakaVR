@@ -73,6 +73,8 @@ internal data class PositionCorrectionStateSnapshot(
 	val lastStateAdvanceAtNanos: Long?,
 	val recoveryGoodSamples: Int,
 	val recoveryStartTeacherAtNanos: Long?,
+	/** Original measurement age also survives an explicitly rebased Q continuity offset. */
+	val lastAcceptedTeacherAtNanos: Long? = lastAccepted?.teacherSampleAtNanos,
 )
 
 internal enum class PositionCorrectionLearningDecision { SEEDED, UPDATED, DUPLICATE, REJECTED, HELD, DECAYED, EXPIRED, INVALIDATED }
@@ -119,6 +121,7 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 	private var observed: PositionCorrectionPhysicalWatermark? = null
 	private var accepted: PositionCorrectionPhysicalWatermark? = null
 	private var acceptedPredictionSequence: Long? = null
+	private var acceptedTeacherAtNanos: Long? = null
 	private var advanceAt: Long? = null
 	private var recoveryGoodSamples = 0
 	private var recoveryStart: Long? = null
@@ -126,8 +129,30 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 
 	fun snapshot() = PositionCorrectionStateSnapshot(
 		phase, correction.snapshot(), lineage?.predictionEpoch?.coordinateSpace,
-		lineage, observed, accepted, acceptedPredictionSequence, advanceAt, recoveryGoodSamples, recoveryStart,
+		lineage, observed, accepted, acceptedPredictionSequence, advanceAt, recoveryGoodSamples, recoveryStart, acceptedTeacherAtNanos,
 	)
+
+	/** Rebase only a selected fallback offset. This is not a new physical teacher pair.
+	 * The orchestrator verifies compatible source/world context and the committed anchor.
+	 */
+	fun rebaseQContinuity(epoch: PositionPredictionEpoch, anchor: Vector3, prediction: Vector3, now: Long): Boolean {
+		val old = lineage ?: return false
+		if (phase == PositionCorrectionPhase.UNINITIALIZED || acceptedTeacherAtNanos == null ||
+			advanceAt?.let { now < it } == true
+		) return false
+		val rebased = DVector.from(anchor) - DVector.from(prediction)
+		if (!rebased.finite() || rebased.norm() > tuning.maxCorrectionMagnitudeMeters ||
+			(phase == PositionCorrectionPhase.EXPIRED && rebased.norm() > tuning.zeroEpsilonMeters)
+		) return false
+		correction = if (phase == PositionCorrectionPhase.EXPIRED) DVector.ZERO else rebased
+		lineage = old.copy(predictionEpoch = epoch)
+		observed = null
+		accepted = null
+		acceptedPredictionSequence = null
+		stableTracking = false
+		resetRecovery()
+		return true
+	}
 
 	fun observe(sample: PositionErrorSample): PositionCorrectionLearningResult {
 		val nextLineage = PositionCorrectionLearningLineage(sample.teacherEpoch, sample.predictionEpoch)
@@ -230,11 +255,11 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 	}
 
 	private fun gap(now: Long): PositionCorrectionLearningResult {
-		val last = accepted
+		val teacherAt = acceptedTeacherAtNanos
 		val previousAdvance = advanceAt
 		advanceAt = now
-		if (last == null) return result(PositionCorrectionLearningDecision.HELD, PositionCorrectionLearningReason.NO_ACCEPTED_MEASUREMENT)
-		val age = now - last.teacherSampleAtNanos
+		if (teacherAt == null) return result(PositionCorrectionLearningDecision.HELD, PositionCorrectionLearningReason.NO_ACCEPTED_MEASUREMENT)
+		val age = now - teacherAt
 		if (age <= tuning.holdNanos) {
 			phase = PositionCorrectionPhase.HOLDING
 			return result(PositionCorrectionLearningDecision.HELD, PositionCorrectionLearningReason.HELD_WITHOUT_MEASUREMENT)
@@ -242,7 +267,7 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 		stableTracking = false
 		resetRecovery()
 		// age > hold proves teacherAt + hold <= now, so this addition cannot overflow.
-		val boundary = last.teacherSampleAtNanos + tuning.holdNanos
+		val boundary = teacherAt + tuning.holdNanos
 		val dt = now - maxOf(previousAdvance ?: boundary, boundary)
 		val seconds = dt / 1e9
 		val alpha = -expm1(-seconds / tuning.decayTauSeconds)
@@ -284,6 +309,7 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 
 	private fun accept(sample: PositionErrorSample, identity: PositionCorrectionPhysicalWatermark) {
 		accepted = identity
+		acceptedTeacherAtNanos = sample.teacherSampleAtNanos
 		acceptedPredictionSequence = sample.predictionSequence // Diagnostics only.
 		advanceAt = sample.evaluatedAtNanos
 	}
@@ -311,6 +337,7 @@ internal class PositionCorrectionLearningLaw(private val tuning: PositionCorrect
 		lineage = null
 		observed = null
 		accepted = null
+		acceptedTeacherAtNanos = null
 		acceptedPredictionSequence = null
 		advanceAt = null
 		stableTracking = false

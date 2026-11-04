@@ -42,29 +42,29 @@ internal class NormalPositionCorrectionRuntime(
 		hmd: RawHmdPoseInput?,
 	): PositionCorrectionRuntimeTickResult? {
 		val hip = tick.assignment.targets[TrackerPosition.HIP] ?: return null
-		val qRef = hip.rotationFallbackTracker ?: return null
+		if (!hip.useAsIkConstraint || hip.sourceSelection?.sixDofSource == null) return null
 		val mainRef = hip.mainTracker
 		val mainContext = mainRef.mtp?.let(sources.mtpContexts::get)
 		if (mainContext != null) lastMainContext = mainContext
 		val continuityContext = lastMainContext
 		val body = (bodySource() as? HipBodyModelSnapshotResult.Available)?.snapshot
-		val q = sources.observationsBySource[qRef.observationId]?.takeIf {
-			qRef.mtp == null &&
-				sources.sourceOwners[it.sourceId] == "slime" &&
-				it.rotationQuality.usable &&
-				it.provenance != null &&
-				it.correctionRotation != null
-		}
 		val space = hmd?.space ?: lastSpace ?: return null
 		lastSpace = space
-		val rawImu = q?.let {
-			val p = requireNotNull(it.provenance)
-			if (p.sampleAtNanos > tick.nowNanos || tick.nowNanos - p.sampleAtNanos > (saved?.predictorPolicy?.maxImuSampleAgeNanos ?: RotationCorrectionTuning.normalRuntimeDefaults().maxImuSampleAgeNanos)) {
-				null
-			} else {
-				runCatching { RawImuOrientationInput(RawSourceIdentity(it.sourceId, RawSourceKind.RAW_IMU), requireNotNull(it.correctionRotation), space, p.copy(space = space)) }.getOrNull()
-			}
+		fun usableQ(ref: TrackerReference?): RawImuOrientationInput? {
+			val q = ref?.let { sources.observationsBySource[it.observationId] } ?: return null
+			val p = q.provenance ?: return null
+			if (!q.rotationQuality.usable || q.rotation == null || q.correctionRotation == null ||
+				q.modality == TrackingModality.NONE ||
+				(q.modality == TrackingModality.FULL && (q.position == null || !q.positionQuality.usable)) ||
+				p.sampleAtNanos > tick.nowNanos ||
+				tick.nowNanos - p.sampleAtNanos > (saved?.predictorPolicy?.maxImuSampleAgeNanos ?: RotationCorrectionTuning.normalRuntimeDefaults().maxImuSampleAgeNanos) ||
+				(p.space != null && p.space.convention != space.convention)
+			) return null
+			// Preserve the admitted Q lineage, including its original space description.
+			val provenance = p.copy(space = space, calibrationEpoch = "${p.calibrationEpoch}|${p.space}")
+			return runCatching { RawImuOrientationInput(RawSourceIdentity(q.sourceId, RawSourceKind.RAW_IMU), q.correctionRotation, space, provenance) }.getOrNull()
 		}
+		val rawImu = usableQ(hip.rotationFallbackTracker) ?: usableQ(mainRef)
 		val mountSaved = saved?.mainMountCalibration?.takeIf { it.sourceId == mainRef.observationId }
 		val mount = mountSaved?.toSnapshot() ?: PositionCorrectionMainMountCalibrationConfig(
 			"consumer-identity-mount",
@@ -93,7 +93,7 @@ internal class NormalPositionCorrectionRuntime(
 		val nextContext = if (hmd != null && rawImu != null && body != null && fixed != null) {
 			listOf(
 				space, tick.assignment, hmd.provenance.sourceEpoch, hmd.provenance.calibrationEpoch,
-				rawImu.provenance.sourceEpoch, rawImu.provenance.calibrationEpoch, body.identity,
+				hmd.source.sourceId, hmd.provenance.mappingRevision, hmd.provenance.commonWorldEpoch, body.identity,
 				fixed.identity, mount.identity, continuityContext?.sourceEpoch, continuityContext?.calibrationEpoch,
 				continuityContext?.mappingRevision, continuityContext?.coordinateSpace,
 			)
@@ -112,7 +112,7 @@ internal class NormalPositionCorrectionRuntime(
 		}
 		val active = orchestrator ?: return null
 		val rawMain = sources.observationsBySource[mainRef.observationId]?.takeIf {
-			sources.sourceOwners[it.sourceId] == "mtp" && mainContext != null && it.provenance?.space?.convention == space.convention
+			it.provenance?.space?.convention == space.convention
 		}?.let {
 			val p = requireNotNull(it.provenance)
 			// Saved coordinate interpretation is stable. A changed source description

@@ -145,6 +145,8 @@ internal class PositionCorrectionRuntimeOrchestrator(
 	private val continuity = PositionCorrectionSolverContinuity(reacquisitionTuning)
 	private var lastSequence: Long? = null
 	private var lastNow: Long? = null
+	private val qContexts = mutableMapOf<String, PositionPredictionEpoch>()
+	private var lastSelectionApplied = false
 
 	fun process(tick: PositionCorrectionRuntimeTick): PositionCorrectionRuntimeTickResult {
 		preflight(tick)?.let { return PositionCorrectionRuntimeTickResult.Rejected(it) }
@@ -159,6 +161,28 @@ internal class PositionCorrectionRuntimeOrchestrator(
 			predictor.predict(it.input)
 		}
 		val epoch = prediction?.takeIf { it.validity == PredictionValidity.AVAILABLE }?.provenance?.epoch
+		if (epoch != null) {
+			val state = learningLaw.snapshot()
+			val oldEpoch = state.lineage?.predictionEpoch
+			val priorSelection = continuity.snapshot()
+			val anchor = priorSelection.lastFallbackAnchor ?: priorSelection.lastSelectedAnchor
+			val knownQ = qContexts[epoch.imuSourceId]
+			// A source switch may rebase only the last selected effective position in the same
+			// non-Q context. Reconnect/calibration/mapping changes invalidate history.
+			val qUnchanged = knownQ == null || (knownQ.imuSourceEpoch == epoch.imuSourceEpoch &&
+				knownQ.imuCalibrationEpoch == epoch.imuCalibrationEpoch && knownQ.imuMappingRevision == epoch.imuMappingRevision)
+			if (oldEpoch != null && oldEpoch.imuSourceId != epoch.imuSourceId &&
+				lastSelectionApplied && qUnchanged && anchor != null && anchor.lineage == state.lineage &&
+				anchor.coordinateSpace == tick.expectedSpace && anchor.assignmentGeneration == assignment.generation &&
+				oldEpoch.copy(imuSourceId = epoch.imuSourceId, imuSourceEpoch = epoch.imuSourceEpoch,
+					imuCalibrationEpoch = epoch.imuCalibrationEpoch, imuMappingRevision = epoch.imuMappingRevision) == epoch
+			) {
+				if (learningLaw.rebaseQContinuity(epoch, anchor.position, requireNotNull(prediction.position), now)) {
+					continuity.rebindQLineage(requireNotNull(state.lineage), requireNotNull(learningLaw.snapshot().lineage))
+				}
+			}
+			qContexts[epoch.imuSourceId] = epoch
+		}
 		val measurement = if (tick.teacher != null && epoch != null) {
 			PositionErrorMeasurement.evaluate(
 				PositionCorrectionInput(
@@ -205,7 +229,9 @@ internal class PositionCorrectionRuntimeOrchestrator(
 		)
 		val finalMap = immutableMap(resolved.mapValues { it.value.solverConstraint() } + (TrackerPosition.HIP to selected.constraint))
 		// Last side-effect operation. Partial receipts are diagnostics, never a second-write trigger.
+		lastSelectionApplied = false
 		val receipt = immutableMap(sink.applySolver(finalMap, assignment))
+		lastSelectionApplied = receipt[TrackerPosition.HIP] == ConstraintIkWriteback.ApplyResult.Applied
 		return PositionCorrectionRuntimeTickResult.Processed(
 			tick.tickSequence, now, assembly, prediction,
 			measurement, learning, application, projection, selected, finalMap, receipt,

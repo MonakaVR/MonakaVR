@@ -131,12 +131,13 @@ internal object PositionCorrectionApplication {
 		val relation = assignment.targets[TrackerPosition.HIP]
 			?: return reject(PositionCorrectionApplicationRejectionReason.ASSIGNMENT_MISSING)
 		if (!relation.useAsIkConstraint) return reject(PositionCorrectionApplicationRejectionReason.IK_CONSTRAINT_DISABLED)
-		val fallback = relation.rotationFallbackTracker
-			?: return reject(PositionCorrectionApplicationRejectionReason.ROTATION_FALLBACK_UNASSIGNED)
+		if (relation.sourceSelection?.let { it.sixDofSource == null } == true) {
+			return reject(PositionCorrectionApplicationRejectionReason.ROTATION_FALLBACK_UNASSIGNED)
+		}
 		if (baseConstraint.target != TrackerPosition.HIP) return reject(PositionCorrectionApplicationRejectionReason.BASE_TARGET_MISMATCH)
 		if (baseConstraint.position != null) return reject(PositionCorrectionApplicationRejectionReason.BASE_POSITION_ALREADY_PRESENT)
 		val rotation = baseConstraint.rotation ?: return reject(PositionCorrectionApplicationRejectionReason.BASE_ROTATION_UNAVAILABLE)
-		if (fallback.observationId != rotation.sourceId || rotation.sourceId != epoch.imuSourceId) {
+		if (rotation.sourceId !in listOfNotNull(relation.mainTracker.observationId, relation.rotationFallbackTracker?.observationId) || rotation.sourceId != epoch.imuSourceId) {
 			return reject(PositionCorrectionApplicationRejectionReason.BASE_ROTATION_SOURCE_MISMATCH)
 		}
 		if (!rotation.quality.usable) return reject(PositionCorrectionApplicationRejectionReason.BASE_ROTATION_QUALITY_UNUSABLE)

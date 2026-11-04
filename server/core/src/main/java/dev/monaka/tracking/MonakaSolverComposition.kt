@@ -84,9 +84,7 @@ class MonakaSolverComposition internal constructor(
 	): MonakaSolverCommitResult {
 		val hip = tick.assignment.targets[TrackerPosition.HIP]
 		val pair = hip?.useAsIkConstraint == true &&
-			hip.mainTracker.mtp != null &&
-			hip.rotationFallbackTracker?.let { it.mtp == null } == true &&
-			(hip.sourceSelection == null || hip.sourceSelection.sixDofSource != null)
+			hip.sourceSelection?.sixDofSource != null
 		if (!pair || normalPositionFactory == null || tick.paused) {
 			if (!pair || tick.paused) normalPosition = null
 			return commitGeneric(tick, constraints, runtime.mtp.historyGeneration)

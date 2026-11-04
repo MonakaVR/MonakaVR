@@ -63,6 +63,8 @@ internal data class PositionCorrectionSolverContinuitySnapshot(
 	val lastFallbackAnchor: PositionCorrectionFallbackAnchor?,
 	val reacquireStartedAtNanos: Long?,
 	val lastTickAtNanos: Long?,
+	/** Last selected effective position, including a projected Main-direct target. */
+	val lastSelectedAnchor: PositionCorrectionFallbackAnchor? = null,
 )
 
 /** Solver input only. No raw/prediction/visible-output conversion. */
@@ -86,6 +88,7 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 	private var phase = PositionCorrectionSolverContinuityPhase.UNINITIALIZED
 	private var context: Context? = null
 	private var anchor: PositionCorrectionFallbackAnchor? = null
+	private var selectedAnchor: PositionCorrectionFallbackAnchor? = null
 	private var startedAt: Long? = null
 	private var lastTick: Long? = null
 	private var lastInput: PositionCorrectionSolverContinuityInput? = null
@@ -98,7 +101,16 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 		anchor?.let { it.copy(position = copy(it.position)) },
 		startedAt,
 		lastTick,
+		selectedAnchor?.let { it.copy(position = copy(it.position)) },
 	)
+
+	/** Called only after a compatible Q switch rebases the existing learner offset. */
+	fun rebindQLineage(previous: PositionCorrectionLearningLineage, next: PositionCorrectionLearningLineage) {
+		if (context?.lineage != previous) return
+		if (anchor?.lineage == previous) anchor = anchor?.copy(lineage = next)
+		if (selectedAnchor?.lineage == previous) selectedAnchor = selectedAnchor?.copy(lineage = next)
+		context = context?.copy(lineage = next)
+	}
 
 	fun select(input: PositionCorrectionSolverContinuityInput): PositionCorrectionSolverContinuityResult {
 		val now = input.nowNanos
@@ -234,9 +246,10 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 			)
 		}
 		val provenance = candidate.predictionProvenance
-		val fallbackSource = relation.rotationFallbackTracker?.observationId
+		val fallbackSource = candidate.predictionEpoch.imuSourceId
 		if (!safeState ||
-			fallbackSource == null ||
+			fallbackSource !in listOfNotNull(relation.mainTracker.observationId, relation.rotationFallbackTracker?.observationId) ||
+			relation.sourceSelection?.let { it.sixDofSource == null } == true ||
 			candidate.applicationAtNanos != now ||
 			candidate.target != TrackerPosition.HIP ||
 			candidate.bodyReference != PositionBodyReference.HIP_CENTER ||
@@ -300,6 +313,18 @@ internal class PositionCorrectionSolverContinuity(private val tuning: PositionCo
 		reason: PositionCorrectionSolverContinuityReason,
 	): PositionCorrectionSolverContinuityResult {
 		phase = next
+		val p = constraint.position
+		val lineage = input.correctionState.lineage
+		val effectivePosition = if (constraint.positionReference == SolverPositionReference.IK_EFFECTIVE_TARGET) {
+			p?.value
+		} else {
+			input.mainEffectiveHipTarget?.position
+		}
+		selectedAnchor = if (p != null && effectivePosition != null && lineage != null && finite(effectivePosition)) {
+			PositionCorrectionFallbackAnchor(copy(effectivePosition), p.observedAtNanos, input.expectedSpace, input.assignment.generation, lineage)
+		} else {
+			null
+		}
 		return PositionCorrectionSolverContinuityResult(next, constraint, reason).also {
 			lastInput = input
 			lastResult = it
