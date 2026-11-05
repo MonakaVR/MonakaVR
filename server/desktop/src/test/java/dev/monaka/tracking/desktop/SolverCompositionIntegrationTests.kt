@@ -167,6 +167,19 @@ class SolverCompositionIntegrationTests {
 			assertEquals("1", record["accepted_mvip"].single()["sequence"].asText())
 			assertEquals(1, f.polls)
 			assertEquals(0L, f.integration.frameDiagnosticFailures)
+			val consumed = record["consumed_rotation_inputs"].filter { it["target"].asText() == "HIP" }
+			assertTrue(consumed.isNotEmpty())
+			val actualInput = f.manager.skeleton.hipTracker!!
+			for (input in consumed) {
+				assertEquals(record["tick"], input["tick"])
+				assertEquals("HUMAN_SKELETON_FK_ROTATION_READ", input["boundary"].asText())
+				assertEquals("updateSpineTransforms", input["read_site"].asText())
+				assertEquals(frames.identity(actualInput.name), input["identity"].asText())
+				assertTrue(input["has_position"].booleanValue())
+				assertTrue(input["has_rotation"].booleanValue())
+				assertEquals(actualInput.getRotation().let { listOf(it.x, it.y, it.z, it.w) }, input["rotation_xyzw"].map { it.floatValue() })
+			}
+			assertTrue(f.manager.skeleton.finishDiagnosticInputFrame().isEmpty())
 			val result = record["computed_trackers"].first { it["target"].asText() == "HIP" }
 			assertEquals(actualPosition, result["position"].map { it.floatValue() })
 			assertEquals(actualRotation, result["rotation_xyzw"].map { it.floatValue() })
@@ -180,6 +193,48 @@ class SolverCompositionIntegrationTests {
 			val dir = Path.of("build/same-frame-diagnostic-fixtures")
 			Files.createDirectories(dir)
 			Files.writeString(dir.resolve("pinned-frame.jsonl"), bytes.toString(Charsets.UTF_8))
+		}
+	}
+
+	@Test fun explicitQOnlyCaptureRecordsActualConsumedQWithoutPositionAndDetachedFromLaterFrame() {
+		val bytes = java.io.ByteArrayOutputStream()
+		val frames = SameFrameDiagnostics(bytes)
+		Fixture(hybrid = false, frames = frames, configureAssignments = { a ->
+			a.configureSources(hip, TrackerReference.mtp(key(pose())), null, true)
+		}).use { f ->
+			val relation = f.assignments.snapshot().targets.getValue(hip)
+			assertNotNull(relation.sourceSelection!!.qSource)
+			assertNull(relation.sourceSelection!!.sixDofSource)
+			assertEquals(OutputMode.IK, relation.outputMode)
+			assertTrue(relation.useAsIkConstraint)
+			val rotations = listOf(listOf(0.0, 0.0, 0.0, 1.0), listOf(.2, 0.0, 0.0, kotlin.math.sqrt(.96)))
+			for ((index, q) in rotations.withIndex()) {
+				f.now += 10_000_000
+				val p = f.p.copy(sequence = (index + 1).toLong(), position = listOf(100.0 * index, -50.0, 90.0), orientation = q)
+				assertTrue(f.integration.runtime.inbox.receive((MonakaCodec.encodeEnvelope(p) as EncodeResult.Success).value, f.now))
+				f.before!!.run()
+				f.finish()
+			}
+			frames.close()
+			assertTrue(frames.awaitTermination(2000))
+			val records = bytes.toString(Charsets.UTF_8).lines().filter { it.isNotBlank() }.map { com.fasterxml.jackson.databind.ObjectMapper().readTree(it) }
+			assertEquals(2, records.size)
+			for ((index, record) in records.withIndex()) {
+				val resolved = record["resolved"].single { it["target"].asText() == "HIP" }
+				assertTrue(resolved["position"].isNull)
+				val consumed = record["consumed_rotation_inputs"].filter { it["target"].asText() == "HIP" }
+				assertTrue(consumed.isNotEmpty())
+				for (input in consumed) {
+					assertEquals(record["tick"], input["tick"])
+					assertFalse(input["has_position"].booleanValue())
+					assertTrue(input["position"].isNull)
+					assertTrue(input["has_rotation"].booleanValue())
+					assertEquals(rotations[index].map { it.toFloat() }, input["rotation_xyzw"].map { it.floatValue() })
+					assertEquals(64, input["identity"].asText().length)
+				}
+			}
+			assertNotEquals(records[0]["computed_trackers"], records[1]["computed_trackers"])
+			assertEquals(0L, f.integration.frameDiagnosticFailures)
 		}
 	}
 
@@ -215,6 +270,13 @@ class SolverCompositionIntegrationTests {
 			assertEquals(listOf("1", "2", "3", "4"), records.map { it["accepted_mvip"].single()["sequence"].asText() })
 			assertEquals(listOf(true, false, false, true), records.map { it["accepted_mvip"].single()["validity"]["position"].booleanValue() })
 			assertEquals(listOf(true, true, false, true), records.map { it["accepted_mvip"].single()["validity"]["orientation"].booleanValue() })
+			for ((index, record) in records.withIndex()) {
+				val consumed = record["consumed_rotation_inputs"].filter { it["target"].asText() == "HIP" }
+				assertTrue(consumed.isNotEmpty()) // same-frame explicit IMU fallback remains consumed even at MVIP NONE
+				assertTrue(consumed.all { it["tick"] == record["tick"] && it["has_rotation"].booleanValue() })
+				assertTrue(consumed.all { it["has_position"].booleanValue() == (index == 0 || index == 3) })
+				assertTrue(consumed.all { it["position"].isNull == (index == 1 || index == 2) })
+			}
 			assertEquals(listOf(false, true, true, false), records.map { r -> r["resolved"].first { it["target"].asText() == "HIP" }["position"].isNull })
 			assertTrue(records.all { r -> r["resolved"].first { it["target"].asText() == "HIP" }["rotation_xyzw"].isArray }) // explicit IMU fallback
 			val dir = Path.of("build/same-frame-diagnostic-fixtures")

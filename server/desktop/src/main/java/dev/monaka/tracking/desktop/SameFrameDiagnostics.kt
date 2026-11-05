@@ -250,7 +250,7 @@ class SameFrameDiagnostics internal constructor(
 				)
 			},
 			"ik_targets_before" to targets(skeleton), "bones_before" to bones(skeleton),
-		)
+		).also { skeleton.beginDiagnosticInputFrame(tick.tickSequence) }
 	}
 	internal fun after(before: Map<String, Any?>, skeleton: HumanSkeleton, direct: Iterable<Tracker>, postIk: Boolean) {
 		offer(
@@ -258,6 +258,17 @@ class SameFrameDiagnostics internal constructor(
 				mapOf(
 					"post_ik_hook" to postIk,
 					"solver_enabled" to skeleton.ikSolver.enabled,
+					"consumed_rotation_inputs" to skeleton.finishDiagnosticInputFrame().map { input ->
+						mapOf(
+							"boundary" to "HUMAN_SKELETON_FK_ROTATION_READ",
+							"tick" to input.tick.toString(), "target" to input.target?.name,
+							"read_site" to input.readSite,
+							"identity" to identity(input.trackerIdentity),
+							"has_position" to input.hasPosition, "has_rotation" to input.hasRotation,
+							"position" to if (input.hasPosition) listOf(input.px, input.py, input.pz).map { it?.let(::finite) } else null,
+							"rotation_xyzw" to if (input.hasRotation) listOf(input.qx, input.qy, input.qz, input.qw).map { it?.let(::finite) } else null,
+						)
+					},
 					"ik_targets_after" to targets(skeleton),
 					"bones_after" to bones(skeleton),
 					"computed_trackers" to skeleton.humanPoseManager.computedTrackers.map { tracker(it, false) },

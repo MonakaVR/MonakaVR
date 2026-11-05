@@ -7,6 +7,11 @@ import dev.monaka.protocol.v2.MonakaCodec
 import dev.monaka.protocol.v2.MtpPose
 import dev.monaka.protocol.v2.Validity
 import dev.slimevr.tracking.processor.HumanPoseManager
+import dev.slimevr.tracking.processor.BoneType
+import dev.slimevr.tracking.processor.skeleton.HumanSkeleton
+import io.github.axisangles.ktmath.Quaternion
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import dev.slimevr.tracking.trackers.TrackerPosition
 import dev.slimevr.unit.TestTrackerSet
 import io.github.axisangles.ktmath.Vector3
@@ -141,4 +146,103 @@ class MvipSolverBoundaryTests {
 			}
 		}
 	}
+
+	@ParameterizedTest
+	@EnumSource(value = TrackerPosition::class, names = ["CHEST", "LEFT_UPPER_LEG"])
+	fun explicitQOnlyConsumesRotationInRealIkAndIgnoresLargePositionChanges(target: TrackerPosition) {
+		var now = 1_000_000_000L
+		val source = fixture()
+		val key = LogicalTracker(source.source_id, source.tracker_id, source.publisher_id)
+		val assignments = TrackerBodyAssignments().also {
+			it.configureSources(target, TrackerReference.mtp(key), null, true)
+		}
+		val relation = assignments.snapshot().targets.getValue(target)
+		assertEquals(TrackerReference.mtp(key), relation.sourceSelection!!.qSource)
+		assertNull(relation.sourceSelection!!.sixDofSource)
+		assertEquals(OutputMode.IK, relation.outputMode)
+		assertTrue(relation.useAsIkConstraint)
+		val trackers = TestTrackerSet()
+		trackers.head.position = Vector3(0f, 1.7f, 0f)
+		val manager = HumanPoseManager(listOf(trackers.head))
+		manager.setLegTweaksEnabled(false)
+		manager.skeleton.ikSolver.enabled = true
+		manager.update()
+		val bone = manager.skeleton.getBone(if (target == TrackerPosition.CHEST) BoneType.CHEST else BoneType.LEFT_UPPER_LEG)
+		val q0 = Quaternion.IDENTITY
+		val q1 = Quaternion(kotlin.math.sqrt(.96f), .2f, 0f, 0f)
+
+		MonakaRuntime({ listOf(trackers.head) }, source.coordinate_space, assignments, clock = { now }).use { runtime ->
+			MonakaSolverComposition(ConstraintIkWriteback(manager.skeleton), ProductionPositionCorrectionGate.NOT_CONFIGURED).use { composition ->
+				var sequence = 0L
+				fun step(p: List<Double>, q: Quaternion, mode: String): List<HumanSkeleton.ConsumedRotationInput> {
+					val next = source.copy(
+						sequence = sequence++, timestamp_ns = source.timestamp_ns + sequence * 10_000_000,
+						sent_at_ns = source.sent_at_ns + sequence * 10_000_000,
+						position = p.takeIf { mode == "full" },
+						orientation = listOf(q.x.toDouble(), q.y.toDouble(), q.z.toDouble(), q.w.toDouble()).takeIf { mode != "none" },
+						modality = mode, validity = Validity(mode == "full", mode != "none"),
+						confidence = Confidence(if (mode == "full") 1.0 else 0.0, if (mode == "none") 0.0 else 1.0),
+						tracking_state = when (mode) { "full" -> "tracked"; "none" -> "lost"; else -> "degraded" },
+						input = source.input.copy(sequence = sequence),
+					)
+					assertTrue(runtime.inbox.receive(assertIs<EncodeResult.Success>(MonakaCodec.encodeEnvelope(next)).value, now))
+					val tick = runtime.tickSnapshot()
+					val resolved = tick.constraints[target]
+					assertNull(resolved?.position)
+					if (mode != "none") assertNotNull(resolved?.rotation) else assertNull(resolved?.rotation)
+					assertIs<MonakaSolverCommitResult.GenericCommitted>(composition.commitGeneric(tick, tick.constraints))
+					manager.skeleton.beginDiagnosticInputFrame(tick.tickSequence)
+					manager.update()
+					val consumed = manager.skeleton.finishDiagnosticInputFrame().filter { it.target == target }
+					if (mode == "none") assertTrue(consumed.isEmpty()) else {
+						assertTrue(consumed.isNotEmpty())
+						for (input in consumed) {
+							assertEquals(tick.tickSequence, input.tick)
+							assertFalse(input.hasPosition)
+							assertTrue(input.hasRotation)
+							assertNull(input.px); assertNull(input.py); assertNull(input.pz)
+							assertEquals(listOf(q.x, q.y, q.z, q.w), listOf(input.qx, input.qy, input.qz, input.qw))
+							assertEquals(if (target == TrackerPosition.CHEST) "updateSpineTransforms" else "updateLegTransforms", input.readSite)
+						}
+					}
+					now += 10_000_000
+					return consumed
+				}
+				fun computed() = manager.computedTrackers.map { it.position to it.getRotation() }
+				val a = step(listOf(0.0, 1.0, 0.0), q0, "full")
+				val initial = computed()
+				val initialBone = bone.getGlobalRotation()
+				val calibration = manager.skeleton.ikSolver.calibrationSnapshot()
+				val b = step(listOf(100.0, -40.0, 75.0), q0, "full")
+				assertEquals(a.map { it.copy(tick = 0) }, b.map { it.copy(tick = 0) })
+				// Deterministic HMD/all other inputs fixed: exact equality is tighter than existing 1e-5 math tolerance.
+				assertEquals(initial, computed())
+				assertEquals(initialBone, bone.getGlobalRotation())
+				step(listOf(-90.0, 80.0, -70.0), q1, "full")
+				assertTrue((bone.getGlobalRotation() * initialBone.inv()).angleR() > .01f)
+				assertTrue(computed().zip(initial).any { (next, before) -> next != before })
+				val rotated = computed()
+				step(emptyList(), q1, "rotation_only")
+				assertEquals(rotated, computed())
+				assertEquals(calibration, manager.skeleton.ikSolver.calibrationSnapshot())
+				// An invalid Q removes the consumed constraint rather than retaining the prior Q.
+				step(emptyList(), q1, "none")
+				step(emptyList(), q1, "rotation_only")
+				val last = runtime.mtp.samples().getValue(key)
+				now = last.sampleTime + 500_000_001
+				val stale = runtime.tickSnapshot()
+				assertNull(stale.constraints[target]?.rotation)
+				assertIs<MonakaSolverCommitResult.GenericCommitted>(composition.commitGeneric(stale, stale.constraints))
+				manager.skeleton.beginDiagnosticInputFrame(stale.tickSequence)
+				manager.update()
+				assertTrue(manager.skeleton.finishDiagnosticInputFrame().none { it.target == target })
+				// Opt-out and arm-without-update expose no historical reads.
+				manager.update()
+				assertTrue(manager.skeleton.finishDiagnosticInputFrame().isEmpty())
+				manager.skeleton.beginDiagnosticInputFrame(999)
+				assertTrue(manager.skeleton.finishDiagnosticInputFrame().isEmpty())
+			}
+		}
+	}
+
 }
