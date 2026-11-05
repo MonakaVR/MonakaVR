@@ -221,6 +221,35 @@ class HumanSkeleton(
 
 	fun refreshConstraintInputs() = setTrackersFromList(rawInputTrackers)
 
+	data class DiagnosticTrackerOrientation(
+		val name: String,
+		val target: TrackerPosition?,
+		val hasPosition: Boolean,
+		val hasRotation: Boolean,
+		val raw: Quaternion?,
+		val referenceAdjusted: Quaternion?,
+		val identityAdjusted: Quaternion?,
+		val referenceAdjustedAvailable: Boolean,
+		val status: String,
+		val sendingData: Boolean,
+	)
+
+	/** Existing GUI data-feed values from real input objects, never the solver proxy view.
+	 * Same server thread, no provider poll or mutable tracker reference escapes.
+	 */
+	fun diagnosticInputOrientations(target: TrackerPosition, selectedNames: Set<String>): List<DiagnosticTrackerOrientation> =
+		rawInputTrackers.asSequence().filter { it.trackerPosition == target || it.name in selectedNames }.take(16).map { t ->
+			val raw = t.getRawRotation().takeIf { t.hasRotation }
+			val adjustedAvailable = t.hasRotation && (t.allowMounting || t.allowReset)
+			DiagnosticTrackerOrientation(
+				t.name, t.trackerPosition, t.hasPosition, t.hasRotation, raw,
+				if (adjustedAvailable) t.getRotation() else null,
+				if (t.allowMounting && t.hasRotation) t.getIdentityAdjustedRotation() else raw.takeIf { t.allowReset },
+				adjustedAvailable,
+				t.status.name, t.status.sendData,
+			)
+		}.toList()
+
 	/** Opt-in evidence from the actual FK rotation reads feeding the existing IK.
 	 * Scalars only: no mutable tracker/math objects, callbacks or I/O cross this boundary.
 	 * A frame is consumed at most once; arming without updatePose produces no inputs.
@@ -1639,34 +1668,41 @@ class HumanSkeleton(
 
 	@JvmOverloads
 	fun resetTrackersFull(resetSourceName: String?, bodyParts: List<Int> = ArrayList()) {
-		humanPoseManager.server?.serverGuards?.onFullReset()
+		val diagnosticStart = humanPoseManager.fullResetDiagnostics.started()
+		var diagnosticCompleted = false
+		try {
+			humanPoseManager.server?.serverGuards?.onFullReset()
 
-		var referenceRotation = IDENTITY
-		headTracker?.let {
-			if (bodyParts.isEmpty() || bodyParts.contains(BodyPart.HEAD)) {
-				// Always reset the head (ifs in resetsHandler)
-				it.resetsHandler.resetFull(referenceRotation)
+			var referenceRotation = IDENTITY
+			headTracker?.let {
+				if (bodyParts.isEmpty() || bodyParts.contains(BodyPart.HEAD)) {
+					// Always reset the head (ifs in resetsHandler)
+					it.resetsHandler.resetFull(referenceRotation)
+				}
+				referenceRotation = it.getRotation()
 			}
-			referenceRotation = it.getRotation()
-		}
 
-		// Resets all axes of the trackers with the HMD as reference.
-		for (tracker in trackersToReset) {
-			// Only reset if tracker needsReset
-			if (tracker != null && (tracker.allowReset || tracker.isHmd) && (bodyParts.isEmpty() || bodyParts.contains(tracker.trackerPosition?.bodyPart))) {
-				tracker.resetsHandler.resetFull(referenceRotation)
+			// Resets all axes of the trackers with the HMD as reference.
+			for (tracker in trackersToReset) {
+				// Only reset if tracker needsReset
+				if (tracker != null && (tracker.allowReset || tracker.isHmd) && (bodyParts.isEmpty() || bodyParts.contains(tracker.trackerPosition?.bodyPart))) {
+					tracker.resetsHandler.resetFull(referenceRotation)
+				}
 			}
-		}
 
-		// Tell floorclip to reset its floor level on the next update
-		// of the computed trackers
-		if (!localizer.getEnabled()) {
-			legTweaks.resetFloorLevel()
+			// Tell floorclip to reset its floor level on the next update
+			// of the computed trackers
+			if (!localizer.getEnabled()) {
+				legTweaks.resetFloorLevel()
+			}
+			legTweaks.resetBuffer()
+			localizer.reset()
+			ikSolver.resetOffsets()
+			LogManager.info("[HumanSkeleton] Reset: full ($resetSourceName)")
+			diagnosticCompleted = true
+		} finally {
+			humanPoseManager.fullResetDiagnostics.finished(diagnosticStart, diagnosticCompleted)
 		}
-		legTweaks.resetBuffer()
-		localizer.reset()
-		ikSolver.resetOffsets()
-		LogManager.info("[HumanSkeleton] Reset: full ($resetSourceName)")
 	}
 
 	@VRServerThread

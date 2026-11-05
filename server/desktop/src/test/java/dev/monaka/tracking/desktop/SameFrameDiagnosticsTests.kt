@@ -1,6 +1,7 @@
 package dev.monaka.tracking.desktop
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import dev.slimevr.tracking.processor.FullResetDiagnostics
 import io.github.axisangles.ktmath.Vector3
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -82,5 +83,76 @@ class SameFrameDiagnosticsTests {
 			assertEquals(64, a.identity("opaque")!!.length)
 			assertNull(a.identity(null))
 		} finally { a.close(); b.close(); assertTrue(a.awaitTermination(2000)); assertTrue(b.awaitTermination(2000)) }
+	}
+	@Test fun resetWindowWaitsWithoutSpendingDiskBudgetAndClosesWithBoundedEvidence() {
+		var now = 1_000_000_000L
+		val bytes = ByteArrayOutputStream()
+		val sink = SameFrameDiagnostics(bytes, resetWindow = true, systemClock = { now })
+		val timeline = FullResetDiagnostics { now }
+		timeline.observe(sink::recordReset)
+		try {
+			repeat(6000) { i ->
+				assertTrue(sink.shouldRecordFrame())
+				sink.recordFrame(mapOf("schema" to "monaka.same_frame.v1", "tick" to i.toString(), "system_ns" to now.toString(), "reset_generation" to "0"))
+				now += SameFrameDiagnostics.SAMPLE_INTERVAL_NS
+			}
+			assertEquals(0L, sink.written.get())
+			assertTrue(sink.bufferedPreFrames in 100..101)
+			val start = timeline.started()
+			timeline.finished(start, true)
+			val deadline = System.nanoTime() + 2_000_000_000L
+			while (sink.written.get() < 102 && System.nanoTime() < deadline) Thread.sleep(1)
+			assertTrue(sink.written.get() >= 102)
+			repeat(101) { i ->
+				assertTrue(sink.shouldRecordFrame())
+				sink.recordFrame(mapOf("schema" to "monaka.same_frame.v1", "tick" to (6000 + i).toString(), "system_ns" to now.toString(), "reset_generation" to "1"))
+				now += SameFrameDiagnostics.SAMPLE_INTERVAL_NS
+			}
+			assertTrue(sink.awaitTermination(2000))
+			val records = bytes.toString(Charsets.UTF_8).lineSequence().filter { it.isNotBlank() }.map(ObjectMapper()::readTree).toList()
+			assertEquals(2, records.count { it["event"]?.asText() == "FULL_RESET" })
+			val summary = records.last()
+			assertEquals("monaka.capture_end.v1", summary["schema"].asText())
+			assertEquals("POST_WINDOW_COMPLETE", summary["termination_reason"].asText())
+			assertFalse(summary["capture_incomplete"].booleanValue())
+			assertEquals("0", summary["dropped"].asText())
+			assertEquals("5000000000", summary["actual_pre_ns"].asText())
+			assertEquals("5000000000", summary["actual_post_ns"].asText())
+			assertTrue(bytes.size() < 100_000)
+			val fixtureDir = Path.of("build/same-frame-diagnostic-fixtures")
+			Files.createDirectories(fixtureDir)
+			Files.write(fixtureDir.resolve("bounded-window-clock-fixture.jsonl"), bytes.toByteArray())
+		} finally { sink.close(); assertTrue(sink.awaitTermination(2000)) }
+	}
+	@Test fun completedResetForcesFirstPostFrameBetweenSampleSlots() {
+		var now = 1_000_000_000L
+		val sink = SameFrameDiagnostics(ByteArrayOutputStream(), resetWindow = true, systemClock = { now })
+		val timeline = FullResetDiagnostics { now }
+		timeline.observe(sink::recordReset)
+		try {
+			assertTrue(sink.shouldRecordFrame())
+			now += 1
+			assertFalse(sink.shouldRecordFrame())
+			val start = timeline.started()
+			timeline.finished(start, true)
+			assertTrue(sink.shouldRecordFrame())
+			assertFalse(sink.shouldRecordFrame())
+		} finally { sink.close(); assertTrue(sink.awaitTermination(2000)) }
+	}
+	@Test fun resetWindowLimitsAndEarlyCloseAreExplicitlyIncomplete() {
+		val bytes = ByteArrayOutputStream()
+		val sink = SameFrameDiagnostics(bytes, resetWindow = true, maxBytes = 2048)
+		assertTrue(sink.offer(mapOf("large" to "x".repeat(4096))))
+		assertTrue(sink.awaitTermination(2000))
+		val summary = ObjectMapper().readTree(bytes.toString(Charsets.UTF_8).trim())
+		assertEquals("MAX_BYTES", summary["termination_reason"].asText())
+		assertTrue(summary["capture_incomplete"].booleanValue())
+		assertTrue(bytes.size() <= 2048)
+		val earlyBytes = ByteArrayOutputStream()
+		val early = SameFrameDiagnostics(earlyBytes, resetWindow = true)
+		early.close(); assertTrue(early.awaitTermination(2000))
+		val end = ObjectMapper().readTree(earlyBytes.toString(Charsets.UTF_8).trim())
+		assertEquals("EXPLICIT_CLOSE", end["termination_reason"].asText())
+		assertTrue(end["capture_incomplete"].booleanValue())
 	}
 }

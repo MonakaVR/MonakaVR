@@ -138,7 +138,7 @@ class MonakaServerIntegration private constructor(
 				resolvedRaw[TrackerPosition.HIP],
 				hip?.mainTracker?.observationId,
 				hip?.rotationFallbackTracker?.observationId,
-				if (frames?.accepting == true) diagnostic { frames.before(tick, runtime, resolved, commit, skeleton, lastPositionCorrection) } else null,
+				if (frames != null && diagnostic { frames.shouldRecordFrame() } == true) diagnostic { frames.before(tick, runtime, resolved, commit, skeleton, lastPositionCorrection) } else null,
 			)
 			if (registerAfterPose == null) finishPoseUpdate() else directOutput.applyPoses(emptyMap())
 		} catch (e: Exception) {
@@ -206,6 +206,7 @@ class MonakaServerIntegration private constructor(
 	override fun close() {
 		if (closed) return
 		closed = true
+		if (frames != null) skeleton.humanPoseManager.fullResetDiagnostics.observe(null)
 		frames?.close()
 		pendingFrame = null
 		try {
@@ -301,6 +302,7 @@ class MonakaServerIntegration private constructor(
 					frames,
 					{ tick -> rawHmdSource(tick, config.space, config.positionCorrection?.predictorPolicy?.maxHmdSampleAgeNanos ?: dev.monaka.tracking.RotationCorrectionTuning.normalRuntimeDefaults().maxImuSampleAgeNanos, normalHmdClockDomain) },
 				).also { integration = it }
+				if (frames != null) skeleton.humanPoseManager.fullResetDiagnostics.observe { frames?.recordReset(it) }
 				result.inputConfiguration = configurationPath?.let { path ->
 					MonakaInputConfigurationApi(config, runtime.mtp, trackers, path)
 				}

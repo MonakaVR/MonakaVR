@@ -74,11 +74,12 @@ class SolverCompositionIntegrationTests {
 		frames: SameFrameDiagnostics? = null,
 		configureAssignments: (TrackerBodyAssignments) -> Unit = {},
 		val mutate: (TrackerBodyAssignments) -> Unit = {},
+		body: TrackerPosition = hip,
 	) : AutoCloseable {
 		val p = pose()
 		val head = tracker(1, TrackerPosition.HEAD, true).also { it.position = Vector3(0f, 1.7f, 0f) }
 		val imu = if (!correction) {
-			tracker(2, hip, false)
+			tracker(2, body, false)
 		} else {
 			Tracker(
 				UDPDevice(InetSocketAddress("127.0.0.1", 20000), InetAddress.getLoopbackAddress(), "composition-test"),
@@ -91,7 +92,7 @@ class SolverCompositionIntegrationTests {
 		}
 		val manager = HumanPoseManager(listOf(head, imu))
 		val assignments = TrackerBodyAssignments().also {
-			it.configure(hip, TrackerReference.mtp(key(p)), TrackerReference.slime(imu.name), if (hybrid) OutputMode.HYBRID else OutputMode.IK)
+			it.configure(body, TrackerReference.mtp(key(p)), TrackerReference.slime(imu.name), if (hybrid) OutputMode.HYBRID else OutputMode.IK)
 			configureAssignments(it)
 		}
 		var before: Runnable? = null
@@ -143,6 +144,76 @@ class SolverCompositionIntegrationTests {
 			assertTrue(failures.isEmpty(), failures.joinToString())
 		}
 		override fun close() = integration.close()
+	}
+
+	@ParameterizedTest
+	@ValueSource(booleans = [false, true])
+	fun actualFullResetLinksSameFrameAdmittedInputConsumedQAndComputedChest(resetWindow: Boolean) {
+		val bytes = java.io.ByteArrayOutputStream()
+		val frames = SameFrameDiagnostics(bytes, resetWindow = resetWindow)
+		Fixture(hybrid = false, frames = frames, body = TrackerPosition.CHEST, configureAssignments = { a ->
+			a.configureSources(TrackerPosition.CHEST, TrackerReference.mtp(key(pose())), null, true)
+		}).use { f ->
+			val relation = f.assignments.snapshot().targets.getValue(TrackerPosition.CHEST)
+			val qOnly = f.p.copy(
+				modality = "rotation_only", validity = dev.monaka.protocol.v2.Validity(false, true),
+				confidence = dev.monaka.protocol.v2.Confidence(0.0, 1.0), tracking_state = "degraded", position = null,
+			)
+			fun frame(sequence: Long) {
+				f.now += 50_000_000
+				val p = qOnly.copy(sequence = sequence, input = qOnly.input.copy(sequence = sequence))
+				assertTrue(f.integration.runtime.inbox.receive((MonakaCodec.encodeEnvelope(p) as EncodeResult.Success).value, f.now))
+				f.before!!.run(); f.finish()
+			}
+			frame(1)
+			f.manager.resetTrackersFull("offline full reset observability")
+			frame(2)
+			frames.close(); assertTrue(frames.awaitTermination(2000))
+			val records = bytes.toString(Charsets.UTF_8).lineSequence().filter { it.isNotBlank() }.map(com.fasterxml.jackson.databind.ObjectMapper()::readTree).toList()
+			val events = records.filter { it["event"]?.asText() == "FULL_RESET" }
+			assertEquals(listOf("STARTED", "COMPLETED"), events.map { it["phase"].asText() })
+			assertTrue(events.all { it["reset_generation"].asText() == "1" })
+			val captured = records.filter { it["schema"].asText() == "monaka.same_frame.v1" }
+			assertEquals(listOf("0", "1"), captured.map { it["reset_generation"].asText() })
+			assertEquals(events[0]["system_ns"], captured[1]["last_reset_system_ns"])
+			assertEquals(events[1]["system_ns"], captured[1]["last_reset_completed_system_ns"])
+			for (record in captured) {
+				val admitted = record["input_trackers"].single { it["source_domain"].asText() == "MVIP_ADMITTED_INPUT" }
+				assertEquals(frames.identity(relation.sourceSelection!!.qSource!!.observationId), admitted["identity"].asText())
+				assertFalse(admitted["gui_orientation_available"].booleanValue())
+				assertTrue(admitted["rotation_selected"].booleanValue())
+				assertEquals("PINNED_TICK_CONSTRAINT", admitted["selection_basis"].asText())
+				assertEquals("NOT_REEVALUATED_DIAGNOSTIC", admitted["freshness_evaluation"].asText())
+				assertFalse(admitted["has_position"].booleanValue())
+				assertEquals(qOnly.orientation, admitted["rotation_xyzw"].map { it.doubleValue() })
+				val consumed = record["consumed_rotation_inputs"].filter { it["target"].asText() == "CHEST" }
+				assertTrue(consumed.isNotEmpty())
+				assertTrue(consumed.all { !it["has_position"].booleanValue() && it["has_rotation"].booleanValue() })
+				assertTrue(consumed.all { it["tick"] == record["tick"] && it["read_site"].asText() == "updateSpineTransforms" })
+				assertTrue(record["bones_after"].any { it["bone"].asText() == "CHEST" })
+				assertTrue(record["computed_trackers"].any { it["target"].asText() == "UPPER_CHEST" })
+			}
+			val dir = Path.of("build/same-frame-diagnostic-fixtures")
+			Files.createDirectories(dir)
+			Files.writeString(dir.resolve("actual-full-reset-${if (resetWindow) "window" else "detailed"}.jsonl"), bytes.toString(Charsets.UTF_8))
+		}
+	}
+
+	@Test fun writerFailureCannotStopActualResetOrFollowingSolverTick() {
+		val frames = SameFrameDiagnostics(object : java.io.OutputStream() {
+			override fun write(b: Int): Unit = throw java.io.IOException("private diagnostic path")
+		})
+		Fixture(frames = frames).use { f ->
+			f.manager.resetTrackersFull("offline writer failure")
+			assertTrue(frames.awaitTermination(2000))
+			assertEquals("IOException", frames.failure)
+			f.manager.resetTrackersFull("offline after writer failure")
+			f.send(); f.before!!.run(); f.finish()
+			assertEquals(2L, f.manager.fullResetDiagnostics.snapshot.generation)
+			assertEquals("COMPLETED", f.manager.fullResetDiagnostics.snapshot.phase)
+			assertTrue(f.failures.isEmpty())
+			assertTrue(f.manager.computedTrackers.all { it.position.x.isFinite() && it.position.y.isFinite() && it.position.z.isFinite() })
+		}
 	}
 
 	@Test fun numericCapturePinsAcceptedSampleAndMatchesActualComputedPose() {

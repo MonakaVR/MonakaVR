@@ -28,6 +28,8 @@ import kotlin.math.*
  * @param server the used VRServer
  */
 class HumanPoseManager(val server: VRServer?) {
+	/** Process-local observation only; survives skeleton input/model refreshes. */
+	val fullResetDiagnostics = FullResetDiagnostics()
 	val computedTrackers: MutableList<Tracker> = FastList()
 	private val onSkeletonUpdated: MutableList<Consumer<HumanSkeleton>> = FastList()
 	private val skeletonConfigManager = SkeletonConfigManager(true, this)
