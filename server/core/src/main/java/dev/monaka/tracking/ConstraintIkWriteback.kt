@@ -1,5 +1,6 @@
 package dev.monaka.tracking
 
+import dev.slimevr.config.ResetsConfig
 import dev.slimevr.tracking.processor.skeleton.HumanSkeleton
 import dev.slimevr.tracking.processor.skeleton.SkeletonInputView
 import dev.slimevr.tracking.trackers.*
@@ -7,10 +8,21 @@ import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 
 /** Private capability-correct inputs to the existing solver; never register these as raw trackers. */
-class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable {
+class ConstraintIkWriteback(
+	private val skeleton: HumanSkeleton,
+	private val resetConfig: () -> ResetsConfig = {
+		skeleton.humanPoseManager.server?.configManager?.vrConfig?.resetsConfig ?: ResetsConfig()
+	},
+) : AutoCloseable {
 	data class ComponentMask(val position: Boolean, val rotation: Boolean)
 	private var managed = emptySet<TrackerPosition>()
 	private val proxies = linkedMapOf<TrackerPosition, Tracker>()
+	private data class QOnlyBinding(val source: TrackerReference, val mode: OutputMode)
+	private data class RetainedQOnly(val binding: QOnlyBinding, val tracker: Tracker)
+	// Consumer reset interpretation outlives samples, but never a changed body/Q binding.
+	// Dormant objects stay out of inputView and the skeleton's reset target references.
+	private val retainedQOnly = linkedMapOf<TrackerPosition, RetainedQOnly>()
+	private var lastPrivateResetNanos: Long? = null
 	private var stableNames = emptyMap<TrackerPosition, String>()
 	private var generation = -1L
 	var topologyRebuilds = 0
@@ -21,6 +33,17 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 		skeleton.setConstraintInputView(::inputView)
 	}
 	fun masks(): Map<TrackerPosition, ComponentMask> = proxies.mapValues { ComponentMask(it.value.hasPosition, it.value.hasRotation) }
+
+	/** Accepted composition ticks only; private inputs are not in VRServer's raw Tracker.tick list. */
+	internal fun advancePrivateResetTime(nowNanos: Long) {
+		check(!closed)
+		val previous = lastPrivateResetNanos
+		lastPrivateResetNanos = maxOf(previous ?: nowNanos, nowNanos)
+		if (previous != null && nowNanos > previous) {
+			val seconds = ((nowNanos - previous).toDouble() / 1_000_000_000).toFloat()
+			for (retained in retainedQOnly.values) retained.tracker.yawResetSmoothing.tick(seconds)
+		}
+	}
 
 	private fun inputView(raw: List<Tracker>): SkeletonInputView {
 		val untouched = raw.filter { FeedbackExclusion.accepts(it) && it.trackerPosition !in managed }
@@ -70,6 +93,16 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 		if (skeleton.getPauseTracking()) return constraints.mapValues { ApplyResult.Paused }
 		val results = linkedMapOf<TrackerPosition, ApplyResult>()
 		val ikAssignments = assignment.targets.filterValues { it.useAsIkConstraint }
+		val qOnlyBindings = ikAssignments.mapNotNull { (target, relation) ->
+			val selection = relation.sourceSelection
+			val q = selection?.qSource
+			if (selection != null && selection.sixDofSource == null && q?.mtp != null) {
+				target to QOnlyBinding(q, relation.outputMode)
+			} else null
+		}.toMap()
+		for (target in retainedQOnly.keys.toList()) {
+			if (retainedQOnly.getValue(target).binding != qOnlyBindings[target]) retainedQOnly.remove(target)
+		}
 		val targets = ikAssignments.keys
 		var rebuild = targets != managed || generation != assignment.generation
 		// Sample/history invalidation is handled by the cache. Calibration belongs to
@@ -119,20 +152,32 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 				if (proxies.remove(target) != null) rebuild = true
 				continue
 			}
-			var proxy = proxies[target]
-			if (proxy == null || proxy.name != stableNames[target] || proxy.hasPosition != (position != null) || proxy.hasRotation != (rotation != null)) {
+			val qOnlyBinding = qOnlyBindings[target]
+			val resetAware = qOnlyBinding != null
+			var proxy = if (resetAware) retainedQOnly[target]?.tracker else proxies[target]
+			if (proxy == null || proxy.name != stableNames[target] || proxy.hasPosition != (position != null) || proxy.hasRotation != (rotation != null) || proxy.allowReset != resetAware) {
 				proxy = Tracker(
 					null, -10000 - target.ordinal, stableNames.getValue(target),
 					trackerPosition = target, hasPosition = position != null, hasRotation = rotation != null,
-					allowFiltering = false, allowReset = false, allowMounting = false, trackRotDirection = false,
+					allowFiltering = false, allowReset = resetAware, allowMounting = resetAware, trackRotDirection = false,
 				)
+				if (qOnlyBinding != null) {
+					// Public Q is already normalized; no extra mount before the first user reset.
+					proxy.resetsHandler.mountingOrientation = Quaternion.IDENTITY
+					retainedQOnly[target] = RetainedQOnly(qOnlyBinding, proxy)
+				}
 				// Internal/computed flags would remove this input from the existing IK solver.
 				// Record its exact owner-created object instead of inferring ownership from its name.
 				FeedbackExclusion.registerOwnedOutput(proxy)
 				proxy.status = TrackerStatus.OK
-				proxies[target] = proxy
 				rebuild = true
 			}
+			if (resetAware) {
+				proxy.resetsHandler.readResetConfig(resetConfig())
+				// Ephemeral private mounting is in-memory only; never write raw Tracker config.
+				proxy.resetsHandler.saveMountingReset = false
+			}
+			if (proxies.put(target, proxy) !== proxy) rebuild = true
 			if (rotation != null) proxy.setRotation(rotation)
 			if (position != null) proxy.position = position
 		}
@@ -145,6 +190,8 @@ class ConstraintIkWriteback(private val skeleton: HumanSkeleton) : AutoCloseable
 	override fun close() {
 		if (closed) return
 		proxies.clear()
+		retainedQOnly.clear()
+		lastPrivateResetNanos = null
 		managed = emptySet()
 		generation = -1
 		skeleton.setConstraintInputView(null)

@@ -147,6 +147,7 @@ class MonakaSolverComposition internal constructor(
 	private fun reserve(tick: MonakaResolvedTickSnapshot, owner: MonakaSolverCommitOwner): MonakaSolverCommitResult.Rejected? {
 		preflight(tick, owner)?.let { return it }
 		lastReservedTickSequence = tick.tickSequence
+		writeback.advancePrivateResetTime(tick.nowNanos)
 		val enteringPause = tick.paused && !wasPaused
 		wasPaused = tick.paused
 		if (enteringPause) dropSession()

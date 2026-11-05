@@ -155,18 +155,30 @@ class SolverCompositionIntegrationTests {
 			a.configureSources(TrackerPosition.CHEST, TrackerReference.mtp(key(pose())), null, true)
 		}).use { f ->
 			val relation = f.assignments.snapshot().targets.getValue(TrackerPosition.CHEST)
+			val headQ = Quaternion.rotationAroundYAxis(.61f)
+			val rawQ = (Quaternion.rotationAroundYAxis(1.13f) * Quaternion(.9689124f, .247404f, 0f, 0f)).unit()
+			f.head.setRotation(headQ)
+			val ordinary = Tracker(null, 190, "full-reset-oracle", trackerPosition = TrackerPosition.CHEST, hasRotation = true, allowReset = true, allowMounting = true, trackRotDirection = false).also {
+				it.resetsHandler.mountingOrientation = Quaternion.IDENTITY
+				it.setRotation(rawQ)
+				it.status = TrackerStatus.OK
+			}
+			val oracleHead = tracker(191, TrackerPosition.HEAD, true).also { it.position = f.head.position; it.setRotation(headQ) }
+			val oracle = HumanPoseManager(listOf(oracleHead, ordinary)).also { it.setLegTweaksEnabled(false); it.skeleton.ikSolver.enabled = true }
 			val qOnly = f.p.copy(
 				modality = "rotation_only", validity = dev.monaka.protocol.v2.Validity(false, true),
 				confidence = dev.monaka.protocol.v2.Confidence(0.0, 1.0), tracking_state = "degraded", position = null,
+				orientation = listOf(rawQ.x.toDouble(), rawQ.y.toDouble(), rawQ.z.toDouble(), rawQ.w.toDouble()),
 			)
 			fun frame(sequence: Long) {
 				f.now += 50_000_000
 				val p = qOnly.copy(sequence = sequence, input = qOnly.input.copy(sequence = sequence))
 				assertTrue(f.integration.runtime.inbox.receive((MonakaCodec.encodeEnvelope(p) as EncodeResult.Success).value, f.now))
-				f.before!!.run(); f.finish()
+				f.before!!.run(); f.finish(); oracle.update()
 			}
 			frame(1)
 			f.manager.resetTrackersFull("offline full reset observability")
+			oracle.resetTrackersFull("ordinary Full Reset oracle")
 			frame(2)
 			frames.close(); assertTrue(frames.awaitTermination(2000))
 			val records = bytes.toString(Charsets.UTF_8).lineSequence().filter { it.isNotBlank() }.map(com.fasterxml.jackson.databind.ObjectMapper()::readTree).toList()
@@ -193,6 +205,17 @@ class SolverCompositionIntegrationTests {
 				assertTrue(record["bones_after"].any { it["bone"].asText() == "CHEST" })
 				assertTrue(record["computed_trackers"].any { it["target"].asText() == "UPPER_CHEST" })
 			}
+			fun assertRotation(expected: Quaternion, json: com.fasterxml.jackson.databind.JsonNode, label: String) {
+				val dot = expected.x * json[0].floatValue() + expected.y * json[1].floatValue() + expected.z * json[2].floatValue() + expected.w * json[3].floatValue()
+				assertTrue(kotlin.math.abs(dot) > .99999f, "$label expected=$expected actual=$json")
+			}
+			val expected = headQ.project(Vector3.POS_Y).unit()
+			val post = captured[1]
+			assertRotation(rawQ, captured[0]["consumed_rotation_inputs"].first { it["target"].asText() == "CHEST" }["rotation_xyzw"], "pre-reset Q")
+			assertRotation(expected, post["consumed_rotation_inputs"].first { it["target"].asText() == "CHEST" }["rotation_xyzw"], "analytical head-yaw reference")
+			assertRotation(ordinary.getRotation(), post["consumed_rotation_inputs"].first { it["target"].asText() == "CHEST" }["rotation_xyzw"], "ordinary reset parity")
+			assertRotation(oracle.skeleton.getBone(dev.slimevr.tracking.processor.BoneType.CHEST).getGlobalRotation(), post["bones_after"].single { it["bone"].asText() == "CHEST" }["rotation_xyzw"], "real chest bone")
+			assertRotation(oracle.skeleton.computedChestTracker!!.getRotation(), post["computed_trackers"].single { it["target"].asText() == "UPPER_CHEST" }["rotation_xyzw"], "real computed chest")
 			val dir = Path.of("build/same-frame-diagnostic-fixtures")
 			Files.createDirectories(dir)
 			Files.writeString(dir.resolve("actual-full-reset-${if (resetWindow) "window" else "detailed"}.jsonl"), bytes.toString(Charsets.UTF_8))
