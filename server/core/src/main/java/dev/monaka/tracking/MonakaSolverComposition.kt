@@ -72,6 +72,7 @@ class MonakaSolverComposition internal constructor(
 	private var session: MonakaPositionCorrectionSession? = null
 	private var normalPosition: NormalPositionCorrectionRuntime? = null
 	val lastPositionCorrection get() = normalPosition?.diagnostics
+	fun diagnosticProxySnapshot(includeOffsets: Boolean = true) = writeback.diagnosticSnapshot(includeOffsets)
 
 	/** The normal server tick has exactly one solver commit owner. Saved source
 	 * assignments reach the existing position learner without a separate activation.

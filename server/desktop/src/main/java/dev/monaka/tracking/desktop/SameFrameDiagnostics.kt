@@ -290,6 +290,7 @@ class SameFrameDiagnostics internal constructor(
 		commit: MonakaSolverCommitResult,
 		skeleton: HumanSkeleton,
 		positionCorrection: dev.monaka.tracking.NormalPositionCorrectionDiagnostics? = null,
+		armInputFrame: Boolean = true,
 	): Map<String, Any?> {
 		val selected = tick.assignment.targets.values.flatMap { listOfNotNull(it.mainTracker?.observationId, it.rotationFallbackTracker?.observationId) }.toSet()
 		if (resetWindow) {
@@ -302,7 +303,7 @@ class SameFrameDiagnostics internal constructor(
 				"bones_before" to bones(skeleton, true),
 			).also {
 				it.putAll(resetFields(skeleton))
-				skeleton.beginDiagnosticInputFrame(tick.tickSequence)
+				if (armInputFrame) skeleton.beginDiagnosticInputFrame(tick.tickSequence)
 			}
 		}
 		return linkedMapOf(
@@ -371,15 +372,16 @@ class SameFrameDiagnostics internal constructor(
 			},
 			"ik_targets_before" to targets(skeleton), "bones_before" to bones(skeleton),
 			"input_trackers" to inputTrackers(tick, runtime, skeleton),
-		).also { it.putAll(resetFields(skeleton)); skeleton.beginDiagnosticInputFrame(tick.tickSequence) }
+		).also { it.putAll(resetFields(skeleton)); if (armInputFrame) skeleton.beginDiagnosticInputFrame(tick.tickSequence) }
 	}
-	internal fun after(before: Map<String, Any?>, skeleton: HumanSkeleton, direct: Iterable<Tracker>, postIk: Boolean) {
+	internal fun after(before: Map<String, Any?>, skeleton: HumanSkeleton, direct: Iterable<Tracker>, postIk: Boolean,
+		consumedInputs: List<HumanSkeleton.ConsumedRotationInput>? = null) {
 		recordFrame(
 			before +
 				mapOf(
 					"post_ik_hook" to postIk,
 					"solver_enabled" to skeleton.ikSolver.enabled,
-					"consumed_rotation_inputs" to skeleton.finishDiagnosticInputFrame().let { if (resetWindow) it.filter { input -> input.target == TrackerPosition.CHEST }.take(16) else it }.map { input ->
+					"consumed_rotation_inputs" to (consumedInputs ?: skeleton.finishDiagnosticInputFrame()).let { if (resetWindow) it.filter { input -> input.target == TrackerPosition.CHEST }.take(16) else it }.map { input ->
 						mapOf(
 							"boundary" to "HUMAN_SKELETON_FK_ROTATION_READ",
 							"tick" to input.tick.toString(), "target" to input.target?.name,

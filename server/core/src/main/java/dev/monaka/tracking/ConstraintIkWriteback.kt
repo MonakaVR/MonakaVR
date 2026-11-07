@@ -23,6 +23,8 @@ class ConstraintIkWriteback(
 	// Dormant objects stay out of inputView and the skeleton's reset target references.
 	private val retainedQOnly = linkedMapOf<TrackerPosition, RetainedQOnly>()
 	private var lastPrivateResetNanos: Long? = null
+	private val diagnosticInstances = java.util.WeakHashMap<Tracker, Long>()
+	private var nextDiagnosticInstance = 0L
 	private var stableNames = emptyMap<TrackerPosition, String>()
 	private var generation = -1L
 	var topologyRebuilds = 0
@@ -33,6 +35,21 @@ class ConstraintIkWriteback(
 		skeleton.setConstraintInputView(::inputView)
 	}
 	fun masks(): Map<TrackerPosition, ComponentMask> = proxies.mapValues { ComponentMask(it.value.hasPosition, it.value.hasRotation) }
+
+	data class DiagnosticProxy(val target: TrackerPosition, val stableName: String, val instance: String,
+		val active: Boolean, val hasPosition: Boolean, val hasRotation: Boolean, val rawRotation: Quaternion?,
+		val topologyRebuilds: String, val resetState: Map<String, Any?>)
+	/** Server-thread read-only snapshot; instance ordinals are local diagnostic metadata, not wire generations. */
+	fun diagnosticSnapshot(includeOffsets: Boolean = true): List<DiagnosticProxy> {
+		val live = (proxies.values + retainedQOnly.values.map { it.tracker }).toSet()
+		diagnosticInstances.keys.retainAll(live)
+		return (proxies.keys + retainedQOnly.keys).mapNotNull { target ->
+		val proxy = proxies[target] ?: retainedQOnly[target]?.tracker ?: return@mapNotNull null
+		val instance = diagnosticInstances.getOrPut(proxy) { ++nextDiagnosticInstance }
+		DiagnosticProxy(target, proxy.name, instance.toString(), proxies[target] === proxy, proxy.hasPosition, proxy.hasRotation,
+			proxy.getRawRotation().takeIf { proxy.hasRotation }, topologyRebuilds.toString(), proxy.resetsHandler.diagnosticResetState(includeOffsets))
+	}
+	}
 
 	/** Accepted composition ticks only; private inputs are not in VRServer's raw Tracker.tick list. */
 	internal fun advancePrivateResetTime(nowNanos: Long) {
@@ -191,6 +208,7 @@ class ConstraintIkWriteback(
 		if (closed) return
 		proxies.clear()
 		retainedQOnly.clear()
+		diagnosticInstances.clear()
 		lastPrivateResetNanos = null
 		managed = emptySet()
 		generation = -1

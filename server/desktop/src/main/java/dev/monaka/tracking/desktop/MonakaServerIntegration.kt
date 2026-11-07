@@ -41,6 +41,7 @@ class MonakaServerIntegration private constructor(
 	val rotationCorrection: HipRotationCorrection?,
 	private val diagnostics: HybridTrackingDiagnosticRecorder?,
 	private val frames: SameFrameDiagnostics?,
+	private val qjump: QJumpDiagnostics?,
 	private val rawHmdSource: (MonakaResolvedTickSnapshot) -> dev.monaka.tracking.RawHmdPoseInput?,
 ) : AutoCloseable {
 	private var closed = false
@@ -64,6 +65,7 @@ class MonakaServerIntegration private constructor(
 		val mainSource: String?,
 		val imuSource: String?,
 		val numericBefore: Map<String, Any?>?,
+		val qjumpBefore: QJumpDiagnostics.Pending?,
 	)
 	private var pendingFrame: PendingPoseFrame? = null
 	val positionCorrectionGate get() = solverComposition.positionCorrectionGate
@@ -130,6 +132,7 @@ class MonakaServerIntegration private constructor(
 			val ik = resolved.mapValues { it.value.ikConstraint() }
 			val commit = solverComposition.commitNormal(tick, ik, runtime, rawHmdSource(tick))
 			check(commit !is MonakaSolverCommitResult.Rejected && commit.writebackAttempted)
+			if (qjump != null) skeleton.beginDiagnosticInputFrame(tick.tickSequence)
 			pendingFrame = PendingPoseFrame(
 				tick,
 				resolved,
@@ -138,7 +141,8 @@ class MonakaServerIntegration private constructor(
 				resolvedRaw[TrackerPosition.HIP],
 				hip?.mainTracker?.observationId,
 				hip?.rotationFallbackTracker?.observationId,
-				if (frames != null && diagnostic { frames.shouldRecordFrame() } == true) diagnostic { frames.before(tick, runtime, resolved, commit, skeleton, lastPositionCorrection) } else null,
+				if (frames != null && diagnostic { frames.shouldRecordFrame() } == true) diagnostic { frames.before(tick, runtime, resolved, commit, skeleton, lastPositionCorrection, armInputFrame = qjump == null) } else null,
+				if (qjump != null) diagnostic { qjump.before(tick, runtime, resolved, solverComposition) } else null,
 			)
 			if (registerAfterPose == null) finishPoseUpdate() else directOutput.applyPoses(emptyMap())
 		} catch (e: Exception) {
@@ -164,7 +168,9 @@ class MonakaServerIntegration private constructor(
 				controller.update(poses.getValue(target), background, now, pending.tick.paused)
 			}
 			directOutput.applyPoses(output, pending.tick.paused)
-			pending.numericBefore?.let { before -> diagnostic { frames?.after(before, skeleton, directOutput.trackers.values, registerAfterPose != null) } }
+			val consumed = if (qjump != null) diagnostic { skeleton.finishDiagnosticInputFrame() } ?: emptyList() else null
+			pending.numericBefore?.let { before -> diagnostic { frames?.after(before, skeleton, directOutput.trackers.values, registerAfterPose != null, consumed) } }
+			pending.qjumpBefore?.let { before -> diagnostic { qjump?.after(before, skeleton, consumed ?: emptyList(), skeleton.humanPoseManager.fullResetDiagnostics.snapshot.generation) } }
 			if (diagnostics != null) {
 				val main = pending.main
 				val imu = pending.imu
@@ -206,8 +212,9 @@ class MonakaServerIntegration private constructor(
 	override fun close() {
 		if (closed) return
 		closed = true
-		if (frames != null) skeleton.humanPoseManager.fullResetDiagnostics.observe(null)
+		if (frames != null || qjump != null) skeleton.humanPoseManager.fullResetDiagnostics.observe(null)
 		frames?.close()
+		qjump?.close()
 		pendingFrame = null
 		try {
 			registerBeforePose(null)
@@ -247,6 +254,7 @@ class MonakaServerIntegration private constructor(
 			onTransition: (OutputTransition) -> Unit = {},
 			onDiagnostic: (HybridTrackingDiagnosticEvent) -> Unit = {},
 			frameDiagnostics: () -> SameFrameDiagnostics? = { null },
+			qJumpDiagnostics: () -> QJumpDiagnostics? = { null },
 			rawHmdSource: (MonakaResolvedTickSnapshot, dev.monaka.protocol.v2.CoordinateSpace, Long, Any) -> dev.monaka.tracking.RawHmdPoseInput? = { _, _, _, _ -> null },
 		): MonakaServerIntegration? {
 			if (!enabled) return null
@@ -276,6 +284,7 @@ class MonakaServerIntegration private constructor(
 			var direct: DirectConstraintOutput? = null
 			var integration: MonakaServerIntegration? = null
 			var frames: SameFrameDiagnostics? = null
+			var qjump: QJumpDiagnostics? = null
 			try {
 				val owner = MonakaSolverComposition(
 					skeleton,
@@ -295,14 +304,20 @@ class MonakaServerIntegration private constructor(
 					java.util.logging.Logger.getLogger("MonakaFrameDiagnostics").warning("Frame diagnostics unavailable: ${e.javaClass.simpleName}")
 					null
 				}
+				qjump = runCatching { qJumpDiagnostics() }.getOrNull()
 				val result = MonakaServerIntegration(
 					runtime, receiver, owner, output, skeleton, registerBeforePose, onFailure, registerAfterPose, background,
 					config.continuityTuning, onTransition, legacyHipCorrection?.let { HipRotationCorrection(it.frames, it.tuning) },
 					if (diagnosticEnabled) HybridTrackingDiagnosticRecorder(onDiagnostic) else null,
 					frames,
+					qjump,
 					{ tick -> rawHmdSource(tick, config.space, config.positionCorrection?.predictorPolicy?.maxHmdSampleAgeNanos ?: dev.monaka.tracking.RotationCorrectionTuning.normalRuntimeDefaults().maxImuSampleAgeNanos, normalHmdClockDomain) },
 				).also { integration = it }
-				if (frames != null) skeleton.humanPoseManager.fullResetDiagnostics.observe { frames?.recordReset(it) }
+				if (frames != null || qjump != null) skeleton.humanPoseManager.fullResetDiagnostics.observe { state ->
+					runCatching { frames?.recordReset(state) }
+					runCatching { qjump?.reset(state) }
+				}
+				if (qjump != null) runtime.mtp.observeAdmitted { key, sample -> runCatching { qjump?.admitted(key, sample, runtime.assignments.snapshot()) } }
 				result.inputConfiguration = configurationPath?.let { path ->
 					MonakaInputConfigurationApi(config, runtime.mtp, trackers, path)
 				}
@@ -322,6 +337,7 @@ class MonakaServerIntegration private constructor(
 					cleanup { integration!!.close() }
 				} else {
 					cleanup { frames?.close() }
+					cleanup { qjump?.close() }
 					cleanup { receiver.close() }
 					cleanup { direct?.close() }
 					cleanup { composition?.close() }

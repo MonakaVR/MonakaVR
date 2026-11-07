@@ -232,6 +232,7 @@ fun main(args: Array<String>) {
 				onTransition = { LogManager.info("[Monaka][${it.target}] $it") },
 				onDiagnostic = { LogManager.info(it.compactLine()) },
 				frameDiagnostics = dev.monaka.tracking.desktop.SameFrameDiagnostics::fromSystemProperty,
+				qJumpDiagnostics = dev.monaka.tracking.desktop.QJumpDiagnostics::fromEnvironment,
 				rawHmdSource = { tick, space, maxAge, clockDomain ->
 					val bridge = vrServer.getVRBridge { it is SteamVRBridge && it.getBridgeConfigKey() == "steamvr" } as? SteamVRBridge
 					bridge?.currentNormalRawHmdPoseInput(

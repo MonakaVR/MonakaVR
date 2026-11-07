@@ -54,6 +54,9 @@ class MtpObservationBackend(
 		private set
 	var suspended = false
 		private set
+	/** Optional detached evidence at each actual admission, before latest-sample coalescing. */
+	private var admittedObserver: ((LogicalTracker, Sample) -> Unit)? = null
+	fun observeAdmitted(observer: ((LogicalTracker, Sample) -> Unit)?) { admittedObserver = observer }
 
 	init {
 		require(expectedSpace.convention == "rh_y_up_neg_z_forward")
@@ -93,6 +96,8 @@ class MtpObservationBackend(
 		),
 	)
 	fun samples(): Map<LogicalTracker, Sample> = devices.mapNotNull { (k, d) -> d.sample?.let { k to it } }.toMap()
+	/** Existing cache value only; diagnostic lookup never repolls or re-admits a sample. */
+	fun sampleFor(key: LogicalTracker): Sample? = devices[key]?.sample
 	internal fun sourceContexts(): Map<LogicalTracker, MtpSourceContextSnapshot> = java.util.Collections.unmodifiableMap(
 		LinkedHashMap(
 			devices.mapNotNull { (key, device) ->
@@ -132,6 +137,7 @@ class MtpObservationBackend(
 		}
 	}
 	fun close() {
+		admittedObserver = null
 		invalidateSamples()
 		inbox.clear()
 		devices.clear()
@@ -320,5 +326,6 @@ class MtpObservationBackend(
 		)
 		inbox.count("WireOriginUnknown")
 		inbox.count("PoseAccepted")
+		admittedObserver?.let { observer -> runCatching { observer(key, requireNotNull(device.sample)) } }
 	}
 }

@@ -490,6 +490,16 @@ class TrackerResetsHandler(val tracker: Tracker) {
 		constraintFix *= correctedRotation
 	}
 
+	/** Detached diagnostic state only. No corrections are calculated or installed here. */
+	fun diagnosticResetState(includeOffsets: Boolean = true): Map<String, Any?> {
+		fun q(value: Quaternion) = listOf(value.x, value.y, value.z, value.w).map { it.takeIf(Float::isFinite) }
+		val epoch = mapOf("correction_epoch" to correctionCalibrationEpoch(), "correction_reset_generation" to correctionResetGeneration.get().toString())
+		if (!includeOffsets) return epoch + mapOf("offset_snapshot" to "UNAVAILABLE_FAST_OBSERVATION")
+		return epoch + mapOf("mounting_orientation" to q(mountingOrientation),
+			"gyro_fix" to q(gyroFix), "attachment_fix" to q(attachmentFix), "mount_rot_fix" to q(mountRotFix),
+			"yaw_fix" to q(yawFix), "constraint_fix" to q(constraintFix))
+	}
+
 	@Synchronized
 	fun clearMounting() {
 		correctionResetGeneration.incrementAndGet()
