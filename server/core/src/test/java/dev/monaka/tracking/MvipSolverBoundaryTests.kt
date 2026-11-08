@@ -12,6 +12,9 @@ import dev.slimevr.tracking.processor.skeleton.HumanSkeleton
 import io.github.axisangles.ktmath.Quaternion
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
+import dev.slimevr.tracking.trackers.Tracker
+import dev.slimevr.tracking.trackers.TrackerStatus
 import dev.slimevr.tracking.trackers.TrackerPosition
 import dev.slimevr.unit.TestTrackerSet
 import io.github.axisangles.ktmath.Vector3
@@ -23,6 +26,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.assertSame
 
 /** Encoded public input through the real runtime, production owner and existing IK. No sockets. */
 class MvipSolverBoundaryTests {
@@ -33,6 +37,80 @@ class MvipSolverBoundaryTests {
 			MonakaCodec.decodeEnvelope(File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes()),
 		).value,
 	)
+
+	@ParameterizedTest
+	@ValueSource(booleans = [false, true])
+	fun explicitMainSuppressesCompetingRawBodyThroughLossAndPreservesOtherBodies(steamVrComputedInput: Boolean) {
+		var now = 1_000_000_000L
+		val source = fixture()
+		val key = LogicalTracker(source.source_id, source.tracker_id, source.publisher_id)
+		val assignments = TrackerBodyAssignments(mapOf(key to hip))
+		val selectedQ = Quaternion(kotlin.math.sqrt(.96f), .2f, 0f, 0f)
+		val competingQ = Quaternion(0f, 0f, 1f, 0f)
+		fun raw(id: Int, target: TrackerPosition) = Tracker(
+			null, id, "external-$id", trackerPosition = target, hasPosition = true, hasRotation = true,
+			isComputed = steamVrComputedInput, allowFiltering = false, trackRotDirection = false,
+		).also { it.status = TrackerStatus.OK; it.position = Vector3(3f, 1f, 0f); it.setRotation(competingQ) }
+		val competing = raw(801, hip)
+		val otherBody = raw(802, TrackerPosition.CHEST)
+		val head = TestTrackerSet().head.also { it.position = Vector3(0f, 1.7f, 0f) }
+		val raw = listOf(head, competing, otherBody)
+		val manager = HumanPoseManager(raw)
+		manager.setLegTweaksEnabled(false)
+		MonakaRuntime({ raw }, source.coordinate_space, assignments, clock = { now }).use { runtime ->
+			MonakaSolverComposition(ConstraintIkWriteback(manager.skeleton), ProductionPositionCorrectionGate.NOT_CONFIGURED).use { composition ->
+				var sequence = 0L
+				fun step(lost: Boolean = false, submit: Boolean = true) {
+					if (submit) {
+						val next = source.copy(
+							sequence = sequence, timestamp_ns = source.timestamp_ns + sequence * 10_000_000,
+							sent_at_ns = source.sent_at_ns + sequence * 10_000_000,
+							position = if (lost) null else listOf(.1, 1.0, 0.0),
+							orientation = if (lost) null else listOf(selectedQ.x.toDouble(), selectedQ.y.toDouble(), selectedQ.z.toDouble(), selectedQ.w.toDouble()),
+							modality = if (lost) "none" else "full", validity = Validity(!lost, !lost),
+							confidence = Confidence(if (lost) 0.0 else 1.0, if (lost) 0.0 else 1.0),
+							tracking_state = if (lost) "lost" else "tracked", input = source.input.copy(sequence = sequence++),
+						)
+						assertTrue(runtime.inbox.receive(assertIs<EncodeResult.Success>(MonakaCodec.encodeEnvelope(next)).value, now))
+					}
+					val tick = runtime.tickSnapshot()
+					assertIs<MonakaSolverCommitResult.GenericCommitted>(composition.commitGeneric(tick, tick.constraints))
+					manager.skeleton.beginDiagnosticInputFrame(tick.tickSequence)
+					manager.update()
+					val consumed = manager.skeleton.finishDiagnosticInputFrame()
+					assertSame(otherBody, manager.skeleton.chestTracker)
+					val targets = manager.skeleton.ikSolver.diagnosticPositionTargets()
+					assertTrue(targets.any { it.trackerIdentity == otherBody.name })
+					assertTrue(targets.none { it.trackerIdentity == competing.name })
+					if (lost) {
+						assertNull(tick.constraints[hip]?.rotation)
+						assertNull(manager.skeleton.hipTracker)
+						assertTrue(targets.none { it.target == hip })
+						assertTrue(consumed.none { it.target == hip })
+					} else {
+						assertEquals(key.observationId, tick.constraints.getValue(hip).position!!.sourceId)
+						val selected = assertNotNull(manager.skeleton.hipTracker)
+						assertTrue(selected !== competing)
+						assertEquals(1, targets.count { it.target == hip })
+						assertEquals(selected.name, targets.single { it.target == hip }.trackerIdentity)
+						assertTrue(consumed.any { it.target == hip })
+						for (input in consumed.filter { it.target == hip }) {
+							val actual = Quaternion(assertNotNull(input.qw), assertNotNull(input.qx), assertNotNull(input.qy), assertNotNull(input.qz))
+							assertTrue(kotlin.math.abs(actual.unit().dot(selectedQ.unit())) > .9999f)
+							assertTrue(kotlin.math.abs(actual.unit().dot(competingQ.unit())) < .01f)
+						}
+					}
+					now += 10_000_000
+				}
+				step()
+				step(lost = true)
+				step()
+				now += 500_000_001
+				step(lost = true, submit = false)
+				step()
+			}
+		}
+	}
 
 	@Test
 	fun admittedFrameIsCommittedOnceAndLossCannotRetainPositionAcrossRecovery() {

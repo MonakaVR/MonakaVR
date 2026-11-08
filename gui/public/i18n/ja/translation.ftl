@@ -836,6 +836,22 @@ monaka-tracking-assigned = 割当済みソース
 monaka-tracking-active = 稼働中のモード
 monaka-tracking-pending = 保存済み・未反映
 monaka-tracking-unknown = 未確認／不明
+home-input-title = Monakaの入力デバイス
+home-input-position = 位置
+home-input-orientation = 回転
+home-input-legacy-empty = 従来の経路で検出・割り当てられたトラッカーはありません
+home-input-help = SteamVRを経由せず接続している入力です。
+home-input-assignments = 入力元と身体部位の割り当てを設定
+home-input-route = 入力経路
+home-input-route-unknown = 不明／未対応の経路
+home-input-waiting = 入力デバイスを取得しています…
+home-input-stale = 接続状態を確認できません。前回の一覧を表示しています。
+home-input-empty = 接続されている入力デバイスはありません。
+home-input-saved-roles = 保存済みの身体部位
+home-input-saved-help = 割当済みでも、受信状態によって使用されない場合があります。
+home-input-restart = 再起動待ちの保存済み設定を表示しています。現在稼働中の設定とは異なる場合があります。
+home-input-legacy = その他の入力デバイス
+home-input-legacy-help = SteamVRなどから受信した入力です。同じ実機が別の経路にも表示される場合があります。
 
 # 通常の身体部位割当への入力選択統合
 assignment-legacy-only = 従来のトラッカー割当だけを操作します。Coreの入力選択を読み取れないため、物理トラッカーの部位だけが変わり、保存済みQ/6DoF選択は変わりません。続行しますか？

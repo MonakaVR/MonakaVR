@@ -16,6 +16,7 @@ import dev.monaka.tracking.OutputMode
 import dev.monaka.tracking.ResolvedComponent
 import dev.monaka.tracking.TrackerBodyAssignments
 import dev.monaka.tracking.TrackerReference
+import dev.monaka.tracking.SlimeTrackerPoseObservationAdapter
 import dev.slimevr.desktop.platform.ProtobufBridge
 import dev.slimevr.desktop.platform.ProtobufMessages.Position
 import dev.slimevr.desktop.platform.ProtobufMessages.ProtobufMessage
@@ -37,6 +38,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class DirectProtobufTests {
@@ -49,6 +51,35 @@ class DirectProtobufTests {
 		ResolvedComponent(Vector3(3f, 2f, 1f), "main", ObservationQuality.TRACKED, 10),
 		ResolvedComponent(Quaternion.IDENTITY, "main", ObservationQuality.TRACKED, 10),
 	)
+
+	@Test fun inboundPositionCannotReuseLocalDirectOrComputedOutputObjects() {
+		val bridge = Capture()
+		val computed = HumanPoseManager(emptyList()).skeleton.computedHipTracker!!
+		DirectConstraintOutput(assignments().snapshot(), CoordinateSpace("test-world", "rh_y_up_neg_z_forward", 0)) { 100 }.use { output ->
+			val direct = output.trackers.getValue(body)
+			output.apply(mapOf(body to full()))
+			bridge.configureDirectOutputs(listOf(direct))
+			for (local in listOf(computed, direct)) {
+				bridge.addSharedTracker(local)
+				val before = local.position to local.getRotation()
+				bridge.accept(Position.newBuilder().setTrackerId(local.id).setX(81f).setY(82f).setZ(83f)
+					.setQw(1f).setQx(0f).setQy(0f).setQz(0f).setDataSource(Position.DataSource.FULL).build())
+				assertEquals(before, local.position to local.getRotation(), "Outbound tracker IDs are not inbound registry objects")
+				assertNull(SlimeTrackerPoseObservationAdapter().adapt(local, 100))
+			}
+			// A separately registered external input is deliberately independent of local output IDs.
+			val external = Tracker(null, direct.id, direct.name, trackerPosition = body, trackerNum = 55,
+				hasPosition = true, hasRotation = true, isComputed = true, trackRotDirection = false).also {
+				it.status = dev.slimevr.tracking.trackers.TrackerStatus.OK
+			}
+			bridge.registerRemoteFixture(external)
+			bridge.accept(Position.newBuilder().setTrackerId(55).setX(4f).setY(5f).setZ(6f)
+				.setQw(1f).setQx(0f).setQy(0f).setQz(0f).setDataSource(Position.DataSource.FULL).build())
+			assertEquals(Vector3(4f, 5f, 6f), external.position)
+			assertNotNull(SlimeTrackerPoseObservationAdapter().adapt(external, 100))
+			assertEquals(Vector3(3f, 2f, 1f), direct.monakaOutputPose!!.position!!.value)
+		}
+	}
 
 	@Test fun directSerializationKeepsIdentityAndOmitsPositionOnRotationOnlyAndNone() {
 		val bridge = Capture()
@@ -230,6 +261,16 @@ class DirectProtobufTests {
 		fun connect() = reconnected()
 		fun disconnect() = disconnected()
 		fun flush() = updateMessageQueue()
+		fun accept(position: Position) {
+			messageReceived(ProtobufMessage.parseFrom(ProtobufMessage.newBuilder().setPosition(position).build().toByteArray()))
+			dataRead()
+		}
+		fun registerRemoteFixture(tracker: Tracker) {
+			@Suppress("UNCHECKED_CAST")
+			val registry = ProtobufBridge::class.java.getDeclaredField("remoteTrackersByTrackerId").apply { isAccessible = true }
+				.get(this) as MutableMap<Int, Tracker>
+			registry[tracker.trackerNum] = tracker
+		}
 		fun ack(query: UserAction) {
 			messageReceived(ProtobufMessage.newBuilder().setUserAction(query.toBuilder().setName(DIRECT_CAPABILITY)).build())
 			dataRead()

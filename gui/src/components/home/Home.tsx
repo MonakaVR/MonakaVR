@@ -16,6 +16,7 @@ import { Checklist } from '@/components/commons/icon/ChecklistIcon';
 import { useState } from 'react';
 import { HomeSettingsModal } from './HomeSettingsModal';
 import { LayoutIcon } from '@/components/commons/icon/LayoutIcon';
+import { HomeInputCatalog } from './HomeInputCatalog';
 
 export function Home() {
   const { l10n } = useLocalization();
@@ -50,6 +51,13 @@ export function Home() {
         <Checklist />
       </NavLink>
       <div className="overflow-y-auto flex flex-col gap-3">
+        <HomeInputCatalog />
+        <div className="px-4 text-background-10 space-y-1">
+          <h2 className="text-lg font-bold">
+            {l10n.getString('home-input-legacy')}
+          </h2>
+          <p className="text-sm">{l10n.getString('home-input-legacy-help')}</p>
+        </div>
         <div className="flex w-full gap-2 items-center px-4 h-5">
           <Typography
             color="secondary"
@@ -64,10 +72,10 @@ export function Home() {
             <LayoutIcon size={18} />
           </div>
         </div>
-        {trackers.length === 0 && (
+        {trackers.length === 0 && unassignedTrackers.length === 0 && (
           <div className="flex px-5 pt-5 justify-center">
             <Typography variant="standard">
-              {l10n.getString('home-no_trackers')}
+              {l10n.getString('home-input-legacy-empty')}
             </Typography>
           </div>
         )}

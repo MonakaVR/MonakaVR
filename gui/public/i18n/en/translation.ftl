@@ -1750,6 +1750,22 @@ monaka-tracking-assigned = Assigned source
 monaka-tracking-active = Active mode
 monaka-tracking-pending = Saved, not yet applied
 monaka-tracking-unknown = Unknown / unverified
+home-input-title = Monaka input devices
+home-input-position = Position
+home-input-orientation = Orientation
+home-input-legacy-empty = No legacy trackers detected or assigned
+home-input-help = Inputs connected without going through SteamVR.
+home-input-assignments = Configure input body assignments
+home-input-route = Input route
+home-input-route-unknown = Unknown / unsupported route
+home-input-waiting = Loading input devices…
+home-input-stale = Connection status is unavailable. Showing the previous list.
+home-input-empty = No input devices are connected.
+home-input-saved-roles = Saved body roles
+home-input-saved-help = An assigned input may not be in use, depending on its reception status.
+home-input-restart = Saved choices awaiting restart are shown. They may differ from the running configuration.
+home-input-legacy = Other input devices
+home-input-legacy-help = Inputs received through SteamVR or other existing routes. The same physical device may appear through more than one route.
 
 # Unified normal body assignment
 assignment-legacy-only = Legacy tracker operation only. Core input choices cannot be read here; this changes only the physical tracker body assignment and does not change saved Q/6DoF choices. Continue?
