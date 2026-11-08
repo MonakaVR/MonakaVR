@@ -1,6 +1,10 @@
 import { useLocalization } from '@fluent/react';
 import classNames from 'classnames';
 import { useMemo, useState, useEffect } from 'react';
+import {
+  selectedSourceLabel,
+  selectedSourceDetails,
+} from '@/monaka-input/source-label';
 import { useForm } from 'react-hook-form';
 import {
   AssignTrackerRequestT,
@@ -84,12 +88,12 @@ export function TrackersAssignPage() {
   const inputSummaries = useMemo(() => {
     const snapshot = unified.state.snapshot;
     const label = (id: string | null) => {
-      const source = snapshot?.candidates.find((c) => c.id === id);
-      return source
-        ? [source.publisher, source.source, source.tracker]
-            .filter(Boolean)
-            .join(' / ')
-        : (id ?? '—');
+      return selectedSourceLabel(
+        id,
+        snapshot?.candidates ?? [],
+        '—',
+        l10n.getString('assignment-offline')
+      );
     };
     return Object.fromEntries(
       (snapshot?.assignments ?? []).flatMap((row) => {
@@ -99,12 +103,26 @@ export function TrackersAssignPage() {
           : [
               [
                 part,
-                `Q: ${label(row.qSource)} · 6DoF: ${label(row.sixDofSource)}`,
+                {
+                  label: `Q: ${label(row.qSource)} · 6DoF: ${label(row.sixDofSource)}`,
+                  details: [
+                    selectedSourceDetails(
+                      row.qSource,
+                      snapshot?.candidates ?? []
+                    ),
+                    selectedSourceDetails(
+                      row.sixDofSource,
+                      snapshot?.candidates ?? []
+                    ),
+                  ]
+                    .filter(Boolean)
+                    .join('\n\n'),
+                },
               ],
             ];
       })
     );
-  }, [unified.state.snapshot]);
+  }, [unified.state.snapshot, l10n]);
 
   const chooseRole = (role: BodyPart) => {
     if (unified.state.dirty || unified.working || unified.needsReview) return;
@@ -488,7 +506,12 @@ export function TrackersAssignPage() {
             <div className="md:w-full md:h-full h-full max-w-[770px] flex flex-col overflow-y-clip tall:py-10">
               <InputAssignmentSummaries.Provider value={inputSummaries}>
                 <BodyAssignment
-                  inputSummaries={inputSummaries}
+                  inputSummaries={Object.fromEntries(
+                    Object.entries(inputSummaries).map(([role, summary]) => [
+                      role,
+                      summary.label,
+                    ])
+                  )}
                   dotSize={15}
                   onlyAssigned={false}
                   highlightedRoles={firstError?.affectedRoles || []}

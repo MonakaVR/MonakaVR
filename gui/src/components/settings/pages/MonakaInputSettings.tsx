@@ -3,6 +3,13 @@ import { InputSelectionController } from '@/monaka-input/controller';
 import { MonakaInputSocket } from '@/monaka-input/socket';
 import { Button } from '@/components/commons/Button';
 import { useLocalization } from '@fluent/react';
+import {
+  sourceLabel,
+  sourceDetails,
+  savedSourceLabel,
+  selectedSourceDetails,
+} from '@/monaka-input/source-label';
+import { InputSourceDetails } from '@/components/commons/InputSourceDetails';
 
 export function MonakaInputPanel({
   model,
@@ -19,21 +26,24 @@ export function MonakaInputPanel({
       <>
         <option value="">{text('unassigned')}</option>
         {selected && !snapshot?.candidates.some((x) => x.id === selected) && (
-          <option value={selected}>
-            {text('saved-offline')}: {selected}
+          <option value={selected} title={selectedSourceDetails(selected, [])}>
+            {savedSourceLabel(text('saved-offline'))}
           </option>
         )}
         {snapshot?.candidates.map((source) => (
           <option
             key={source.id}
             value={source.id}
+            title={sourceDetails(source)}
             disabled={
               kind === 'q' ? !source.qSelectable : !source.sixDofSelectable
             }
           >
-            {[source.publisher, source.source, source.tracker]
-              .filter(Boolean)
-              .join(' / ')}{' '}
+            {sourceLabel(
+              source,
+              snapshot?.candidates ?? [],
+              text('saved-offline')
+            )}{' '}
             — {source.capabilities?.join(', ') || text('support-unknown')}
             {source.conflict ? ` — ${text('conflict')}` : ''}
           </option>
@@ -53,7 +63,7 @@ export function MonakaInputPanel({
       <label className="block">
         {text('body')}{' '}
         <select
-          className="bg-background-80 text-background-10 rounded px-2 py-1 max-w-full"
+          className="bg-background-80 text-background-10 rounded px-2 py-1 max-w-full min-w-0"
           aria-label={text('body-label')}
           value={draft.body}
           disabled={!snapshot || busy || dirty}
@@ -67,7 +77,11 @@ export function MonakaInputPanel({
       <label className="block">
         {text('q')}{' '}
         <select
-          className="bg-background-80 text-background-10 rounded px-2 py-1 max-w-full"
+          className="bg-background-80 text-background-10 rounded px-2 py-1 w-full max-w-full min-w-0"
+          title={selectedSourceDetails(
+            draft.qSource,
+            snapshot?.candidates ?? []
+          )}
           aria-label={text('q')}
           value={draft.qSource ?? ''}
           disabled={!model.canEdit}
@@ -79,7 +93,11 @@ export function MonakaInputPanel({
       <label className="block">
         {text('six')}{' '}
         <select
-          className="bg-background-80 text-background-10 rounded px-2 py-1 max-w-full"
+          className="bg-background-80 text-background-10 rounded px-2 py-1 w-full max-w-full min-w-0"
+          title={selectedSourceDetails(
+            draft.sixDofSource,
+            snapshot?.candidates ?? []
+          )}
           aria-label={text('six')}
           value={draft.sixDofSource ?? ''}
           disabled={!model.canEdit}
@@ -123,10 +141,16 @@ export function MonakaInputPanel({
       {!snapshot && <p>{text('waiting')}</p>}
       <ul aria-label={text('usability')}>
         {snapshot?.candidates.map((source) => (
-          <li key={source.id}>
-            {[source.publisher, source.source, source.tracker]
-              .filter(Boolean)
-              .join(' / ')}
+          <li
+            key={source.id}
+            className="min-w-0 break-words"
+            title={sourceDetails(source)}
+          >
+            {sourceLabel(
+              source,
+              snapshot?.candidates ?? [],
+              text('saved-offline')
+            )}
             : Q{' '}
             {text(
               !state.snapshotFresh
@@ -147,6 +171,7 @@ export function MonakaInputPanel({
             {source.capabilities === null
               ? ` — ${text('support-unknown')}`
               : ''}
+            <InputSourceDetails text={sourceDetails(source)} />
           </li>
         ))}
       </ul>

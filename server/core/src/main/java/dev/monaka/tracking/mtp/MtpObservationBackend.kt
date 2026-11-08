@@ -47,6 +47,9 @@ class MtpObservationBackend(
 	}
 	private val lifetimes = linkedMapOf<String, Lifetime>()
 	private val devices = linkedMapOf<LogicalTracker, Device>()
+	// Display metadata is not a pose, capability or persistent identity. Keep it
+	// through sample invalidation and same-identity sessions, with bounded memory.
+	private val displayNames = linkedMapOf<LogicalTracker, String>()
 	private val removed = linkedSetOf<String>()
 	private val adapter = MtpPoseAdapter()
 	private var assignmentGeneration = -1L
@@ -71,6 +74,7 @@ class MtpObservationBackend(
 		val sampleTime: Long?,
 		val positionValid: Boolean,
 		val orientationValid: Boolean,
+		val displayName: String? = null,
 	) {
 		fun freshAt(now: Long, timeoutNanos: Long): Boolean = !conflict && sampleTime?.let { it <= now && now - it < timeoutNanos } == true
 	}
@@ -91,6 +95,7 @@ class MtpObservationBackend(
 					d.sample?.sampleTime,
 					adapted?.position != null,
 					adapted?.rotation != null,
+					displayNames[key],
 				)
 			},
 		),
@@ -141,6 +146,7 @@ class MtpObservationBackend(
 		invalidateSamples()
 		inbox.clear()
 		devices.clear()
+		displayNames.clear()
 		lifetimes.clear()
 		assignmentGeneration = -1
 	}
@@ -317,6 +323,11 @@ class MtpObservationBackend(
 			return
 		}
 		device.sample = Sample(pose, received.receivedAtNanos - age, received.receivedAtNanos)
+		// Descriptive metadata follows admitted public messages, independently of
+		// component usability. Existing observation gates continue to own tracking.
+		displayNames.remove(key)
+		displayNames[key] = pose.input.device_id
+		if (displayNames.size > 1024) displayNames.remove(displayNames.keys.first())
 		device.context = MtpSourceContextSnapshot(
 			key,
 			"${pose.session_id}:${pose.clock_id}",

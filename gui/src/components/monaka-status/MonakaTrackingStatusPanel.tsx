@@ -69,17 +69,27 @@ function Choice({ value }: { value: boolean | null }) {
 function Identity({ source }: { source: SourceStatus }) {
   return (
     <div className="space-y-1 break-all">
-      <code className="block text-xs">{source.id}</code>
-      <dl className="text-sm">
-        <dt>Publisher</dt>
-        <dd>{source.publisher ?? <Unknown />}</dd>
-        <dt>Source</dt>
-        <dd>{source.source ?? <Unknown />}</dd>
-        <dt>Tracker</dt>
-        <dd>{source.tracker ?? <Unknown />}</dd>
-        <dt>Origin</dt>
-        <dd>{source.origin ?? <Unknown />}</dd>
-      </dl>
+      <span className="block max-w-xs">{source.label}</span>
+      <details>
+        <summary className="cursor-pointer text-xs">ID</summary>
+        <code className="block text-xs">{source.id}</code>
+        <dl className="text-sm">
+          {source.displayName && (
+            <>
+              <dt>Input device</dt>
+              <dd>{source.displayName}</dd>
+            </>
+          )}
+          <dt>Publisher</dt>
+          <dd>{source.publisher ?? <Unknown />}</dd>
+          <dt>Source</dt>
+          <dd>{source.source ?? <Unknown />}</dd>
+          <dt>Tracker</dt>
+          <dd>{source.tracker ?? <Unknown />}</dd>
+          <dt>Origin</dt>
+          <dd>{source.origin ?? <Unknown />}</dd>
+        </dl>
+      </details>
     </div>
   );
 }

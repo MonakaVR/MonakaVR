@@ -55,6 +55,7 @@ class MonakaInputConfigurationApi(
 		val sixDofUsableNow: Boolean,
 		val origin: String,
 		val slimeTrackerId: SlimeTrackerId? = null,
+		val displayName: String? = null,
 	)
 
 	/** Ephemeral locator for an actual SolarXR tracker; never a persistent source identity. */
@@ -86,6 +87,7 @@ class MonakaInputConfigurationApi(
 				fresh && source.orientationValid,
 				fresh && source.positionValid && source.orientationValid && source.modality == "full",
 				"mvip_pose",
+				displayName = source.displayName,
 			)
 		}
 		val adapter = SlimeTrackerPoseObservationAdapter()
@@ -115,6 +117,7 @@ class MonakaInputConfigurationApi(
 				sample?.modality == TrackingModality.FULL && sample.position != null && sample.rotation != null && sample.positionQuality.usable && sample.rotationQuality.usable,
 				"slime_orientation_stream",
 				locator,
+				displayName = tracker?.customName?.takeIf { it.isNotBlank() } ?: tracker?.displayName,
 			)
 		}
 		return Snapshot(state.generation, Collections.unmodifiableList(mtp + slime), state.targets)
@@ -312,6 +315,7 @@ class MonakaInputConfigurationApi(
 						"id" to x.reference.observationId,
 						"publisher" to x.reference.mtp?.publisherId, "source" to x.reference.mtp?.sourceId,
 						"tracker" to (x.reference.mtp?.trackerId ?: x.reference.observationId.removePrefix("slime:")),
+						"displayName" to x.displayName,
 						"capabilities" to x.capabilities?.components, "conflict" to x.conflict,
 						"qSelectable" to x.qSelectable, "sixDofSelectable" to x.sixDofSelectable,
 						"qUsableNow" to x.qUsableNow, "sixDofUsableNow" to x.sixDofUsableNow, "origin" to x.origin,

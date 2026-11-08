@@ -125,10 +125,11 @@ export function TrackerPartCard({
         ))}
         {summary && (
           <p
-            className="text-xs break-all max-w-48"
+            className="text-xs break-words max-w-48 min-w-0 line-clamp-2"
+            title={summary.details}
             data-testid={`assignment-summary-${BodyPart[role]}`}
           >
-            {summary}
+            {summary.label}
           </p>
         )}
         {!td && !summary && (

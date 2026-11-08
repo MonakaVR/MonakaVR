@@ -3,6 +3,8 @@ export interface InputCandidate {
   publisher: string | null;
   source: string | null;
   tracker: string;
+  /** Public display metadata; never a persistent identity or selection key. */
+  displayName?: string | null;
   capabilities: string[] | null;
   conflict: boolean;
   qSelectable: boolean;

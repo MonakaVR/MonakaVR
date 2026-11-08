@@ -10,6 +10,11 @@ import { useAtomValue } from 'jotai';
 import type { UnifiedAssignment } from '@/hooks/unified-assignment';
 import { sourceOtherBody } from '@/monaka-input/assignment';
 import {
+  selectedSourceLabel,
+  selectedSourceDetails,
+} from '@/monaka-input/source-label';
+import { InputSourceDetails } from '@/components/commons/InputSourceDetails';
+import {
   assignedTrackersAtom,
   FlatDeviceTracker,
   unassignedTrackersAtom,
@@ -151,13 +156,12 @@ function UnifiedChoices({
       )
     : [];
   const label = (id: string | null | undefined) => {
-    if (!id) return text('none');
-    const source = snapshot.candidates.find((c) => c.id === id);
-    return source
-      ? [source.publisher, source.source, source.tracker]
-          .filter(Boolean)
-          .join(' / ')
-      : `${text('offline')}: ${id}`;
+    return selectedSourceLabel(
+      id,
+      snapshot.candidates,
+      text('none'),
+      text('offline')
+    );
   };
   const unavailable = [state.draft.qSource, state.draft.sixDofSource].filter(
     (id, index, all): id is string =>
@@ -167,7 +171,7 @@ function UnifiedChoices({
   );
   return (
     <div
-      className="w-full max-w-3xl min-h-0 flex flex-col gap-3 overflow-y-auto p-3 rounded-xl bg-background-80 text-background-10"
+      className="w-full max-w-3xl min-w-0 min-h-0 flex flex-col gap-3 overflow-y-auto p-3 rounded-xl bg-background-80 text-background-10 break-words"
       data-testid="unified-assignment"
     >
       {unified.needsReview && (
@@ -184,13 +188,13 @@ function UnifiedChoices({
         </p>
       )}
       <div className="overflow-x-auto shrink-0">
-        <table className="w-full text-left">
+        <table className="w-full table-fixed text-left">
           <caption className="text-left">{text('sources')}</caption>
           <thead>
             <tr>
               <th>{text('source')}</th>
-              <th>{l10n.getString('monaka-input-q')}</th>
-              <th>{l10n.getString('monaka-input-six')}</th>
+              <th className="w-20">{l10n.getString('monaka-input-q')}</th>
+              <th className="w-20">{l10n.getString('monaka-input-six')}</th>
             </tr>
           </thead>
           <tbody>
@@ -231,8 +235,20 @@ function UnifiedChoices({
               const disabled = !unified.canEdit || !!other || unsafeSlime;
               return (
                 <tr key={source.id} className="border-t border-background-50">
-                  <th className="p-2 break-all font-normal max-w-sm">
-                    <span>{label(source.id)}</span>
+                  <th
+                    className="p-2 min-w-0 break-words font-normal"
+                    title={selectedSourceDetails(
+                      source.id,
+                      snapshot.candidates
+                    )}
+                  >
+                    <span className="break-all">{label(source.id)}</span>
+                    <InputSourceDetails
+                      text={selectedSourceDetails(
+                        source.id,
+                        snapshot.candidates
+                      )}
+                    />
                     <span className="block text-sm">
                       {entry.kind === 'slime' ? text('slime') : 'MVIP'} ·{' '}
                       {source.capabilities?.join(', ') || text('unknown')}
@@ -298,7 +314,15 @@ function UnifiedChoices({
             })}
             {unavailable.map((id) => (
               <tr key={id}>
-                <th className="break-all">{label(id)}</th>
+                <th
+                  className="break-all"
+                  title={selectedSourceDetails(id, snapshot.candidates)}
+                >
+                  {label(id)}
+                  <InputSourceDetails
+                    text={selectedSourceDetails(id, snapshot.candidates)}
+                  />
+                </th>
                 <td>{state.draft.qSource === id ? '✓' : ''}</td>
                 <td>{state.draft.sixDofSource === id ? '✓' : ''}</td>
               </tr>
@@ -307,13 +331,39 @@ function UnifiedChoices({
         </table>
       </div>
       {state.snapshot?.restartRequired && (
-        <p data-testid="assignment-active">
+        <p
+          data-testid="assignment-active"
+          title={[
+            selectedSourceDetails(saved?.qSource, snapshot.candidates),
+            selectedSourceDetails(saved?.sixDofSource, snapshot.candidates),
+          ]
+            .filter(Boolean)
+            .join('\n\n')}
+        >
           {text('active')}: Q = {label(saved?.qSource)}; 6DoF ={' '}
           {label(saved?.sixDofSource)}
         </p>
       )}
       {(saved || inherited.length === 0) && (
-        <p data-testid="assignment-readback">
+        <p
+          data-testid="assignment-readback"
+          title={[
+            selectedSourceDetails(
+              saved?.savedQSource === undefined
+                ? saved?.qSource
+                : saved.savedQSource,
+              snapshot.candidates
+            ),
+            selectedSourceDetails(
+              saved?.savedSixDofSource === undefined
+                ? saved?.sixDofSource
+                : saved.savedSixDofSource,
+              snapshot.candidates
+            ),
+          ]
+            .filter(Boolean)
+            .join('\n\n')}
+        >
           {text('saved')}: Q ={' '}
           {label(
             saved?.savedQSource === undefined

@@ -34,10 +34,12 @@ async function open(page: Page, fixture: CoreUiFixture, language = 'en') {
   await page.locator('.control#HIP').click();
   await expect(page.getByTestId('unified-assignment')).toBeVisible();
 }
-const qName = 'Q Source: publisher-a / opaque-source / same-name';
-const sixName = '6DoF Source: publisher-a / opaque-source / same-name';
+const qName = 'Q Source: device-publisher-a';
+const sixName = '6DoF Source: device-publisher-a';
 
-test('inherited assignment is visible without creating or saving an override', async ({ page }) => {
+test('inherited assignment is visible without creating or saving an override', async ({
+  page,
+}) => {
   const fixture = new CoreUiFixture();
   const id = new TrackerIdT(new DeviceIdT(7), 2);
   const source = fixture.snapshot.candidates.find((c) => c.id === 'slime-q')!;
@@ -59,8 +61,12 @@ test('inherited assignment is visible without creating or saving an override', a
   message.dataFeedMsgs = [header];
   const builder = new Builder(128);
   builder.finish(message.pack(builder));
-  fixture.binaryConnections.forEach((socket) => socket.send(Buffer.from(builder.asUint8Array())));
-  await expect(page.getByTestId('assignment-inherited')).toContainText('現在の割り当て');
+  fixture.binaryConnections.forEach((socket) =>
+    socket.send(Buffer.from(builder.asUint8Array()))
+  );
+  await expect(page.getByTestId('assignment-inherited')).toContainText(
+    '現在の割り当て'
+  );
   await expect(page.getByTestId('assignment-readback')).toHaveCount(0);
   expect(fixture.snapshot.assignments).toEqual([]);
   expect(fixture.saves).toHaveLength(0);
@@ -276,19 +282,19 @@ test('Q-only and old-Core Slime association fail closed while manual clear survi
   await open(page, fixture);
   await expect(
     page.getByRole('radio', {
-      name: 'Q Source: slime-q / opaque-source / same-name',
+      name: 'Q Source: device-slime-q',
       exact: true,
     })
   ).toBeDisabled();
   await page
     .getByRole('radio', {
-      name: 'Q Source: q-only / opaque-source / same-name',
+      name: 'Q Source: device-q-only',
       exact: true,
     })
     .check();
   await expect(
     page.getByRole('radio', {
-      name: '6DoF Source: q-only / opaque-source / same-name',
+      name: '6DoF Source: device-q-only',
       exact: true,
     })
   ).toBeDisabled();
@@ -340,7 +346,7 @@ test('Japanese normal picker remains operable at narrow width', async ({ page })
   await open(page, fixture, 'ja');
   await page
     .getByRole('radio', {
-      name: 'Q入力元: publisher-a / opaque-source / same-name',
+      name: 'Q入力元: device-publisher-a',
       exact: true,
     })
     .check();

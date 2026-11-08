@@ -3,6 +3,7 @@ import type {
   InputCandidate,
   InputSnapshot,
 } from '@/monaka-input/controller';
+import { sourceLabel, savedSourceLabel } from '@/monaka-input/source-label';
 
 /** The host owns connection health, request failure and snapshot cadence. */
 export type TrackingConnection =
@@ -28,6 +29,8 @@ export type TrackingStatusReason =
 
 export interface SourceStatus {
   id: string;
+  label: string;
+  displayName?: string | null;
   publisher: string | null;
   source: string | null;
   tracker: string | null;
@@ -142,6 +145,10 @@ function parseSnapshot(value: unknown): {
       publisher: item.publisher,
       source: item.source,
       tracker: item.tracker,
+      displayName:
+        typeof item.displayName === 'string' && item.displayName.trim()
+          ? item.displayName
+          : null,
       origin: item.origin,
       capabilities:
         item.capabilities === null ? null : ([...item.capabilities] as string[]),
@@ -254,6 +261,8 @@ export function buildTrackingStatusModel(
     );
     return {
       id: candidate.id,
+      label: sourceLabel(candidate, accepted?.candidates ?? []),
+      displayName: candidate.displayName,
       publisher: candidate.publisher,
       source: candidate.source,
       tracker: candidate.tracker,
@@ -278,6 +287,7 @@ export function buildTrackingStatusModel(
     // A saved ID is all that is known. Never decode it or invent tuple metadata.
     const offline: SourceStatus = {
       id,
+      label: savedSourceLabel(),
       publisher: null,
       source: null,
       tracker: null,
@@ -289,6 +299,14 @@ export function buildTrackingStatusModel(
       sixDofUsableNow: 'unknown',
       availability: 'saved-offline',
     };
+    const historical = base?.candidates.find((candidate) => candidate.id === id);
+    if (historical) {
+      offline.label = sourceLabel(historical, base?.candidates ?? []);
+      offline.displayName = historical.displayName;
+      offline.publisher = historical.publisher;
+      offline.source = historical.source;
+      offline.tracker = historical.tracker;
+    }
     byId.set(id, offline);
     sources.push(offline);
     return offline;

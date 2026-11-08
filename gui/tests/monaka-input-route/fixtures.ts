@@ -16,6 +16,7 @@ export function candidate(
     publisher: id,
     source: 'opaque-source',
     tracker: 'same-name',
+    displayName: `device-${id}`,
     origin: 'mvip_pose',
     capabilities,
     conflict: false,
