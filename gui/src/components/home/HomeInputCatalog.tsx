@@ -2,6 +2,12 @@ import { useEffect, useId, useMemo, useSyncExternalStore } from 'react';
 import { useLocalization } from '@fluent/react';
 import { NavLink } from 'react-router-dom';
 import { BodyPart } from 'solarxr-protocol';
+import { Typography } from '@/components/commons/Typography';
+import {
+  TrackerCardSurface,
+  TrackerCompactContent,
+  TrackerStatusPresentation,
+} from '@/components/tracker/TrackerCardPresentation';
 import { MonakaInputSocket } from '@/monaka-input/socket';
 import { sourceDetails, sourceLabel } from '@/monaka-input/source-label';
 import { bodyPartForInput } from '@/monaka-input/roles';
@@ -40,103 +46,133 @@ export function HomeInputCatalogPanel({
       `monaka-input-${value === null ? 'unknown' : value ? 'valid' : 'invalid'}`
     );
   return (
-    <section
-      aria-labelledby={titleId}
-      className="mx-4 p-4 rounded-lg bg-background-70 text-background-10 min-w-0 space-y-3"
-    >
-      <h2 id={titleId} className="text-xl font-bold">
-        {text('title')}
-      </h2>
-      <NavLink className="underline" to={inputAssignmentsHref(search)}>
-        {text('assignments')}
-      </NavLink>
+    <section aria-labelledby={titleId} className="min-w-0">
+      <div className="flex w-full gap-2 items-center px-4 h-5">
+        <div id={titleId}>
+          <Typography color="secondary">{text('title')}</Typography>
+        </div>
+        <div className="bg-background-50 h-[2px] rounded-lg flex-grow" />
+        <NavLink
+          className="text-sm text-background-30 hover:text-background-20"
+          to={inputAssignmentsHref(search)}
+        >
+          {text('assignments')}
+        </NavLink>
+      </div>
       {!state.fresh && (
-        <p role="status">
+        <p role="status" className="px-5 pt-5 text-background-10">
           {text(state.snapshot || state.failed ? 'stale' : 'waiting')}
         </p>
       )}
-      {state.fresh && rows.length === 0 && <p role="status">{text('empty')}</p>}
-      {state.snapshot?.restartRequired && <p>{text('restart')}</p>}
-      <ul className="grid sm:grid-cols-1 md:grid-cols-2 gap-3">
-        {rows.map((row) => (
-          <li
-            key={row.id}
-            data-input-id={row.id}
-            className="p-3 rounded bg-background-80 min-w-0 break-words space-y-2"
-          >
-            <h3 className="font-bold">
-              {sourceLabel(
-                row.candidate,
-                candidates,
-                l10n.getString('monaka-input-unknown')
-              )}
-            </h3>
-            <p role="status">
-              {text(
-                row.conflict
-                  ? 'conflict'
-                  : row.qUsableNow === true || row.sixDofUsableNow === true
-                    ? 'available'
-                    : row.qUsableNow === false && row.sixDofUsableNow === false
-                      ? 'unavailable'
-                      : 'unknown'
-              )}
-            </p>
-            <p>
-              {row.savedRoles.length
-                ? [...new Set(row.savedRoles.map(({ body }) => body))]
-                    .map(bodyLabel)
-                    .join(', ')
-                : l10n.getString('monaka-input-unassigned')}
-            </p>
-            <details className="min-w-0 text-xs font-normal space-y-2">
-              <summary className="cursor-pointer">{text('details')}</summary>
-              <p>
-                {text('route')}:{' '}
-                {row.route === 'mvip' ? 'MVIP' : text('route-unknown')}
-              </p>
-              <p>
-                {l10n.getString('monaka-tracking-capability')}:{' '}
-                {row.capabilities?.some(
-                  (capability) =>
-                    capability === 'position' || capability === 'orientation'
-                )
-                  ? ['position', 'orientation']
-                      .filter((capability) =>
-                        row.capabilities?.includes(capability)
-                      )
-                      .map((capability) => text(capability))
-                      .join(' + ')
-                  : l10n.getString('monaka-input-support-unknown')}
-              </p>
-              <p>
-                {l10n.getString('monaka-input-usability')}: Q{' '}
-                {usability(row.qUsableNow)}, 6DoF{' '}
-                {usability(row.sixDofUsableNow)}
-              </p>
-              <p>
-                {text('saved-roles')}:{' '}
-                {row.savedRoles.length
-                  ? row.savedRoles
+      {state.fresh && rows.length === 0 && (
+        <p role="status" className="px-5 pt-5 text-background-10">
+          {text('empty')}
+        </p>
+      )}
+      {state.snapshot?.restartRequired && (
+        <p className="px-5 pt-5 text-background-10">{text('restart')}</p>
+      )}
+      <ul className="grid sm:grid-cols-1 md:grid-cols-2 gap-4 px-5 my-5">
+        {rows.map((row) => {
+          const roles = [...new Set(row.savedRoles.map(({ body }) => body))];
+          const bodyPart =
+            roles.length === 1
+              ? (bodyPartForInput(roles[0]) ?? BodyPart.NONE)
+              : BodyPart.NONE;
+          const savedRoles = roles.length
+            ? roles.map(bodyLabel).join(', ')
+            : l10n.getString('monaka-input-unassigned');
+          const status = row.conflict
+            ? 'conflict'
+            : row.qUsableNow === true || row.sixDofUsableNow === true
+              ? 'available'
+              : row.qUsableNow === false && row.sixDofUsableNow === false
+                ? 'unavailable'
+                : 'unknown';
+          const statusClass =
+            status === 'available'
+              ? 'bg-status-success'
+              : status === 'conflict'
+                ? 'bg-status-warning'
+                : 'bg-background-30';
+          const name = sourceLabel(
+            row.candidate,
+            candidates,
+            l10n.getString('monaka-input-unknown')
+          );
+          return (
+            <li
+              key={row.id}
+              data-input-id={row.id}
+              className="relative min-w-0"
+            >
+              <TrackerCardSurface asDetails interactable>
+                <summary
+                  className="list-none [&::-webkit-details-marker]:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-background-40 focus-visible:-outline-offset-2"
+                  title={`${text('saved-roles')}: ${savedRoles}`}
+                  aria-label={`${name}; ${text(status)}; ${text('saved-roles')}: ${savedRoles}; ${text('details')}`}
+                >
+                  <TrackerCompactContent
+                    bodyPart={bodyPart}
+                    name={name}
+                    status={
+                      <TrackerStatusPresentation
+                        label={text(status)}
+                        statusClass={statusClass}
+                      />
+                    }
+                  />
+                </summary>
+                <div className="px-4 pb-3 text-xs text-background-10 break-words space-y-2">
+                  <p>
+                    {text('route')}:{' '}
+                    {row.route === 'mvip' ? 'MVIP' : text('route-unknown')}
+                  </p>
+                  <p>
+                    {l10n.getString('monaka-tracking-capability')}:{' '}
+                    {row.capabilities?.some(
+                      (capability) =>
+                        capability === 'position' ||
+                        capability === 'orientation'
+                    )
+                      ? ['position', 'orientation']
+                          .filter((capability) =>
+                            row.capabilities?.includes(capability)
+                          )
+                          .map((capability) => text(capability))
+                          .join(' + ')
+                      : l10n.getString('monaka-input-support-unknown')}
+                  </p>
+                  <p>
+                    {l10n.getString('monaka-input-usability')}: Q{' '}
+                    {usability(row.qUsableNow)}, 6DoF{' '}
+                    {usability(row.sixDofUsableNow)}
+                  </p>
+                  <p>
+                    {text('saved-roles')}:{' '}
+                    {row.savedRoles.length
+                      ? row.savedRoles
+                          .map(
+                            ({ body, kind }) =>
+                              `${bodyLabel(body)} (${kind === 'q' ? 'Q' : '6DoF'})`
+                          )
+                          .join(', ')
+                      : l10n.getString('monaka-input-unassigned')}
+                  </p>
+                  <pre className="whitespace-pre-wrap break-all max-w-full">
+                    {row.variants
                       .map(
-                        ({ body, kind }) =>
-                          `${bodyLabel(body)} (${kind === 'q' ? 'Q' : '6DoF'})`
+                        (candidate) =>
+                          `${sourceDetails(candidate)}\nOrigin: ${candidate.origin}\nCapabilities: ${candidate.capabilities?.join(', ') ?? l10n.getString('monaka-input-support-unknown')}`
                       )
-                      .join(', ')
-                  : l10n.getString('monaka-input-unassigned')}
-              </p>
-              <pre className="whitespace-pre-wrap break-all max-w-full">
-                {row.variants
-                  .map(
-                    (candidate) =>
-                      `${sourceDetails(candidate)}\nOrigin: ${candidate.origin}\nCapabilities: ${candidate.capabilities?.join(', ') ?? l10n.getString('monaka-input-support-unknown')}`
-                  )
-                  .join('\n\n')}
-              </pre>
-              <p>{text('saved-help')}</p>
-            </details>
-          </li>
-        ))}
+                      .join('\n\n')}
+                  </pre>
+                  <p>{text('saved-help')}</p>
+                </div>
+              </TrackerCardSurface>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

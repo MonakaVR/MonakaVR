@@ -20,6 +20,18 @@ await build({
   platform: 'node',
   format: 'esm',
   packages: 'external',
+  // Real locale contexts import flag assets; Node needs the same asset bundling.
+  loader: { '.svg': 'dataurl' },
+  plugins: [
+    {
+      name: 'locale-svg-assets',
+      setup(build) {
+        build.onResolve({ filter: /^@twemoji\/svg\// }, ({ path }) => ({
+          path: require.resolve(path),
+        }));
+      },
+    },
+  ],
   jsx: 'automatic',
   alias: { '@': resolve(root, 'src') },
 });

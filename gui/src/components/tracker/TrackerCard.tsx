@@ -10,7 +10,10 @@ import { Typography } from '@/components/commons/Typography';
 import { TrackerBattery } from './TrackerBattery';
 import { TrackerWifi } from './TrackerWifi';
 import { TrackerStatus } from './TrackerStatus';
-import classNames from 'classnames';
+import {
+  TrackerCardSurface,
+  TrackerCompactContent,
+} from './TrackerCardPresentation';
 import { useTracker } from '@/hooks/tracker';
 import { BodyPartIcon } from '@/components/commons/BodyPartIcon';
 import { Tooltip } from '@/components/commons/Tooltip';
@@ -88,57 +91,39 @@ function TrackerSmol({
   const trackerName = useName();
 
   return (
-    <div className="flex rounded-md py-3 px-4 w-full gap-4 h-[70px]">
-      <div className="flex flex-col justify-center items-center fill-background-10 relative">
-        {warning && (
-          <div className="absolute -right-2 -bottom-3 text-status-warning ">
-            <WarningIcon width={20} />
-          </div>
-        )}
-        <div
-          className={classNames(
-            'border-[3px] border-opacity-80 rounded-md overflow-clip',
-            {
-              'border-status-warning': warning,
-              'border-transparent': !warning,
-            }
-          )}
-        >
-          <BodyPartIcon bodyPart={tracker.info?.bodyPart} width={40} />
-        </div>
-      </div>
-
-      <div className="flex flex-col flex-grow justify-center gap-1">
-        <Typography bold truncate variant="section-title">
-          {trackerName}
-        </Typography>
-        <TrackerStatus status={tracker.status} />
-      </div>
-      {device && device.hardwareStatus && (
-        <>
-          <div className="flex flex-col justify-center items-center">
-            {device.hardwareStatus.batteryPctEstimate != null && (
-              <TrackerBattery
-                voltage={device.hardwareStatus.batteryVoltage}
-                value={device.hardwareStatus.batteryPctEstimate / 100}
-                runtime={device.hardwareStatus.batteryRuntimeEstimate}
-                disabled={tracker.status === TrackerStatusEnum.DISCONNECTED}
-              />
-            )}
-          </div>
-          <div className="flex flex-col justify-center items-center">
-            {(device.hardwareStatus.rssi != null ||
-              device.hardwareStatus.ping != null) && (
-              <TrackerWifi
-                rssi={device.hardwareStatus.rssi}
-                ping={device.hardwareStatus.ping}
-                disabled={tracker.status === TrackerStatusEnum.DISCONNECTED}
-              />
-            )}
-          </div>
-        </>
-      )}
-    </div>
+    <TrackerCompactContent
+      bodyPart={tracker.info?.bodyPart}
+      name={trackerName}
+      status={<TrackerStatus status={tracker.status} />}
+      warning={!!warning}
+      telemetry={
+        device &&
+        device.hardwareStatus && (
+          <>
+            <div className="flex flex-col justify-center items-center">
+              {device.hardwareStatus.batteryPctEstimate != null && (
+                <TrackerBattery
+                  voltage={device.hardwareStatus.batteryVoltage}
+                  value={device.hardwareStatus.batteryPctEstimate / 100}
+                  runtime={device.hardwareStatus.batteryRuntimeEstimate}
+                  disabled={tracker.status === TrackerStatusEnum.DISCONNECTED}
+                />
+              )}
+            </div>
+            <div className="flex flex-col justify-center items-center">
+              {(device.hardwareStatus.rssi != null ||
+                device.hardwareStatus.ping != null) && (
+                <TrackerWifi
+                  rssi={device.hardwareStatus.rssi}
+                  ping={device.hardwareStatus.ping}
+                  disabled={tracker.status === TrackerStatusEnum.DISCONNECTED}
+                />
+              )}
+            </div>
+          </>
+        )
+      }
+    />
   );
 }
 
@@ -170,14 +155,11 @@ export function TrackerCard({
 
   return (
     <div className="relative">
-      <div
+      <TrackerCardSurface
         onClick={onClick}
-        className={classNames(
-          'rounded-lg overflow-hidden transition-[box-shadow] duration-200 ease-linear',
-          interactable && 'hover:bg-background-50 cursor-pointer',
-          outlined && 'outline outline-2 outline-accent-background-40',
-          bg
-        )}
+        interactable={interactable}
+        outlined={outlined}
+        bg={bg}
         style={
           shakeHighlight
             ? {
@@ -206,7 +188,7 @@ export function TrackerCard({
           </Tooltip>
         )}
         {!smol && <TrackerBig tracker={tracker} device={device} />}
-      </div>
+      </TrackerCardSurface>
       {showUpdates && <FirmwareIcon tracker={tracker} device={device} />}
     </div>
   );
