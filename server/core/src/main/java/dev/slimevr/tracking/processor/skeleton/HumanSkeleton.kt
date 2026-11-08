@@ -1118,6 +1118,12 @@ class HumanSkeleton(
 		lowerArmTracker: Tracker?,
 		handTracker: Tracker?,
 	) {
+		// Both arm paths need the current torso/shoulder baseline, even when
+		// the hand is rooted independently at a positional controller.
+		var armRot = shoulderTracker?.readSolverRotation("updateArmTransforms") ?: upperChestBone.getLocalRotation()
+		upperShoulderBone.setRotation(upperChestBone.getLocalRotation())
+		shoulderBone.setRotation(armRot)
+
 		if (isTrackingFromController) { // From controller
 			// Set hand rotation and position from tracker
 			handTracker?.let {
@@ -1127,7 +1133,7 @@ class HumanSkeleton(
 			}
 
 			// Get lower arm rotation
-			var armRot = getFirstAvailableTracker(lowerArmTracker, upperArmTracker)?.readSolverRotation("updateArmTransforms") ?: IDENTITY
+			armRot = getFirstAvailableTracker(lowerArmTracker, upperArmTracker)?.readSolverRotation("updateArmTransforms") ?: IDENTITY
 			// Set lower arm rotation
 			lowerArmBone.setRotation(armRot)
 
@@ -1136,12 +1142,6 @@ class HumanSkeleton(
 			// Set elbow tracker rotation
 			elbowTrackerBone.setRotation(armRot)
 		} else { // From HMD
-			// Get shoulder rotation
-			var armRot = shoulderTracker?.readSolverRotation("updateArmTransforms") ?: upperChestBone.getLocalRotation()
-			// Set shoulder rotation
-			upperShoulderBone.setRotation(upperChestBone.getLocalRotation())
-			shoulderBone.setRotation(armRot)
-
 			if (upperArmTracker != null || lowerArmTracker != null) {
 				// Get upper arm rotation
 				getFirstAvailableTracker(upperArmTracker, lowerArmTracker)?.let { armRot = it.readSolverRotation("updateArmTransforms") }

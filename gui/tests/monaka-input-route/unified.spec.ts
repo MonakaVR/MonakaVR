@@ -37,6 +37,35 @@ async function open(page: Page, fixture: CoreUiFixture, language = 'en') {
 const qName = 'Q Source: publisher-a / opaque-source / same-name';
 const sixName = '6DoF Source: publisher-a / opaque-source / same-name';
 
+test('inherited assignment is visible without creating or saving an override', async ({ page }) => {
+  const fixture = new CoreUiFixture();
+  const id = new TrackerIdT(new DeviceIdT(7), 2);
+  const source = fixture.snapshot.candidates.find((c) => c.id === 'slime-q')!;
+  source.slimeTrackerId = id;
+  source.capabilities = ['position', 'orientation'];
+  source.sixDofSelectable = true;
+  await open(page, fixture, 'ja');
+  const info = new TrackerInfoT();
+  info.editable = true;
+  info.bodyPart = BodyPart.HIP;
+  info.displayName = 'physical fixture';
+  const device = new DeviceDataT();
+  device.id = id.deviceId;
+  device.trackers = [new TrackerDataT(id, info)];
+  const header = new DataFeedMessageHeaderT();
+  header.messageType = DataFeedMessage.DataFeedUpdate;
+  header.message = new DataFeedUpdateT([device], [], [], null, 0);
+  const message = new MessageBundleT();
+  message.dataFeedMsgs = [header];
+  const builder = new Builder(128);
+  builder.finish(message.pack(builder));
+  fixture.binaryConnections.forEach((socket) => socket.send(Buffer.from(builder.asUint8Array())));
+  await expect(page.getByTestId('assignment-inherited')).toContainText('現在の割り当て');
+  await expect(page.getByTestId('assignment-readback')).toHaveCount(0);
+  expect(fixture.snapshot.assignments).toEqual([]);
+  expect(fixture.saves).toHaveLength(0);
+});
+
 test('a later partial operation reviews its current body after recovering a different body', async ({
   page,
 }) => {

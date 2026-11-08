@@ -14,13 +14,16 @@ adapter and input profile. Lost/stale metadata never establishes support.
 
 The GUI lists full persistent source identities, including unassigned sources.
 Q requires declared orientation; 6DoF requires declared position and orientation.
-Unknown/conflicting support cannot create a new assignment. Legacy Slime
-orientation streams are Q candidates only; that does not prove independent IMU
-authenticity. Their existing name identity remains unchanged and duplicate names
+Unknown/conflicting support cannot create a new assignment. Legacy tracker
+candidates use their immutable position/orientation declarations.
+Orientation-only inputs remain Q candidates only; inputs declaring both are also
+6DoF candidates. Neither declaration proves independent IMU authenticity. Their
+existing name identity remains unchanged and duplicate names
 fail closed. Feedback outputs are excluded.
 
-On the first Q choice for an unassigned body only, a confirmed Pos+Q MTP source
-also fills 6DoF. Q-only, unknown and Slime sources do not. Explicit/manual choices,
+On the first Q choice for an unassigned body only, a declared Pos+Q source
+also fills 6DoF, including legacy FULL inputs. Q-only and unknown sources do not.
+Explicit/manual choices,
 clears and saved choices survive subsequent metadata, loss and reconnect. Six-only
 selection is allowed. The fields map into the existing policy: 6DoF is Main,
 selected Q is rotation fallback when Main is unavailable. A usable Main FULL pose
@@ -54,3 +57,10 @@ No automatic restart, topology rebuild or Fusion/IK tuning change is performed.
 Admission Gate default remains OFF; thresholds remain hardware-unvalidated.
 This implementation and its process/browser fixtures are software-only;
 `hil_ready=false` and physical 2C-4A is not authorized.
+
+The body picker displays an existing legacy body assignment separately when no
+explicit Monaka assignment exists. Reading, opening, cancelling and no-op saves do
+not migrate it. An explicit legacy FULL selection retains paired position and
+rotation. In the unified physical-body transaction, a legacy 6DoF Main owns the
+physical association; distinct legacy Q and 6DoF trackers require separate review
+and are rejected before either writer runs. MTP Main plus legacy Q remains supported.

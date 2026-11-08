@@ -85,11 +85,19 @@ export function planAssignment(
   const qChanged = draft.qSource !== (previous?.qSource ?? null);
   const changes: LegacyChange[] = [];
   const q = snapshot.candidates.find((row) => row.id === draft.qSource);
-  if (!qChanged && !reset && !qExplicit && q?.origin !== 'slime_orientation_stream')
+  const six = snapshot.candidates.find((row) => row.id === draft.sixDofSource);
+  const legacyQ = q?.origin === 'slime_orientation_stream' ? q : undefined;
+  const legacySix = six?.origin === 'slime_orientation_stream' ? six : undefined;
+  if (legacyQ && legacySix && legacyQ.id !== legacySix.id)
+    throw new Error(
+      'Select one physical legacy tracker for this body before saving Q and 6DoF.'
+    );
+  const selectedSource = legacySix ?? legacyQ;
+  if (!qChanged && !reset && !qExplicit && !selectedSource)
     return { body, before: trackers, changes, reset };
   let selected: LegacyTracker | undefined;
-  if (q?.origin === 'slime_orientation_stream') {
-    const key = locatorKey(q.slimeTrackerId);
+  if (selectedSource) {
+    const key = locatorKey(selectedSource.slimeTrackerId);
     const matches = key ? trackers.filter((t) => locatorKey(t.id) === key) : [];
     if (matches.length !== 1 || !matches[0].editable)
       throw new Error(

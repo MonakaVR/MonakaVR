@@ -868,5 +868,6 @@ assignment-status-legacy-observed = Core入力を保存しました。物理ト�
 assignment-status-partial = 一部成功または未確認です。Core保存後の物理部位変更が未確認、または操作中に状態が変わりました。両方の状態を再読込してから再試行してください。自動復元は行っていません。
 assignment-status-save-unknown = Core保存に失敗したか、結果が不明です。物理トラッカーの部位変更は送信していません。再読込してから再試行してください。
 assignment-legacy-active = 受信データで確認した物理トラッカーの部位
+assignment-legacy-inherited = 現在の割り当て
 
 assignment-active = サーバー再起動までの稼働設定

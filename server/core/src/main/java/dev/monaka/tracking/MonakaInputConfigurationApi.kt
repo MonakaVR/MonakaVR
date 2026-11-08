@@ -66,6 +66,10 @@ class MonakaInputConfigurationApi(
 		val assignments: Map<TrackerPosition, MainTrackerAssignment>,
 	)
 	class Edit internal constructor(internal val generation: Long, val assignments: Map<TrackerPosition, MainTrackerAssignment>)
+	private fun sixDofSource(assignment: MainTrackerAssignment, candidates: List<Candidate>): TrackerReference? =
+		if (assignment.sourceSelection != null) assignment.sourceSelection.sixDofSource else assignment.mainTracker.takeIf { main ->
+			main.mtp != null || candidates.singleOrNull { it.reference == main }?.capabilities?.supportsSixDof == true
+		}
 	fun snapshot(now: Long): Snapshot {
 		checkThread()
 		require(now >= 0)
@@ -97,14 +101,18 @@ class MonakaInputConfigurationApi(
 					locatorCounts[it.device?.id to it.trackerNum] == 1
 			}?.let { SlimeTrackerId(it.device?.let { device -> SlimeDeviceId(device.id) }, it.trackerNum) }
 			val sample = matches.singleOrNull()?.let { adapter.adapt(it, now, TrackerPosition.HEAD) }
+			// These immutable Tracker declarations are separate from current sample validity.
+			val capabilities = tracker?.let {
+				DeclaredTrackerCapabilities(listOfNotNull("position".takeIf { _ -> it.hasPosition }, "orientation".takeIf { _ -> it.hasRotation }))
+			}
 			Candidate(
 				TrackerReference.slime(name),
-				DeclaredTrackerCapabilities.orientationOnly(),
+				capabilities,
 				matches.size != 1,
 				matches.size == 1,
-				false,
+				capabilities?.supportsSixDof == true,
 				sample?.rotation != null && sample.rotationQuality.usable,
-				false,
+				sample?.modality == TrackingModality.FULL && sample.position != null && sample.rotation != null && sample.positionQuality.usable && sample.rotationQuality.usable,
 				"slime_orientation_stream",
 				locator,
 			)
@@ -127,12 +135,12 @@ class MonakaInputConfigurationApi(
 		val sixCandidate = six?.let { ref -> snapshot.candidates.singleOrNull { it.reference == ref } }
 		val current = snapshot.assignments[target]
 		val currentQ = current?.let { if (it.sourceSelection != null) it.sourceSelection.qSource else it.rotationFallbackTracker ?: it.mainTracker }
-		val currentSix = current?.let { if (it.sourceSelection != null) it.sourceSelection.sixDofSource else it.mainTracker.takeIf { ref -> ref.mtp != null } }
+		val currentSix = current?.let { sixDofSource(it, snapshot.candidates) }
 		require(q == null || qCandidate?.qSelectable == true || q == currentQ) { "Q Source has unknown/conflicting orientation support" }
 		require(six == null || sixCandidate?.sixDofSelectable == true || six == currentSix) { "6DoF Source requires declared position and orientation" }
 		if (!manualSix) {
 			val permitted = if (current == null) {
-				q?.takeIf { qCandidate?.capabilities?.supportsSixDof == true && qCandidate.origin == "mvip_pose" }
+				q?.takeIf { qCandidate?.capabilities?.supportsSixDof == true }
 			} else {
 				currentSix
 			}
@@ -314,10 +322,10 @@ class MonakaInputConfigurationApi(
 					mapOf(
 						"body" to body.name,
 						"qSource" to (a.sourceSelection?.qSource?.observationId ?: if (a.sourceSelection == null) (a.rotationFallbackTracker ?: a.mainTracker).observationId else null),
-						"sixDofSource" to (a.sourceSelection?.sixDofSource?.observationId ?: if (a.sourceSelection == null && a.mainTracker.mtp != null) a.mainTracker.observationId else null),
+						"sixDofSource" to sixDofSource(a, s.candidates)?.observationId,
 						"savedManualSix" to (savedAssignments[body]?.sourceSelection?.sixDofManuallySelected ?: true),
 						"savedQSource" to (savedAssignments[body]?.let { saved -> if (saved.sourceSelection != null) saved.sourceSelection.qSource else saved.rotationFallbackTracker ?: saved.mainTracker }?.observationId),
-						"savedSixDofSource" to (savedAssignments[body]?.let { saved -> if (saved.sourceSelection != null) saved.sourceSelection.sixDofSource else saved.mainTracker.takeIf { it.mtp != null } }?.observationId),
+						"savedSixDofSource" to savedAssignments[body]?.let { sixDofSource(it, s.candidates) }?.observationId,
 						"manualSix" to (a.sourceSelection?.sixDofManuallySelected ?: true), "mode" to a.outputMode.name.lowercase(),
 						"activeMode" to a.outputMode.name.lowercase(), "savedMode" to savedAssignments[body]?.outputMode?.name?.lowercase(),
 						"restartRequired" to (savedAssignments[body] != a),

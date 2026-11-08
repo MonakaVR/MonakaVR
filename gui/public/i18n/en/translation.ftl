@@ -1782,5 +1782,6 @@ assignment-status-legacy-observed = Core input choices saved. Physical body assi
 assignment-status-partial = Partial or unconfirmed: Core may have saved, but physical body changes were not all confirmed or the live state changed. Reload both states before retrying; no rollback was attempted.
 assignment-status-save-unknown = Core save failed or its outcome is unknown. No physical body write was sent. Reload before retrying.
 assignment-legacy-active = Physical body observed in the live feed
+assignment-legacy-inherited = Current assignment
 
 assignment-active = Active until server restart

@@ -144,6 +144,38 @@ test('physical replacement plan includes only exact target clear and selected tr
   );
 });
 
+test('legacy FULL six-only selection keeps its physical association instead of clearing it', () => {
+  const s = snapshot();
+  s.candidates[0] = {
+    ...source,
+    capabilities: ['position', 'orientation'],
+    sixDofSelectable: true,
+  };
+  const selected = { ...physical, body: BodyPart.HIP };
+  const sixOnly = { ...draft, qSource: null, sixDofSource: source.id, manualSix: true };
+  assert.deepEqual(planAssignment(s, sixOnly, BodyPart.HIP, [selected]).changes, []);
+  const moved = planAssignment(s, sixOnly, BodyPart.HIP, [physical]);
+  assert.deepEqual(moved.changes, [
+    { id: physical.id, from: BodyPart.CHEST, to: BodyPart.HIP },
+  ]);
+});
+
+test('distinct legacy Q and six physical sources are rejected before either writer', () => {
+  const s = snapshot();
+  const other = {
+    ...source,
+    id: 'another-physical',
+    slimeTrackerId: { deviceId: null, trackerNum: 12 },
+    sixDofSelectable: true,
+  };
+  s.candidates.push(other);
+  assert.throws(
+    () =>
+      planAssignment(s, { ...draft, sixDofSource: other.id }, BodyPart.HIP, [physical]),
+    /one physical legacy tracker/
+  );
+});
+
 test('source reuse across roles, ambiguous association and noneditable displacement are rejected before writes', () => {
   const s = snapshot();
   s.assignments.push({ ...draft, body: 'CHEST' });

@@ -57,14 +57,32 @@ class Api implements InputApi {
 }
 test('pending restart verifies persisted choices separately from the active runtime', async () => {
   const api = new Api();
-  api.value.assignments = [{ body: 'HIP', qSource: 'q-only', sixDofSource: 'publisher-a', manualSix: true, mode: 'hybrid' }];
+  api.value.assignments = [
+    {
+      body: 'HIP',
+      qSource: 'q-only',
+      sixDofSource: 'publisher-a',
+      manualSix: true,
+      mode: 'hybrid',
+    },
+  ];
   const model = new InputSelectionController(api);
   await model.load();
   model.selectSix('publisher-b');
   api.request = async (fields) => {
     assert.equal(fields.action, 'save');
-    return { ...structuredClone(api.value), restartRequired: true,
-      assignments: [{ ...api.value.assignments[0], savedQSource: 'q-only', savedSixDofSource: 'publisher-b', savedManualSix: true }] };
+    return {
+      ...structuredClone(api.value),
+      restartRequired: true,
+      assignments: [
+        {
+          ...api.value.assignments[0],
+          savedQSource: 'q-only',
+          savedSixDofSource: 'publisher-b',
+          savedManualSix: true,
+        },
+      ],
+    };
   };
   assert.equal(await model.save(), true);
   assert.equal(model.state.snapshot!.assignments[0].sixDofSource, 'publisher-a');
@@ -117,7 +135,7 @@ test('first Pos+Q selection uses static support even while invalid; manual clear
   model.selectQ('publisher-b');
   assert.equal(model.state.draft.sixDofSource, null);
 });
-test('Q-only and Slime never fill 6DoF; unknown/conflicting support is not selectable', async () => {
+test('Q-only legacy declarations never fill 6DoF; unknown/conflicting support is not selectable', async () => {
   for (const id of ['q-only', 'slime-q']) {
     const model = new InputSelectionController(new Api());
     await model.load();
@@ -135,6 +153,25 @@ test('Q-only and Slime never fill 6DoF; unknown/conflicting support is not selec
   await model.load();
   model.selectQ('unknown');
   assert.equal(model.state.draft.qSource, null);
+  assert.equal(model.state.draft.sixDofSource, null);
+});
+
+test('declared legacy FULL first selection preserves position and explicit clear survives reload', async () => {
+  const api = new Api();
+  const full = candidate('legacy-full', true, 'slime_orientation_stream');
+  api.value.candidates.push(full);
+  const model = new InputSelectionController(api);
+  await model.load();
+  assert.equal(api.saves.length, 0);
+  assert.equal(await model.save(), false);
+  model.selectQ(full.id);
+  assert.equal(model.state.draft.sixDofSource, full.id);
+  assert.equal(await model.save(), true);
+  assert.equal(api.saves[0].sixDofSource, full.id);
+  model.selectSix(null);
+  assert.equal(await model.save(), true);
+  await model.load();
+  model.selectQ(full.id);
   assert.equal(model.state.draft.sixDofSource, null);
 });
 test('same names with different publishers, independent manual choices, and 6DoF-only', async () => {

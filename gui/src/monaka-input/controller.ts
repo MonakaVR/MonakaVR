@@ -162,7 +162,7 @@ export class InputSelectionController {
     const draft = { ...this.state.draft, qSource: id };
     if (!this.autoConsidered && !draft.manualSix && id !== null) {
       draft.sixDofSource =
-        source?.sixDofSelectable && source.origin === 'mvip_pose' ? id : null;
+        source?.sixDofSelectable ? id : null;
       this.autoConsidered = true;
     }
     this.state.draft = draft;
