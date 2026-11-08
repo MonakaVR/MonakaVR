@@ -2,7 +2,6 @@ import { useEffect, useId, useMemo, useSyncExternalStore } from 'react';
 import { useLocalization } from '@fluent/react';
 import { NavLink } from 'react-router-dom';
 import { BodyPart } from 'solarxr-protocol';
-import { InputSourceDetails } from '@/components/commons/InputSourceDetails';
 import { MonakaInputSocket } from '@/monaka-input/socket';
 import { sourceDetails, sourceLabel } from '@/monaka-input/source-label';
 import { bodyPartForInput } from '@/monaka-input/roles';
@@ -48,7 +47,6 @@ export function HomeInputCatalogPanel({
       <h2 id={titleId} className="text-xl font-bold">
         {text('title')}
       </h2>
-      <p>{text('help')}</p>
       <NavLink className="underline" to={inputAssignmentsHref(search)}>
         {text('assignments')}
       </NavLink>
@@ -73,54 +71,73 @@ export function HomeInputCatalogPanel({
                 l10n.getString('monaka-input-unknown')
               )}
             </h3>
-            <p>
-              {text('route')}:{' '}
-              {row.route === 'mvip' ? 'MVIP' : text('route-unknown')}
-            </p>
-            {row.conflict && (
-              <p role="status">{l10n.getString('monaka-input-conflict')}</p>
-            )}
-            <p>
-              {l10n.getString('monaka-tracking-capability')}:{' '}
-              {row.capabilities?.some(
-                (capability) =>
-                  capability === 'position' || capability === 'orientation'
-              )
-                ? ['position', 'orientation']
-                    .filter((capability) =>
-                      row.capabilities?.includes(capability)
-                    )
-                    .map((capability) => text(capability))
-                    .join(' + ')
-                : l10n.getString('monaka-input-support-unknown')}
+            <p role="status">
+              {text(
+                row.conflict
+                  ? 'conflict'
+                  : row.qUsableNow === true || row.sixDofUsableNow === true
+                    ? 'available'
+                    : row.qUsableNow === false && row.sixDofUsableNow === false
+                      ? 'unavailable'
+                      : 'unknown'
+              )}
             </p>
             <p>
-              {l10n.getString('monaka-input-usability')}: Q{' '}
-              {usability(row.qUsableNow)}, 6DoF {usability(row.sixDofUsableNow)}
-            </p>
-            <p>
-              {text('saved-roles')}:{' '}
               {row.savedRoles.length
-                ? row.savedRoles
-                    .map(
-                      ({ body, kind }) =>
-                        `${bodyLabel(body)} (${kind === 'q' ? 'Q' : '6DoF'})`
-                    )
+                ? [...new Set(row.savedRoles.map(({ body }) => body))]
+                    .map(bodyLabel)
                     .join(', ')
                 : l10n.getString('monaka-input-unassigned')}
             </p>
-            <InputSourceDetails
-              text={row.variants
-                .map(
-                  (candidate) =>
-                    `${sourceDetails(candidate)}\nOrigin: ${candidate.origin}\nCapabilities: ${candidate.capabilities?.join(', ') ?? l10n.getString('monaka-input-support-unknown')}`
+            <details className="min-w-0 text-xs font-normal space-y-2">
+              <summary className="cursor-pointer">{text('details')}</summary>
+              <p>
+                {text('route')}:{' '}
+                {row.route === 'mvip' ? 'MVIP' : text('route-unknown')}
+              </p>
+              <p>
+                {l10n.getString('monaka-tracking-capability')}:{' '}
+                {row.capabilities?.some(
+                  (capability) =>
+                    capability === 'position' || capability === 'orientation'
                 )
-                .join('\n\n')}
-            />
+                  ? ['position', 'orientation']
+                      .filter((capability) =>
+                        row.capabilities?.includes(capability)
+                      )
+                      .map((capability) => text(capability))
+                      .join(' + ')
+                  : l10n.getString('monaka-input-support-unknown')}
+              </p>
+              <p>
+                {l10n.getString('monaka-input-usability')}: Q{' '}
+                {usability(row.qUsableNow)}, 6DoF{' '}
+                {usability(row.sixDofUsableNow)}
+              </p>
+              <p>
+                {text('saved-roles')}:{' '}
+                {row.savedRoles.length
+                  ? row.savedRoles
+                      .map(
+                        ({ body, kind }) =>
+                          `${bodyLabel(body)} (${kind === 'q' ? 'Q' : '6DoF'})`
+                      )
+                      .join(', ')
+                  : l10n.getString('monaka-input-unassigned')}
+              </p>
+              <pre className="whitespace-pre-wrap break-all max-w-full">
+                {row.variants
+                  .map(
+                    (candidate) =>
+                      `${sourceDetails(candidate)}\nOrigin: ${candidate.origin}\nCapabilities: ${candidate.capabilities?.join(', ') ?? l10n.getString('monaka-input-support-unknown')}`
+                  )
+                  .join('\n\n')}
+              </pre>
+              <p>{text('saved-help')}</p>
+            </details>
           </li>
         ))}
       </ul>
-      <p className="text-sm">{text('saved-help')}</p>
     </section>
   );
 }

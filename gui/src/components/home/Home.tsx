@@ -51,12 +51,10 @@ export function Home() {
         <Checklist />
       </NavLink>
       <div className="overflow-y-auto flex flex-col gap-3">
-        <HomeInputCatalog />
         <div className="px-4 text-background-10 space-y-1">
           <h2 className="text-lg font-bold">
             {l10n.getString('home-input-legacy')}
           </h2>
-          <p className="text-sm">{l10n.getString('home-input-legacy-help')}</p>
         </div>
         <div className="flex w-full gap-2 items-center px-4 h-5">
           <Typography
@@ -154,6 +152,7 @@ export function Home() {
             )}
           </>
         )}
+        <HomeInputCatalog />
       </div>
     </div>
   );
