@@ -15,12 +15,14 @@ class IKConstraint(val tracker: Tracker) {
 		rotationOffset = value.rotationOffset
 	}
 
-	fun getPosition(): Vector3 = tracker.position + (tracker.getRotation() * rotationOffset).sandwich(offset)
+	private fun positionRotation(): Quaternion = tracker.positionAnchorRotation ?: tracker.getRotation()
+
+	fun getPosition(): Vector3 = tracker.position + (positionRotation() * rotationOffset).sandwich(offset)
 
 	fun reset(nodePosition: Vector3) {
 		val bodyPartsToSkip = setOf(BodyPart.LEFT_HAND, BodyPart.RIGHT_HAND)
 
-		rotationOffset = tracker.getRotation().inv()
+		rotationOffset = positionRotation().inv()
 		if (tracker.trackerPosition?.bodyPart in bodyPartsToSkip) return
 		offset = nodePosition - tracker.position
 	}

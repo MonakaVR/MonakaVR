@@ -184,6 +184,12 @@ class LegTweaks(private val skeleton: HumanSkeleton) {
 		// don't spend time doing calculations!
 		if ((!skeleton.hasKneeTrackers && !alwaysUseFloorclip) || !enabled) return
 
+		// A current measured knee has already been solved with its anatomical
+		// attachment. Foot skating/floor corrections must not move that point.
+		val activeIk = skeleton.ikSolver.enabled && !skeleton.getPauseTracking()
+		val measuredLeftKnee = if (activeIk && skeleton.leftUpperLegTracker?.preserveMeasuredPosition == true) skeleton.computedLeftKneeTracker?.position else null
+		val measuredRightKnee = if (activeIk && skeleton.rightUpperLegTracker?.preserveMeasuredPosition == true) skeleton.computedRightKneeTracker?.position else null
+
 		// update the class with the latest data from the skeleton
 		// if false is returned something indicated that the legs should not
 		// be tweaked
@@ -200,6 +206,10 @@ class LegTweaks(private val skeleton: HumanSkeleton) {
 
 		// calculate the correction for the knees
 		if (initialized) solveLowerBody()
+
+		// Keep corrected history consistent with the actual published knee.
+		measuredLeftKnee?.let { leftKneePosition = it }
+		measuredRightKnee?.let { rightKneePosition = it }
 
 		// populate the corrected data into the current frame
 		bufferHead

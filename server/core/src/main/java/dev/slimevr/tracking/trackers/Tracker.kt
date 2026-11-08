@@ -152,6 +152,15 @@ class Tracker @JvmOverloads constructor(
 
 	var position = Vector3.NULL
 
+	/** Owned solver proxies only: position lever arms stay in the accepted tracker
+	 * frame when a separate anatomical RIGHT mount changes the FK rotation.
+	 * Null preserves every ordinary Tracker's existing position/reset behavior.
+	 */
+	internal var positionAnchorRotation: Quaternion? = null
+
+	/** Current paired measured knee input; owned writeback clears this every frame. */
+	internal var preserveMeasuredPosition: Boolean = false
+
 	/** Optional upstream sample capability. Only the opt-in Monaka adapter reads it. */
 	var sampleModality: dev.monaka.tracking.TrackingModality? = null
 

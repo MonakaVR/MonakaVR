@@ -1690,6 +1690,8 @@ class HumanSkeleton(
 				}
 			}
 
+			constraintInputView?.invoke(rawInputTrackers)?.onReset?.invoke(ConstraintResetKind.FULL, referenceRotation, bodyParts)
+
 			// Tell floorclip to reset its floor level on the next update
 			// of the computed trackers
 			if (!localizer.getEnabled()) {
@@ -1766,6 +1768,7 @@ class HumanSkeleton(
 				tracker.resetsHandler.resetMounting(referenceRotation)
 			}
 		}
+		constraintInputView?.invoke(rawInputTrackers)?.onReset?.invoke(ConstraintResetKind.MOUNTING, referenceRotation, bodyParts)
 		legTweaks.resetBuffer()
 		localizer.reset()
 

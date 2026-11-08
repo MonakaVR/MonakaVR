@@ -2,6 +2,7 @@ package dev.monaka.tracking
 
 import dev.slimevr.config.ResetsConfig
 import dev.slimevr.tracking.processor.skeleton.HumanSkeleton
+import dev.slimevr.tracking.processor.skeleton.ConstraintResetKind
 import dev.slimevr.tracking.processor.skeleton.SkeletonInputView
 import dev.slimevr.tracking.trackers.*
 import io.github.axisangles.ktmath.Quaternion
@@ -18,7 +19,12 @@ class ConstraintIkWriteback(
 	private var managed = emptySet<TrackerPosition>()
 	private val proxies = linkedMapOf<TrackerPosition, Tracker>()
 	private data class QOnlyBinding(val source: TrackerReference, val mode: OutputMode)
-	private data class RetainedQOnly(val binding: QOnlyBinding, val tracker: Tracker)
+	private data class RetainedQOnly(
+		val binding: QOnlyBinding,
+		val tracker: Tracker,
+		var rightMount: Quaternion = Quaternion.IDENTITY,
+		var rawAtCurrentInput: Quaternion? = null,
+	)
 	// Consumer reset interpretation outlives samples, but never a changed body/Q binding.
 	// Dormant objects stay out of inputView and the skeleton's reset target references.
 	private val retainedQOnly = linkedMapOf<TrackerPosition, RetainedQOnly>()
@@ -68,7 +74,48 @@ class ConstraintIkWriteback(
 		// A position-only body constraint must not inject an identity rotation into FK.
 		// Head is also the positional root anchor and handles missing orientation explicitly.
 		val rotations = untouched + proxies.values.filter { it.hasRotation || it.trackerPosition == TrackerPosition.HEAD }
-		return SkeletonInputView(rotations, constraints, untouched.map { it.name }.toSet() + stableNames.values)
+		return SkeletonInputView(rotations, constraints, untouched.map { it.name }.toSet() + stableNames.values, ::captureBodyMountReset)
+	}
+
+
+	private fun calibrationTracker(target: TrackerPosition, name: String): Tracker = Tracker(
+		null, -10000 - target.ordinal, name, trackerPosition = target,
+		hasRotation = true, allowFiltering = false, allowReset = true,
+		allowMounting = true, trackRotDirection = false,
+	).also {
+		it.resetsHandler.mountingOrientation = Quaternion.IDENTITY
+		it.resetsHandler.saveMountingReset = false
+		it.status = TrackerStatus.OK
+		FeedbackExclusion.registerOwnedOutput(it)
+	}
+
+	/** Explicit user reset only. Never derive a mount from an arbitrary mode
+	 * transition, a held/lost sample, an independent Q or the solved skeleton.
+	 */
+	private fun captureBodyMountReset(kind: ConstraintResetKind, reference: Quaternion, bodyParts: List<Int>) {
+		if (closed || skeleton.getPauseTracking()) return
+		for ((target, state) in retainedQOnly) {
+			if (bodyParts.isNotEmpty() && target.bodyPart !in bodyParts) continue
+			val raw = state.rawAtCurrentInput ?: continue
+			val proxy = proxies[target] ?: continue
+			if (!SolverCalibrationTransform.valid(raw)) continue
+			val helper = state.tracker
+			if (proxy !== helper) {
+				helper.resetsHandler.readResetConfig(resetConfig())
+				helper.resetsHandler.saveMountingReset = false
+				helper.setRotation(raw)
+				when (kind) {
+					ConstraintResetKind.FULL -> helper.resetsHandler.resetFull(reference)
+					ConstraintResetKind.MOUNTING -> helper.resetsHandler.resetMounting(reference)
+				}
+			}
+			// An active Q-only helper was already reset by the ordinary loop.
+			val body = helper.resetsHandler.getCorrectionReferenceRotationFrom(raw)
+			val mount = raw.inv() * body
+			if (!SolverCalibrationTransform.valid(mount)) continue
+			state.rightMount = mount.unit()
+			if (proxy !== helper && proxy.hasRotation) proxy.setRotation(raw * state.rightMount)
+		}
 	}
 
 	fun apply(
@@ -107,19 +154,22 @@ class ConstraintIkWriteback(
 		assignment: TrackerBodyAssignments.Snapshot,
 	): Map<TrackerPosition, ApplyResult> {
 		check(!closed)
-		if (skeleton.getPauseTracking()) return constraints.mapValues { ApplyResult.Paused }
+		for (proxy in proxies.values) proxy.preserveMeasuredPosition = false
+		if (skeleton.getPauseTracking()) {
+			for (state in retainedQOnly.values) state.rawAtCurrentInput = null
+			return constraints.mapValues { ApplyResult.Paused }
+		}
 		val results = linkedMapOf<TrackerPosition, ApplyResult>()
 		val ikAssignments = assignment.targets.filterValues { it.useAsIkConstraint }
-		val qOnlyBindings = ikAssignments.mapNotNull { (target, relation) ->
-			val selection = relation.sourceSelection
-			val q = selection?.qSource
-			if (selection != null && selection.sixDofSource == null && q?.mtp != null) {
-				target to QOnlyBinding(q, relation.outputMode)
-			} else null
+		// Retention belongs to the same normalized public Main/body, not whether
+		// this tick/selection supplies position. A distinct fallback never owns it.
+		val publicBindings = ikAssignments.mapNotNull { (target, relation) ->
+			relation.mainTracker.takeIf { it.mtp != null }?.let { target to QOnlyBinding(it, relation.outputMode) }
 		}.toMap()
 		for (target in retainedQOnly.keys.toList()) {
-			if (retainedQOnly.getValue(target).binding != qOnlyBindings[target]) retainedQOnly.remove(target)
+			if (retainedQOnly.getValue(target).binding != publicBindings[target]) retainedQOnly.remove(target)
 		}
+		for (state in retainedQOnly.values) state.rawAtCurrentInput = null
 		val targets = ikAssignments.keys
 		var rebuild = targets != managed || generation != assignment.generation
 		// Sample/history invalidation is handled by the cache. Calibration belongs to
@@ -169,19 +219,29 @@ class ConstraintIkWriteback(
 				if (proxies.remove(target) != null) rebuild = true
 				continue
 			}
-			val qOnlyBinding = qOnlyBindings[target]
-			val resetAware = qOnlyBinding != null
-			var proxy = if (resetAware) retainedQOnly[target]?.tracker else proxies[target]
+			val relation = ikAssignments.getValue(target)
+			val selection = relation.sourceSelection
+			val resetAware = selection != null && selection.sixDofSource == null && selection.qSource?.mtp != null
+			val publicBinding = publicBindings[target]
+			val state = publicBinding?.let { binding ->
+				retainedQOnly.getOrPut(target) { RetainedQOnly(binding, calibrationTracker(target, stableNames.getValue(target))) }
+			}
+			val ownsCurrentRotation = rotation != null && constraint?.rotation?.sourceId == relation.mainTracker.observationId && constraint?.rotation?.quality?.usable == true
+			val declaredSix = selection?.sixDofSource?.mtp != null
+			if (state != null && ownsCurrentRotation && (resetAware || declaredSix || position != null)) {
+				state.rawAtCurrentInput = rotation
+				state.tracker.setRotation(rotation!!)
+			}
+			var proxy = if (resetAware) state?.tracker else proxies[target]
 			if (proxy == null || proxy.name != stableNames[target] || proxy.hasPosition != (position != null) || proxy.hasRotation != (rotation != null) || proxy.allowReset != resetAware) {
 				proxy = Tracker(
 					null, -10000 - target.ordinal, stableNames.getValue(target),
 					trackerPosition = target, hasPosition = position != null, hasRotation = rotation != null,
 					allowFiltering = false, allowReset = resetAware, allowMounting = resetAware, trackRotDirection = false,
 				)
-				if (qOnlyBinding != null) {
-					// Public Q is already normalized; no extra mount before the first user reset.
+				if (resetAware) {
+					// Normally the retained helper already supplies this object.
 					proxy.resetsHandler.mountingOrientation = Quaternion.IDENTITY
-					retainedQOnly[target] = RetainedQOnly(qOnlyBinding, proxy)
 				}
 				// Internal/computed flags would remove this input from the existing IK solver.
 				// Record its exact owner-created object instead of inferring ownership from its name.
@@ -195,8 +255,18 @@ class ConstraintIkWriteback(
 				proxy.resetsHandler.saveMountingReset = false
 			}
 			if (proxies.put(target, proxy) !== proxy) rebuild = true
-			if (rotation != null) proxy.setRotation(rotation)
+			if (rotation != null) {
+				val bodyRotation = if (!resetAware && ownsCurrentRotation && state != null) rotation * state.rightMount else rotation
+				proxy.setRotation(bodyRotation)
+			}
+			// FK's anatomical mount must not rotate the existing position lever arm.
+			proxy.positionAnchorRotation = rotation.takeIf { position != null && !resetAware && state != null && ownsCurrentRotation }
 			if (position != null) proxy.position = position
+			proxy.preserveMeasuredPosition =
+				(target == TrackerPosition.LEFT_UPPER_LEG || target == TrackerPosition.RIGHT_UPPER_LEG) &&
+					skeleton.ikSolver.enabled && !skeleton.getPauseTracking() && publicBinding != null && !resetAware &&
+					reference == SolverPositionReference.TRACKER_ORIGIN && position != null && ownsCurrentRotation &&
+					constraint?.position?.sourceId == relation.mainTracker.observationId && constraint?.position?.quality?.usable == true
 		}
 		if (rebuild) {
 			skeleton.refreshConstraintInputs()
