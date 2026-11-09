@@ -1,5 +1,6 @@
 package dev.monaka.tracking
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import dev.monaka.tracking.mtp.MtpObservationBackend
@@ -20,11 +21,17 @@ class MonakaInputConfigurationApi(
 	private val backend: MtpObservationBackend,
 	private val trackers: () -> Iterable<Tracker>,
 	path: Path,
+	private val trackingOverrideStatus: () -> Map<TrackingOverrideHand, TrackingOverrideSourceStatus> = { emptyMap() },
+	private val trackingOverrideDriverReady: () -> Boolean = { false },
+	private val trackingOverrideRegisteredHands: () -> Set<TrackingOverrideHand> = { emptySet() },
+	private val overrideEditorToken: String? = System.getenv("MONAKA_TRACKING_OVERRIDE_EDITOR_TOKEN"),
 ) {
 	private val path = path.toAbsolutePath().normalize()
 	private val mapper = ObjectMapper()
 	private var expectedFile = readBounded(this.path)
-	private var savedAssignments = MonakaConfiguration.loadBytes(this.path, expectedFile).assignments.snapshot().targets
+	private val initiallySaved = MonakaConfiguration.loadBytes(this.path, expectedFile)
+	private var savedAssignments = initiallySaved.assignments.snapshot().targets
+	private var overrideSelections = configuration.trackingOverride
 	private var restartPending = savedAssignments != configuration.assignments.snapshot().targets
 	private var tokenEpoch = UUID.randomUUID().toString()
 	private fun readbackToken(): String = tokenEpoch +
@@ -44,6 +51,10 @@ class MonakaInputConfigurationApi(
 	private fun checkThread() {
 		if (owner == null) owner = Thread.currentThread()
 		check(owner === Thread.currentThread()) { "Input configuration requires the server thread" }
+	}
+	fun trackingOverrideSelections(): Map<TrackingOverrideHand, TrackingOverrideSelection> {
+		checkThread()
+		return overrideSelections
 	}
 	data class Candidate(
 		val reference: TrackerReference,
@@ -168,7 +179,7 @@ class MonakaInputConfigurationApi(
 		}
 
 		val next = TrackerBodyAssignments().also { it.replaceTargets(edit.assignments) }
-		val candidate = configuration.copy(assignments = next) // All existing configuration validators.
+		val candidate = configuration.copy(assignments = next, trackingOverride = overrideSelections) // All existing configuration validators.
 		commit { stage ->
 			candidate.saveUnmanaged(stage)
 			val generated = mapper.readTree(stage.toFile())
@@ -226,6 +237,32 @@ class MonakaInputConfigurationApi(
 		savedAssignments = nextSaved
 		restartPending = true
 	}
+	private fun saveOverride(root: JsonNode, now: Long): TrackingOverrideHand {
+		require(root["readbackToken"]?.textValue() == readbackToken()) { "Saved configuration changed; reload before editing" }
+		val hand = TrackingOverrideConfigJson.hand(requireNotNull(root["hand"]?.textValue()))
+		val current = overrideSelections[hand] ?: TrackingOverrideSelection()
+		val candidates = snapshot(now).candidates
+		val next = TrackingOverrideConfigJson.readSelection(requireNotNull(root["selection"])) { id ->
+			require(id.isTextual)
+			candidates.singleOrNull { it.reference.mtp != null && it.reference.observationId == id.asText() }?.reference
+				?: current.source?.takeIf { it.observationId == id.asText() }
+				?: error("Override source unavailable; reload the source catalog")
+		}
+		if (next == current) return hand
+		if (next.source != null && (next.source != current.source || (next.enabled && !current.enabled))) {
+			require(candidates.singleOrNull { it.reference == next.source }?.sixDofSelectable == true) {
+				"Override source requires declared position and orientation"
+			}
+		}
+		val selections = overrideSelections + (hand to next)
+		val document = mapper.readTree(expectedFile) as ObjectNode
+		require(document["version"].asInt() in 2..4) { "Migrate legacy configuration before editing tracking overrides" }
+		document.put("version", 4)
+		document.set<JsonNode>("trackingOverride", mapper.valueToTree(TrackingOverrideConfigJson.write(selections)))
+		commit { mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(document) }
+		overrideSelections = Collections.unmodifiableMap(selections)
+		return hand
+	}
 	private fun commit(generate: (Path) -> ByteArray) {
 		require(!Files.isSymbolicLink(path)) { "Configuration aliases require offline review" }
 		val parent = path.parent.toRealPath()
@@ -259,12 +296,14 @@ class MonakaInputConfigurationApi(
 	fun handleJson(raw: String, now: Long): String {
 		checkThread()
 		var id = ""
+		var invalidateReadback = true
 		return try {
 			require(raw.length <= 65536)
 			val root = mapper.readTree(raw)
 			require(root["type"]?.asText() == "monaka_inputs_v1")
 			require(root["id"]?.isTextual == true && root["id"].asText().length in 1..64)
 			id = root["id"].asText()
+			var editedOverride: TrackingOverrideHand? = null
 			if (root["action"]?.asText() == "save") {
 				val current = snapshot(now)
 				val target = TrackerPosition.valueOf(root["body"].asText())
@@ -301,13 +340,34 @@ class MonakaInputConfigurationApi(
 					else -> error("Unknown output mode")
 				}
 				saveMode(TrackerPosition.valueOf(root["body"].asText()), mode, root["generation"].asText().toLong(), root["readbackToken"].asText())
+			} else if (root["action"]?.asText() == "save_override") {
+				val suppliedToken = root["editorToken"]?.textValue()
+				invalidateReadback = overrideEditorToken != null && suppliedToken != null &&
+					MessageDigest.isEqual(overrideEditorToken.toByteArray(), suppliedToken.toByteArray())
+				require(invalidateReadback) { "Tracking override editing requires the local desktop application" }
+				editedOverride = saveOverride(root, now)
 			} else {
 				require(root["action"]?.asText() == "snapshot")
 			}
 			val s = snapshot(now)
+			val statuses = trackingOverrideStatus()
+			val registeredHands = trackingOverrideRegisteredHands()
 			val data = mapOf(
 				"type" to "monaka_inputs_v1", "id" to id, "ok" to true, "generation" to s.generation.toString(),
 				"readbackToken" to readbackToken(), "restartRequired" to restartPending,
+				"trackingOverride" to mapOf(
+					"driverReady" to trackingOverrideDriverReady(),
+					"hands" to TrackingOverrideHand.entries.associate { hand ->
+						val selection = overrideSelections[hand] ?: TrackingOverrideSelection()
+						hand.name.lowercase() to mapOf(
+							"saved" to TrackingOverrideConfigJson.writeSelection(selection) { it.observationId },
+							"sourceStatus" to if (hand == editedOverride) null else statuses[hand]?.name,
+							"devicePath" to hand.devicePath,
+							"targetPath" to hand.targetPath,
+							"registeredDevicePath" to hand.devicePath.takeIf { hand in registeredHands },
+						)
+					},
+				),
 				"backgroundIkAlignmentConfirmed" to (configuration.backgroundIkSharedSpace?.convention == configuration.space.convention),
 				"bodies" to TrackerPosition.values().filter { it.name != "NONE" }.map { it.name },
 				"candidates" to s.candidates.map { x ->
@@ -349,7 +409,7 @@ class MonakaInputConfigurationApi(
 			)
 			mapper.writeValueAsString(data).also { require(it.length <= MAX_BYTES) }
 		} catch (e: Exception) {
-			tokenEpoch = UUID.randomUUID().toString() // A failed/uncertain write requires a fresh review snapshot.
+			if (invalidateReadback) tokenEpoch = UUID.randomUUID().toString() // Failed authorized writes require fresh readback.
 			mapper.writeValueAsString(
 				mapOf(
 					"type" to "monaka_inputs_v1",

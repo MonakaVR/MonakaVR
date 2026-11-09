@@ -206,7 +206,9 @@ test('restart-required snapshot disables editing and saving without losing a dra
   await expect(
     page.getByRole('button', { name: 'Save input choices', exact: true })
   ).toBeDisabled();
-  await expect(page.getByRole('status')).toContainText('Restart required');
+  await expect(
+    page.getByRole('region', { name: 'Q and 6DoF sources' }).getByRole('status')
+  ).toContainText('Restart required');
   expect(fixture.saves).toEqual([]);
 });
 

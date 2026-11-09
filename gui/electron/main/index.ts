@@ -38,6 +38,16 @@ import { options } from './cli';
 import { ServerStatusEvent } from 'electron/preload/interface';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { MenuItem } from 'electron/main';
+import { randomBytes } from 'node:crypto';
+// Electron main's Vite configuration has no renderer alias.
+// eslint-disable-next-line @dword-design/import-alias/prefer-alias
+import { MonakaInputSocket } from '../../src/monaka-input/socket';
+import { requestTrackingOverride } from './tracking-override-ipc';
+import {
+  assertWindowsSteamVRStopped,
+  SteamTrackingOverrides,
+  windowsSteamVRSettingsPath,
+} from './steam-tracking-overrides';
 
 type Stores = Awaited<ReturnType<typeof initStores>>;
 let stores: Stores;
@@ -72,6 +82,39 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 let mainWindow: BrowserWindow | null = null;
+let trackingCore: ReturnType<typeof spawn> | undefined;
+let trackingOverrideBusy = false;
+const trackingEditorToken = randomBytes(32).toString('hex');
+const steamTrackingOverrides = new SteamTrackingOverrides(
+  windowsSteamVRSettingsPath,
+  assertWindowsSteamVRStopped
+);
+handleIpc(IPC_CHANNELS.TRACKING_OVERRIDE, async (event, request) => {
+  const frame = event.senderFrame;
+  const url = frame && new URL(frame.url);
+  const devUrl = process.env.ELECTRON_RENDERER_URL;
+  const trustedUrl = url && (
+    (url.protocol === 'app:' && url.hostname === '.' && url.pathname === '/index.html') ||
+    (devUrl && url.origin === new URL(devUrl).origin && url.pathname === new URL(devUrl).pathname)
+  );
+  if (!trustedUrl || event.sender !== mainWindow?.webContents || frame !== event.sender.mainFrame)
+    throw new Error('Tracking overrides require the local desktop window');
+  if (process.platform !== 'win32' || instance.networkOnly)
+    throw new Error('SteamVR override editing is unavailable in this desktop session');
+  const mutation = request?.action !== 'snapshot';
+  if (mutation && trackingOverrideBusy)
+    throw new Error('A tracking override change is already in progress');
+  if (mutation) trackingOverrideBusy = true;
+  try {
+    return await requestTrackingOverride(request, steamTrackingOverrides, () => {
+      if (!trackingCore?.pid || trackingCore.exitCode !== null || trackingCore.signalCode !== null)
+        throw new Error('The desktop application does not own a running MonakaVR Core');
+      return new MonakaInputSocket('ws://127.0.0.1:' + instance.port);
+    }, trackingEditorToken);
+  } finally {
+    if (mutation) trackingOverrideBusy = false;
+  }
+});
 handleIpc(IPC_CHANNELS.GH_FETCH, async (e, options) => {
   if (options.type === 'fw-releases') {
     return fetch(
@@ -436,6 +479,7 @@ const spawnServer = async () => {
       MONAKA_PROFILE_DIRECTORY: instance.profile,
       MONAKA_NETWORK_ONLY: String(instance.networkOnly),
       MONAKA_WEBSOCKET_PORT: String(instance.port),
+      MONAKA_TRACKING_OVERRIDE_EDITOR_TOKEN: trackingEditorToken,
       ...(platform === 'windows'
         ? {
             APPDATA: instance.profile
@@ -450,6 +494,7 @@ const spawnServer = async () => {
         : {}),
     },
   });
+  trackingCore = serverProcess;
 
   const sendToWindow = (event: ServerStatusEvent) => {
     if (mainWindow && !mainWindow.webContents.isDestroyed()) {

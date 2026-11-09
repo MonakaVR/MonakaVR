@@ -5,6 +5,8 @@ import dev.monaka.tracking.desktop.REVIEWED_HMD_SAMPLE_TRANSPORT_V1
 import dev.monaka.tracking.desktop.RawHmdPoseInputCapability
 import dev.monaka.tracking.desktop.admitRawHmdPoseInput
 import dev.monaka.tracking.desktop.decodeHmdProviderSampleTransport
+import dev.monaka.tracking.TrackingOverrideFrame
+import dev.monaka.tracking.TrackingOverrideHand
 import dev.slimevr.VRServer.Companion.instance
 import dev.slimevr.bridge.BridgeThread
 import dev.slimevr.bridge.ISteamVRBridge
@@ -165,6 +167,14 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 
 	@ThreadSafe
 	private val outputQueue: Queue<ProtobufMessage> = LinkedBlockingQueue()
+	private val trackingOverride = TrackingOverrideTransport(::currentInboundTransportSession, ::sendMessage, ::signalSend)
+
+	fun publishTrackingOverride(frames: Map<TrackingOverrideHand, TrackingOverrideFrame>, capturedAt: Long) =
+		trackingOverride.publish(frames, capturedAt)
+
+	fun trackingOverrideDriverReady() = trackingOverride.ready()
+
+	fun trackingOverrideRegisteredHands() = trackingOverride.registeredHands
 
 	@Synchronize("self")
 	private val remoteTrackersBySerial: MutableMap<String, Tracker> = HashMap()
@@ -219,6 +229,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 			if (!directOutputSupported && isDirectMessage(message!!)) continue
 			if (!sendMessageReal(message)) return
 		}
+		trackingOverride.flush(::sendMessageReal)
 	}
 
 	private fun isDirectMessage(message: ProtobufMessage): Boolean = (message.hasPosition() && directOutputTrackers.any { it.id == message.position.trackerId }) ||
@@ -330,6 +341,7 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 		if (message!!.hasPosition()) {
 			positionReceived(message.position, transportSession, receivedAtSystemNanos)
 		} else if (message.hasUserAction()) {
+			if (trackingOverride.accept(message.userAction, transportSession)) return
 			if (message.userAction.name == HMD_PROVIDER_CAPABILITY) {
 				synchronized(inboundTransportSession) {
 					if (transportSession != null &&

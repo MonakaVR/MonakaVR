@@ -801,6 +801,50 @@ unknown_device-modal-forget = 無視する
 
 # Desktop Bridge controls
 settings-sidebar-monaka-input = MVIP入力
+
+tracking-override-title = トラッキングの置き換え
+tracking-override-help = 左右の手ごとに 6DoF の入力元を選んで保存します。SteamVR を一度起動して置き換え元を登録し、PC で SteamVR を終了してから割当を適用または解除します。
+tracking-override-desktop-required = 置き換えの編集や解除は Windows 版 MonakaVR デスクトップアプリで行ってください。
+tracking-override-left = 左手
+tracking-override-right = 右手
+tracking-override-target = SteamVR の置き換え先
+tracking-override-device-path = 置き換え元のデバイスパス
+tracking-override-enabled = 置き換え元の Pose 出力を有効化
+tracking-override-source = 6DoF の入力元
+tracking-override-source-status = 入力元の状態
+tracking-override-unassigned = 未割当
+tracking-override-status-unknown = 不明
+tracking-override-source-unavailable = 入力元が未接続または利用不可
+tracking-override-capability-unknown = 対応能力は未確認
+tracking-override-capability-unsupported = 位置と姿勢の両方に対応している必要があります
+tracking-override-stale = 追跡ロストまたは Pose の更新停止
+tracking-override-incomplete = 6DoF 追跡が不完全
+tracking-override-space-mismatch = 入力元の座標系と設定済みの座標系が異なります
+tracking-override-full = 6DoF Pose を利用可能
+tracking-override-universe = 入力元の座標系と SteamVR ドライバーの Universe が一致することを確認しました
+tracking-override-unconfirmed-universe = SteamVR の座標系との一致は未確認
+tracking-override-no-grip-offset = グリップオフセット未設定
+tracking-override-use-identity = ゼロのグリップオフセットを指定
+tracking-override-offset-help = 位置はメートル、回転は単位クォータニオンで入力します。ゼロオフセットを選んだ場合も実機で確認してください。
+tracking-override-saved = MonakaVR の保存状態
+tracking-override-on = ON
+tracking-override-off = OFF
+tracking-override-registration-unverified = SteamVR による置き換え元の登録待ち
+tracking-override-driver-connected = 互換ドライバー接続中。この MonakaVR セッションで置き換え元の登録を確認済み
+tracking-override-previously-registered = この MonakaVR セッションで置き換え元の登録を確認済み
+tracking-override-steam-settings = SteamVR の保存状態
+tracking-override-mapped = MonakaVR の割当を保存済み
+tracking-override-unmapped = MonakaVR の割当なし
+tracking-override-conflict = この手に別の割当が競合しています
+tracking-override-active-unverified = SteamVR での反映状態は実行時に確認が必要です
+tracking-override-restart-required = SteamVR の再起動が必要です。起動後に反映状態を確認してください。
+tracking-override-remove-first = Pose 出力を無効にする前に SteamVR の割当を解除してください。
+tracking-override-save = Pose 入力元を保存
+tracking-override-discard = 入力元の編集を破棄
+tracking-override-apply = SteamVR に適用
+tracking-override-remove = SteamVR の割当を解除
+tracking-override-reload = SteamVR の設定を再読込
+tracking-override-recovery-link = トラッキングの置き換え設定を開いて SteamVR の割当を解除
 settings-sidebar-monaka-bridge = Monaka Bridge
 
 ## Monakaのトラッキングモードと入力診断

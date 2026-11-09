@@ -21,6 +21,9 @@ import dev.monaka.tracking.OutputMode
 import dev.monaka.tracking.OutputTransition
 import dev.monaka.tracking.PoseObservation
 import dev.monaka.tracking.ResolvedTrackingPose
+import dev.monaka.tracking.TrackingOverrideFrame
+import dev.monaka.tracking.TrackingOverrideHand
+import dev.monaka.tracking.TrackingOverrideSourceStatus
 import dev.slimevr.tracking.processor.skeleton.HumanSkeleton
 import dev.slimevr.tracking.trackers.Tracker
 import dev.slimevr.tracking.trackers.TrackerPosition
@@ -43,8 +46,10 @@ class MonakaServerIntegration private constructor(
 	private val frames: SameFrameDiagnostics?,
 	private val qjump: QJumpDiagnostics?,
 	private val rawHmdSource: (MonakaResolvedTickSnapshot) -> dev.monaka.tracking.RawHmdPoseInput?,
+	private val publishTrackingOverride: (Map<TrackingOverrideHand, TrackingOverrideFrame>, Long) -> Unit,
 ) : AutoCloseable {
 	private var closed = false
+	private var trackingOverrideStatus: Map<TrackingOverrideHand, TrackingOverrideSourceStatus> = emptyMap()
 	var inputConfiguration: MonakaInputConfigurationApi? = null
 		private set
 	fun inputRequest(raw: String): String {
@@ -91,6 +96,10 @@ class MonakaServerIntegration private constructor(
 				onFailure(receiver.failure!!)
 			}
 			val tick = runtime.tickSnapshot(skeleton.getPauseTracking())
+			val selections = inputConfiguration?.trackingOverrideSelections().orEmpty()
+			val overrides = if (selections.isEmpty()) emptyMap() else runtime.trackingOverrideFrames(tick, selections)
+			trackingOverrideStatus = overrides.mapValues { it.value.status }
+			publishTrackingOverride(overrides, tick.trackerReceiptCutoffSystemNanos)
 			val assignment = tick.assignment
 			check(assignment.targets.filterValues { it.outputMode != OutputMode.IK } == outputAssignments) {
 				"Changing visible output assignment/strategy requires a server restart"
@@ -212,6 +221,11 @@ class MonakaServerIntegration private constructor(
 	override fun close() {
 		if (closed) return
 		closed = true
+		trackingOverrideStatus = emptyMap()
+		publishTrackingOverride(
+			TrackingOverrideHand.entries.associateWith { TrackingOverrideFrame(TrackingOverrideSourceStatus.OFF) },
+			System.nanoTime(),
+		)
 		if (frames != null || qjump != null) skeleton.humanPoseManager.fullResetDiagnostics.observe(null)
 		frames?.close()
 		qjump?.close()
@@ -256,6 +270,9 @@ class MonakaServerIntegration private constructor(
 			frameDiagnostics: () -> SameFrameDiagnostics? = { null },
 			qJumpDiagnostics: () -> QJumpDiagnostics? = { null },
 			rawHmdSource: (MonakaResolvedTickSnapshot, dev.monaka.protocol.v2.CoordinateSpace, Long, Any) -> dev.monaka.tracking.RawHmdPoseInput? = { _, _, _, _ -> null },
+			publishTrackingOverride: (Map<TrackingOverrideHand, TrackingOverrideFrame>, Long) -> Unit = { _, _ -> },
+			trackingOverrideDriverReady: () -> Boolean = { false },
+			trackingOverrideRegisteredHands: () -> Set<TrackingOverrideHand> = { emptySet() },
 		): MonakaServerIntegration? {
 			if (!enabled) return null
 			val config = configuration()
@@ -312,6 +329,7 @@ class MonakaServerIntegration private constructor(
 					frames,
 					qjump,
 					{ tick -> rawHmdSource(tick, config.space, config.positionCorrection?.predictorPolicy?.maxHmdSampleAgeNanos ?: dev.monaka.tracking.RotationCorrectionTuning.normalRuntimeDefaults().maxImuSampleAgeNanos, normalHmdClockDomain) },
+					publishTrackingOverride,
 				).also { integration = it }
 				if (frames != null || qjump != null) skeleton.humanPoseManager.fullResetDiagnostics.observe { state ->
 					runCatching { frames?.recordReset(state) }
@@ -319,7 +337,12 @@ class MonakaServerIntegration private constructor(
 				}
 				if (qjump != null) runtime.mtp.observeAdmitted { key, sample -> runCatching { qjump?.admitted(key, sample, runtime.assignments.snapshot()) } }
 				result.inputConfiguration = configurationPath?.let { path ->
-					MonakaInputConfigurationApi(config, runtime.mtp, trackers, path)
+					MonakaInputConfigurationApi(
+						config, runtime.mtp, trackers, path,
+						trackingOverrideStatus = { result.trackingOverrideStatus },
+						trackingOverrideDriverReady = trackingOverrideDriverReady,
+						trackingOverrideRegisteredHands = trackingOverrideRegisteredHands,
+					)
 				}
 				registerBeforePose(Runnable(result::tick))
 				registerAfterPose?.invoke(Runnable(result::finishPoseUpdate))

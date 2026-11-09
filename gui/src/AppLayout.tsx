@@ -2,7 +2,7 @@ import { useLayoutEffect } from 'react';
 import { useConfig } from './hooks/config';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-export function AppLayout() {
+export function AppLayout({ offlineRecovery = false }: { offlineRecovery?: boolean }) {
   const { config } = useConfig();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -30,13 +30,14 @@ export function AppLayout() {
 
   useLayoutEffect(() => {
     if (
+      !offlineRecovery &&
       config &&
       !config.doneOnboarding &&
       !pathname.startsWith('/onboarding/')
     ) {
       navigate('/onboarding/home');
     }
-  }, [config]);
+  }, [config, offlineRecovery]);
 
   return (
     <>

@@ -37,6 +37,7 @@ class MonakaRuntime(
 		pinnedEligibility = { observation, now, assignment -> assignedImuFreshness?.apply(observation, now, assignment) ?: observation },
 	)
 	val mtp = MtpObservationBackend(inbox, assignments, expectedSpace)
+	private val trackingOverride = TrackingOverrideResolver(mtp, expectedSpace, timeoutNanos)
 	val runner = ObservationBackendRunner(
 		pipeline,
 		listOf(
@@ -113,6 +114,14 @@ class MonakaRuntime(
 			mtp.sourceContexts(),
 			mtp.samples(),
 		)
+	}
+
+	fun trackingOverrideFrames(
+		tick: MonakaResolvedTickSnapshot,
+		selections: Map<TrackingOverrideHand, TrackingOverrideSelection>,
+	): Map<TrackingOverrideHand, TrackingOverrideFrame> {
+		check(!closed && tick === lastCompletedTick)
+		return TrackingOverrideHand.entries.associateWith { trackingOverride.resolve(selections[it], tick.nowNanos, tick.paused) }
 	}
 
 	/** Wrap the already-selected components. Fresh Main metadata is diagnostic only. */

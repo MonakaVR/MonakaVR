@@ -31,4 +31,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     apply: () => ipcRenderer.invoke('stage15:bridge'),
     cancel: () => ipcRenderer.invoke('stage15:bridge'),
   },
+  ...(process.env.STAGE15_OVERRIDE_TEST === '1'
+    ? { trackingOverride: (request) => ipcRenderer.invoke('stage15:override', request) }
+    : {}),
 });

@@ -4,6 +4,7 @@ import {
   SaveDialogOptions,
   SaveDialogReturnValue,
 } from 'electron';
+import type { OverrideReply, OverrideRequest } from '../tracking-override-types';
 
 export type ServerStatusEvent = {
   type: 'stdout' | 'stderr' | 'error' | 'terminated' | 'other';
@@ -60,6 +61,7 @@ export interface IElectronAPI {
   setPresence: (options: DiscordPresence) => void;
   getInstallDir: () => Promise<string>;
   isSteam: () => Promise<boolean>;
+  trackingOverride?: (request: OverrideRequest) => Promise<OverrideReply>;
 }
 
 declare global {

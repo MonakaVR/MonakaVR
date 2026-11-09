@@ -1,3 +1,5 @@
+import type { OverrideOutputSnapshot } from '../../electron/tracking-override-types.js';
+
 export interface InputCandidate {
   id: string;
   publisher: string | null;
@@ -33,6 +35,8 @@ export interface InputSnapshot {
   bodies: string[];
   candidates: InputCandidate[];
   assignments: InputAssignment[];
+  readbackToken?: string;
+  trackingOverride?: OverrideOutputSnapshot;
 }
 export interface InputApi {
   request(fields: Record<string, unknown>): Promise<InputSnapshot>;

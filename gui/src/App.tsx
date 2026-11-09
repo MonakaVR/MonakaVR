@@ -1,5 +1,11 @@
 import { createContext, useEffect, useState } from 'react';
-import { HashRouter as Router, Outlet, Route, Routes } from 'react-router-dom';
+import {
+  HashRouter as Router,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom';
 import { Home } from './components/home/Home';
 import { MainLayout } from './components/MainLayout';
 import { AppContextProvider } from './components/providers/AppContext';
@@ -69,7 +75,18 @@ export const SLIMEVR_DISCORD = 'https://discord.gg/slimevr';
 
 const SentryRoutes = withSentryReactRouterV6Routing(Routes);
 
-function Layout() {
+function ServerLayout({ connected }: { connected: boolean }) {
+  const { pathname } = useLocation();
+  const recoveryPage =
+    pathname === '/settings/monaka-input' && window.electronAPI?.trackingOverride;
+  return connected || recoveryPage ? (
+    <Layout offlineRecovery={!connected} />
+  ) : (
+    <ConnectionLost />
+  );
+}
+
+function Layout({ offlineRecovery }: { offlineRecovery: boolean }) {
   const { isMobile } = useBreakpoint('mobile');
   useDiscordPresence();
 
@@ -80,7 +97,7 @@ function Layout() {
       <UnknownDeviceModal />
       <UdevRulesModal />
       <SentryRoutes>
-        <Route element={<AppLayout />}>
+        <Route element={<AppLayout offlineRecovery={offlineRecovery} />}>
           <Route
             path="/"
             element={
@@ -314,8 +331,7 @@ export default function App() {
                           <VersionContext.Provider value={updateFound}>
                             <div className="h-full w-full text-standard bg-background-80 text-background-10">
                               <Preload />
-                              {!websocketAPI.isConnected && <ConnectionLost />}
-                              {websocketAPI.isConnected && <Layout />}
+                              <ServerLayout connected={websocketAPI.isConnected} />
                             </div>
                           </VersionContext.Provider>
                         </TrackingChecklistProvider>

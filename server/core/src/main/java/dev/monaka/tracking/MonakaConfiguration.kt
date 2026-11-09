@@ -21,6 +21,7 @@ data class MonakaConfiguration(
 	val continuityTuning: ContinuityTuning = ContinuityTuning(),
 	val rotationCorrection: RotationCorrectionConfig? = null,
 	val positionCorrection: PositionCorrectionConfig? = null,
+	val trackingOverride: Map<TrackingOverrideHand, TrackingOverrideSelection> = emptyMap(),
 ) {
 	// A loaded writer must not overwrite a newer API transaction with its old runtime state.
 	private var loadedPath: Path? = null
@@ -105,7 +106,7 @@ data class MonakaConfiguration(
 			mapOf("kind" to "slime", "name" to ref.observationId.removePrefix("slime:"))
 		}
 		val document = mapOf(
-			"version" to (if (assignmentSnapshot.targets.values.any { it.sourceSelection != null }) 4 else 3),
+			"version" to (if (trackingOverride.isNotEmpty() || assignmentSnapshot.targets.values.any { it.sourceSelection != null }) 4 else 3),
 			"port" to port,
 			"timeout_ns" to timeoutNanos.toString(),
 			"space" to mapOf("id" to space.id, "revision" to space.revision, "convention" to space.convention),
@@ -172,7 +173,8 @@ data class MonakaConfiguration(
 					)
 				} ?: emptyMap()
 				) +
-			(positionCorrection?.let { mapOf("positionCorrection" to PositionCorrectionConfigJson.write(it)) } ?: emptyMap())
+			(positionCorrection?.let { mapOf("positionCorrection" to PositionCorrectionConfigJson.write(it)) } ?: emptyMap()) +
+			(if (trackingOverride.isNotEmpty()) mapOf("trackingOverride" to TrackingOverrideConfigJson.write(trackingOverride)) else emptyMap())
 		val absolute = path.toAbsolutePath()
 		Files.createDirectories(absolute.parent)
 		if (assignmentSnapshot.targets.values.any { it.sourceSelection != null } && Files.exists(absolute)) {
@@ -223,6 +225,7 @@ data class MonakaConfiguration(
 			val version = root["version"]
 			require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 1..4)
 			require(version.asInt() >= 3 || !root.has("positionCorrection")) { "Position correction requires schema v3+" }
+			require(version.asInt() == 4 || !root.has("trackingOverride")) { "Tracking override requires schema v4" }
 			val space = requireNotNull(root["space"])
 			val revision = space["revision"]
 			require(revision != null && revision.isIntegralNumber && revision.canConvertToLong())
@@ -349,7 +352,8 @@ data class MonakaConfiguration(
 				}
 			}
 			val positionCorrection = root["positionCorrection"]?.let(PositionCorrectionConfigJson::read)
-			return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction, positionCorrection).also {
+			val trackingOverride = root["trackingOverride"]?.let(TrackingOverrideConfigJson::read).orEmpty()
+			return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction, positionCorrection, trackingOverride).also {
 				it.loadedPath = path.toAbsolutePath().normalize()
 				it.loadedBytes = bytes
 			}

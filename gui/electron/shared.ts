@@ -5,6 +5,7 @@ import {
   SaveDialogReturnValue,
 } from 'electron';
 import { DiscordPresence, GHGet, GHReturn, OSStats } from './preload/interface';
+import type { OverrideReply, OverrideRequest } from './tracking-override-types';
 
 export const IPC_CHANNELS = {
   SERVER_STATUS: 'server-status',
@@ -21,6 +22,7 @@ export const IPC_CHANNELS = {
   GH_FETCH: 'gh-fetch',
   DISCORD_PRESENCE: 'discord-presence',
   IS_STEAM: 'is-steam',
+  TRACKING_OVERRIDE: 'tracking-override',
 } as const;
 
 export interface IpcInvokeMap {
@@ -50,4 +52,5 @@ export interface IpcInvokeMap {
   ) => Promise<GHReturn[T['type']]>;
   [IPC_CHANNELS.DISCORD_PRESENCE]: (options: DiscordPresence) => void;
   [IPC_CHANNELS.IS_STEAM]: () => boolean;
+  [IPC_CHANNELS.TRACKING_OVERRIDE]: (request: OverrideRequest) => Promise<OverrideReply>;
 }

@@ -220,6 +220,7 @@ fun main(args: Array<String>) {
 		} else {
 			null
 		}
+		val trackingOverrideBridge = vrServer.getVRBridge { it is SteamVRBridge && it.getBridgeConfigKey() == "steamvr" } as? SteamVRBridge
 		val mtpIntegration = try {
 			MonakaServerIntegration.startIfEnabled(
 				enabled = mtpEnabled,
@@ -249,6 +250,9 @@ fun main(args: Array<String>) {
 						requireNotNull(bridge) { "Direct output requires the primary SteamVR bridge" }.configureDirectOutputs(trackers)
 					}
 				},
+				publishTrackingOverride = { frames, capturedAt -> trackingOverrideBridge?.publishTrackingOverride(frames, capturedAt) },
+				trackingOverrideDriverReady = { trackingOverrideBridge?.trackingOverrideDriverReady() == true },
+				trackingOverrideRegisteredHands = { trackingOverrideBridge?.trackingOverrideRegisteredHands().orEmpty() },
 				onFailure = { LogManager.severe("Monaka input failure; affected constraints invalidated", it) },
 			)
 		} catch (e: Exception) {

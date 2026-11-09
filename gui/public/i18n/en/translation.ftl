@@ -1715,6 +1715,50 @@ toolbar-unassigned_trackers = {$count} trackers unassigned
 
 # Desktop Bridge controls
 settings-sidebar-monaka-input = MVIP inputs
+
+tracking-override-title = Tracking Override
+tracking-override-help = Choose and save a 6DoF source for each hand. Start SteamVR once to register the source device. Close SteamVR on the PC to apply or remove its saved mapping.
+tracking-override-desktop-required = Use the MonakaVR Windows desktop app to edit or remove tracking overrides.
+tracking-override-left = Left hand
+tracking-override-right = Right hand
+tracking-override-target = SteamVR target
+tracking-override-device-path = Override device path
+tracking-override-enabled = Enable pose source
+tracking-override-source = 6DoF Source
+tracking-override-source-status = Source status
+tracking-override-unassigned = Unassigned
+tracking-override-status-unknown = Unknown
+tracking-override-source-unavailable = Source disconnected or unavailable
+tracking-override-capability-unknown = Capabilities unconfirmed
+tracking-override-capability-unsupported = Position and orientation required
+tracking-override-stale = Tracking lost or stale
+tracking-override-incomplete = Incomplete 6DoF tracking
+tracking-override-space-mismatch = Source world differs from the configured world
+tracking-override-full = Full 6DoF pose available
+tracking-override-universe = I verified the source world aligns with the SteamVR driver universe
+tracking-override-unconfirmed-universe = SteamVR world alignment unconfirmed
+tracking-override-no-grip-offset = Grip offset unset
+tracking-override-use-identity = Set identity grip offset
+tracking-override-offset-help = Enter position in metres and rotation as a unit quaternion. Identity represents zero offset and requires physical verification.
+tracking-override-saved = Saved MonakaVR source
+tracking-override-on = ON
+tracking-override-off = OFF
+tracking-override-registration-unverified = Waiting for SteamVR to register the source device
+tracking-override-driver-connected = Compatible driver connected. Source device registration confirmed in this MonakaVR session.
+tracking-override-previously-registered = Source device registration was confirmed earlier in this MonakaVR session
+tracking-override-steam-settings = Saved SteamVR mapping
+tracking-override-mapped = MonakaVR mapping saved
+tracking-override-unmapped = No MonakaVR mapping
+tracking-override-conflict = Another override conflicts with this hand
+tracking-override-active-unverified = Active SteamVR mapping requires runtime verification
+tracking-override-restart-required = SteamVR restart required. Verify the active mapping after SteamVR starts.
+tracking-override-remove-first = Remove the saved SteamVR mapping before turning off its pose source.
+tracking-override-save = Save pose source
+tracking-override-discard = Discard source edits
+tracking-override-apply = Apply to SteamVR
+tracking-override-remove = Remove SteamVR mapping
+tracking-override-reload = Reload SteamVR settings
+tracking-override-recovery-link = Open Tracking Override settings to remove a SteamVR mapping
 settings-sidebar-monaka-bridge = Monaka Bridge
 
 ## Monaka tracking modes and input diagnostics

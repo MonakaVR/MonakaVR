@@ -59,6 +59,8 @@ def main():
     for module in ("libraries/openvr", "libraries/linalg"):
         tracked_copy(source / module, output / module)
     shutil.copy2(ROOT / "native/direct-driver/MonakaDirectPose.hpp", output / "src/MonakaDirectPose.hpp")
+    shutil.copy2(ROOT / "native/direct-driver/MonakaTrackingOverrideDevice.hpp", output / "src/MonakaTrackingOverrideDevice.hpp")
+    shutil.copy2(ROOT / "native/direct-driver/tracking_override_test.cpp", output / "tracking_override_test.cpp")
     shutil.copy2(ROOT / "native/direct-driver/direct_pose_test.cpp", output / "direct_pose_test.cpp")
     for name in ("MonakaHmdFrameProbe.hpp", "MonakaHmdFrameProbeDriver.hpp"):
         shutil.copy2(ROOT / "native/direct-driver" / name, output / "src" / name)
@@ -85,8 +87,9 @@ def main():
             '    switch (status.status()) {')
     driver = output / "src/VRDriver.cpp"
     driver_header = output / "src/VRDriver.hpp"
+    replace(driver, '#include "VRDriver.hpp"', '#include "VRDriver.hpp"\n#include <charconv>')
     replace(driver_header, '#include "Logger.hpp"',
-            '#include "Logger.hpp"\n#include "MonakaHmdFrameProbeDriver.hpp"\n#include "MonakaRawHmdProviderDriver.hpp"\n#include "MonakaHmdProviderTransport.hpp"')
+            '#include "Logger.hpp"\n#include "MonakaHmdFrameProbeDriver.hpp"\n#include "MonakaRawHmdProviderDriver.hpp"\n#include "MonakaHmdProviderTransport.hpp"\n#include "MonakaTrackingOverrideDevice.hpp"')
     replace(driver_header, '    std::optional<std::pair<uint64_t, UniverseTranslation>> current_universe_ = std::nullopt;',
             '    std::optional<std::pair<uint64_t, UniverseTranslation>> current_universe_ = std::nullopt;\n'
             '    // Created before worker startup and never reassigned during driver lifetime. Default OFF.\n'
@@ -95,7 +98,10 @@ def main():
             'private:\n'
             '    // Outlives worker/bridge members and their synchronous lifecycle callbacks.\n'
             '    monaka::RawHmdProviderDriver hmd_provider_;\n'
-            '    monaka::HmdProviderTransport hmd_provider_transport_;\n')
+            '    monaka::HmdProviderTransport hmd_provider_transport_;\n'
+            '    std::atomic_uint64_t tracking_override_epoch_{1};\n'
+            '    uint64_t tracking_override_negotiated_ = 0;\n'
+            '    std::string tracking_override_token_;\n')
     # Generated overlay only: synchronous notifications, no changes to transport bytes/buffers.
     # Retirement cannot miss a disconnect/reconnect occurring between pose-thread polls.
     bridge_header = output / "src/bridge/BridgeClient.hpp"
@@ -115,7 +121,7 @@ def main():
             '    if (provider_retire_) provider_retire_();\n    connected_ = false;')
     replace(driver, '    bridge_->Start();',
             '    bridge_->SetProviderLifecycleCallbacks(\n'
-            '        [this] { hmd_provider_transport_.Reset(); hmd_provider_.Reestablish(); }, [this] { hmd_provider_transport_.Reset(); hmd_provider_.Retire(); });\n'
+            '        [this] { hmd_provider_transport_.Reset(); hmd_provider_.Reestablish(); }, [this] { hmd_provider_transport_.Reset(); hmd_provider_.Retire(); ++tracking_override_epoch_; });\n'
             '    bridge_->Start();')
     replace(driver, '    exiting_.store(true);', '    hmd_provider_transport_.Reset();\n    hmd_provider_.Retire();\n    exiting_.store(true);')
     replace(driver, '        vr::PropertyContainerHandle_t hmd_prop_container = vr::VRProperties()->TrackedDeviceToPropertyContainer(vr::k_unTrackedDeviceIndex_Hmd);',
@@ -228,12 +234,78 @@ def main():
             '        *reply.mutable_user_action() = message.user_action();\n'
             '        reply.mutable_user_action()->set_name("monaka-direct-output-v1");\n'
             '        bridge_->SendBridgeMessage(reply);\n'
+            '    } else if (message.has_user_action() && message.user_action().name() == std::string(monaka::OverrideCapability) + "?") {\n'
+            '        const auto& arguments = message.user_action().action_arguments();\n'
+            '        auto token = arguments.find("connection");\n'
+            '        if (token == arguments.end() || token->second.empty()) return;\n'
+            '        tracking_override_token_ = token->second;\n'
+            '        tracking_override_negotiated_ = tracking_override_epoch_.load();\n'
+            '        messages::ProtobufMessage reply;\n'
+            '        auto* action = reply.mutable_user_action();\n'
+            '        action->set_name(monaka::OverrideCapability);\n'
+            '        (*action->mutable_action_arguments())["connection"] = tracking_override_token_;\n'
+            '        bridge_->SendBridgeMessage(reply);\n'
+            '    } else if (message.has_user_action() && message.user_action().name() == std::string(monaka::OverrideActivated) + "?") {\n'
+            '        if (tracking_override_negotiated_ != tracking_override_epoch_.load()) return;\n'
+            '        const auto& arguments = message.user_action().action_arguments();\n'
+            '        auto token = arguments.find("connection");\n'
+            '        auto serial = arguments.find("serial");\n'
+            '        if (token == arguments.end() || token->second != tracking_override_token_ ||\n'
+            '            serial == arguments.end() || !monaka::OverrideId(serial->second)) return;\n'
+            '        auto device = devices_by_serial_.find(serial->second);\n'
+            '        if (device == devices_by_serial_.end()) return;\n'
+            '        const auto index = device->second->GetDeviceIndex();\n'
+            '        if (index == vr::k_unTrackedDeviceIndexInvalid) return;\n'
+            '        auto* properties = vr::VRProperties();\n'
+            '        const auto container = properties->TrackedDeviceToPropertyContainer(index);\n'
+            '        if (properties->GetStringProperty(container, vr::Prop_SerialNumber_String) != serial->second ||\n'
+            '            properties->GetStringProperty(container, vr::Prop_TrackingSystemName_String) != monaka::OverrideDriverName) return;\n'
+            '        messages::ProtobufMessage reply;\n'
+            '        auto* action = reply.mutable_user_action();\n'
+            '        action->set_name(monaka::OverrideActivated);\n'
+            '        (*action->mutable_action_arguments())["connection"] = tracking_override_token_;\n'
+            '        (*action->mutable_action_arguments())["driver"] = monaka::OverrideDriverName;\n'
+            '        (*action->mutable_action_arguments())["serial"] = serial->second;\n'
+            '        bridge_->SendBridgeMessage(reply);\n'
+            '    } else if (message.has_user_action() && message.user_action().name() == std::string(monaka::OverrideLease) + "?") {\n'
+            '        if (tracking_override_negotiated_ != tracking_override_epoch_.load()) return;\n'
+            '        const auto& arguments = message.user_action().action_arguments();\n'
+            '        auto token = arguments.find("connection");\n'
+            '        auto serial = arguments.find("serial");\n'
+            '        auto deadline = arguments.find("deadline");\n'
+            '        if (token == arguments.end() || token->second != tracking_override_token_ ||\n'
+            '            serial == arguments.end() || !monaka::OverrideId(serial->second) || deadline == arguments.end()) return;\n'
+            '        auto device = devices_by_serial_.find(serial->second);\n'
+            '        if (device == devices_by_serial_.end()) return;\n'
+            '        int64_t parsed = 0;\n'
+            '        const auto* end = deadline->second.data() + deadline->second.size();\n'
+            '        auto [cursor, error] = std::from_chars(deadline->second.data(), end, parsed);\n'
+            '        if (error != std::errc{} || cursor != end) parsed = 0;\n'
+            '        static_cast<monaka::TrackingOverrideDevice&>(*device->second).OfferLease(parsed, tracking_override_negotiated_);\n'
             '    } else if (message.has_tracker_added()) {')
+    replace(driver, '        messages::TrackerAdded ta = message.tracker_added();',
+            '        messages::TrackerAdded ta = message.tracker_added();\n'
+            '        if (const auto id = monaka::OverrideId(ta.tracker_serial()); id != 0) {\n'
+            '            if (tracking_override_negotiated_ == tracking_override_epoch_.load() &&\n'
+            '                ta.tracker_id() == id && ta.tracker_role() == static_cast<int>(TrackerRole::NONE)) {\n'
+            '                AddDevice(std::make_shared<monaka::TrackingOverrideDevice>(ta.tracker_serial(), tracking_override_epoch_));\n'
+            '            }\n'
+            '            return;\n'
+            '        }\n'
+            '        if (ta.tracker_id() == -1 || ta.tracker_id() == -2) return;')
+    replace(driver, '        messages::Position pos = message.position();',
+            '        messages::Position pos = message.position();\n'
+            '        if ((pos.tracker_id() == -1 || pos.tracker_id() == -2) &&\n'
+            '            tracking_override_negotiated_ != tracking_override_epoch_.load()) return;')
     with (output / "CMakeLists.txt").open("a", encoding="utf-8") as f:
         f.write('\n# Monaka Direct output contract, software-only; no runtime installation.\n'
                 'enable_testing()\nadd_executable(monaka_direct_pose_test direct_pose_test.cpp)\n'
                 'target_link_libraries(monaka_direct_pose_test PRIVATE SlimeVR-OpenVR-Driver_static)\n'
                 'add_test(NAME monaka_direct_pose COMMAND monaka_direct_pose_test)\n')
+        f.write('\nadd_executable(monaka_tracking_override_test tracking_override_test.cpp)\n'
+                'target_link_libraries(monaka_tracking_override_test PRIVATE SlimeVR-OpenVR-Driver_static)\n'
+                'set_target_properties(monaka_tracking_override_test PROPERTIES CXX_STANDARD 20)\n'
+                'add_test(NAME monaka_tracking_override COMMAND monaka_tracking_override_test)\n')
         f.write('\n# Driver-local observations only; never a trusted frame epoch.\n'
                 'add_executable(monaka_hmd_frame_probe_test frame_probe_test.cpp)\n'
                 'target_include_directories(monaka_hmd_frame_probe_test PRIVATE ${DEPS_INCLUDES})\n'

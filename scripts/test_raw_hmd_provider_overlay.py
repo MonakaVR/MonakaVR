@@ -24,7 +24,7 @@ def verify_provider(source, output, driver):
     # No edits to query/send expressions; remove only these reviewed lifecycle additions.
     for addition in (
         '    bridge_->SetProviderLifecycleCallbacks(\n'
-        '        [this] { hmd_provider_transport_.Reset(); hmd_provider_.Reestablish(); }, [this] { hmd_provider_transport_.Reset(); hmd_provider_.Retire(); });\n',
+        '        [this] { hmd_provider_transport_.Reset(); hmd_provider_.Reestablish(); }, [this] { hmd_provider_transport_.Reset(); hmd_provider_.Retire(); ++tracking_override_epoch_; });\n',
         '    hmd_provider_transport_.Reset();\n',
         '    hmd_provider_.Retire();\n',
         '        const auto hmd_provider_session = hmd_provider_.BeginSample();\n',

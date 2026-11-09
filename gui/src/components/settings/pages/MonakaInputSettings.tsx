@@ -10,6 +10,7 @@ import {
   selectedSourceDetails,
 } from '@/monaka-input/source-label';
 import { InputSourceDetails } from '@/components/commons/InputSourceDetails';
+import { TrackingOverridePanel } from './TrackingOverridePanel';
 
 export function MonakaInputPanel({
   model,
@@ -194,5 +195,10 @@ export function MonakaInputSettings() {
       api.close();
     };
   }, [api, model]);
-  return <MonakaInputPanel model={model} />;
+  return (
+    <div className="space-y-4">
+      <MonakaInputPanel model={model} />
+      <TrackingOverridePanel model={model} />
+    </div>
+  );
 }
