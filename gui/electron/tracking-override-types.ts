@@ -15,7 +15,6 @@ export type GripOffset = {
 
 export type OverrideSelection = {
   enabled: boolean;
-  source: string | null;
   gripOffset: GripOffset | null;
   sameUniverseConfirmed: boolean;
 };
@@ -39,6 +38,9 @@ export type OverrideOutputSnapshot = {
     OverrideHand,
     {
       saved: OverrideSelection;
+      source: string | null;
+      canEnable: boolean;
+      calibrationCurrent: boolean;
       sourceStatus: OverrideSourceStatus | null;
       devicePath: string;
       targetPath: string;
@@ -59,4 +61,4 @@ export type OverrideRequest =
 
 export type OverrideReply =
   | { type: 'steam'; settings: SteamOverrideSnapshot }
-  | { type: 'core' };
+  | { type: 'core'; settings?: SteamOverrideSnapshot; error?: string };

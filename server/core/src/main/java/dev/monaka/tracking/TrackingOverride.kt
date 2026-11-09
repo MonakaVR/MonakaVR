@@ -6,22 +6,50 @@ import dev.monaka.tracking.mtp.MtpPoseAdapter
 import dev.slimevr.tracking.trackers.TrackerPosition
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
+import java.security.MessageDigest
 import kotlin.math.abs
 import kotlin.math.sqrt
 
-enum class TrackingOverrideHand(val serial: String, val targetPath: String) {
-	LEFT("monaka-override-v1-left", "/user/hand/left"),
-	RIGHT("monaka-override-v1-right", "/user/hand/right"),
+enum class TrackingOverrideHand(val body: TrackerPosition, val serial: String, val targetPath: String) {
+	LEFT(TrackerPosition.LEFT_HAND, "monaka-override-v1-left", "/user/hand/left"),
+	RIGHT(TrackerPosition.RIGHT_HAND, "monaka-override-v1-right", "/user/hand/right"),
 	;
 	val devicePath: String get() = "/devices/slimevr/$serial"
 }
 
 data class TrackingOverrideSelection(
 	val enabled: Boolean = false,
-	val source: TrackerReference? = null,
 	val gripOffset: TrackingOverrideGripOffset? = null,
-	val sameUniverseConfirmed: Boolean = false,
-)
+	val confirmedAssignment: String? = null,
+) {
+	init {
+		require(confirmedAssignment == null || (gripOffset != null && confirmedAssignment.matches(Regex("[0-9a-f]{64}"))))
+	}
+
+	internal fun calibrationCurrent(hand: TrackingOverrideHand, source: TrackerReference?, space: CoordinateSpace): Boolean =
+		confirmedAssignment != null && source?.mtp != null && confirmedAssignment == hand.assignmentFingerprint(source, space)
+
+	companion object {
+		fun confirmed(
+			enabled: Boolean,
+			hand: TrackingOverrideHand,
+			source: TrackerReference,
+			space: CoordinateSpace,
+			gripOffset: TrackingOverrideGripOffset,
+		) = TrackingOverrideSelection(enabled, gripOffset, hand.assignmentFingerprint(source, space))
+	}
+}
+
+/** An explicit cleared 6DoF field never inherits the Q-only Main or fallback. */
+internal fun MainTrackerAssignment.configuredSixDofSource(): TrackerReference? =
+	if (sourceSelection == null) mainTracker else sourceSelection.sixDofSource
+
+private fun TrackingOverrideHand.assignmentFingerprint(source: TrackerReference, space: CoordinateSpace): String {
+	require(source.mtp != null)
+	val fields = listOf(serial, source.observationId, space.id, space.convention, space.revision.toString())
+	val canonical = fields.joinToString("") { "${it.length}:$it" }
+	return MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8)).toHexString()
+}
 
 /** Tracker-local grip reference transform. Identity is an explicit choice. */
 data class TrackingOverrideGripOffset(
@@ -39,7 +67,11 @@ enum class TrackingOverrideSourceStatus {
 }
 
 /** An independent hand output. No body role, fallback, or IK output participates. */
-data class TrackingOverrideFrame(val status: TrackingOverrideSourceStatus, val pose: TrackingOverridePose? = null)
+data class TrackingOverrideFrame(
+	val status: TrackingOverrideSourceStatus,
+	val pose: TrackingOverridePose? = null,
+	val source: TrackerReference? = null,
+)
 
 data class TrackingOverridePose(val position: Vector3, val rotation: Quaternion, val remainingFreshNanos: Long)
 
@@ -49,36 +81,54 @@ internal class TrackingOverrideResolver(
 	private val timeoutNanos: Long,
 ) {
 	private val adapter = MtpPoseAdapter()
+	private val assignmentFingerprints = mutableMapOf<TrackingOverrideHand, Pair<TrackerReference, String>>()
 
-	fun resolve(selection: TrackingOverrideSelection?, nowNanos: Long, paused: Boolean): TrackingOverrideFrame {
-		if (selection?.enabled != true) return TrackingOverrideFrame(TrackingOverrideSourceStatus.OFF)
-		val source = selection.source ?: return TrackingOverrideFrame(TrackingOverrideSourceStatus.UNASSIGNED)
-		val key = source.mtp ?: return TrackingOverrideFrame(TrackingOverrideSourceStatus.CAPABILITY_UNSUPPORTED)
-		val offset = selection.gripOffset ?: return TrackingOverrideFrame(TrackingOverrideSourceStatus.NO_GRIP_OFFSET)
-		if (!selection.sameUniverseConfirmed) return TrackingOverrideFrame(TrackingOverrideSourceStatus.UNCONFIRMED_UNIVERSE)
+	private fun fingerprint(hand: TrackingOverrideHand, source: TrackerReference): String {
+		val current = assignmentFingerprints[hand]
+		if (current?.first == source) return current.second
+		val next = hand.assignmentFingerprint(source, expectedSpace)
+		assignmentFingerprints[hand] = source to next
+		return next
+	}
+
+	fun resolve(
+		hand: TrackingOverrideHand,
+		selection: TrackingOverrideSelection?,
+		source: TrackerReference?,
+		nowNanos: Long,
+		paused: Boolean,
+	): TrackingOverrideFrame {
+		fun unavailable(status: TrackingOverrideSourceStatus) = TrackingOverrideFrame(status, source = source)
+		if (selection?.enabled != true) return unavailable(TrackingOverrideSourceStatus.OFF)
+		if (source == null) return unavailable(TrackingOverrideSourceStatus.UNASSIGNED)
+		val key = source.mtp ?: return unavailable(TrackingOverrideSourceStatus.CAPABILITY_UNSUPPORTED)
+		val offset = selection.gripOffset ?: return unavailable(TrackingOverrideSourceStatus.NO_GRIP_OFFSET)
+		if (selection.confirmedAssignment == null || selection.confirmedAssignment != fingerprint(hand, source)) {
+			return unavailable(TrackingOverrideSourceStatus.UNCONFIRMED_UNIVERSE)
+		}
 		val declared = backend.declaredCapabilitiesFor(key)
-			?: return TrackingOverrideFrame(TrackingOverrideSourceStatus.CAPABILITY_UNKNOWN)
-		if (!declared.supportsSixDof) return TrackingOverrideFrame(TrackingOverrideSourceStatus.CAPABILITY_UNSUPPORTED)
+			?: return unavailable(TrackingOverrideSourceStatus.CAPABILITY_UNKNOWN)
+		if (!declared.supportsSixDof) return unavailable(TrackingOverrideSourceStatus.CAPABILITY_UNSUPPORTED)
 		val sample = backend.sampleFor(key)
-		if (paused || sample == null) return TrackingOverrideFrame(TrackingOverrideSourceStatus.SOURCE_UNAVAILABLE)
-		if (sample.pose.coordinate_space != expectedSpace) return TrackingOverrideFrame(TrackingOverrideSourceStatus.SPACE_MISMATCH)
+		if (paused || sample == null) return unavailable(TrackingOverrideSourceStatus.SOURCE_UNAVAILABLE)
+		if (sample.pose.coordinate_space != expectedSpace) return unavailable(TrackingOverrideSourceStatus.SPACE_MISMATCH)
 		val age = nowNanos - sample.sampleTime
-		if (age < 0 || age >= timeoutNanos) return TrackingOverrideFrame(TrackingOverrideSourceStatus.STALE)
-		if (sample.pose.modality != "full") return TrackingOverrideFrame(TrackingOverrideSourceStatus.INCOMPLETE)
+		if (age < 0 || age >= timeoutNanos) return unavailable(TrackingOverrideSourceStatus.STALE)
+		if (sample.pose.modality != "full") return unavailable(TrackingOverrideSourceStatus.INCOMPLETE)
 
 		// The existing admission adapter owns component validity and Float conversion.
 		// Its observation label has no relationship to the dedicated wire device.
-		val adapted = runCatching { adapter.adapt(sample.pose, TrackerPosition.HEAD, sample.sampleTime) }.getOrNull()
+		val adapted = runCatching { adapter.adapt(sample.pose, hand.body, sample.sampleTime) }.getOrNull()
 		val p = adapted?.position
 		val q = adapted?.rotation
-		if (p == null || q == null || !q.isUnitRotation()) return TrackingOverrideFrame(TrackingOverrideSourceStatus.INCOMPLETE)
+		if (p == null || q == null || !q.isUnitRotation()) return unavailable(TrackingOverrideSourceStatus.INCOMPLETE)
 		// The wire permits a small unit-norm tolerance. After validation, use
 		// the same rotations at unit scale for the rigid transform.
 		val sourceRotation = q.unit()
 		val position = p + sourceRotation.sandwich(offset.position)
 		val rotation = (sourceRotation * offset.rotation.unit()).unit()
-		if (!position.isFinite() || !rotation.isUnitRotation()) return TrackingOverrideFrame(TrackingOverrideSourceStatus.INCOMPLETE)
-		return TrackingOverrideFrame(TrackingOverrideSourceStatus.FULL, TrackingOverridePose(position, rotation, timeoutNanos - age))
+		if (!position.isFinite() || !rotation.isUnitRotation()) return unavailable(TrackingOverrideSourceStatus.INCOMPLETE)
+		return TrackingOverrideFrame(TrackingOverrideSourceStatus.FULL, TrackingOverridePose(position, rotation, timeoutNanos - age), source)
 	}
 }
 

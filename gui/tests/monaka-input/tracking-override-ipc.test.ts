@@ -10,14 +10,14 @@ import type { InputSnapshot } from '../../src/monaka-input/controller.js';
 
 const selection: OverrideSelection = {
   enabled: true,
-  source: 'test-public-source',
   gripOffset: { positionM: [0, 0, 0], rotationWxyz: [1, 0, 0, 0] },
   sameUniverseConfirmed: true,
 };
 
-function setup() {
+function setup({ blockRemove = false, failSave = false } = {}) {
   const mutations: unknown[][] = [];
   const coreRequests: unknown[] = [];
+  const order: string[] = [];
   const snapshot: SteamOverrideSnapshot = {
     token: 'steam-review',
     hands: {
@@ -27,6 +27,7 @@ function setup() {
   };
   const coreSnapshot: InputSnapshot = {
     generation: '0',
+    readbackToken: 'core-review',
     candidates: [],
     assignments: [],
     bodies: [],
@@ -37,12 +38,18 @@ function setup() {
           ...overridePaths('left'),
           registeredDevicePath: null,
           sourceStatus: null,
+          source: 'test-public-source',
+          canEnable: true,
+          calibrationCurrent: true,
           saved: selection,
         },
         right: {
           ...overridePaths('right'),
           registeredDevicePath: null,
           sourceStatus: null,
+          source: 'test-public-source',
+          canEnable: true,
+          calibrationCurrent: true,
           saved: selection,
         },
       },
@@ -53,6 +60,8 @@ function setup() {
   const steam = {
     snapshot: async () => snapshot,
     change: async (...args: unknown[]) => {
+      order.push('steam:' + args[0]);
+      if (blockRemove) throw new Error('SteamVR still running');
       mutations.push(args);
       return snapshot;
     },
@@ -65,7 +74,10 @@ function setup() {
         connections++;
         return {
           request: async (request) => {
+            order.push('core:' + request.action);
             coreRequests.push(request);
+            if (failSave && request.action === 'save_override')
+              throw new Error('Core save uncertain');
             return coreSnapshot;
           },
           close: () => closes++,
@@ -78,6 +90,7 @@ function setup() {
     coreRequests,
     mutations,
     coreSnapshot,
+    order,
     connections: () => connections,
     closes: () => closes,
   };
@@ -94,6 +107,12 @@ test('Apply requires exact activated path for the saved hand and allows earlier 
   row.saved = { ...selection, enabled: false };
   await assert.rejects(() => fixture.dispatch(action), /saved|Save/);
   row.saved = selection;
+  row.calibrationCurrent = false;
+  await assert.rejects(() => fixture.dispatch(action), /Save/);
+  row.calibrationCurrent = true;
+  row.canEnable = false;
+  await assert.rejects(() => fixture.dispatch(action), /Save/);
+  row.canEnable = true;
   assert.equal((await fixture.dispatch(action)).type, 'steam');
   assert.deepEqual(fixture.mutations, [['apply', 'left', 'steam-review']]);
   assert.equal(fixture.connections(), fixture.closes());
@@ -140,4 +159,43 @@ test('Only the desktop-to-Core save injects the editor credential', async () => 
     },
   ]);
   assert.deepEqual(fixture.mutations, []);
+});
+
+test('Disabling checks the local Core token, then removes its owned mapping before saving OFF', async () => {
+  const fixture = setup();
+  const action = {
+    action: 'save',
+    hand: 'right',
+    token: 'core-review',
+    selection: { ...selection, enabled: false },
+  };
+  await assert.rejects(
+    () => fixture.dispatch({ ...action, token: 'foreign' }),
+    /Reload/
+  );
+  assert.deepEqual(fixture.mutations, []);
+  fixture.order.length = 0;
+  assert.equal((await fixture.dispatch(action)).type, 'core');
+  assert.deepEqual(fixture.order, [
+    'core:snapshot',
+    'steam:remove',
+    'core:save_override',
+  ]);
+});
+
+test('A blocked removal preserves Core, and a failed Core save reports the completed removal', async () => {
+  const action = {
+    action: 'save',
+    hand: 'right',
+    token: 'core-review',
+    selection: { ...selection, enabled: false },
+  };
+  const blocked = setup({ blockRemove: true });
+  await assert.rejects(() => blocked.dispatch(action), /still running/);
+  assert.deepEqual(blocked.order, ['core:snapshot', 'steam:remove']);
+  const partial = await setup({ failSave: true }).dispatch(action);
+  assert.equal(partial.type, 'core');
+  if (partial.type !== 'core') throw new Error('Expected Core save outcome');
+  assert.ok(partial.settings);
+  assert.match(partial.error ?? '', /Core save uncertain/);
 });

@@ -43,10 +43,6 @@ export function SettingSelectorMobile() {
         value: { url: '/settings/serial' },
       },
       {
-        label: l10n.getString('settings-sidebar-monaka-input'),
-        value: { url: '/settings/monaka-input' },
-      },
-      {
         label: l10n.getString('settings-sidebar-firmware-tool'),
         value: { url: '/settings/firmware-tool' },
       },

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { type ReactNode, useCallback, useMemo } from 'react';
 import { BodyPart } from 'solarxr-protocol';
 import { AssignMode } from '@/hooks/config';
 import { BodyInteractions } from '@/components/commons/BodyInteractions';
@@ -105,6 +105,7 @@ export function BodyAssignment({
   onlyAssigned = false,
   dotSize,
   inputSummaries = {},
+  handControls,
 }: {
   assignMode: AssignMode | null;
   mirror: boolean;
@@ -115,6 +116,7 @@ export function BodyAssignment({
   width?: number;
   dotSize?: number;
   inputSummaries?: Record<number, string>;
+  handControls?: Partial<Record<BodyPart, ReactNode>>;
 }) {
   const assignedTrackers = useAtomValue(assignedTrackersAtom);
 
@@ -229,6 +231,7 @@ export function BodyAssignment({
                 roleError={rolesWithErrors[SIDES[left].hand]?.label}
                 td={trackerPartGrouped[SIDES[left].hand]}
                 role={SIDES[left].hand}
+                labelControl={handControls?.[SIDES[left].hand]}
                 onClick={() => onRoleSelected(SIDES[left].hand)}
                 direction="right"
               />
@@ -351,6 +354,7 @@ export function BodyAssignment({
                 td={trackerPartGrouped[SIDES[right].hand]}
                 onClick={() => onRoleSelected(SIDES[right].hand)}
                 role={SIDES[right].hand}
+                labelControl={handControls?.[SIDES[right].hand]}
                 direction="left"
               />
             )}

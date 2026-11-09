@@ -49,7 +49,7 @@ class MonakaServerIntegration private constructor(
 	private val publishTrackingOverride: (Map<TrackingOverrideHand, TrackingOverrideFrame>, Long) -> Unit,
 ) : AutoCloseable {
 	private var closed = false
-	private var trackingOverrideStatus: Map<TrackingOverrideHand, TrackingOverrideSourceStatus> = emptyMap()
+	private var trackingOverrideStatus: Map<TrackingOverrideHand, TrackingOverrideFrame> = emptyMap()
 	var inputConfiguration: MonakaInputConfigurationApi? = null
 		private set
 	fun inputRequest(raw: String): String {
@@ -98,7 +98,7 @@ class MonakaServerIntegration private constructor(
 			val tick = runtime.tickSnapshot(skeleton.getPauseTracking())
 			val selections = inputConfiguration?.trackingOverrideSelections().orEmpty()
 			val overrides = if (selections.isEmpty()) emptyMap() else runtime.trackingOverrideFrames(tick, selections)
-			trackingOverrideStatus = overrides.mapValues { it.value.status }
+			trackingOverrideStatus = overrides
 			publishTrackingOverride(overrides, tick.trackerReceiptCutoffSystemNanos)
 			val assignment = tick.assignment
 			check(assignment.targets.filterValues { it.outputMode != OutputMode.IK } == outputAssignments) {

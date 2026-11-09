@@ -121,7 +121,10 @@ class MonakaRuntime(
 		selections: Map<TrackingOverrideHand, TrackingOverrideSelection>,
 	): Map<TrackingOverrideHand, TrackingOverrideFrame> {
 		check(!closed && tick === lastCompletedTick)
-		return TrackingOverrideHand.entries.associateWith { trackingOverride.resolve(selections[it], tick.nowNanos, tick.paused) }
+		return TrackingOverrideHand.entries.associateWith { hand ->
+			val source = tick.assignment.targets[hand.body]?.configuredSixDofSource()
+			trackingOverride.resolve(hand, selections[hand], source, tick.nowNanos, tick.paused)
+		}
 	}
 
 	/** Wrap the already-selected components. Fresh Main metadata is diagnostic only. */

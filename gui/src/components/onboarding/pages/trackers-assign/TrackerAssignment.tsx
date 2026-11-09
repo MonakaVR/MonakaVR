@@ -41,6 +41,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useUnifiedAssignment } from '@/hooks/unified-assignment';
 import { bodyPartForInput, inputRole } from '@/monaka-input/roles';
 import { InputAssignmentSummaries } from '@/monaka-input/assignment-summary';
+import { useTrackingOverrideControls } from '@/components/settings/pages/TrackingOverridePanel';
 import {
   assignedTrackersAtom,
   FlatDeviceTracker,
@@ -59,12 +60,18 @@ interface FlatDeviceTrackerDummy {
   };
 }
 
+function AssignmentProgress() {
+  const { applyProgress } = useOnboarding();
+  applyProgress(0.5);
+  return null;
+}
+
 export function TrackersAssignPage() {
   const { isMd } = useBreakpoint('md');
   const { l10n } = useLocalization();
   const { config, setConfig } = useConfig();
-  const { applyProgress, state, slimeSet } = useOnboarding();
-  const { sendRPCPacket, useRPCPacket } = useWebsocketAPI();
+  const { state, slimeSet } = useOnboarding();
+  const { sendRPCPacket, useRPCPacket, isConnected } = useWebsocketAPI();
   const defaultValues = {
     mirrorView: config?.mirrorView ?? defaultConfig.mirrorView,
   };
@@ -73,6 +80,9 @@ export function TrackersAssignPage() {
   }>({ defaultValues });
   const { mirrorView } = watch();
   const unified = useUnifiedAssignment();
+  const overrides = useTrackingOverrideControls(
+    unified.model, isConnected, unified.working || unified.needsReview || unified.state.dirty
+  );
   const [selectedRole, setSelectRole] = useState<BodyPart>(BodyPart.NONE);
   const location = useLocation();
   const navigate = useNavigate();
@@ -154,8 +164,8 @@ export function TrackersAssignPage() {
   const trackers = useAtomValue(flatTrackersAtom);
 
   useEffect(() => {
-    setConfig({ mirrorView });
-  }, [mirrorView]);
+    if (isConnected) setConfig({ mirrorView });
+  }, [mirrorView, isConnected]);
 
   const [tapDetectionSettings, setTapDetectionSettings] = useState<Omit<
     TapDetectionSettingsT,
@@ -163,8 +173,8 @@ export function TrackersAssignPage() {
   > | null>(null);
 
   useEffect(() => {
-    sendRPCPacket(RpcMessage.SettingsRequest, new SettingsRequestT());
-  }, []);
+    if (isConnected) sendRPCPacket(RpcMessage.SettingsRequest, new SettingsRequestT());
+  }, [isConnected]);
 
   useRPCPacket(RpcMessage.SettingsResponse, (settings: SettingsResponseT) => {
     if (settings.tapDetectionSettings) {
@@ -173,7 +183,7 @@ export function TrackersAssignPage() {
   });
 
   useEffect(() => {
-    if (!tapDetectionSettings) return;
+    if (!isConnected || !tapDetectionSettings) return;
     const newTapSettings = new TapDetectionSettingsT(
       tapDetectionSettings.fullResetDelay,
       tapDetectionSettings.fullResetEnabled,
@@ -221,7 +231,7 @@ export function TrackersAssignPage() {
         )
       );
     };
-  }, [tapDetectionSettings]);
+  }, [tapDetectionSettings, isConnected]);
 
   const trackerPartGrouped = useMemo(
     () =>
@@ -359,8 +369,6 @@ export function TrackersAssignPage() {
     });
   };
 
-  applyProgress(0.5);
-
   const { closeChokerWarning, tryOpenChokerWarning, shouldShowChokerWarn } =
     useChokerWarning({
       next: chooseRole,
@@ -368,8 +376,12 @@ export function TrackersAssignPage() {
 
   const firstError = Object.values(rolesWithErrors).find((r) => !!r);
 
+  if (!isConnected) return overrides.coreless;
+
   return (
     <>
+      <AssignmentProgress />
+      {overrides.dialog}
       <TrackerSelectionMenu
         bodyPart={selectedRole}
         isOpen={selectedRole !== BodyPart.NONE}
@@ -405,6 +417,7 @@ export function TrackersAssignPage() {
             <Typography variant="main-title" color="accent">
               {l10n.getString('onboarding-assign_trackers-title')}
             </Typography>
+            {overrides.status}
             {unified.needsReview && (
               <div role="alert" data-testid="assignment-review-required">
                 <p>{l10n.getString('assignment-status-partial')}</p>
@@ -519,6 +532,10 @@ export function TrackersAssignPage() {
                   assignMode={config?.assignMode ?? null}
                   mirror={mirrorView}
                   onRoleSelected={tryOpenChokerWarning}
+                  handControls={{
+                    [BodyPart.LEFT_HAND]: overrides.controls('left'),
+                    [BodyPart.RIGHT_HAND]: overrides.controls('right'),
+                  }}
                 />
               </InputAssignmentSummaries.Provider>
             </div>

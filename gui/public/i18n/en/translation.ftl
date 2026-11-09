@@ -1714,9 +1714,17 @@ toolbar-assigned_trackers = {$count} trackers assigned
 toolbar-unassigned_trackers = {$count} trackers unassigned
 
 # Desktop Bridge controls
-settings-sidebar-monaka-input = MVIP inputs
-
 tracking-override-title = Tracking Override
+tracking-override-toggle = Override
+tracking-override-offset-settings = Offset Settings
+tracking-override-save-offset = Save offset settings
+tracking-override-pending-source = Override pending. Choose the hand’s 6DoF source.
+tracking-override-pending-offset = Override pending. Review and save the offset settings to enable it.
+tracking-override-pending-capability = Override pending. This hand requires an MVIP source with position and orientation.
+tracking-override-review-source = Saved Override is waiting for a 6DoF assignment.
+tracking-override-review-offset = Saved Override requires an offset review for the current 6DoF source.
+tracking-override-recover-hand = Release SteamVR mapping
+tracking-override-coreless-help = Core is unavailable. Close SteamVR on the PC to remove an owned mapping.
 tracking-override-help = Choose and save a 6DoF source for each hand. Start SteamVR once to register the source device. Close SteamVR on the PC to apply or remove its saved mapping.
 tracking-override-desktop-required = Use the MonakaVR Windows desktop app to edit or remove tracking overrides.
 tracking-override-left = Left hand

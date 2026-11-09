@@ -3,17 +3,25 @@ import { resolve } from 'node:path';
 import { CoreUiFixture, routeUrl } from './fixtures';
 import {
   overridePaths,
+  type OverrideOutputSnapshot,
   type OverrideRequest,
   type OverrideSelection,
 } from '../../electron/tracking-override-types';
 
-test('isolated Electron loads the real App with zero Bridge IPC', async () => {
+const baseURL = 'http://127.0.0.1:' + (process.env.MONAKA_INPUT_SMOKE_PORT ?? '4207');
+const empty: OverrideSelection = {
+  enabled: false,
+  gripOffset: null,
+  sameUniverseConfirmed: false,
+};
+
+test('isolated Electron opens the canonical assignment without producer IPC', async () => {
   const app = await _electron.launch({
     args: [resolve('tests/monaka-input-route/electron-main.cjs')],
     env: {
       ...process.env,
       STAGE15_ELECTRON_PROFILE: resolve(
-        `build/monaka-input-route/electron-${Date.now()}`
+        'build/monaka-input-route/electron-' + Date.now()
       ),
     },
   });
@@ -24,13 +32,11 @@ test('isolated Electron loads the real App with zero Bridge IPC', async () => {
     const fixture = new CoreUiFixture();
     fixture.snapshot.candidates = [];
     await fixture.install(page);
-    await page.goto(
-      `http://127.0.0.1:${process.env.MONAKA_INPUT_SMOKE_PORT ?? '4207'}` + routeUrl
-    );
-    await expect(page.getByLabel('Q Source', { exact: true })).toBeEnabled();
-    await expect(page.locator('.settings-layout')).toBeVisible();
+    await page.goto(baseURL + routeUrl);
+    await expect(page.getByRole('heading', { name: 'Assign trackers' })).toBeVisible();
+    await expect(page).toHaveURL(/#\/onboarding\/trackers-assign/);
     await page.reload();
-    await expect(page.getByLabel('Q Source', { exact: true })).toBeEnabled();
+    await expect(page.getByRole('heading', { name: 'Assign trackers' })).toBeVisible();
     expect(
       await app.evaluate(
         () =>
@@ -40,17 +46,13 @@ test('isolated Electron loads the real App with zero Bridge IPC', async () => {
     ).toBe(0);
     expect(fixture.saves).toEqual([]);
     expect(errors).toEqual([]);
-    await page.screenshot({
-      path: 'build/monaka-input-route/after-electron.png',
-      fullPage: true,
-    });
   } finally {
     await app.close();
   }
 });
 
-test('Tracking Override in the real App keeps hand choices separate and can remove without Core', async () => {
-  test.setTimeout(90000);
+test('hand Override starts before the normal chooser and its mapping remains recoverable without Core', async () => {
+  test.setTimeout(120000);
   const app = await _electron.launch({
     args: [resolve('tests/monaka-input-route/electron-main.cjs')],
     env: {
@@ -89,97 +91,135 @@ test('Tracking Override in the real App keeps hand choices separate and can remo
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const fixture = new CoreUiFixture();
-    const initial: OverrideSelection = {
-      enabled: false,
+    fixture.snapshot.bodies.push('LEFT_HAND', 'RIGHT_HAND');
+    const row = (hand: 'left' | 'right') => ({
+      ...overridePaths(hand),
+      saved: empty,
       source: null,
-      gripOffset: null,
-      sameUniverseConfirmed: false,
-    };
-    const output = {
+      canEnable: false,
+      calibrationCurrent: false,
+      sourceStatus: 'OFF' as const,
+      registeredDevicePath: null,
+    });
+    const output: OverrideOutputSnapshot = {
       driverReady: false,
-      hands: {
-        left: {
-          ...overridePaths('left'),
-          saved: initial,
-          sourceStatus: null,
-          registeredDevicePath: null as string | null,
-        },
-        right: {
-          ...overridePaths('right'),
-          saved: initial,
-          sourceStatus: null,
-          registeredDevicePath: null as string | null,
-        },
-      },
+      hands: { left: row('left'), right: row('right') },
     };
     fixture.snapshot.readbackToken = 'core-review';
     fixture.snapshot.trackingOverride = output;
-    await fixture.install(page);
-    const baseURL =
-      'http://127.0.0.1:' + (process.env.MONAKA_INPUT_SMOKE_PORT ?? '4207');
-    await page.goto(baseURL + routeUrl);
-    const left = page.getByRole('group', { name: 'Left hand', exact: true });
-    const right = page.getByRole('group', { name: 'Right hand', exact: true });
-    const apply = 'Apply to SteamVR';
-    const remove = 'Remove SteamVR mapping';
-    const saveHand = async (hand: 'left' | 'right', source: string) => {
-      const form = hand === 'left' ? left : right;
-      const label = hand === 'left' ? 'Left hand' : 'Right hand';
-      await form.getByLabel(label + ' 6DoF Source').selectOption(source);
-      await form.getByRole('button', { name: 'Set identity grip offset' }).click();
-      await form
-        .getByLabel(
-          'I verified the source world aligns with the SteamVR driver universe'
-        )
-        .check();
-      await form.getByLabel(label + ' Enable pose source').check();
-      await form.getByRole('button', { name: 'Save pose source' }).click();
-      await expect
-        .poll(async () =>
-          (await requests()).some((x) => x.action === 'save' && x.hand === hand)
-        )
-        .toBe(true);
-      const save = (await requests()).filter((x) => x.action === 'save').at(-1);
-      if (!save || save.action !== 'save') throw new Error('Expected save');
-      expect(save.selection).toEqual({
-        enabled: true,
-        source,
-        sameUniverseConfirmed: true,
-        gripOffset: { positionM: [0, 0, 0], rotationWxyz: [1, 0, 0, 0] },
-      });
-      output.hands[hand].saved = save.selection;
-      await expect(form).toContainText('Saved MonakaVR source ON');
-      await expect(form.getByRole('button', { name: apply })).toBeDisabled();
-      output.hands[hand].registeredDevicePath = overridePaths(hand).devicePath;
-      await form.getByRole('button', { name: apply }).click();
-      await expect(form).toContainText('MonakaVR mapping saved');
+    fixture.afterSave = () => {
+      for (const hand of ['left', 'right'] as const) {
+        const source =
+          fixture.snapshot.assignments.find(
+            (a) => a.body === hand.toUpperCase() + '_HAND'
+          )?.sixDofSource ?? null;
+        output.hands[hand].source = source;
+        output.hands[hand].canEnable = !!source;
+      }
+      return false;
     };
-    await expect(left).toContainText('Saved MonakaVR source OFF');
-    await expect(right).toContainText('Saved MonakaVR source OFF');
-    await expect(left.locator('option[value="q-only"]')).toHaveJSProperty(
-      'disabled',
-      true
-    );
-    await expect(left.locator('option[value="unknown"]')).toHaveJSProperty(
-      'disabled',
-      true
-    );
-    await saveHand('left', 'publisher-a');
-    await expect(right).toContainText('Saved MonakaVR source OFF');
-    await saveHand('right', 'publisher-b');
-    await expect(left).toContainText('/user/hand/left');
-    await expect(right).toContainText('/user/hand/right');
+    await fixture.install(page);
+    await page.goto(baseURL + routeUrl);
+    const left = page.locator('.control#LEFT_HAND');
+    const right = page.locator('.control#RIGHT_HAND');
+    const leftToggle = left.getByRole('checkbox', {
+      name: 'Left hand Tracking Override',
+    });
+    const rightToggle = right.getByRole('checkbox', {
+      name: 'Right hand Tracking Override',
+    });
+    const leftOffset = left.getByRole('button', { name: 'Left hand Offset Settings' });
+    const rightOffset = right.getByRole('button', {
+      name: 'Right hand Offset Settings',
+    });
     await expect(
-      page.getByRole('status').filter({ hasText: 'SteamVR restart required' })
-    ).toBeVisible();
-    await page.reload();
-    await expect(left.getByLabel('Left hand 6DoF Source')).toHaveValue('publisher-a');
-    await expect(right.getByLabel('Right hand 6DoF Source')).toHaveValue('publisher-b');
-    await expect(left).toContainText(
-      'Active SteamVR mapping requires runtime verification'
+      page.getByRole('checkbox', { name: /Tracking Override$/ })
+    ).toHaveCount(2);
+    await expect(leftOffset).toHaveCount(0);
+    await expect(rightOffset).toHaveCount(0);
+    await leftToggle.check();
+    await expect(leftToggle).toBeChecked();
+    await expect(rightToggle).not.toBeChecked();
+    await expect(page.getByTestId('unified-assignment')).toHaveCount(0);
+    expect((await requests()).filter((x) => x.action === 'save')).toEqual([]);
+
+    const assign = async (hand: 'left' | 'right', publisher: string) => {
+      const card = hand === 'left' ? left : right;
+      await card
+        .getByText(hand === 'left' ? 'Left hand' : 'Right hand', { exact: true })
+        .click();
+      const chooser = page.getByTestId('unified-assignment');
+      await expect(chooser).toBeVisible();
+      await chooser
+        .getByRole('radio', { name: '6DoF Source: device-' + publisher, exact: true })
+        .check();
+      await chooser
+        .getByRole('button', { name: 'Save input choices', exact: true })
+        .click();
+      await expect(chooser.getByTestId('assignment-readback')).toContainText(publisher);
+      await chooser.getByRole('button', { name: 'Close', exact: true }).click();
+    };
+    await assign('left', 'publisher-a');
+    await expect(leftOffset).toBeVisible();
+    await expect(rightOffset).toHaveCount(0);
+    await assign('right', 'publisher-b');
+    await expect(rightOffset).toBeVisible();
+    expect(fixture.saves).toEqual([
+      expect.objectContaining({ body: 'LEFT_HAND', sixDofSource: 'publisher-a' }),
+      expect.objectContaining({ body: 'RIGHT_HAND', sixDofSource: 'publisher-b' }),
+    ]);
+
+    await page.screenshot({
+      path: 'build/monaka-input-route/tracking-override-avatar.png',
+      fullPage: true,
+    });
+    const initial = await left.boundingBox();
+    await page.getByText('Mirror view', { exact: true }).click();
+    await expect.poll(async () => (await left.boundingBox())?.x).not.toBe(initial?.x);
+    await expect(left.getByTestId('assignment-summary-LEFT_HAND')).toContainText(
+      'publisher-a'
     );
+    await expect(right.getByTestId('assignment-summary-RIGHT_HAND')).toContainText(
+      'publisher-b'
+    );
+    await expect(leftToggle).toBeChecked();
+    await expect(rightToggle).not.toBeChecked();
+
+    await leftOffset.click();
+    const detail = page.getByRole('dialog', { name: 'Left hand Tracking Override' });
+    await expect(detail).toContainText('device-publisher-a');
+    await expect(detail.getByRole('combobox')).toHaveCount(0);
+    await detail.getByRole('button', { name: 'Set identity grip offset' }).click();
+    await detail
+      .getByLabel('I verified the source world aligns with the SteamVR driver universe')
+      .check();
+    await detail.getByRole('button', { name: 'Save offset settings' }).click();
+    await expect
+      .poll(async () => (await requests()).filter((x) => x.action === 'save').length)
+      .toBe(1);
+    const save = (await requests()).find((x) => x.action === 'save');
+    if (!save || save.action !== 'save') throw new Error('Expected offset save');
+    expect(save.selection).toEqual({
+      enabled: true,
+      sameUniverseConfirmed: true,
+      gripOffset: { positionM: [0, 0, 0], rotationWxyz: [1, 0, 0, 0] },
+    });
+    output.hands.left.saved = save.selection;
+    output.hands.left.calibrationCurrent = true;
+    output.hands.left.sourceStatus = 'FULL';
+    const apply = detail.getByRole('button', { name: 'Apply to SteamVR' });
+    await expect(apply).toBeDisabled();
+    output.hands.left.registeredDevicePath = overridePaths('left').devicePath;
+    await apply.click();
+    await expect(detail).toContainText('MonakaVR mapping saved');
+    await expect(detail).toContainText('SteamVR restart required');
+    await detail.getByRole('button', { name: 'Close', exact: true }).click();
+    await page.reload();
+    await expect(leftToggle).toBeChecked();
+    await expect(rightToggle).not.toBeChecked();
+
     fixture.disconnect();
-    await expect(left.getByLabel('Left hand 6DoF Source')).toBeDisabled();
+    await expect(page.getByText(/Core is unavailable/)).toBeVisible({ timeout: 10000 });
     await page.evaluate(() => {
       window.location.hash = '#/';
     });
@@ -188,26 +228,16 @@ test('Tracking Override in the real App keeps hand choices separate and can remo
         name: 'Open Tracking Override settings to remove a SteamVR mapping',
       })
       .click();
-    await expect(left.getByLabel('Left hand 6DoF Source')).toBeDisabled();
-    await left.getByRole('button', { name: remove }).click();
-    await expect(left).toContainText('No MonakaVR mapping');
-    await expect(right).toContainText('MonakaVR mapping saved');
-    fixture.reconnect();
-    await left.getByRole('button', { name: apply }).click();
-    await expect(left).toContainText('MonakaVR mapping saved');
+    await page.getByRole('button', { name: 'Release SteamVR mapping' }).click();
+    await page.getByRole('button', { name: 'Remove SteamVR mapping' }).click();
+    await expect(page.getByRole('dialog')).toContainText('No MonakaVR mapping');
     expect(
       (await requests()).filter((x) => x.action === 'apply' || x.action === 'remove')
     ).toEqual([
       { action: 'apply', hand: 'left', token: 'steam-review' },
-      { action: 'apply', hand: 'right', token: 'steam-review' },
       { action: 'remove', hand: 'left', token: 'steam-review' },
-      { action: 'apply', hand: 'left', token: 'steam-review' },
     ]);
     expect(errors).toEqual([]);
-    await page.screenshot({
-      path: 'build/monaka-input-route/tracking-override.png',
-      fullPage: true,
-    });
   } finally {
     await app.close();
   }

@@ -8,6 +8,7 @@ import { useWebsocketAPI } from '@/hooks/websocket-api';
 import { error } from '@/utils/logging';
 import { Localized } from '@fluent/react';
 import { Link } from 'react-router-dom';
+import { inputAssignmentsPath } from '@/monaka-input/home-catalog';
 
 function Error({ title, desc }: { title: string; desc: string }) {
   const electron = useElectron();
@@ -83,7 +84,7 @@ export function ConnectionLost() {
             <Error title="websocket-timedout" desc="websocket-timedout-desc" />
           )}
           {!isLoading && window.electronAPI?.trackingOverride && (
-            <Link className="underline" to="/settings/monaka-input">
+            <Link className="underline" to={inputAssignmentsPath} state={{ alonePage: true }}>
               <Localized id="tracking-override-recovery-link">
                 <span />
               </Localized>

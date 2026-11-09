@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import {
   MouseEventHandler,
+  ReactNode,
   useContext,
   useEffect,
   useMemo,
@@ -45,12 +46,14 @@ export function TrackerPartCard({
   direction,
   roleError,
   onlyAssigned,
+  labelControl,
   onClick,
 }: {
   td: FlatDeviceTracker[];
   role: BodyPart;
   roleError: string | undefined;
   onlyAssigned: boolean;
+  labelControl?: ReactNode;
   direction: 'left' | 'right';
   onClick?: MouseEventHandler<HTMLDivElement>;
 }) {
@@ -84,12 +87,21 @@ export function TrackerPartCard({
       (onlyAssigned && ((td && td.length > 0) || !!summary)) || !onlyAssigned,
     [onlyAssigned, td, summary]
   );
+  const title = (
+    <Typography
+      variant={isXs ? 'section-title' : 'standard'}
+      whitespace={isXs ? 'whitespace-nowrap' : undefined}
+    >
+      {l10n.getString('body_part-' + BodyPart[role])}
+    </Typography>
+  );
 
   return (
     (showCard && (
       <div
         className={classNames(
           'flex flex-col gap-1 control xs:w-auto hover:bg-background-50 cursor-pointer px-2 py-1 rounded-md relative transition-[box-shadow] duration-200 ease-linear',
+          labelControl && 'mobile:max-w-28',
           direction === 'left' ? 'items-start' : 'items-end'
         )}
         id={BodyPart[role]}
@@ -110,12 +122,15 @@ export function TrackerPartCard({
             <WarningIcon />
           </div>
         )}
-        <Typography
-          variant={isXs ? 'section-title' : 'standard'}
-          whitespace={isXs ? 'whitespace-nowrap' : undefined}
-        >
-          {l10n.getString('body_part-' + BodyPart[role])}
-        </Typography>
+        {labelControl ? (
+          <div className={classNames(
+            'flex flex-wrap items-center gap-x-2 gap-y-1',
+            direction === 'right' && 'justify-end'
+          )}>
+            {title}
+            {labelControl}
+          </div>
+        ) : title}
         {td?.map(({ tracker }, index) => (
           <Tracker
             tracker={tracker}
@@ -125,7 +140,10 @@ export function TrackerPartCard({
         ))}
         {summary && (
           <p
-            className="text-xs break-words max-w-48 min-w-0 line-clamp-2"
+            className={classNames(
+              'text-xs break-words max-w-48 min-w-0 line-clamp-2',
+              labelControl && 'mobile:max-w-full'
+            )}
             title={summary.details}
             data-testid={`assignment-summary-${BodyPart[role]}`}
           >

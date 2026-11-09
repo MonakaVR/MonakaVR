@@ -55,6 +55,7 @@ export function HomeInputCatalogPanel({
         <NavLink
           className="text-sm text-background-30 hover:text-background-20"
           to={inputAssignmentsHref(search)}
+          state={{ alonePage: true }}
         >
           {text('assignments')}
         </NavLink>

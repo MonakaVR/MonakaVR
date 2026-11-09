@@ -1,6 +1,8 @@
 package dev.monaka.tracking
 
 import com.fasterxml.jackson.databind.JsonNode
+import dev.monaka.protocol.v2.CoordinateSpace
+import dev.slimevr.tracking.trackers.TrackerPosition
 import io.github.axisangles.ktmath.Quaternion
 import io.github.axisangles.ktmath.Vector3
 
@@ -11,33 +13,58 @@ internal object TrackingOverrideConfigJson {
 		else -> error("Unknown tracking override hand")
 	}
 
-	fun read(node: JsonNode): Map<TrackingOverrideHand, TrackingOverrideSelection> {
+	fun read(
+		node: JsonNode,
+		assignments: Map<TrackerPosition, MainTrackerAssignment>,
+		space: CoordinateSpace,
+	): Map<TrackingOverrideHand, TrackingOverrideSelection> {
 		require(node.isObject) { "trackingOverride must be an object" }
 		return node.fields().asSequence().associate { (key, value) ->
-			hand(key) to readSelection(value) { ref ->
-				require(ref.isObject && ref["kind"]?.textValue() == "mtp") { "Override source must use the MVIP catalog identity" }
-				fun component(name: String): String = requireNotNull(ref[name]?.textValue()?.takeUnless(String::isBlank)) {
-					"Missing override source $name"
+			val hand = hand(key)
+			require(value.isObject && value["enabled"]?.isBoolean == true)
+			val grip = requireNotNull(value["gripOffset"]).takeUnless(JsonNode::isNull)?.let(::readGrip)
+			val enabled = value["enabled"].booleanValue()
+			val fields = value.fieldNames().asSequence().toSet()
+			val selection = if (fields == setOf("enabled", "gripOffset", "confirmedAssignment")) {
+				val binding = value["confirmedAssignment"].takeUnless(JsonNode::isNull)?.let {
+					requireNotNull(it.textValue()) { "Invalid tracking override confirmation" }
 				}
-				TrackerReference.mtp(LogicalTracker(component("source_id"), component("tracker_id"), component("publisher_id")))
+				TrackingOverrideSelection(enabled, grip, binding)
+			} else {
+				require(fields == setOf("enabled", "source", "gripOffset", "sameUniverseConfirmed") && value["sameUniverseConfirmed"].isBoolean) {
+					"Invalid tracking override selection"
+				}
+				val oldSource = value["source"].takeUnless(JsonNode::isNull)?.let(::readLegacySource)
+				val confirmed = value["sameUniverseConfirmed"].booleanValue()
+				require(!enabled || (oldSource != null && grip != null && confirmed)) { "Invalid legacy tracking override selection" }
+				if (confirmed && grip != null && oldSource != null && oldSource == assignments[hand.body]?.configuredSixDofSource()) {
+					TrackingOverrideSelection.confirmed(enabled, hand, oldSource, space, grip)
+				} else {
+					TrackingOverrideSelection(enabled, grip)
+				}
 			}
+			hand to selection
 		}
 	}
 
-	fun readSelection(node: JsonNode, reference: (JsonNode) -> TrackerReference): TrackingOverrideSelection {
+	private fun readLegacySource(ref: JsonNode): TrackerReference {
+		require(ref.isObject && ref["kind"]?.textValue() == "mtp") { "Legacy override source must use the MVIP catalog identity" }
+		fun component(name: String): String = requireNotNull(ref[name]?.textValue()?.takeUnless(String::isBlank)) {
+			"Missing legacy override source $name"
+		}
+		return TrackerReference.mtp(LogicalTracker(component("source_id"), component("tracker_id"), component("publisher_id")))
+	}
+
+	data class Edit(val enabled: Boolean, val gripOffset: TrackingOverrideGripOffset?, val sameUniverseConfirmed: Boolean)
+
+	fun readEdit(node: JsonNode): Edit {
 		require(
 			node.isObject &&
-				node.fieldNames().asSequence().toSet() == setOf("enabled", "source", "gripOffset", "sameUniverseConfirmed") &&
+				node.fieldNames().asSequence().toSet() == setOf("enabled", "gripOffset", "sameUniverseConfirmed") &&
 				node["enabled"].isBoolean && node["sameUniverseConfirmed"].isBoolean,
-		) { "Invalid tracking override selection" }
-		val source = node["source"].takeUnless(JsonNode::isNull)?.let(reference)
+		) { "Invalid tracking override settings. Choose the source in the hand assignment." }
 		val grip = node["gripOffset"].takeUnless(JsonNode::isNull)?.let(::readGrip)
-		val enabled = node["enabled"].booleanValue()
-		val confirmed = node["sameUniverseConfirmed"].booleanValue()
-		require(!enabled || (source != null && grip != null && confirmed)) {
-			"Enable requires a 6DoF source, an explicit grip offset, and SteamVR world confirmation"
-		}
-		return TrackingOverrideSelection(enabled, source, grip, confirmed)
+		return Edit(node["enabled"].booleanValue(), grip, node["sameUniverseConfirmed"].booleanValue())
 	}
 
 	private fun readGrip(node: JsonNode): TrackingOverrideGripOffset {
@@ -54,22 +81,22 @@ internal object TrackingOverrideConfigJson {
 		return TrackingOverrideGripOffset(Vector3(x, y, z), Quaternion(w, qx, qy, qz))
 	}
 
-	fun writeSelection(selection: TrackingOverrideSelection, reference: (TrackerReference) -> Any): Map<String, Any?> = mapOf(
+	fun readback(selection: TrackingOverrideSelection, calibrationCurrent: Boolean): Map<String, Any?> = mapOf(
 		"enabled" to selection.enabled,
-		"source" to selection.source?.let(reference),
-		"gripOffset" to selection.gripOffset?.let { grip ->
-			mapOf(
-				"positionM" to listOf(grip.position.x, grip.position.y, grip.position.z),
-				"rotationWxyz" to listOf(grip.rotation.w, grip.rotation.x, grip.rotation.y, grip.rotation.z),
-			)
-		},
-		"sameUniverseConfirmed" to selection.sameUniverseConfirmed,
+		"gripOffset" to selection.gripOffset?.takeIf { calibrationCurrent }?.let(::writeGrip),
+		"sameUniverseConfirmed" to calibrationCurrent,
 	)
 
 	fun write(selections: Map<TrackingOverrideHand, TrackingOverrideSelection>): Map<String, Any> = selections.entries.associate { (hand, selection) ->
-		hand.name.lowercase() to writeSelection(selection) { reference ->
-			val mtp = requireNotNull(reference.mtp) { "Override source must use the MVIP catalog identity" }
-			mapOf("kind" to "mtp", "publisher_id" to mtp.publisherId, "source_id" to mtp.sourceId, "tracker_id" to mtp.trackerId)
-		}
+		hand.name.lowercase() to mapOf(
+			"enabled" to selection.enabled,
+			"gripOffset" to selection.gripOffset?.let(::writeGrip),
+			"confirmedAssignment" to selection.confirmedAssignment,
+		)
 	}
+
+	private fun writeGrip(grip: TrackingOverrideGripOffset) = mapOf(
+		"positionM" to listOf(grip.position.x, grip.position.y, grip.position.z),
+		"rotationWxyz" to listOf(grip.rotation.w, grip.rotation.x, grip.rotation.y, grip.rotation.z),
+	)
 }

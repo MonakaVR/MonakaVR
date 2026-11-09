@@ -86,8 +86,10 @@ export function buildHomeInputCatalog(
   return rows;
 }
 
+export const inputAssignmentsPath = '/onboarding/trackers-assign';
+
 export function inputAssignmentsHref(search: string): string {
-  return `/settings/monaka-input${search}`;
+  return inputAssignmentsPath + search;
 }
 
 /** Snapshot-only reader. Expiration prevents a hung request reviving cached usability. */

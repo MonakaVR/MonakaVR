@@ -159,6 +159,6 @@ test('hung snapshot expires; late completion after stop cannot revive state', as
 test('consumer settings link preserves connection query', () => {
   assert.equal(
     inputAssignmentsHref('?ip=example.test&port=21111'),
-    '/settings/monaka-input?ip=example.test&port=21111'
+    '/onboarding/trackers-assign?ip=example.test&port=21111'
   );
 });

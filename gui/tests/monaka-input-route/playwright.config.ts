@@ -3,7 +3,12 @@ import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   testDir: '.',
-  testMatch: ['route.spec.ts', 'electron.spec.ts'],
+  testMatch: [
+    'route.spec.ts',
+    'electron.spec.ts',
+    'unified.spec.ts',
+    'physical-labels.spec.ts',
+  ],
   outputDir: '../../build/monaka-input-route',
   workers: 1,
   retries: 0,

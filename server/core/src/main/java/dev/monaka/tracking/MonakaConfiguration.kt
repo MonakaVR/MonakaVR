@@ -352,7 +352,9 @@ data class MonakaConfiguration(
 				}
 			}
 			val positionCorrection = root["positionCorrection"]?.let(PositionCorrectionConfigJson::read)
-			val trackingOverride = root["trackingOverride"]?.let(TrackingOverrideConfigJson::read).orEmpty()
+			val trackingOverride = root["trackingOverride"]?.let {
+				TrackingOverrideConfigJson.read(it, assignments.snapshot().targets, expectedSpace)
+			}.orEmpty()
 			return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction, positionCorrection, trackingOverride).also {
 				it.loadedPath = path.toAbsolutePath().normalize()
 				it.loadedBytes = bytes

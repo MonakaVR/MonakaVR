@@ -800,9 +800,17 @@ unknown_device-modal-forget = 無視する
 
 
 # Desktop Bridge controls
-settings-sidebar-monaka-input = MVIP入力
-
 tracking-override-title = トラッキングの置き換え
+tracking-override-toggle = Override
+tracking-override-offset-settings = オフセット設定
+tracking-override-save-offset = オフセット設定を保存
+tracking-override-pending-source = 置き換えは保留中です。この手の 6DoF 入力元を選択してください。
+tracking-override-pending-offset = 置き換えは保留中です。オフセット設定を確認して保存してください。
+tracking-override-pending-capability = 置き換えは保留中です。この手には位置と姿勢に対応する MVIP 入力元が必要です。
+tracking-override-review-source = 保存済みの置き換えは 6DoF 入力元の割当待ちです。
+tracking-override-review-offset = 保存済みの置き換えには、現在の 6DoF 入力元のオフセット確認が必要です。
+tracking-override-recover-hand = SteamVR の割当を解除
+tracking-override-coreless-help = Core に接続できません。PC で SteamVR を終了すると、MonakaVR が保存した割当を解除できます。
 tracking-override-help = 左右の手ごとに 6DoF の入力元を選んで保存します。SteamVR を一度起動して置き換え元を登録し、PC で SteamVR を終了してから割当を適用または解除します。
 tracking-override-desktop-required = 置き換えの編集や解除は Windows 版 MonakaVR デスクトップアプリで行ってください。
 tracking-override-left = 左手

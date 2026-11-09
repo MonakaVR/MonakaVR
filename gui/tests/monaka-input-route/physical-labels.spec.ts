@@ -30,30 +30,32 @@ function fixture() {
   return core;
 }
 
-test('public physical labels keep exact selection IDs, full details and bounded settings at 375px', async ({
+test('public physical labels keep exact selection IDs, full details and a bounded picker at 375px', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 375, height: 900 });
   const core = fixture();
+  core.snapshot.bodies.push('LEFT_HAND');
   await forbidBridgeApi(page);
   await core.install(page);
   await page.goto(routeUrl);
-  const q = page.getByLabel('Q Source', { exact: true });
+  await page
+    .locator('.control#LEFT_HAND')
+    .getByText('Left hand', { exact: true })
+    .click();
+  const picker = page.getByTestId('unified-assignment');
+  const q = picker.getByRole('radio', { name: /^Q Source: HappyPC\/測/ });
   await expect(q).toBeEnabled();
-  await expect(q.locator('option[value="logical-left"]')).toContainText(
-    'HappyPC/device/knee · HappyPC left'
-  );
-  await expect(q.locator('option[value="logical-right"]')).toContainText(
-    'HappyPC/device/knee · HappyPC right'
-  );
-  const primary = await q
-    .locator('option')
-    .filter({ hasText: 'HappyPC/測' })
-    .textContent();
+  await expect(
+    picker.getByRole('radio', { name: 'Q Source: HappyPC/device/knee · HappyPC left' })
+  ).toBeVisible();
+  await expect(
+    picker.getByRole('radio', { name: 'Q Source: HappyPC/device/knee · HappyPC right' })
+  ).toBeVisible();
+  const primary = await q.getAttribute('aria-label');
   expect(primary).not.toContain('random-logical-key');
   expect(primary).not.toContain('11111111-1111');
-  await q.selectOption(persistent);
-  await expect(q).toHaveAttribute('title', new RegExp('random-logical-key'));
+  await q.check();
   await page.getByRole('button', { name: 'Save input choices', exact: true }).click();
   await expect(
     page.getByRole('button', { name: 'Save input choices', exact: true })
@@ -63,19 +65,29 @@ test('public physical labels keep exact selection IDs, full details and bounded 
     sixDofSource: persistent,
   });
   expect(core.saves[0]).not.toHaveProperty('displayName');
-  const section = page.locator('section[aria-labelledby="monaka-input-title"]');
   expect(
-    await section.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)
+    await picker.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)
   ).toBe(true);
-  const sectionBox = await section.boundingBox();
-  const selectBox = await q.boundingBox();
-  expect(selectBox!.width).toBeLessThanOrEqual(sectionBox!.width);
+  await expect(picker.getByTestId('assignment-readback')).toHaveAttribute(
+    'title',
+    /random-logical-key/
+  );
   core.snapshot.candidates = [];
   await page.reload();
-  await expect(q).toHaveValue(persistent);
-  await expect(q.locator('option:checked')).toHaveText('Saved source (offline)');
-  expect(await q.locator('option:checked').textContent()).not.toContain('mtp:36:');
-  await expect(q).toHaveAttribute('title', `Saved identity: ${persistent}`);
+  await page
+    .locator('.control#LEFT_HAND')
+    .getByText('Left hand', { exact: true })
+    .click();
+  await expect(picker.getByTestId('assignment-readback')).toContainText(
+    'Saved source offline'
+  );
+  expect(await picker.getByTestId('assignment-readback').textContent()).not.toContain(
+    'mtp:36:'
+  );
+  await expect(picker.getByTestId('assignment-readback')).toHaveAttribute(
+    'title',
+    /Saved identity: mtp:36:/
+  );
   expect(core.saves).toHaveLength(1);
 });
 

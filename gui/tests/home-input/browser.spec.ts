@@ -11,7 +11,7 @@ test('real Home catalog wrapper: absent producer, arbitrary publishers, dedup, c
   await expect(panel).toContainText('接続されている入力デバイスはありません。');
   await expect(panel.getByRole('link')).toHaveAttribute(
     'href',
-    '/settings/monaka-input?ip=public-contract.invalid&port=21212'
+    '/onboarding/trackers-assign?ip=public-contract.invalid&port=21212'
   );
   const a = source('exact-a', {
     publisher: 'unknown-publisher-one',

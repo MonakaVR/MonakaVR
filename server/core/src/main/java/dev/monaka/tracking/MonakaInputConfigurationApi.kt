@@ -21,7 +21,7 @@ class MonakaInputConfigurationApi(
 	private val backend: MtpObservationBackend,
 	private val trackers: () -> Iterable<Tracker>,
 	path: Path,
-	private val trackingOverrideStatus: () -> Map<TrackingOverrideHand, TrackingOverrideSourceStatus> = { emptyMap() },
+	private val trackingOverrideStatus: () -> Map<TrackingOverrideHand, TrackingOverrideFrame> = { emptyMap() },
 	private val trackingOverrideDriverReady: () -> Boolean = { false },
 	private val trackingOverrideRegisteredHands: () -> Set<TrackingOverrideHand> = { emptySet() },
 	private val overrideEditorToken: String? = System.getenv("MONAKA_TRACKING_OVERRIDE_EDITOR_TOKEN"),
@@ -79,9 +79,15 @@ class MonakaInputConfigurationApi(
 	)
 	class Edit internal constructor(internal val generation: Long, val assignments: Map<TrackerPosition, MainTrackerAssignment>)
 	private fun sixDofSource(assignment: MainTrackerAssignment, candidates: List<Candidate>): TrackerReference? =
-		if (assignment.sourceSelection != null) assignment.sourceSelection.sixDofSource else assignment.mainTracker.takeIf { main ->
-			main.mtp != null || candidates.singleOrNull { it.reference == main }?.capabilities?.supportsSixDof == true
+		assignment.configuredSixDofSource()?.takeIf { main ->
+			assignment.sourceSelection != null || main.mtp != null || candidates.singleOrNull { it.reference == main }?.capabilities?.supportsSixDof == true
 		}
+
+	private fun overrideSource(hand: TrackingOverrideHand, snapshot: Snapshot): TrackerReference? =
+		snapshot.assignments[hand.body]?.let { sixDofSource(it, snapshot.candidates) }
+
+	private fun canEnableOverride(source: TrackerReference?, snapshot: Snapshot): Boolean =
+		!restartPending && source?.mtp != null && snapshot.candidates.any { it.reference == source && it.sixDofSelectable }
 	fun snapshot(now: Long): Snapshot {
 		checkThread()
 		require(now >= 0)
@@ -177,6 +183,9 @@ class MonakaInputConfigurationApi(
 			current.targets[it]?.outputMode?.let { mode -> mode != OutputMode.IK } == true ||
 				edit.assignments[it]?.outputMode?.let { mode -> mode != OutputMode.IK } == true
 		}
+		val handSourceChanged = TrackingOverrideHand.entries.any { hand ->
+			current.targets[hand.body]?.configuredSixDofSource() != edit.assignments[hand.body]?.configuredSixDofSource()
+		}
 
 		val next = TrackerBodyAssignments().also { it.replaceTargets(edit.assignments) }
 		val candidate = configuration.copy(assignments = next, trackingOverride = overrideSelections) // All existing configuration validators.
@@ -194,6 +203,11 @@ class MonakaInputConfigurationApi(
 				assignments.add(row)
 			}
 			document.set<com.fasterxml.jackson.databind.JsonNode>("assignments", assignments)
+			// Canonicalize any loaded legacy binding before changing the assignment
+			// so a legacy source can never be rebound implicitly on the next load.
+			if (handSourceChanged && generated.has("trackingOverride")) {
+				document.set<JsonNode>("trackingOverride", generated["trackingOverride"])
+			}
 			mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(document)
 		}
 		if (requiresRestart) restartPending = true else configuration.assignments.replaceTargets(edit.assignments)
@@ -241,19 +255,24 @@ class MonakaInputConfigurationApi(
 		require(root["readbackToken"]?.textValue() == readbackToken()) { "Saved configuration changed; reload before editing" }
 		val hand = TrackingOverrideConfigJson.hand(requireNotNull(root["hand"]?.textValue()))
 		val current = overrideSelections[hand] ?: TrackingOverrideSelection()
-		val candidates = snapshot(now).candidates
-		val next = TrackingOverrideConfigJson.readSelection(requireNotNull(root["selection"])) { id ->
-			require(id.isTextual)
-			candidates.singleOrNull { it.reference.mtp != null && it.reference.observationId == id.asText() }?.reference
-				?: current.source?.takeIf { it.observationId == id.asText() }
-				?: error("Override source unavailable; reload the source catalog")
-		}
-		if (next == current) return hand
-		if (next.source != null && (next.source != current.source || (next.enabled && !current.enabled))) {
-			require(candidates.singleOrNull { it.reference == next.source }?.sixDofSelectable == true) {
-				"Override source requires declared position and orientation"
+		val edit = TrackingOverrideConfigJson.readEdit(requireNotNull(root["selection"]))
+		val next = if (!edit.enabled && (!edit.sameUniverseConfirmed || edit.gripOffset == null)) {
+			// Release remains possible without an available source or a current calibration.
+			current.copy(enabled = false)
+		} else {
+			val snapshot = snapshot(now)
+			val source = overrideSource(hand, snapshot)
+			if (!edit.enabled && !canEnableOverride(source, snapshot) && current.enabled && edit.gripOffset == current.gripOffset) {
+				current.copy(enabled = false)
+			} else {
+				require(canEnableOverride(source, snapshot)) { "Assign a supported MVIP 6DoF source to this hand first" }
+				require(edit.gripOffset != null && edit.sameUniverseConfirmed) {
+					"Confirm a grip offset and the SteamVR world for this hand assignment"
+				}
+				TrackingOverrideSelection.confirmed(edit.enabled, hand, requireNotNull(source), configuration.space, edit.gripOffset)
 			}
 		}
+		if (next == current) return hand
 		val selections = overrideSelections + (hand to next)
 		val document = mapper.readTree(expectedFile) as ObjectNode
 		require(document["version"].asInt() in 2..4) { "Migrate legacy configuration before editing tracking overrides" }
@@ -359,9 +378,14 @@ class MonakaInputConfigurationApi(
 					"driverReady" to trackingOverrideDriverReady(),
 					"hands" to TrackingOverrideHand.entries.associate { hand ->
 						val selection = overrideSelections[hand] ?: TrackingOverrideSelection()
+						val source = overrideSource(hand, s)
+						val calibrationCurrent = selection.calibrationCurrent(hand, source, configuration.space)
 						hand.name.lowercase() to mapOf(
-							"saved" to TrackingOverrideConfigJson.writeSelection(selection) { it.observationId },
-							"sourceStatus" to if (hand == editedOverride) null else statuses[hand]?.name,
+							"saved" to TrackingOverrideConfigJson.readback(selection, calibrationCurrent),
+							"source" to source?.observationId,
+							"canEnable" to canEnableOverride(source, s),
+							"calibrationCurrent" to calibrationCurrent,
+							"sourceStatus" to statuses[hand]?.takeIf { hand != editedOverride && it.source == source }?.status?.name,
 							"devicePath" to hand.devicePath,
 							"targetPath" to hand.targetPath,
 							"registeredDevicePath" to hand.devicePath.takeIf { hand in registeredHands },

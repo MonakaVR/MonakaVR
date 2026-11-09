@@ -6,12 +6,10 @@ import {
   useSyncExternalStore,
 } from 'react';
 import { useLocalization } from '@fluent/react';
+import ReactModal from 'react-modal';
 import { Button } from '@/components/commons/Button';
-import type {
-  InputCandidate,
-  InputSelectionController,
-} from '@/monaka-input/controller';
-import { sourceDetails, sourceLabel } from '@/monaka-input/source-label';
+import type { InputSelectionController } from '@/monaka-input/controller';
+import { selectedSourceLabel } from '@/monaka-input/source-label';
 import {
   overrideHands,
   overridePaths,
@@ -23,227 +21,144 @@ import {
   type SteamOverrideSnapshot,
 } from '../../../../electron/tracking-override-types';
 
-const EMPTY: OverrideSelection = {
-  enabled: false,
-  source: null,
-  gripOffset: null,
-  sameUniverseConfirmed: false,
-};
 const IDENTITY = ['0', '0', '0', '1', '0', '0', '0'];
-const INPUT_CLASS =
-  'bg-background-80 text-background-10 rounded px-2 py-1 min-w-0';
-const offsetFields = (gripOffset: GripOffset | null) =>
-  gripOffset
-    ? [...gripOffset.positionM, ...gripOffset.rotationWxyz].map(String)
-    : null;
+const OFFSET_FIELDS = ['X (m)', 'Y (m)', 'Z (m)', 'Qw', 'Qx', 'Qy', 'Qz'];
+type OverrideRow = OverrideOutputSnapshot['hands'][OverrideHand];
 
-function HandSettings({
-  hand,
+function HandDetails({
   row,
-  candidates,
-  snapshotFresh,
-  driverReady,
-  canSave,
-  steam,
+  source,
+  hand,
+  editorReady,
+  intended,
   busy,
-  coreToken,
+  registered,
+  steam,
+  save,
   request,
+  close,
 }: {
+  row?: OverrideRow;
+  source: string;
   hand: OverrideHand;
-  row?: OverrideOutputSnapshot['hands'][OverrideHand];
-  candidates: InputCandidate[];
-  snapshotFresh: boolean;
-  driverReady: boolean;
-  canSave: boolean;
-  steam: SteamOverrideSnapshot | null;
+  editorReady: boolean;
+  intended: boolean;
   busy: boolean;
-  coreToken?: string;
+  registered: boolean;
+  steam: SteamOverrideSnapshot | null;
+  save: (selection: OverrideSelection) => Promise<boolean>;
   request: (operation: OverrideRequest) => Promise<boolean>;
+  close: () => void;
 }) {
   const { l10n } = useLocalization();
   const text = (name: string) => l10n.getString('tracking-override-' + name);
-  const saved = row?.saved ?? EMPTY;
-  const [draft, setDraft] = useState(saved);
-  const [baseToken, setBaseToken] = useState<string>();
-  const [offset, setOffset] = useState(() => offsetFields(saved.gripOffset));
-  const update = (fields: Partial<OverrideSelection>) => {
-    setBaseToken((current) => current ?? coreToken);
-    setDraft((current) => ({ ...current, ...fields }));
-  };
-  const candidates6Dof = candidates.filter(
-    (source) => source.origin === 'mvip_pose'
+  const saved = row?.saved;
+  const grip = saved?.gripOffset;
+  const [fields, setFields] = useState<string[] | null>(
+    grip ? [...grip.positionM, ...grip.rotationWxyz].map(String) : null
   );
-  const current = candidates6Dof.find((source) => source.id === draft.source);
-  const savedSource = candidates6Dof.find(
-    (source) => source.id === saved.source
+  const [confirmed, setConfirmed] = useState(
+    saved?.sameUniverseConfirmed ?? false
   );
-  const { devicePath, targetPath } = overridePaths(hand);
-  const registered = snapshotFresh && row?.registeredDevicePath === devicePath;
-  const mapping = steam?.hands[hand];
-  const removeFirst = mapping?.owned && saved.enabled && !draft.enabled;
-  const handLabel = text(hand);
-  const numbers = offset?.map((value) =>
+  const numbers = fields?.map((value) =>
     value.trim() === '' ? NaN : Number(value)
   );
-  const validOffset = numbers?.length === 7 && numbers.every(Number.isFinite);
-  const gripOffset: GripOffset | null = validOffset
+  const offset: GripOffset | null = numbers?.every(Number.isFinite)
     ? {
         positionM: numbers.slice(0, 3) as GripOffset['positionM'],
         rotationWxyz: numbers.slice(3) as GripOffset['rotationWxyz'],
       }
     : null;
-  const changed = baseToken !== undefined;
-  const formValid =
-    (!offset || validOffset) &&
-    (!draft.enabled ||
-      (!!draft.source && !!gripOffset && draft.sameUniverseConfirmed));
-  const sourceStatus = !draft.source
-    ? 'unassigned'
-    : !snapshotFresh
-      ? 'status-unknown'
-      : !current
-        ? 'source-unavailable'
-        : !current.capabilities
-          ? 'capability-unknown'
-          : !current.sixDofSelectable
-            ? 'capability-unsupported'
-            : row?.saved.enabled &&
-                row.saved.source === draft.source &&
-                row.sourceStatus
-              ? row.sourceStatus.toLowerCase().replaceAll('_', '-')
-              : current.sixDofUsableNow
-                ? 'full'
-                : 'incomplete';
-
+  const editing = editorReady && !!row?.source && row.canEnable;
+  const { targetPath, devicePath } = overridePaths(hand);
+  const mapping = steam?.hands[hand];
   return (
-    <fieldset className="rounded border border-background-50 p-4 space-y-3 min-w-0">
-      <legend className="font-bold px-2">{handLabel}</legend>
+    <>
+      <h2 className="text-xl font-bold">
+        {text(hand)} · {text('offset-settings')}
+      </h2>
       <p>
         {text('target')} <code>{targetPath}</code>
       </p>
       <p>
         {text('device-path')} <code>{devicePath}</code>
       </p>
-      <label className="block">
-        <input
-          type="checkbox"
-          checked={draft.enabled}
-          disabled={!canSave || busy}
-          onChange={(event) => update({ enabled: event.target.checked })}
-          aria-label={handLabel + ' ' + text('enabled')}
-        />{' '}
-        {text('enabled')}
-      </label>
-      <label className="block">
-        {text('source')}{' '}
-        <select
-          className={INPUT_CLASS + ' w-full'}
-          aria-label={handLabel + ' ' + text('source')}
-          value={draft.source ?? ''}
-          disabled={!canSave || busy}
-          onChange={(event) => {
-            update({
-              source: event.target.value || null,
-              sameUniverseConfirmed: false,
-            });
-            setOffset(null);
-          }}
-        >
-          <option value="">{text('unassigned')}</option>
-          {draft.source && !current && (
-            <option value={draft.source}>{text('source-unavailable')}</option>
-          )}
-          {candidates6Dof.map((candidate) => (
-            <option
-              key={candidate.id}
-              value={candidate.id}
-              title={sourceDetails(candidate)}
-              disabled={!candidate.sixDofSelectable}
-            >
-              {sourceLabel(candidate, candidates6Dof, text('status-unknown'))}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p role="status">
-        {text('source-status')} {text(sourceStatus)}
-      </p>
-      <label className="block">
-        <input
-          type="checkbox"
-          checked={draft.sameUniverseConfirmed}
-          disabled={!canSave || busy}
-          onChange={(event) =>
-            update({ sameUniverseConfirmed: event.target.checked })
-          }
-        />{' '}
-        {text('universe')}
-      </label>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="secondary"
-          disabled={!canSave || busy}
-          onClick={() => {
-            update({});
-            setOffset(IDENTITY);
-          }}
-        >
-          {text('use-identity')}
-        </Button>
-        <span>{text(offset ? 'offset-help' : 'no-grip-offset')}</span>
-      </div>
-      {offset && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {['X (m)', 'Y (m)', 'Z (m)', 'Qw', 'Qx', 'Qy', 'Qz'].map(
-            (name, index) => (
-              <label key={name} className="min-w-0">
-                {name}{' '}
-                <input
-                  className={INPUT_CLASS + ' w-full'}
-                  type="number"
-                  step="any"
-                  value={offset[index]}
-                  disabled={!canSave || busy}
-                  onChange={(event) => {
-                    update({});
-                    setOffset(
-                      offset.map((value, i) =>
-                        i === index ? event.target.value : value
-                      )
-                    );
-                  }}
-                />
-              </label>
-            )
-          )}
-        </div>
+      {row && (
+        <>
+          <p>
+            {text('source')} {source}
+          </p>
+          <p role="status">
+            {text('source-status')}{' '}
+            {text(
+              row.sourceStatus?.toLowerCase().replaceAll('_', '-') ??
+                'status-unknown'
+            )}
+          </p>
+          <p>
+            {text(
+              registered ? 'previously-registered' : 'registration-unverified'
+            )}
+          </p>
+        </>
       )}
-      <p role="status">
-        {text('saved')}{' '}
-        {text(row ? (saved.enabled ? 'on' : 'off') : 'status-unknown')}
-        {saved.source && (
-          <>
-            {' '}
-            ·{' '}
-            {savedSource
-              ? sourceLabel(
-                  savedSource,
-                  candidates6Dof,
-                  text('source-unavailable')
-                )
-              : text('source-unavailable')}
-          </>
-        )}
-      </p>
-      <p role="status">
-        {text(
-          !registered
-            ? 'registration-unverified'
-            : driverReady
-              ? 'driver-connected'
-              : 'previously-registered'
-        )}
-      </p>
+      {row?.source && (
+        <>
+          <p>{text('offset-help')}</p>
+          <label className="block">
+            <input
+              type="checkbox"
+              checked={confirmed}
+              disabled={!editing || busy}
+              onChange={(event) => setConfirmed(event.target.checked)}
+            />{' '}
+            {text('universe')}
+          </label>
+          <Button
+            variant="secondary"
+            disabled={!editing || busy}
+            onClick={() => setFields(IDENTITY)}
+          >
+            {text('use-identity')}
+          </Button>
+          {fields && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {OFFSET_FIELDS.map((name, index) => (
+                <label key={name} className="min-w-0">
+                  {name}{' '}
+                  <input
+                    className="bg-background-80 text-background-10 rounded px-2 py-1 min-w-0 w-full"
+                    type="number"
+                    step="any"
+                    value={fields[index]}
+                    disabled={!editing || busy}
+                    onChange={(event) =>
+                      setFields(
+                        fields.map((value, i) =>
+                          i === index ? event.target.value : value
+                        )
+                      )
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+          )}
+          <Button
+            variant="primary"
+            disabled={!editing || busy || !offset || !confirmed}
+            onClick={() =>
+              void save({
+                enabled: intended || !!saved?.enabled,
+                gripOffset: offset,
+                sameUniverseConfirmed: confirmed,
+              })
+            }
+          >
+            {text('save-offset')}
+          </Button>
+        </>
+      )}
       <p role="status">
         {text('steam-settings')}{' '}
         {text(
@@ -256,44 +171,8 @@ function HandSettings({
                 : 'unmapped'
         )}
       </p>
-      <p role="status">{text('active-unverified')}</p>
-      {removeFirst && <p>{text('remove-first')}</p>}
+      <p>{text('active-unverified')}</p>
       <div className="flex flex-wrap gap-2">
-        <Button
-          variant="primary"
-          disabled={
-            !canSave ||
-            busy ||
-            !baseToken ||
-            !changed ||
-            !formValid ||
-            !!removeFirst
-          }
-          onClick={() => {
-            if (!baseToken) return;
-            void request({
-              action: 'save',
-              hand,
-              token: baseToken,
-              selection: { ...draft, gripOffset },
-            }).then((ok) => {
-              if (ok) setBaseToken(undefined);
-            });
-          }}
-        >
-          {text('save')}
-        </Button>
-        <Button
-          variant="secondary"
-          disabled={busy || !changed}
-          onClick={() => {
-            setDraft(saved);
-            setBaseToken(undefined);
-            setOffset(offsetFields(saved.gripOffset));
-          }}
-        >
-          {text('discard')}
-        </Button>
         <Button
           variant="secondary"
           disabled={
@@ -302,8 +181,10 @@ function HandSettings({
             !!mapping?.owned ||
             !!mapping?.conflict ||
             !registered ||
-            !saved.enabled ||
-            changed
+            !editorReady ||
+            !row?.saved.enabled ||
+            !row.canEnable ||
+            !row.calibrationCurrent
           }
           onClick={() => {
             if (steam)
@@ -322,16 +203,26 @@ function HandSettings({
         >
           {text('remove')}
         </Button>
+        <Button
+          variant="secondary"
+          disabled={busy}
+          onClick={() => void request({ action: 'snapshot' })}
+        >
+          {text('reload')}
+        </Button>
+        <Button variant="secondary" disabled={busy} onClick={close}>
+          {l10n.getString('assignment-close')}
+        </Button>
       </div>
-    </fieldset>
+    </>
   );
 }
 
-export function TrackingOverridePanel({
-  model,
-}: {
-  model: InputSelectionController;
-}) {
+export function useTrackingOverrideControls(
+  model: InputSelectionController,
+  connected: boolean,
+  assignmentBusy: boolean
+) {
   const { l10n } = useLocalization();
   const text = (name: string) => l10n.getString('tracking-override-' + name);
   const state = useSyncExternalStore(model.subscribe, () => model.state);
@@ -340,25 +231,36 @@ export function TrackingOverridePanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [restartRequired, setRestartRequired] = useState(false);
+  const [detail, setDetail] = useState<OverrideHand | null>(null);
+  const [intent, setIntent] = useState<Partial<Record<OverrideHand, boolean>>>(
+    {}
+  );
   const pending = useRef(false);
   const request = useCallback(
-    async (operation: OverrideRequest) => {
+    async (operation: OverrideRequest, quiet = false) => {
       if (!editor || pending.current) return false;
       pending.current = true;
       setBusy(true);
       setError('');
       try {
         const reply = await editor(operation);
-        if (reply.type === 'steam') {
+        if (reply.settings) {
           setSteam(reply.settings);
           if (operation.action !== 'snapshot') setRestartRequired(true);
         }
-        if (operation.action === 'save') await model.load();
+        if (reply.type === 'core') {
+          await model.load();
+          if (reply.error) {
+            setError(reply.error);
+            return false;
+          }
+        }
         return true;
       } catch (cause) {
-        setError(cause instanceof Error ? cause.message : String(cause));
-        if (operation.action !== 'save') setSteam(null);
-        else await model.load();
+        if (!quiet)
+          setError(cause instanceof Error ? cause.message : String(cause));
+        if (operation.action === 'save') await model.load();
+        else if (operation.action === 'snapshot') setSteam(null);
         return false;
       } finally {
         pending.current = false;
@@ -368,52 +270,197 @@ export function TrackingOverridePanel({
     [editor, model]
   );
   useEffect(() => {
-    void request({ action: 'snapshot' });
+    void request({ action: 'snapshot' }, true);
   }, [request]);
-  const snapshot = state.snapshot;
-  return (
-    <section
-      aria-labelledby="tracking-override-title"
-      className="bg-background-70 text-background-10 rounded-lg p-5 space-y-4 min-w-0 break-words"
+
+  const rows = state.snapshot?.trackingOverride?.hands;
+  const coreToken = state.snapshot?.readbackToken;
+  const editorReady =
+    !!editor &&
+    !!coreToken &&
+    connected &&
+    state.snapshotFresh &&
+    !state.busy &&
+    !assignmentBusy;
+  const save = async (hand: OverrideHand, selection: OverrideSelection) => {
+    if (!coreToken || !editorReady) return false;
+    const saved = await request({
+      action: 'save',
+      hand,
+      token: coreToken,
+      selection,
+    });
+    if (saved) setIntent((current) => ({ ...current, [hand]: false }));
+    return saved;
+  };
+  const toggle = (hand: OverrideHand, enabled: boolean) => {
+    const row = rows?.[hand];
+    if (!row) return;
+    if (!enabled && intent[hand] && !row.saved.enabled) {
+      setIntent((current) => ({ ...current, [hand]: false }));
+      return;
+    }
+    if (enabled && (!row.canEnable || !row.calibrationCurrent)) {
+      setIntent((current) => ({ ...current, [hand]: true }));
+      return;
+    }
+    void save(hand, {
+      enabled,
+      gripOffset: row.saved.gripOffset,
+      sameUniverseConfirmed: row.saved.sameUniverseConfirmed,
+    });
+  };
+  const review = (hand: OverrideHand) => {
+    const row = rows?.[hand];
+    if (intent[hand]) {
+      if (!row?.source) return 'pending-source';
+      return row.canEnable ? 'pending-offset' : 'pending-capability';
+    }
+    if (row?.saved.enabled && !row.calibrationCurrent)
+      return row.source ? 'review-offset' : 'review-source';
+    return null;
+  };
+  const recovery = (hand: OverrideHand) =>
+    steam?.hands[hand].owned ? (
+      <button
+        type="button"
+        className="text-xs underline"
+        onClick={(event) => {
+          event.stopPropagation();
+          setDetail(hand);
+        }}
+        disabled={busy}
+      >
+        {text('recover-hand')}
+      </button>
+    ) : null;
+  const controls = (hand: OverrideHand) => {
+    const row = rows?.[hand];
+    return (
+      <>
+        <label
+          className="inline-flex items-center gap-1 whitespace-nowrap text-xs"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            aria-label={text(hand) + ' ' + text('title')}
+            aria-describedby={
+              review(hand) ? 'override-review-' + hand : undefined
+            }
+            checked={!!row?.saved.enabled || !!intent[hand]}
+            disabled={!editorReady || !row || busy}
+            onChange={(event) => toggle(hand, event.target.checked)}
+          />
+          {text('toggle')}
+        </label>
+        {row?.source ? (
+          <button
+            type="button"
+            className="text-xs underline"
+            aria-label={text(hand) + ' ' + text('offset-settings')}
+            disabled={!editor || busy}
+            onClick={(event) => {
+              event.stopPropagation();
+              setDetail(hand);
+            }}
+          >
+            {text('offset-settings')}
+          </button>
+        ) : (
+          recovery(hand)
+        )}
+      </>
+    );
+  };
+  const row = detail && connected ? rows?.[detail] : undefined;
+  const close = () => {
+    if (!busy) setDetail(null);
+  };
+  const status = (
+    <>
+      {connected &&
+        overrideHands.map((hand) => {
+          const message = review(hand);
+          return (
+            message && (
+              <p
+                key={hand}
+                id={'override-review-' + hand}
+                role="status"
+                className="text-sm"
+              >
+                {text(hand)} · {text(message)}
+              </p>
+            )
+          );
+        })}
+      {restartRequired && (
+        <p role="status" className="text-sm">
+          {text('restart-required')}
+        </p>
+      )}
+      {!detail && error && <p role="alert">{error}</p>}
+    </>
+  );
+  const dialog = detail && (
+    <ReactModal
+      isOpen
+      onRequestClose={close}
+      shouldCloseOnOverlayClick={!busy}
+      shouldCloseOnEsc={!busy}
+      contentLabel={text(detail) + ' ' + text('title')}
+      overlayClassName="fixed inset-0 z-30 grid place-items-center bg-background-90 bg-opacity-90 p-4"
+      className="w-full max-w-xl max-h-full overflow-auto rounded-lg bg-background-70 text-background-10 p-4 space-y-3 outline-none"
     >
-      <h2 id="tracking-override-title" className="text-xl font-bold">
-        {text('title')}
-      </h2>
-      <p>{text('help')}</p>
-      {!editor && <p role="status">{text('desktop-required')}</p>}
+      <HandDetails
+        key={detail + JSON.stringify([row?.source, row?.saved])}
+        row={row}
+        source={selectedSourceLabel(
+          row?.source,
+          state.snapshot?.candidates ?? [],
+          text('unassigned'),
+          text('source-unavailable')
+        )}
+        hand={detail}
+        editorReady={editorReady}
+        intended={!!intent[detail]}
+        busy={busy}
+        registered={
+          state.snapshotFresh &&
+          row?.registeredDevicePath === overridePaths(detail).devicePath
+        }
+        steam={steam}
+        save={(selection) => save(detail, selection)}
+        request={request}
+        close={close}
+      />
       {error && <p role="alert">{error}</p>}
       {restartRequired && <p role="status">{text('restart-required')}</p>}
-      {overrideHands.map((hand) => {
-        const row = snapshot?.trackingOverride?.hands?.[hand];
-        return (
-          <HandSettings
-            key={hand + JSON.stringify(row?.saved ?? EMPTY)}
-            hand={hand}
-            row={row}
-            candidates={snapshot?.candidates ?? []}
-            snapshotFresh={state.snapshotFresh}
-            driverReady={snapshot?.trackingOverride?.driverReady === true}
-            canSave={
-              !!editor &&
-              !!row &&
-              state.snapshotFresh &&
-              !state.busy &&
-              !!snapshot?.readbackToken
-            }
-            steam={steam}
-            busy={busy}
-            coreToken={snapshot?.readbackToken}
-            request={request}
-          />
-        );
-      })}
+    </ReactModal>
+  );
+  const coreless = (
+    <section className="p-4 space-y-3">
+      <h2 className="text-xl font-bold">{text('title')}</h2>
+      <p>{text('coreless-help')}</p>
+      {overrideHands.map(
+        (hand) =>
+          steam?.hands[hand].owned && (
+            <p key={hand}>
+              {text(hand)} · {recovery(hand)}
+            </p>
+          )
+      )}
       <Button
         variant="secondary"
-        disabled={!editor || busy}
+        disabled={busy}
         onClick={() => void request({ action: 'snapshot' })}
       >
         {text('reload')}
       </Button>
+      {status}
+      {dialog}
     </section>
   );
+  return { controls, status, dialog, coreless };
 }

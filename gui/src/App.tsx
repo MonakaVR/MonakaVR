@@ -67,6 +67,7 @@ import { AppLocalizationProvider } from './i18n/config';
 import { openUrl } from './hooks/crossplatform';
 import { UdevRulesModal } from './components/onboarding/UdevRulesModal';
 import { MonakaInputSettings } from './components/settings/pages/MonakaInputSettings';
+import { inputAssignmentsPath } from './monaka-input/home-catalog';
 
 export const GH_REPO = 'SlimeVR/SlimeVR-Server';
 export const VersionContext = createContext('');
@@ -78,7 +79,8 @@ const SentryRoutes = withSentryReactRouterV6Routing(Routes);
 function ServerLayout({ connected }: { connected: boolean }) {
   const { pathname } = useLocation();
   const recoveryPage =
-    pathname === '/settings/monaka-input' && window.electronAPI?.trackingOverride;
+    (pathname === inputAssignmentsPath || pathname === '/settings/monaka-input') &&
+    window.electronAPI?.trackingOverride;
   return connected || recoveryPage ? (
     <Layout offlineRecovery={!connected} />
   ) : (
@@ -97,6 +99,7 @@ function Layout({ offlineRecovery }: { offlineRecovery: boolean }) {
       <UnknownDeviceModal />
       <UdevRulesModal />
       <SentryRoutes>
+        <Route path="/settings/monaka-input" element={<MonakaInputSettings />} />
         <Route element={<AppLayout offlineRecovery={offlineRecovery} />}>
           <Route
             path="/"
@@ -156,7 +159,6 @@ function Layout({ offlineRecovery }: { offlineRecovery: boolean }) {
           >
             <Route path="firmware-tool" element={<FirmwareToolSettings />} />
             <Route path="trackers" element={<GeneralSettings />} />
-            <Route path="monaka-input" element={<MonakaInputSettings />} />
             <Route path="serial" element={<Serial />} />
             <Route path="osc/router" element={<OSCRouterSettings />} />
             <Route path="osc/vrchat" element={<VRCOSCSettings />} />

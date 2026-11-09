@@ -9,6 +9,7 @@ import dev.monaka.protocol.v2.MtpPose
 import dev.monaka.protocol.v2.Validity
 import dev.monaka.tracking.LogicalTracker
 import dev.monaka.tracking.MonakaConfiguration
+import dev.monaka.tracking.TrackerBodyAssignments
 import dev.monaka.tracking.TrackerReference
 import dev.monaka.tracking.TrackingOverrideGripOffset
 import dev.monaka.tracking.TrackingOverrideHand
@@ -51,16 +52,22 @@ class TrackingOverrideProductTests {
 		fun identity(pose: MtpPose) = LogicalTracker(pose.source_id, pose.tracker_id, pose.publisher_id)
 		val half = sqrt(0.5)
 		val config = dir.resolve("input.json")
+		val assignments = TrackerBodyAssignments().also {
+			it.configureSources(TrackingOverrideHand.LEFT.body, null, TrackerReference.mtp(identity(left)), true)
+			it.configureSources(TrackingOverrideHand.RIGHT.body, null, TrackerReference.mtp(identity(right)), true)
+		}
 		MonakaConfiguration(
 			left.coordinate_space,
+			assignments,
 			port = 0,
 			trackingOverride = mapOf(
-				TrackingOverrideHand.LEFT to TrackingOverrideSelection(
-					true, TrackerReference.mtp(identity(left)), TrackingOverrideGripOffset(Vector3(1f, 2f, 3f)), true,
+				TrackingOverrideHand.LEFT to TrackingOverrideSelection.confirmed(
+					true, TrackingOverrideHand.LEFT, TrackerReference.mtp(identity(left)), left.coordinate_space,
+					TrackingOverrideGripOffset(Vector3(1f, 2f, 3f)),
 				),
-				TrackingOverrideHand.RIGHT to TrackingOverrideSelection(
-					true, TrackerReference.mtp(identity(right)),
-					TrackingOverrideGripOffset(Vector3(1f, 0f, 0f), Quaternion(half.toFloat(), half.toFloat(), 0f, 0f)), true,
+				TrackingOverrideHand.RIGHT to TrackingOverrideSelection.confirmed(
+					true, TrackingOverrideHand.RIGHT, TrackerReference.mtp(identity(right)), right.coordinate_space,
+					TrackingOverrideGripOffset(Vector3(1f, 0f, 0f), Quaternion(half.toFloat(), half.toFloat(), 0f, 0f)),
 				),
 			),
 		).save(config)
@@ -174,8 +181,27 @@ class TrackingOverrideProductTests {
 				assertPosition(TrackingOverrideHand.RIGHT, 2.0, 2.0, 3.0)
 				val nearUnit = last(TrackingOverrideHand.RIGHT)
 				assertEquals(1.0, abs((nearUnit.qw + nearUnit.qx) * half), 1e-5)
+				feed(left, 8)
+				assertPosition(TrackingOverrideHand.LEFT, 2.0, 4.0, 6.0)
+				val replacement = left.copy(publisher_id = "third-opaque-publisher", position = listOf(40.0, 50.0, 60.0))
+				feed(replacement, 0)
+				val mapper = ObjectMapper()
+				val active = mapper.readTree(integration.inputRequest(
+					"""{"type":"monaka_inputs_v1","id":"before-change","action":"snapshot"}""",
+				))
+				val changed = mapper.readTree(integration.inputRequest(mapper.writeValueAsString(mapOf(
+					"type" to "monaka_inputs_v1", "id" to "change-left", "action" to "save", "body" to "LEFT_HAND",
+					"generation" to active["generation"].asText(), "manualSix" to true,
+					"qSource" to identity(left).observationId, "sixDofSource" to identity(replacement).observationId,
+				))))
+				assertTrue(changed["ok"].asBoolean(), changed.toString())
+				assertEquals(identity(replacement).observationId, changed.at("/trackingOverride/hands/left/source").asText())
+				assertFalse(changed.at("/trackingOverride/hands/left/calibrationCurrent").asBoolean())
+				tick()
+				assertUnavailable(TrackingOverrideHand.LEFT)
+				assertPosition(TrackingOverrideHand.RIGHT, 2.0, 2.0, 3.0)
 				assertTrue(bridge.messages.none { it.hasTrackerAdded() })
-				assertTrue(integration.runtime.assignments.snapshot().targets.isEmpty())
+				assertEquals(setOf(TrackingOverrideHand.LEFT.body, TrackingOverrideHand.RIGHT.body), integration.runtime.assignments.snapshot().targets.keys)
 			}
 		}
 	}

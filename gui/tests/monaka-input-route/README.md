@@ -1,4 +1,4 @@
-# Independent input settings route smoke
+# Tracker assignment route smoke
 
 Run from `gui/` after the frozen workspace dependency install:
 
@@ -8,7 +8,8 @@ pnpm exec playwright test --config tests/monaka-input-route/playwright.config.ts
 ```
 
 The suite loads the real application entry point, providers, layout, routing,
-settings navigation, and unchanged input widget/controller/socket. Edge must be
+the body avatar and normal Q/6DoF picker, plus the legacy settings bookmark
+redirect. Edge must be
 installed. The Vite server is owned by Playwright on loopback. Set
 `MONAKA_INPUT_SMOKE_PORT` to an available OS-assigned test port (default 4207).
 The offline runner reserves and releases an ephemeral port immediately before
@@ -26,9 +27,10 @@ and MTP process suites.
 The Electron case uses an isolated main/preload, real Electron renderer and the
 real App. Fixture storage stays under `gui/build/monaka-input-route`. Every
 Bridge API call crosses an instrumented IPC handler which fails and increments
-a counter; this route must make zero calls. The fixture does not launch the
-product Electron main or its retained legacy services. Whole-product startup
-independence and real OS interaction require separate validation.
+a counter; this route must make zero calls. The hand Override test uses a
+fixture settings IPC and checks the avatar controls, mirror/narrow layouts,
+normal 6DoF save, contextual offset, and Coreless mapping removal. The fixture
+does not launch the product Electron main, SteamVR, or legacy services.
 
 This suite adds no producer lifecycle, configuration or private API dependency.
 It does not fulfill the two independent conforming MVIP implementation gate.
