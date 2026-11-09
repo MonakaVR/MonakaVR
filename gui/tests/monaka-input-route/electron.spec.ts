@@ -309,9 +309,10 @@ test('Grip offset edits preview live in millimetres and XYZ degrees', async () =
       manualSix: true,
       mode: 'ik',
     });
+    const savedHalfAngle = (90.123456 * Math.PI) / 360;
     const savedGrip = {
-      positionM: [0.01, -0.0000208, 0.0000245],
-      rotationWxyz: [Math.SQRT1_2, 0, 0, Math.SQRT1_2],
+      positionM: [0.01, -0.0000208491, 0.0000245491],
+      rotationWxyz: [Math.cos(savedHalfAngle), 0, 0, Math.sin(savedHalfAngle)],
     } satisfies NonNullable<OverrideSelection['gripOffset']>;
     const saved = {
       enabled: true,
@@ -362,17 +363,22 @@ test('Grip offset edits preview live in millimetres and XYZ degrees', async () =
     await expect(field('Z (mm)')).toHaveValue('0.0245');
     await expect(field('X (°)')).toHaveValue('0');
     await expect(field('Y (°)')).toHaveValue('0');
-    await expect(field('Z (°)')).toHaveValue('90');
+    await expect(field('Z (°)')).toHaveValue('90.1235');
+    await saveOffset.click();
+    await expect.poll(async () => (await requests())[0]?.selection).toEqual(saved);
+    await expect(field('X (mm)')).toBeEnabled();
     expect(await previews()).toEqual([]);
     await field('X (mm)').press('ArrowUp');
     await expect(field('X (mm)')).toHaveValue('11');
     await expect.poll(async () => (await previews()).length).toBe(1);
     await field('X (mm)').fill('12');
     await field('X (mm)').fill('13');
-    await field('X (mm)').fill('14');
+    await field('X (mm)').fill('14.00015');
     await field('X (mm)').fill('');
     await expect(saveOffset).toBeDisabled();
-    expect(await requests()).toEqual([]);
+    await field('X (mm)').fill('1e308');
+    await expect(saveOffset).toBeDisabled();
+    expect(await requests()).toHaveLength(1);
     expect(
       (await previews()).map((request) => request.gripOffset?.positionM[0])
     ).toEqual([0.011]);
@@ -383,7 +389,7 @@ test('Grip offset edits preview live in millimetres and XYZ degrees', async () =
           .slice(0, 3)
           .map((request) => request.gripOffset?.positionM[0])
       )
-      .toEqual([0.011, 0.014, 0.014]);
+      .toEqual([0.011, 14.0002 / 1000, 14.0002 / 1000]);
     const confirmed = detail.getByLabel(
       'I verified the source world aligns with the SteamVR driver universe'
     );
@@ -392,23 +398,34 @@ test('Grip offset edits preview live in millimetres and XYZ degrees', async () =
       .poll(async () => (await previews()).at(-1)?.gripOffset)
       .toBeNull();
     await confirmed.check();
-    await field('X (mm)').fill('11');
-    await saveOffset.click();
+    const editedGrip = {
+      ...savedGrip,
+      positionM: [11.2345 / 1000, savedGrip.positionM[1], savedGrip.positionM[2]],
+    };
+    await field('X (mm)').fill('11.23445');
     await expect
-      .poll(async () => (await requests())[0]?.selection)
-      .toEqual({
-        ...saved,
-        gripOffset: { ...savedGrip, positionM: [0.011, -0.0000208, 0.0000245] },
-      });
+      .poll(async () => (await previews()).at(-1)?.gripOffset)
+      .toEqual(editedGrip);
+    await expect(field('X (mm)')).toHaveValue('11.23445');
+    // A save can run while the edited field still has focus.
+    await saveOffset.evaluate((button: HTMLButtonElement) => button.click());
+    await expect
+      .poll(async () => (await requests())[1]?.selection)
+      .toEqual({ ...saved, gripOffset: editedGrip });
+
+    await field('X (°)').fill('1e308');
+    await expect(saveOffset).toBeEnabled();
 
     await field('X (°)').fill('179');
     await field('X (°)').press('ArrowUp');
     await expect(field('X (°)')).toHaveValue('180');
     await field('Y (°)').fill('90');
-    await field('Z (°)').fill('-90');
+    await field('Z (°)').fill('-89.99997');
+    await field('Z (°)').press('Tab');
+    await expect(field('Z (°)')).toHaveValue('-90');
     await saveOffset.click();
-    await expect.poll(async () => (await requests()).length).toBe(2);
-    const rotationSave = (await requests())[1].selection;
+    await expect.poll(async () => (await requests()).length).toBe(3);
+    const rotationSave = (await requests())[2].selection;
     const quaternion = rotationSave.gripOffset?.rotationWxyz;
     if (!quaternion) throw new Error('Expected rotation offset save');
     expect(Math.hypot(...quaternion)).toBeCloseTo(1, 12);
@@ -416,6 +433,9 @@ test('Grip offset edits preview live in millimetres and XYZ degrees', async () =
     expect(
       Math.abs(quaternion.reduce((dot, component) => dot + component * 0.5, 0))
     ).toBeCloseTo(1, 12);
+    for (const component of quaternion) {
+      expect(Math.abs(component)).toBeCloseTo(0.5, 12);
+    }
     left.saved = rotationSave;
     await expect(field('X (°)')).toHaveValue('90');
     await expect(field('Y (°)')).toHaveValue('90');
@@ -432,7 +452,7 @@ test('Grip offset edits preview live in millimetres and XYZ degrees', async () =
     await field('X (mm)').fill('12');
     await saveOffset.click();
     await expect
-      .poll(async () => (await requests())[2]?.selection.gripOffset)
+      .poll(async () => (await requests())[3]?.selection.gripOffset)
       .toEqual({
         positionM: [0.012, 0, 0],
         rotationWxyz: [1, 0, 0, 0],

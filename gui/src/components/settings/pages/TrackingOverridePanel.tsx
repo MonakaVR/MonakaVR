@@ -25,6 +25,10 @@ import {
 
 const IDENTITY = ['0', '0', '0', '0', '0', '0'];
 const OFFSET_FIELDS = ['X (mm)', 'Y (mm)', 'Z (mm)', 'X (°)', 'Y (°)', 'Z (°)'];
+const OFFSET_FORMAT = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 4,
+  useGrouping: false,
+});
 const PREVIEW_UPDATE_MS = 75;
 const PREVIEW_RENEW_MS = 500;
 type OverrideRow = OverrideOutputSnapshot['hands'][OverrideHand];
@@ -141,14 +145,22 @@ function useOffsetPreview(
   return { update, stop, failed };
 }
 
+function roundOffsetValue(value: number) {
+  if (!Number.isFinite(value)) return value;
+  const rounded = Number(OFFSET_FORMAT.format(value));
+  return rounded === 0 ? 0 : rounded;
+}
+
+function readOffsetField(value: string) {
+  return value.trim() === '' ? NaN : roundOffsetValue(Number(value));
+}
+
 function rotationDegrees([w, x, y, z]: GripOffset['rotationWxyz']) {
   const angles = new Euler().setFromQuaternion(
     new Quaternion(x, y, z, w).normalize(),
     'XYZ'
   );
-  return [angles.x, angles.y, angles.z].map((radians) =>
-    Number(MathUtils.radToDeg(radians).toFixed(10))
-  );
+  return [angles.x, angles.y, angles.z].map(MathUtils.radToDeg);
 }
 
 function rotationWxyz(
@@ -202,51 +214,47 @@ function HandDetails({
   const text = (name: string) => l10n.getString('tracking-override-' + name);
   const saved = row?.saved;
   const grip = saved?.gripOffset;
-  const savedAngles = grip ? rotationDegrees(grip.rotationWxyz) : null;
-  const [fields, setFields] = useState<string[] | null>(
-    grip && savedAngles
-      ? [
-          ...grip.positionM.map((metres) => String(metres * 1000)),
-          ...savedAngles.map(String),
-        ]
-      : null
+  const savedValues = grip
+    ? [
+        ...grip.positionM.map((metres) => metres * 1000),
+        ...rotationDegrees(grip.rotationWxyz),
+      ]
+    : [];
+  // A null field keeps the saved value independent of its rounded display.
+  const [fields, setFields] = useState<(string | null)[] | null>(() =>
+    grip ? OFFSET_FIELDS.map(() => null) : null
   );
   const [confirmed, setConfirmed] = useState(
     saved?.sameUniverseConfirmed ?? false
   );
-  const [identitySelected, setIdentitySelected] = useState(false);
   const preview = useOffsetPreview(hand, previewToken, invoke);
-  const readOffset = (
-    values: string[] | null,
-    identity: boolean
-  ): GripOffset | null => {
-    const numbers = values?.map((value) =>
-      value.trim() === '' ? NaN : Number(value)
+  const readOffset = (values: (string | null)[] | null): GripOffset | null => {
+    if (!values) return null;
+    const numbers = values.map((value, index) =>
+      value === null ? savedValues[index] : readOffsetField(value)
     );
-    if (!numbers?.every(Number.isFinite)) return null;
-    const positionM = numbers.slice(0, 3).map((millimetres, index) => {
-      const savedMetres = grip?.positionM[index];
-      // Keep unchanged axes exact through a display-unit round trip.
-      return savedMetres !== undefined && millimetres === savedMetres * 1000
-        ? savedMetres
-        : millimetres / 1000;
-    }) as GripOffset['positionM'];
+    if (!numbers.every(Number.isFinite)) return null;
+    const positionM = numbers
+      .slice(0, 3)
+      .map((millimetres, index) =>
+        grip && values[index] === null
+          ? grip.positionM[index]
+          : millimetres / 1000
+      ) as GripOffset['positionM'];
     if (!positionM.every((metres) => Number.isFinite(Math.fround(metres))))
       return null;
     return {
       positionM,
       rotationWxyz:
-        !identity &&
-        grip &&
-        savedAngles?.every((angle, index) => angle === numbers[index + 3])
+        grip && values.slice(3).every((value) => value === null)
           ? grip.rotationWxyz
           : rotationWxyz(numbers[3], numbers[4], numbers[5]),
     };
   };
-  const offset = readOffset(fields, identitySelected);
-  const editFields = (next: string[], identity = identitySelected) => {
+  const offset = readOffset(fields);
+  const editFields = (next: (string | null)[]) => {
     setFields(next);
-    const offset = readOffset(next, identity);
+    const offset = readOffset(next);
     if (confirmed && offset) preview.update(offset);
   };
   const editing = editorReady && !!row?.source && row.canEnable;
@@ -304,10 +312,7 @@ function HandDetails({
           <Button
             variant="secondary"
             disabled={!editing || busy}
-            onClick={() => {
-              editFields(IDENTITY, true);
-              setIdentitySelected(true);
-            }}
+            onClick={() => editFields(IDENTITY)}
           >
             {text('use-identity')}
           </Button>
@@ -320,7 +325,10 @@ function HandDetails({
                     className="bg-background-80 text-background-10 rounded px-2 py-1 min-w-0 w-full"
                     type="number"
                     step={1}
-                    value={fields[index]}
+                    value={
+                      fields[index] ??
+                      String(roundOffsetValue(savedValues[index]))
+                    }
                     disabled={!editing || busy}
                     onChange={(event) =>
                       editFields(
@@ -329,6 +337,17 @@ function HandDetails({
                         )
                       )
                     }
+                    onBlur={() => {
+                      const draft = fields[index];
+                      if (draft === null) return;
+                      const rounded = readOffsetField(draft);
+                      if (Number.isFinite(rounded))
+                        setFields(
+                          fields.map((value, i) =>
+                            i === index ? String(rounded) : value
+                          )
+                        );
+                    }}
                   />
                 </label>
               ))}
