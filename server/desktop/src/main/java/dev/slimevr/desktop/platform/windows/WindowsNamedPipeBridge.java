@@ -117,6 +117,11 @@ public class WindowsNamedPipeBridge extends SteamVRBridge
 	}
 
 	@Override
+	protected boolean getSessionScopedRemoteTrackers() {
+		return "steamvr".equals(bridgeSettingsKey);
+	}
+
+	@Override
 	@ThreadSafe
 	protected void signalSend() {
 		if (connection != null)

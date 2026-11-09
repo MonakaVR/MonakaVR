@@ -542,6 +542,7 @@ class InboundTransportSessionTests {
 	}
 
 	private class Capture(receiptClock: () -> Long = { 100 }) : ProtobufBridge("session-test", receiptClock) {
+		override val sessionScopedRemoteTrackers = true
 		val processed = mutableListOf<Pair<ProtobufMessage, TransportSessionHandle?>>()
 		val positionContexts = mutableListOf<TransportSessionHandle?>()
 		val positionsAfterProcessing = mutableListOf<Vector3>()

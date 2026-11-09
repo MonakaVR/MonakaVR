@@ -176,11 +176,15 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 
 	fun trackingOverrideRegisteredHands() = trackingOverride.registeredHands
 
-	@Synchronize("self")
+	/** The primary Windows pipe identifies controller/tracker registrations by wire serial. */
+	protected open val sessionScopedRemoteTrackers = false
+
+	@Synchronize("remoteTrackersByTrackerId")
 	private val remoteTrackersBySerial: MutableMap<String, Tracker> = HashMap()
 
 	@Synchronize("self")
 	private val remoteTrackersByTrackerId: MutableMap<Int, Tracker> = HashMap()
+	private var remoteTrackerSession: TransportSessionHandle? = null
 	private var hadNewData = false
 
 	@Volatile private var directOutputSupported = false
@@ -238,12 +242,55 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	@VRServerThread
 	override fun dataRead() {
 		hadNewData = false
+		if (sessionScopedRemoteTrackers) synchronized(inboundTransportSession) {
+			refreshRemoteTrackerSession()
+		}
 		var envelope: InboundProtobufEnvelope?
 		while ((inputQueue.poll().also { envelope = it }) != null) {
 			val accepted = envelope!!
-			processMessageReceived(accepted.message, accepted.transportSession, accepted.receivedAtSystemNanos)
-			hadNewData = true
+			if (sessionScopedRemoteTrackers && accepted.message.isSessionScopedTrackerMessage()) {
+				synchronized(inboundTransportSession) {
+					refreshRemoteTrackerSession()
+					if (remoteTrackerSession != null && accepted.transportSession === remoteTrackerSession) {
+						processMessageReceived(accepted.message, accepted.transportSession, accepted.receivedAtSystemNanos)
+						hadNewData = true
+					}
+				}
+			} else {
+				processMessageReceived(accepted.message, accepted.transportSession, accepted.receivedAtSystemNanos)
+				hadNewData = true
+			}
 		}
+	}
+
+	// Only the active connection can establish a new registration, including the
+	// HMD at ID 0. Existing HMD numeric/history handling keeps its own trust gates.
+	private fun ProtobufMessage.isSessionScopedTrackerMessage() = when {
+		hasPosition() -> position.trackerId != 0
+		hasUserAction() -> false
+		hasTrackerStatus() -> trackerStatus.trackerId != 0
+		hasTrackerAdded() -> true
+		hasBattery() -> battery.trackerId != 0
+		else -> false
+	}
+
+	/** Called on the server thread with the transport handle locked through dispatch. */
+	private fun refreshRemoteTrackerSession() {
+		val active = currentInboundTransportSession()
+		if (remoteTrackerSession === active) return
+		remoteTrackerSession = active
+		synchronized(remoteTrackersByTrackerId) {
+			remoteTrackersByTrackerId.entries.removeIf { (id, tracker) ->
+				if (id == 0) return@removeIf false // Keep existing HMD registration and trust handling.
+				retireRemoteTracker(tracker)
+				true
+			}
+		}
+	}
+
+	private fun retireRemoteTracker(tracker: Tracker) {
+		tracker.sampleModality = dev.monaka.tracking.TrackingModality.NONE
+		tracker.status = TrackerStatus.DISCONNECTED
 	}
 
 	@VRServerThread
@@ -454,20 +501,38 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 	protected abstract fun createNewTracker(trackerAdded: TrackerAdded): Tracker
 
 	@VRServerThread
+	protected open fun registerRemoteTracker(tracker: Tracker) = instance.registerTracker(tracker)
+
+	@VRServerThread
 	protected fun trackerAddedReceived(trackerAdded: TrackerAdded) {
-		var tracker = getInternalRemoteTrackerById(trackerAdded.trackerId)
-		if (tracker != null) {
-			// TODO reinit?
+		if (sessionScopedRemoteTrackers && trackerAdded.trackerId != 0) {
+			registerSessionRemoteTracker(trackerAdded)
 			return
 		}
-		tracker = createNewTracker(trackerAdded)
-		synchronized(remoteTrackersBySerial) {
-			remoteTrackersBySerial.put(tracker!!.name, tracker)
-		}
+		if (getInternalRemoteTrackerById(trackerAdded.trackerId) != null) return
+		val tracker = createNewTracker(trackerAdded)
 		synchronized(remoteTrackersByTrackerId) {
-			remoteTrackersByTrackerId.put(tracker!!.trackerNum, tracker)
+			remoteTrackersByTrackerId[tracker.trackerNum] = tracker
 		}
-		instance.registerTracker(tracker!!)
+		registerRemoteTracker(tracker)
+	}
+
+	private fun registerSessionRemoteTracker(added: TrackerAdded) = synchronized(remoteTrackersByTrackerId) {
+		val id = added.trackerId
+		val serial = added.trackerSerial
+		if (remoteTrackersByTrackerId[id]?.name == serial) return@synchronized
+
+		// An announcement for a different serial supersedes the old owner of this wire ID.
+		remoteTrackersByTrackerId.remove(id)?.let(::retireRemoteTracker)
+		val known = remoteTrackersBySerial[serial]
+		// Reject a second simultaneous alias for the same serial. Leave the conflicting
+		// index unbound so subsequent packets cannot update its previous owner.
+		if (known != null && remoteTrackersByTrackerId.containsValue(known)) return@synchronized
+		val tracker = known ?: createNewTracker(added).also {
+			registerRemoteTracker(it)
+			if (serial.isNotBlank()) remoteTrackersBySerial[serial] = it
+		}
+		remoteTrackersByTrackerId[id] = tracker
 	}
 
 	@VRServerThread
@@ -557,8 +622,8 @@ abstract class ProtobufBridge @JvmOverloads constructor(
 			directCapabilityToken = null
 		}
 		synchronized(remoteTrackersByTrackerId) {
-			for ((_, value) in remoteTrackersByTrackerId) {
-				value.status = TrackerStatus.DISCONNECTED
+			for ((id, tracker) in remoteTrackersByTrackerId) {
+				if (!sessionScopedRemoteTrackers || id == 0) tracker.status = TrackerStatus.DISCONNECTED
 			}
 		}
 	}
