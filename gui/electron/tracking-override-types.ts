@@ -57,8 +57,15 @@ export type SteamOverrideSnapshot = {
 export type OverrideRequest =
   | { action: 'snapshot' }
   | { action: 'save'; hand: OverrideHand; token: string; selection: OverrideSelection }
+  | {
+      action: 'preview';
+      hand: OverrideHand;
+      token: string;
+      gripOffset: GripOffset | null;
+    }
   | { action: 'apply' | 'remove'; hand: OverrideHand; token: string };
 
 export type OverrideReply =
   | { type: 'steam'; settings: SteamOverrideSnapshot }
+  | { type: 'preview'; settings?: never }
   | { type: 'core'; settings?: SteamOverrideSnapshot; error?: string };

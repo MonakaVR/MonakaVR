@@ -67,7 +67,7 @@ internal object TrackingOverrideConfigJson {
 		return Edit(node["enabled"].booleanValue(), grip, node["sameUniverseConfirmed"].booleanValue())
 	}
 
-	private fun readGrip(node: JsonNode): TrackingOverrideGripOffset {
+	fun readGrip(node: JsonNode): TrackingOverrideGripOffset {
 		require(node.isObject && node.fieldNames().asSequence().toSet() == setOf("positionM", "rotationWxyz")) { "Invalid grip offset" }
 		fun components(name: String, size: Int): List<Float> {
 			val values = node[name]

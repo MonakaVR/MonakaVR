@@ -13,8 +13,17 @@ type LocalCoreConnection = {
     readbackToken?: string;
     trackingOverride?: OverrideOutputSnapshot;
   }>;
+  requestPreview: (fields: Record<string, unknown>) => Promise<void>;
   close: () => void;
 };
+
+function finiteComponents(value: unknown, size: number): boolean {
+  return (
+    Array.isArray(value) &&
+    value.length === size &&
+    Array.from(value).every(Number.isFinite)
+  );
+}
 
 export async function requestTrackingOverride(
   value: unknown,
@@ -44,6 +53,35 @@ export async function requestTrackingOverride(
     throw new Error('Invalid tracking override hand or readback token');
   }
   const hand = value.hand as OverrideHand;
+  if (value.action === 'preview') {
+    if (!('gripOffset' in value) || Object.keys(value).length !== 4)
+      throw new Error('Invalid tracking override preview');
+    const gripOffset = value.gripOffset;
+    if (
+      gripOffset !== null &&
+      (!gripOffset ||
+        typeof gripOffset !== 'object' ||
+        Object.keys(gripOffset).length !== 2 ||
+        !('positionM' in gripOffset) ||
+        !finiteComponents(gripOffset.positionM, 3) ||
+        !('rotationWxyz' in gripOffset) ||
+        !finiteComponents(gripOffset.rotationWxyz, 4))
+    )
+      throw new Error('Invalid tracking override preview');
+    const core = connectCore();
+    try {
+      await core.requestPreview({
+        action: 'preview_override',
+        hand,
+        gripOffset,
+        readbackToken: value.token,
+        editorToken,
+      });
+      return { type: 'preview' };
+    } finally {
+      core.close();
+    }
+  }
   if (value.action === 'save') {
     if (!('selection' in value) || Object.keys(value).length !== 4)
       throw new Error('Invalid tracking override selection');

@@ -36,6 +36,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.math.abs
 import kotlin.math.sqrt
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
@@ -77,6 +78,7 @@ class TrackingOverrideProductTests {
 		var hook: Runnable? = null
 		var now = 1_000_000_000L
 		val errors = mutableListOf<Exception>()
+		val editorToken = "test-desktop-editor"
 		val integration = assertNotNull(
 			MonakaServerIntegration.startIfEnabled(
 				true, { MonakaConfiguration.load(config) }, { emptyList() }, skeleton, { hook = it },
@@ -84,6 +86,7 @@ class TrackingOverrideProductTests {
 				publishTrackingOverride = bridge::publishTrackingOverride,
 				trackingOverrideDriverReady = bridge::trackingOverrideDriverReady,
 				trackingOverrideRegisteredHands = bridge::trackingOverrideRegisteredHands,
+				trackingOverrideEditorToken = editorToken,
 			),
 		)
 		integration.use {
@@ -206,9 +209,65 @@ class TrackingOverrideProductTests {
 				assertEquals(1.0, abs((nearUnit.qw + nearUnit.qx) * half), 1e-5)
 				feed(left, 8)
 				assertPosition(TrackingOverrideHand.LEFT, 2.0, 4.0, 6.0)
+				val mapper = ObjectMapper()
+				fun request(action: String, fields: Map<String, Any?> = emptyMap()) = mapper.readTree(integration.inputRequest(mapper.writeValueAsString(
+					mapOf("type" to "monaka_inputs_v1", "id" to "override-test", "action" to action) + fields,
+				)))
+				val original = request("snapshot")
+				val token = original["readbackToken"].asText()
+				val originalGrip = original.at("/trackingOverride/hands/left/saved/gripOffset")
+				val originalBytes = Files.readAllBytes(config)
+				fun backupCount() = Files.list(dir).use { files -> files.filter { ".pre-input-edit-" in it.fileName.toString() }.count() }
+				val draftGrip = mapOf("positionM" to listOf(4, 5, 6), "rotationWxyz" to listOf(half, half, 0.0, 0.0))
+				fun editFields(readback: String, secret: String) = mapOf("hand" to "left", "readbackToken" to readback, "editorToken" to secret)
+				fun preview(grip: Any?, readback: String = token, secret: String = editorToken) =
+					request("preview_override", editFields(readback, secret) + ("gripOffset" to grip))
+				fun save(grip: Any) = request("save_override", editFields(token, editorToken) + ("selection" to mapOf(
+					"enabled" to true, "gripOffset" to grip, "sameUniverseConfirmed" to true,
+				)))
+				assertFalse(preview(draftGrip, secret = "invalid")["ok"].asBoolean())
+				assertFalse(preview(draftGrip + ("rotationWxyz" to listOf(2, 0, 0, 0)))["ok"].asBoolean())
+				assertEquals(token, request("snapshot")["readbackToken"].asText())
+				val previewReply = preview(draftGrip)
+				assertTrue(previewReply["preview"].asBoolean())
+				assertFalse(previewReply.has("assignments"))
+				tick()
+				assertPosition(TrackingOverrideHand.LEFT, 5.0, 7.0, 9.0)
+				val previewRotation = last(TrackingOverrideHand.LEFT)
+				assertEquals(1.0, abs((previewRotation.qw + previewRotation.qx) * half), 1e-5)
+				assertPosition(TrackingOverrideHand.RIGHT, 2.0, 2.0, 3.0)
+				assertEquals(originalGrip, request("snapshot").at("/trackingOverride/hands/left/saved/gripOffset"))
+				assertContentEquals(originalBytes, Files.readAllBytes(config))
+				assertEquals(0L, backupCount())
+
+				assertTrue(preview(null)["ok"].asBoolean())
+				tick()
+				assertPosition(TrackingOverrideHand.LEFT, 2.0, 4.0, 6.0)
+				assertTrue(preview(draftGrip)["ok"].asBoolean())
+				now += 2_000_000_000L
+				feed(left, 9)
+				assertPosition(TrackingOverrideHand.LEFT, 2.0, 4.0, 6.0)
+
+				assertTrue(preview(draftGrip)["ok"].asBoolean())
+				assertTrue(save(originalGrip)["ok"].asBoolean())
+				tick()
+				assertPosition(TrackingOverrideHand.LEFT, 2.0, 4.0, 6.0)
+				assertContentEquals(originalBytes, Files.readAllBytes(config))
+				assertEquals(0L, backupCount())
+
+				assertTrue(preview(draftGrip)["ok"].asBoolean())
+				val saved = save(draftGrip + ("positionM" to listOf(6, 7, 8)))
+				assertTrue(saved["ok"].asBoolean(), saved.toString())
+				tick()
+				assertPosition(TrackingOverrideHand.LEFT, 7.0, 9.0, 11.0)
+				assertEquals(Vector3(6f, 7f, 8f), MonakaConfiguration.load(config).trackingOverride.getValue(TrackingOverrideHand.LEFT).gripOffset?.position)
+				assertEquals(1L, backupCount())
+				assertFalse(preview(draftGrip)["ok"].asBoolean())
+				val savedToken = saved["readbackToken"].asText()
+				assertTrue(preview(draftGrip, savedToken)["ok"].asBoolean())
+				feed(reconnected, 2)
 				val replacement = left.copy(publisher_id = "third-opaque-publisher", position = listOf(40.0, 50.0, 60.0))
 				feed(replacement, 0)
-				val mapper = ObjectMapper()
 				val active = mapper.readTree(integration.inputRequest(
 					"""{"type":"monaka_inputs_v1","id":"before-change","action":"snapshot"}""",
 				))
@@ -220,6 +279,8 @@ class TrackingOverrideProductTests {
 				assertTrue(changed["ok"].asBoolean(), changed.toString())
 				assertEquals(identity(replacement).observationId, changed.at("/trackingOverride/hands/left/source").asText())
 				assertFalse(changed.at("/trackingOverride/hands/left/calibrationCurrent").asBoolean())
+				assertFalse(preview(draftGrip, savedToken)["ok"].asBoolean())
+				assertFalse(preview(draftGrip, changed["readbackToken"].asText())["ok"].asBoolean())
 				tick()
 				assertUnavailable(TrackingOverrideHand.LEFT)
 				assertPosition(TrackingOverrideHand.RIGHT, 2.0, 2.0, 3.0)

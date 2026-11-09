@@ -96,3 +96,35 @@ test('late close from an old transport cannot reject a replacement request', asy
     globalThis.WebSocket = original;
   }
 });
+
+test('Preview accepts a lightweight acknowledgement while snapshot still requires its catalog', async () => {
+  const original = globalThis.WebSocket;
+  globalThis.WebSocket = FakeSocket as unknown as typeof WebSocket;
+  const api = new MonakaInputSocket('ws://test.invalid');
+  try {
+    const preview = api.requestPreview({ action: 'preview_override' });
+    const socket = FakeSocket.instances.at(-1)!;
+    socket.open();
+    const acknowledge = async () => {
+      await Promise.resolve();
+      const { id, type } = socket.sent.at(-1)!;
+      socket.onmessage?.({
+        data: JSON.stringify({ id, type, ok: true, preview: true }),
+      });
+    };
+    await acknowledge();
+    await preview;
+
+    const snapshot = api.request({ action: 'snapshot' });
+    await acknowledge();
+    await assert.rejects(snapshot, /Invalid Core input response/);
+
+    const missingAcknowledgement = api.requestPreview({ action: 'preview_override' });
+    await Promise.resolve();
+    socket.reply();
+    await assert.rejects(missingAcknowledgement, /Invalid Core preview response/);
+  } finally {
+    api.close();
+    globalThis.WebSocket = original;
+  }
+});

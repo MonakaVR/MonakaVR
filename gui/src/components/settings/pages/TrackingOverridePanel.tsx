@@ -17,6 +17,7 @@ import {
   type GripOffset,
   type OverrideHand,
   type OverrideOutputSnapshot,
+  type OverrideReply,
   type OverrideRequest,
   type OverrideSelection,
   type SteamOverrideSnapshot,
@@ -24,7 +25,121 @@ import {
 
 const IDENTITY = ['0', '0', '0', '0', '0', '0'];
 const OFFSET_FIELDS = ['X (mm)', 'Y (mm)', 'Z (mm)', 'X (°)', 'Y (°)', 'Z (°)'];
+const PREVIEW_UPDATE_MS = 75;
+const PREVIEW_RENEW_MS = 500;
 type OverrideRow = OverrideOutputSnapshot['hands'][OverrideHand];
+type InvokeOverride = (
+  operation: () => OverrideRequest | null
+) => Promise<OverrideReply | undefined>;
+
+type PreviewDraft = {
+  hand: OverrideHand;
+  token: string;
+  offset: GripOffset;
+  timer?: ReturnType<typeof setTimeout>;
+  renewing: boolean;
+  sending: boolean;
+  sent: boolean;
+};
+
+function useOffsetPreview(
+  hand: OverrideHand,
+  token: string | undefined,
+  invoke: InvokeOverride
+) {
+  const active = useRef<PreviewDraft | null>(null);
+  const [failed, setFailed] = useState(false);
+  const stop = useCallback(
+    (clear = true) => {
+      const draft = active.current;
+      if (!draft) return;
+      active.current = null;
+      clearTimeout(draft.timer);
+      if (!draft.sent) return;
+      const clearPreview = () =>
+        invoke(() => ({
+          action: 'preview',
+          hand: draft.hand,
+          token: draft.token,
+          gripOffset: null,
+        })).catch(() => {
+          // Core expires the preview if the connection is unavailable.
+        });
+      if (clear) void clearPreview();
+      return clearPreview;
+    },
+    [invoke]
+  );
+  useEffect(
+    () => () => {
+      if (active.current?.hand === hand && active.current.token === token)
+        stop();
+    },
+    [hand, token, stop]
+  );
+
+  const schedule = (draft: PreviewDraft, renewing: boolean) => {
+    clearTimeout(draft.timer);
+    draft.renewing = renewing;
+    draft.timer = setTimeout(
+      async () => {
+        draft.timer = undefined;
+        if (active.current !== draft) return;
+        draft.sending = true;
+        let sentOffset: GripOffset | undefined;
+        const fail = () => {
+          if (active.current !== draft) return;
+          stop();
+          setFailed(true);
+        };
+        try {
+          const reply = await invoke(() => {
+            if (active.current !== draft) return null;
+            draft.sent = true;
+            sentOffset = draft.offset;
+            return {
+              action: 'preview',
+              hand: draft.hand,
+              token: draft.token,
+              gripOffset: sentOffset,
+            };
+          });
+          if (active.current === draft && reply?.type === 'preview') {
+            schedule(draft, draft.offset === sentOffset);
+          } else fail();
+        } catch {
+          fail();
+        } finally {
+          draft.sending = false;
+        }
+      },
+      renewing ? PREVIEW_RENEW_MS : PREVIEW_UPDATE_MS
+    );
+  };
+
+  const update = (offset: GripOffset) => {
+    if (!token) return;
+    setFailed(false);
+    if (active.current?.token !== token || active.current.hand !== hand) {
+      stop();
+      active.current = {
+        hand,
+        token,
+        offset,
+        renewing: false,
+        sending: false,
+        sent: false,
+      };
+    }
+    const draft = active.current;
+    draft.offset = offset;
+    if (!draft.sending && (draft.timer === undefined || draft.renewing)) {
+      schedule(draft, false);
+    }
+  };
+
+  return { update, stop, failed };
+}
 
 function rotationDegrees([w, x, y, z]: GripOffset['rotationWxyz']) {
   const angles = new Euler().setFromQuaternion(
@@ -63,6 +178,8 @@ function HandDetails({
   busy,
   registered,
   steam,
+  previewToken,
+  invoke,
   save,
   request,
   close,
@@ -75,6 +192,8 @@ function HandDetails({
   busy: boolean;
   registered: boolean;
   steam: SteamOverrideSnapshot | null;
+  previewToken?: string;
+  invoke: InvokeOverride;
   save: (selection: OverrideSelection) => Promise<boolean>;
   request: (operation: OverrideRequest) => Promise<boolean>;
   close: () => void;
@@ -96,26 +215,40 @@ function HandDetails({
     saved?.sameUniverseConfirmed ?? false
   );
   const [identitySelected, setIdentitySelected] = useState(false);
-  const numbers = fields?.map((value) =>
-    value.trim() === '' ? NaN : Number(value)
-  );
-  const offset: GripOffset | null = numbers?.every(Number.isFinite)
-    ? {
-        positionM: numbers.slice(0, 3).map((millimetres, index) => {
-          const savedMetres = grip?.positionM[index];
-          // Keep unchanged axes exact through a display-unit round trip.
-          return savedMetres !== undefined && millimetres === savedMetres * 1000
-            ? savedMetres
-            : millimetres / 1000;
-        }) as GripOffset['positionM'],
-        rotationWxyz:
-          !identitySelected &&
-          grip &&
-          savedAngles?.every((angle, index) => angle === numbers[index + 3])
-            ? grip.rotationWxyz
-            : rotationWxyz(numbers[3], numbers[4], numbers[5]),
-      }
-    : null;
+  const preview = useOffsetPreview(hand, previewToken, invoke);
+  const readOffset = (
+    values: string[] | null,
+    identity: boolean
+  ): GripOffset | null => {
+    const numbers = values?.map((value) =>
+      value.trim() === '' ? NaN : Number(value)
+    );
+    if (!numbers?.every(Number.isFinite)) return null;
+    const positionM = numbers.slice(0, 3).map((millimetres, index) => {
+      const savedMetres = grip?.positionM[index];
+      // Keep unchanged axes exact through a display-unit round trip.
+      return savedMetres !== undefined && millimetres === savedMetres * 1000
+        ? savedMetres
+        : millimetres / 1000;
+    }) as GripOffset['positionM'];
+    if (!positionM.every((metres) => Number.isFinite(Math.fround(metres))))
+      return null;
+    return {
+      positionM,
+      rotationWxyz:
+        !identity &&
+        grip &&
+        savedAngles?.every((angle, index) => angle === numbers[index + 3])
+          ? grip.rotationWxyz
+          : rotationWxyz(numbers[3], numbers[4], numbers[5]),
+    };
+  };
+  const offset = readOffset(fields, identitySelected);
+  const editFields = (next: string[], identity = identitySelected) => {
+    setFields(next);
+    const offset = readOffset(next, identity);
+    if (confirmed && offset) preview.update(offset);
+  };
   const editing = editorReady && !!row?.source && row.canEnable;
   const { targetPath, devicePath } = overridePaths(hand);
   const mapping = steam?.hands[hand];
@@ -152,12 +285,19 @@ function HandDetails({
       {row?.source && (
         <>
           <p>{text('offset-help')}</p>
+          {previewToken && <p>{text('preview-help')}</p>}
+          {previewToken && preview.failed && (
+            <p role="alert">{text('preview-error')}</p>
+          )}
           <label className="block">
             <input
               type="checkbox"
               checked={confirmed}
               disabled={!editing || busy}
-              onChange={(event) => setConfirmed(event.target.checked)}
+              onChange={(event) => {
+                setConfirmed(event.target.checked);
+                if (!event.target.checked) preview.stop();
+              }}
             />{' '}
             {text('universe')}
           </label>
@@ -165,7 +305,7 @@ function HandDetails({
             variant="secondary"
             disabled={!editing || busy}
             onClick={() => {
-              setFields(IDENTITY);
+              editFields(IDENTITY, true);
               setIdentitySelected(true);
             }}
           >
@@ -183,7 +323,7 @@ function HandDetails({
                     value={fields[index]}
                     disabled={!editing || busy}
                     onChange={(event) =>
-                      setFields(
+                      editFields(
                         fields.map((value, i) =>
                           i === index ? event.target.value : value
                         )
@@ -197,13 +337,17 @@ function HandDetails({
           <Button
             variant="primary"
             disabled={!editing || busy || !offset || !confirmed}
-            onClick={() =>
-              void save({
-                enabled: intended || !!saved?.enabled,
-                gripOffset: offset,
-                sameUniverseConfirmed: confirmed,
-              })
-            }
+            onClick={async () => {
+              const clearPreview = preview.stop(false);
+              if (
+                !(await save({
+                  enabled: intended || !!saved?.enabled,
+                  gripOffset: offset,
+                  sameUniverseConfirmed: confirmed,
+                }))
+              )
+                await clearPreview?.();
+            }}
           >
             {text('save-offset')}
           </Button>
@@ -286,6 +430,18 @@ export function useTrackingOverrideControls(
     {}
   );
   const pending = useRef(false);
+  const lastInvocation = useRef<Promise<unknown>>(Promise.resolve());
+  const invoke = useCallback<InvokeOverride>(
+    (operation) => {
+      const next = lastInvocation.current.then(() => {
+        const request = operation();
+        if (editor && request) return editor(request);
+      });
+      lastInvocation.current = next.catch(() => {});
+      return next;
+    },
+    [editor]
+  );
   const request = useCallback(
     async (operation: OverrideRequest, quiet = false) => {
       if (!editor || pending.current) return false;
@@ -293,7 +449,8 @@ export function useTrackingOverrideControls(
       setBusy(true);
       setError('');
       try {
-        const reply = await editor(operation);
+        const reply = await invoke(() => operation);
+        if (!reply || reply.type === 'preview') return false;
         if (reply.settings) {
           setSteam(reply.settings);
           if (operation.action !== 'snapshot') setRestartRequired(true);
@@ -317,7 +474,7 @@ export function useTrackingOverrideControls(
         setBusy(false);
       }
     },
-    [editor, model]
+    [editor, invoke, model]
   );
   useEffect(() => {
     void request({ action: 'snapshot' }, true);
@@ -481,6 +638,15 @@ export function useTrackingOverrideControls(
           row?.registeredDevicePath === overridePaths(detail).devicePath
         }
         steam={steam}
+        previewToken={
+          editorReady &&
+          row?.saved.enabled &&
+          row.canEnable &&
+          row.calibrationCurrent
+            ? coreToken
+            : undefined
+        }
+        invoke={invoke}
         save={(selection) => save(detail, selection)}
         request={request}
         close={close}

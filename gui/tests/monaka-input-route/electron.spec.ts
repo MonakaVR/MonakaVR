@@ -243,7 +243,7 @@ test('hand Override starts before the normal chooser and its mapping remains rec
   }
 });
 
-test('Grip offset edits use millimetres and XYZ degrees', async () => {
+test('Grip offset edits preview live in millimetres and XYZ degrees', async () => {
   const app = await _electron.launch({
     args: [resolve('tests/monaka-input-route/electron-main.cjs')],
     env: {
@@ -256,22 +256,50 @@ test('Grip offset edits use millimetres and XYZ degrees', async () => {
   });
   try {
     type OffsetSave = Extract<OverrideRequest, { action: 'save' }>;
+    type Preview = Extract<OverrideRequest, { action: 'preview' }>;
+    type OffsetFixture = {
+      offsetSaves: OffsetSave[];
+      previews: Preview[];
+      blockNextPreview: boolean;
+      releasePreview?: () => void;
+    };
     await app.evaluate(({ ipcMain }) => {
-      const store = globalThis as typeof globalThis & {
-        offsetSaves: OffsetSave[];
-      };
+      const store = globalThis as typeof globalThis & OffsetFixture;
       store.offsetSaves = [];
-      ipcMain.handle('stage15:override', (_event, request: OverrideRequest) => {
-        if (request.action === 'save') store.offsetSaves.push(request);
-        return { type: 'core' };
-      });
+      store.previews = [];
+      store.blockNextPreview = true;
+      ipcMain.handle(
+        'stage15:override',
+        async (_event, request: OverrideRequest) => {
+          if (request.action === 'preview') {
+            store.previews.push(request);
+            if (request.gripOffset && store.blockNextPreview) {
+              store.blockNextPreview = false;
+              await new Promise<void>((resolve) => {
+                store.releasePreview = resolve;
+              });
+            }
+            return { type: 'preview' };
+          }
+          if (request.action === 'save') store.offsetSaves.push(request);
+          return { type: 'core' };
+        }
+      );
     });
     const requests = () =>
       app.evaluate(
-        () =>
-          (globalThis as typeof globalThis & { offsetSaves: OffsetSave[] })
-            .offsetSaves
+        () => (globalThis as typeof globalThis & OffsetFixture).offsetSaves
       );
+    const previews = () =>
+      app.evaluate(
+        () => (globalThis as typeof globalThis & OffsetFixture).previews
+      );
+    const release = () =>
+      app.evaluate(() => {
+        const store = globalThis as typeof globalThis & OffsetFixture;
+        store.releasePreview?.();
+        store.releasePreview = undefined;
+      });
     const fixture = new CoreUiFixture();
     fixture.snapshot.bodies.push('LEFT_HAND');
     fixture.snapshot.assignments.push({
@@ -335,8 +363,36 @@ test('Grip offset edits use millimetres and XYZ degrees', async () => {
     await expect(field('X (°)')).toHaveValue('0');
     await expect(field('Y (°)')).toHaveValue('0');
     await expect(field('Z (°)')).toHaveValue('90');
+    expect(await previews()).toEqual([]);
     await field('X (mm)').press('ArrowUp');
     await expect(field('X (mm)')).toHaveValue('11');
+    await expect.poll(async () => (await previews()).length).toBe(1);
+    await field('X (mm)').fill('12');
+    await field('X (mm)').fill('13');
+    await field('X (mm)').fill('14');
+    await field('X (mm)').fill('');
+    await expect(saveOffset).toBeDisabled();
+    expect(await requests()).toEqual([]);
+    expect(
+      (await previews()).map((request) => request.gripOffset?.positionM[0])
+    ).toEqual([0.011]);
+    await release();
+    await expect
+      .poll(async () =>
+        (await previews())
+          .slice(0, 3)
+          .map((request) => request.gripOffset?.positionM[0])
+      )
+      .toEqual([0.011, 0.014, 0.014]);
+    const confirmed = detail.getByLabel(
+      'I verified the source world aligns with the SteamVR driver universe'
+    );
+    await confirmed.uncheck();
+    await expect
+      .poll(async () => (await previews()).at(-1)?.gripOffset)
+      .toBeNull();
+    await confirmed.check();
+    await field('X (mm)').fill('11');
     await saveOffset.click();
     await expect
       .poll(async () => (await requests())[0]?.selection)
@@ -381,6 +437,26 @@ test('Grip offset edits use millimetres and XYZ degrees', async () => {
         positionM: [0.012, 0, 0],
         rotationWxyz: [1, 0, 0, 0],
       });
+
+    await app.evaluate(() => {
+      (globalThis as typeof globalThis & OffsetFixture).blockNextPreview = true;
+    });
+    await field('X (mm)').fill('15');
+    await expect
+      .poll(async () => (await previews()).at(-1)?.gripOffset?.positionM[0])
+      .toBe(0.015);
+    await field('X (mm)').fill('16');
+    await detail.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(detail).toBeHidden();
+    await release();
+    await expect
+      .poll(async () => (await previews()).at(-1)?.gripOffset)
+      .toBeNull();
+    expect(
+      (await previews()).some(
+        (request) => request.gripOffset?.positionM[0] === 0.016
+      )
+    ).toBe(false);
   } finally {
     await app.close();
   }

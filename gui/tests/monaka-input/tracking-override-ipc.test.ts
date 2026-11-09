@@ -57,8 +57,12 @@ function setup({ blockRemove = false, failSave = false } = {}) {
   };
   let connections = 0;
   let closes = 0;
+  let steamReads = 0;
   const steam = {
-    snapshot: async () => snapshot,
+    snapshot: async () => {
+      steamReads++;
+      return snapshot;
+    },
     change: async (...args: unknown[]) => {
       order.push('steam:' + args[0]);
       if (blockRemove) throw new Error('SteamVR still running');
@@ -80,6 +84,9 @@ function setup({ blockRemove = false, failSave = false } = {}) {
               throw new Error('Core save uncertain');
             return coreSnapshot;
           },
+          requestPreview: async (request) => {
+            coreRequests.push(request);
+          },
           close: () => closes++,
         };
       },
@@ -93,8 +100,51 @@ function setup({ blockRemove = false, failSave = false } = {}) {
     order,
     connections: () => connections,
     closes: () => closes,
+    steamReads: () => steamReads,
   };
 }
+
+test('Preview and clear use only the authenticated lightweight Core action', async () => {
+  const fixture = setup();
+  const request = {
+    action: 'preview',
+    hand: 'left',
+    token: 'core-review',
+    gripOffset: selection.gripOffset,
+  };
+  await assert.rejects(
+    () => fixture.dispatch({ ...request, enabled: true }),
+    /preview/
+  );
+  await assert.rejects(
+    () =>
+      fixture.dispatch({
+        ...request,
+        gripOffset: { positionM: [NaN, 0, 0], rotationWxyz: [1, 0, 0, 0] },
+      }),
+    /preview/
+  );
+  assert.equal(fixture.connections(), 0);
+
+  assert.deepEqual(await fixture.dispatch(request), { type: 'preview' });
+  assert.deepEqual(await fixture.dispatch({ ...request, gripOffset: null }), {
+    type: 'preview',
+  });
+  assert.deepEqual(
+    fixture.coreRequests,
+    [selection.gripOffset, null].map((gripOffset) => ({
+      action: 'preview_override',
+      hand: 'left',
+      readbackToken: 'core-review',
+      editorToken: 'desktop-secret',
+      gripOffset,
+    }))
+  );
+  assert.equal(fixture.connections(), 2);
+  assert.equal(fixture.closes(), 2);
+  assert.equal(fixture.steamReads(), 0);
+  assert.deepEqual(fixture.mutations, []);
+});
 
 test('Apply requires exact activated path for the saved hand and allows earlier registration after stopping', async () => {
   const fixture = setup();

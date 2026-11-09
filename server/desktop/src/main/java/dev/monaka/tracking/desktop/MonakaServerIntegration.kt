@@ -96,7 +96,7 @@ class MonakaServerIntegration private constructor(
 				onFailure(receiver.failure!!)
 			}
 			val tick = runtime.tickSnapshot(skeleton.getPauseTracking())
-			val selections = inputConfiguration?.trackingOverrideSelections().orEmpty()
+			val selections = inputConfiguration?.effectiveTrackingOverrideSelections(tick.nowNanos).orEmpty()
 			val overrides = if (selections.isEmpty()) emptyMap() else runtime.trackingOverrideFrames(tick, selections)
 			trackingOverrideStatus = overrides
 			publishTrackingOverride(overrides, tick.trackerReceiptCutoffSystemNanos)
@@ -273,6 +273,7 @@ class MonakaServerIntegration private constructor(
 			publishTrackingOverride: (Map<TrackingOverrideHand, TrackingOverrideFrame>, Long) -> Unit = { _, _ -> },
 			trackingOverrideDriverReady: () -> Boolean = { false },
 			trackingOverrideRegisteredHands: () -> Set<TrackingOverrideHand> = { emptySet() },
+			trackingOverrideEditorToken: String? = System.getenv("MONAKA_TRACKING_OVERRIDE_EDITOR_TOKEN"),
 		): MonakaServerIntegration? {
 			if (!enabled) return null
 			val config = configuration()
@@ -342,6 +343,7 @@ class MonakaServerIntegration private constructor(
 						trackingOverrideStatus = { result.trackingOverrideStatus },
 						trackingOverrideDriverReady = trackingOverrideDriverReady,
 						trackingOverrideRegisteredHands = trackingOverrideRegisteredHands,
+						overrideEditorToken = trackingOverrideEditorToken,
 					)
 				}
 				registerBeforePose(Runnable(result::tick))

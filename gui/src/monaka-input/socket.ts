@@ -8,7 +8,7 @@ export class MonakaInputSocket implements InputApi {
   private pending = new Map<
     string,
     {
-      resolve: (x: InputSnapshot) => void;
+      resolve: (x: Record<string, unknown>) => void;
       reject: (x: Error) => void;
       timer: ReturnType<typeof setTimeout>;
       socket: WebSocket;
@@ -84,19 +84,32 @@ export class MonakaInputSocket implements InputApi {
               typeof value.error === 'string' ? value.error : 'Input request failed'
             )
           );
-        else if (
-          typeof value.generation !== 'string' ||
-          !Array.isArray(value.candidates) ||
-          !Array.isArray(value.assignments) ||
-          !Array.isArray(value.bodies)
-        )
-          entry.reject(new Error('Invalid Core input response'));
-        else entry.resolve(value as InputSnapshot);
+        else entry.resolve(value);
       };
     });
     return this.opening;
   }
-  async request(fields: Record<string, unknown>): Promise<InputSnapshot> {
+  request(fields: Record<string, unknown>): Promise<InputSnapshot> {
+    return this.send(fields, (value) => {
+      if (
+        typeof value.generation !== 'string' ||
+        !Array.isArray(value.candidates) ||
+        !Array.isArray(value.assignments) ||
+        !Array.isArray(value.bodies)
+      )
+        throw new Error('Invalid Core input response');
+      return value as unknown as InputSnapshot;
+    });
+  }
+  requestPreview(fields: Record<string, unknown>): Promise<void> {
+    return this.send(fields, (value) => {
+      if (value.preview !== true) throw new Error('Invalid Core preview response');
+    });
+  }
+  private async send<T>(
+    fields: Record<string, unknown>,
+    read: (value: Record<string, unknown>) => T
+  ): Promise<T> {
     const socket = await this.connect();
     if (this.pending.size >= 4) throw new Error('Input request is already pending');
     const id = `${Date.now()}-${++this.serial}`;
@@ -105,7 +118,18 @@ export class MonakaInputSocket implements InputApi {
         this.pending.delete(id);
         reject(new Error('Core request timed out; saved result may be unknown'));
       }, 8000);
-      this.pending.set(id, { resolve, reject, timer, socket });
+      this.pending.set(id, {
+        resolve: (value) => {
+          try {
+            resolve(read(value));
+          } catch (error) {
+            reject(error);
+          }
+        },
+        reject,
+        timer,
+        socket,
+      });
       try {
         socket.send(JSON.stringify({ ...fields, type: 'monaka_inputs_v1', id }));
       } catch (error) {

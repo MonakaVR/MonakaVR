@@ -29,15 +29,20 @@ class MonakaInputConfigurationApi(
 	private val path = path.toAbsolutePath().normalize()
 	private val mapper = ObjectMapper()
 	private var expectedFile = readBounded(this.path)
+	private var expectedFileDigest = fileDigest(expectedFile)
 	private val initiallySaved = MonakaConfiguration.loadBytes(this.path, expectedFile)
 	private var savedAssignments = initiallySaved.assignments.snapshot().targets
 	private var overrideSelections = configuration.trackingOverride
+	private data class OverridePreview(
+		val selection: TrackingOverrideSelection,
+		val generation: Long,
+		val epoch: String,
+		val receivedAt: Long,
+	)
+	private val overridePreviews = mutableMapOf<TrackingOverrideHand, OverridePreview>()
 	private var restartPending = savedAssignments != configuration.assignments.snapshot().targets
 	private var tokenEpoch = UUID.randomUUID().toString()
-	private fun readbackToken(): String = tokenEpoch +
-		":" +
-		MessageDigest.getInstance("SHA-256")
-			.digest(expectedFile).joinToString("") { "%02x".format(it) }
+	private fun readbackToken(): String = "$tokenEpoch:$expectedFileDigest"
 	private fun checkFile() {
 		require(!Files.isSymbolicLink(path) && readBounded(path).contentEquals(expectedFile)) {
 			"Configuration file changed; reload/restart and review offline before saving"
@@ -55,6 +60,15 @@ class MonakaInputConfigurationApi(
 	fun trackingOverrideSelections(): Map<TrackingOverrideHand, TrackingOverrideSelection> {
 		checkThread()
 		return overrideSelections
+	}
+	fun effectiveTrackingOverrideSelections(now: Long): Map<TrackingOverrideHand, TrackingOverrideSelection> {
+		checkThread()
+		if (overridePreviews.isEmpty()) return overrideSelections
+		val generation = configuration.assignments.snapshot().generation
+		overridePreviews.values.removeIf {
+			it.epoch != tokenEpoch || it.generation != generation || now - it.receivedAt !in 0 until OVERRIDE_PREVIEW_LEASE_NANOS
+		}
+		return overrideSelections + overridePreviews.mapValues { it.value.selection }
 	}
 	data class Candidate(
 		val reference: TrackerReference,
@@ -272,7 +286,10 @@ class MonakaInputConfigurationApi(
 				TrackingOverrideSelection.confirmed(edit.enabled, hand, requireNotNull(source), configuration.space, edit.gripOffset)
 			}
 		}
-		if (next == current) return hand
+		if (next == current) {
+			overridePreviews.remove(hand)
+			return hand
+		}
 		val selections = overrideSelections + (hand to next)
 		val document = mapper.readTree(expectedFile) as ObjectNode
 		require(document["version"].asInt() in 2..4) { "Migrate legacy configuration before editing tracking overrides" }
@@ -282,6 +299,33 @@ class MonakaInputConfigurationApi(
 		overrideSelections = Collections.unmodifiableMap(selections)
 		return hand
 	}
+	private fun previewOverride(root: JsonNode, now: Long) {
+		require(root.fieldNames().asSequence().toSet() == setOf("type", "id", "action", "hand", "gripOffset", "readbackToken", "editorToken"))
+		require(root["readbackToken"]?.textValue() == readbackToken()) { "Saved configuration changed; reload before previewing" }
+		val hand = TrackingOverrideConfigJson.hand(requireNotNull(root["hand"]?.textValue()))
+		val offset = root["gripOffset"]
+		if (offset.isNull) {
+			overridePreviews.remove(hand)
+			return
+		}
+		require(!restartPending) { "Saved configuration is awaiting server restart" }
+		val assignment = configuration.assignments.snapshot()
+		val source = assignment.targets[hand.body]?.configuredSixDofSource()
+		val saved = overrideSelections[hand]
+		require(saved?.enabled == true && saved.calibrationCurrent(hand, source, configuration.space) &&
+			source?.mtp?.let(backend::declaredCapabilitiesFor)?.supportsSixDof == true) {
+			"Save an enabled override for a supported MVIP source before previewing"
+		}
+		overridePreviews[hand] = OverridePreview(
+			saved.copy(gripOffset = TrackingOverrideConfigJson.readGrip(offset)), assignment.generation, tokenEpoch, now,
+		)
+	}
+	private fun overrideEditorAuthorized(root: JsonNode): Boolean {
+		val suppliedToken = root["editorToken"]?.textValue()
+		return overrideEditorToken != null && suppliedToken != null &&
+			MessageDigest.isEqual(overrideEditorToken.toByteArray(), suppliedToken.toByteArray())
+	}
+
 	private fun commit(generate: (Path) -> ByteArray) {
 		require(!Files.isSymbolicLink(path)) { "Configuration aliases require offline review" }
 		val parent = path.parent.toRealPath()
@@ -292,6 +336,7 @@ class MonakaInputConfigurationApi(
 				checkFile()
 				val bytes = generate(stage)
 				require(bytes.size <= MAX_BYTES)
+				val digest = fileDigest(bytes)
 				Files.write(stage, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 				MonakaConfiguration.load(stage) // Validate the exact merged document, not merely the generated fields.
 				FileChannel.open(stage, StandardOpenOption.WRITE).use { it.force(true) }
@@ -304,7 +349,9 @@ class MonakaInputConfigurationApi(
 				require(readBounded(path).contentEquals(expectedFile)) { "Configuration changed before commit" }
 				Files.move(stage, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
 				expectedFile = bytes
+				expectedFileDigest = digest
 				tokenEpoch = nextToken
+				overridePreviews.clear()
 			}
 		} finally {
 			// Cleanup cannot turn a completed commit into a reported cancellation/failure.
@@ -320,10 +367,16 @@ class MonakaInputConfigurationApi(
 			require(raw.length <= 65536)
 			val root = mapper.readTree(raw)
 			require(root["type"]?.asText() == "monaka_inputs_v1")
+			val action = root["action"]?.asText()
+			if (action == "preview_override") invalidateReadback = false
 			require(root["id"]?.isTextual == true && root["id"].asText().length in 1..64)
 			id = root["id"].asText()
 			var editedOverride: TrackingOverrideHand? = null
-			if (root["action"]?.asText() == "save") {
+			if (action == "preview_override") {
+				require(overrideEditorAuthorized(root)) { "Tracking override editing requires the local desktop application" }
+				previewOverride(root, now)
+				return mapper.writeValueAsString(mapOf("type" to "monaka_inputs_v1", "id" to id, "ok" to true, "preview" to true))
+			} else if (action == "save") {
 				val current = snapshot(now)
 				val target = TrackerPosition.valueOf(root["body"].asText())
 				val existing = current.assignments[target]?.let { listOfNotNull(it.mainTracker, it.rotationFallbackTracker) }.orEmpty()
@@ -345,7 +398,7 @@ class MonakaInputConfigurationApi(
 					now,
 				)
 				saveAndApply(edit)
-			} else if (root["action"]?.asText() == "save_mode") {
+			} else if (action == "save_mode") {
 				require(
 					root["body"]?.isTextual == true &&
 						root["generation"]?.isTextual == true &&
@@ -359,14 +412,12 @@ class MonakaInputConfigurationApi(
 					else -> error("Unknown output mode")
 				}
 				saveMode(TrackerPosition.valueOf(root["body"].asText()), mode, root["generation"].asText().toLong(), root["readbackToken"].asText())
-			} else if (root["action"]?.asText() == "save_override") {
-				val suppliedToken = root["editorToken"]?.textValue()
-				invalidateReadback = overrideEditorToken != null && suppliedToken != null &&
-					MessageDigest.isEqual(overrideEditorToken.toByteArray(), suppliedToken.toByteArray())
+			} else if (action == "save_override") {
+				invalidateReadback = overrideEditorAuthorized(root)
 				require(invalidateReadback) { "Tracking override editing requires the local desktop application" }
 				editedOverride = saveOverride(root, now)
 			} else {
-				require(root["action"]?.asText() == "snapshot")
+				require(action == "snapshot")
 			}
 			val s = snapshot(now)
 			val statuses = trackingOverrideStatus()
@@ -448,6 +499,8 @@ class MonakaInputConfigurationApi(
 	}
 	companion object {
 		private const val MAX_BYTES = 2 * 1024 * 1024
+		private const val OVERRIDE_PREVIEW_LEASE_NANOS = 2_000_000_000L
+		private fun fileDigest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).toHexString()
 		private fun readBounded(path: Path): ByteArray {
 			require(Files.isRegularFile(path) && Files.size(path) <= MAX_BYTES)
 			return Files.newInputStream(path).use { it.readNBytes(MAX_BYTES + 1) }.also { require(it.size <= MAX_BYTES) }
