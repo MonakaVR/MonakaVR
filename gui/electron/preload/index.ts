@@ -49,7 +49,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getInstallDir: () => ipcRenderer.invoke(IPC_CHANNELS.GET_FOLDER, 'exe'),
   isSteam: () => ipcRenderer.invoke(IPC_CHANNELS.IS_STEAM),
   trackingOverride:
-    process.platform === 'win32'
+    typeof process !== 'undefined' && process.platform === 'win32'
       ? (request) => ipcRenderer.invoke(IPC_CHANNELS.TRACKING_OVERRIDE, request)
       : undefined,
 } satisfies IElectronAPI);
