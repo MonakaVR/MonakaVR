@@ -242,3 +242,146 @@ test('hand Override starts before the normal chooser and its mapping remains rec
     await app.close();
   }
 });
+
+test('Grip offset edits use millimetres and XYZ degrees', async () => {
+  const app = await _electron.launch({
+    args: [resolve('tests/monaka-input-route/electron-main.cjs')],
+    env: {
+      ...process.env,
+      STAGE15_OVERRIDE_TEST: '1',
+      STAGE15_ELECTRON_PROFILE: resolve(
+        'build/monaka-input-route/grip-offset-' + Date.now()
+      ),
+    },
+  });
+  try {
+    type OffsetSave = Extract<OverrideRequest, { action: 'save' }>;
+    await app.evaluate(({ ipcMain }) => {
+      const store = globalThis as typeof globalThis & {
+        offsetSaves: OffsetSave[];
+      };
+      store.offsetSaves = [];
+      ipcMain.handle('stage15:override', (_event, request: OverrideRequest) => {
+        if (request.action === 'save') store.offsetSaves.push(request);
+        return { type: 'core' };
+      });
+    });
+    const requests = () =>
+      app.evaluate(
+        () =>
+          (globalThis as typeof globalThis & { offsetSaves: OffsetSave[] })
+            .offsetSaves
+      );
+    const fixture = new CoreUiFixture();
+    fixture.snapshot.bodies.push('LEFT_HAND');
+    fixture.snapshot.assignments.push({
+      body: 'LEFT_HAND',
+      qSource: null,
+      sixDofSource: 'publisher-a',
+      manualSix: true,
+      mode: 'ik',
+    });
+    const savedGrip = {
+      positionM: [0.01, -0.0000208, 0.0000245],
+      rotationWxyz: [Math.SQRT1_2, 0, 0, Math.SQRT1_2],
+    } satisfies NonNullable<OverrideSelection['gripOffset']>;
+    const saved = {
+      enabled: true,
+      sameUniverseConfirmed: true,
+      gripOffset: savedGrip,
+    };
+    const left: OverrideOutputSnapshot['hands']['left'] = {
+      ...overridePaths('left'),
+      saved,
+      source: 'publisher-a',
+      canEnable: true,
+      calibrationCurrent: true,
+      sourceStatus: 'FULL',
+      registeredDevicePath: null,
+    };
+    fixture.snapshot.readbackToken = 'core-review';
+    fixture.snapshot.trackingOverride = {
+      driverReady: false,
+      hands: {
+        left,
+        right: {
+          ...overridePaths('right'),
+          saved: empty,
+          source: null,
+          canEnable: false,
+          calibrationCurrent: false,
+          sourceStatus: 'OFF',
+          registeredDevicePath: null,
+        },
+      },
+    };
+    const page = await app.firstWindow();
+    await fixture.install(page);
+    await page.goto(baseURL + routeUrl);
+    await page
+      .getByRole('button', { name: 'Left hand Offset Settings' })
+      .click();
+    const detail = page.getByRole('dialog', {
+      name: 'Left hand Tracking Override',
+    });
+    const field = (name: string) => detail.getByRole('spinbutton', { name });
+    const saveOffset = detail.getByRole('button', {
+      name: 'Save offset settings',
+    });
+
+    await expect(field('X (mm)')).toHaveValue('10');
+    await expect(field('Y (mm)')).toHaveValue('-0.0208');
+    await expect(field('Z (mm)')).toHaveValue('0.0245');
+    await expect(field('X (°)')).toHaveValue('0');
+    await expect(field('Y (°)')).toHaveValue('0');
+    await expect(field('Z (°)')).toHaveValue('90');
+    await field('X (mm)').press('ArrowUp');
+    await expect(field('X (mm)')).toHaveValue('11');
+    await saveOffset.click();
+    await expect
+      .poll(async () => (await requests())[0]?.selection)
+      .toEqual({
+        ...saved,
+        gripOffset: { ...savedGrip, positionM: [0.011, -0.0000208, 0.0000245] },
+      });
+
+    await field('X (°)').fill('179');
+    await field('X (°)').press('ArrowUp');
+    await expect(field('X (°)')).toHaveValue('180');
+    await field('Y (°)').fill('90');
+    await field('Z (°)').fill('-90');
+    await saveOffset.click();
+    await expect.poll(async () => (await requests()).length).toBe(2);
+    const rotationSave = (await requests())[1].selection;
+    const quaternion = rotationSave.gripOffset?.rotationWxyz;
+    if (!quaternion) throw new Error('Expected rotation offset save');
+    expect(Math.hypot(...quaternion)).toBeCloseTo(1, 12);
+    // Intrinsic XYZ (180°, 90°, -90°) and (90°, 90°, 0°) encode the same rotation.
+    expect(
+      Math.abs(quaternion.reduce((dot, component) => dot + component * 0.5, 0))
+    ).toBeCloseTo(1, 12);
+    left.saved = rotationSave;
+    await expect(field('X (°)')).toHaveValue('90');
+    await expect(field('Y (°)')).toHaveValue('90');
+    await expect(field('Z (°)')).toHaveValue('0');
+
+    left.saved = {
+      ...saved,
+      gripOffset: { ...savedGrip, rotationWxyz: [1, 1e-14, 0, 0] },
+    };
+    await expect(field('X (°)')).toHaveValue('0');
+    await detail
+      .getByRole('button', { name: 'Set identity grip offset' })
+      .click();
+    await field('X (mm)').fill('12');
+    await saveOffset.click();
+    await expect
+      .poll(async () => (await requests())[2]?.selection.gripOffset)
+      .toEqual({
+        positionM: [0.012, 0, 0],
+        rotationWxyz: [1, 0, 0, 0],
+      });
+  } finally {
+    await app.close();
+  }
+});

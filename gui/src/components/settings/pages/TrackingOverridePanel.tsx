@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useLocalization } from '@fluent/react';
 import ReactModal from 'react-modal';
+import { Euler, MathUtils, Quaternion } from 'three';
 import { Button } from '@/components/commons/Button';
 import type { InputSelectionController } from '@/monaka-input/controller';
 import { selectedSourceLabel } from '@/monaka-input/source-label';
@@ -21,9 +22,37 @@ import {
   type SteamOverrideSnapshot,
 } from '../../../../electron/tracking-override-types';
 
-const IDENTITY = ['0', '0', '0', '1', '0', '0', '0'];
-const OFFSET_FIELDS = ['X (m)', 'Y (m)', 'Z (m)', 'Qw', 'Qx', 'Qy', 'Qz'];
+const IDENTITY = ['0', '0', '0', '0', '0', '0'];
+const OFFSET_FIELDS = ['X (mm)', 'Y (mm)', 'Z (mm)', 'X (°)', 'Y (°)', 'Z (°)'];
 type OverrideRow = OverrideOutputSnapshot['hands'][OverrideHand];
+
+function rotationDegrees([w, x, y, z]: GripOffset['rotationWxyz']) {
+  const angles = new Euler().setFromQuaternion(
+    new Quaternion(x, y, z, w).normalize(),
+    'XYZ'
+  );
+  return [angles.x, angles.y, angles.z].map((radians) =>
+    Number(MathUtils.radToDeg(radians).toFixed(10))
+  );
+}
+
+function rotationWxyz(
+  x: number,
+  y: number,
+  z: number
+): GripOffset['rotationWxyz'] {
+  const rotation = new Quaternion()
+    .setFromEuler(
+      new Euler(
+        MathUtils.degToRad(x % 360),
+        MathUtils.degToRad(y % 360),
+        MathUtils.degToRad(z % 360),
+        'XYZ'
+      )
+    )
+    .normalize();
+  return [rotation.w, rotation.x, rotation.y, rotation.z];
+}
 
 function HandDetails({
   row,
@@ -54,19 +83,37 @@ function HandDetails({
   const text = (name: string) => l10n.getString('tracking-override-' + name);
   const saved = row?.saved;
   const grip = saved?.gripOffset;
+  const savedAngles = grip ? rotationDegrees(grip.rotationWxyz) : null;
   const [fields, setFields] = useState<string[] | null>(
-    grip ? [...grip.positionM, ...grip.rotationWxyz].map(String) : null
+    grip && savedAngles
+      ? [
+          ...grip.positionM.map((metres) => String(metres * 1000)),
+          ...savedAngles.map(String),
+        ]
+      : null
   );
   const [confirmed, setConfirmed] = useState(
     saved?.sameUniverseConfirmed ?? false
   );
+  const [identitySelected, setIdentitySelected] = useState(false);
   const numbers = fields?.map((value) =>
     value.trim() === '' ? NaN : Number(value)
   );
   const offset: GripOffset | null = numbers?.every(Number.isFinite)
     ? {
-        positionM: numbers.slice(0, 3) as GripOffset['positionM'],
-        rotationWxyz: numbers.slice(3) as GripOffset['rotationWxyz'],
+        positionM: numbers.slice(0, 3).map((millimetres, index) => {
+          const savedMetres = grip?.positionM[index];
+          // Keep unchanged axes exact through a display-unit round trip.
+          return savedMetres !== undefined && millimetres === savedMetres * 1000
+            ? savedMetres
+            : millimetres / 1000;
+        }) as GripOffset['positionM'],
+        rotationWxyz:
+          !identitySelected &&
+          grip &&
+          savedAngles?.every((angle, index) => angle === numbers[index + 3])
+            ? grip.rotationWxyz
+            : rotationWxyz(numbers[3], numbers[4], numbers[5]),
       }
     : null;
   const editing = editorReady && !!row?.source && row.canEnable;
@@ -117,7 +164,10 @@ function HandDetails({
           <Button
             variant="secondary"
             disabled={!editing || busy}
-            onClick={() => setFields(IDENTITY)}
+            onClick={() => {
+              setFields(IDENTITY);
+              setIdentitySelected(true);
+            }}
           >
             {text('use-identity')}
           </Button>
@@ -129,7 +179,7 @@ function HandDetails({
                   <input
                     className="bg-background-80 text-background-10 rounded px-2 py-1 min-w-0 w-full"
                     type="number"
-                    step="any"
+                    step={1}
                     value={fields[index]}
                     disabled={!editing || busy}
                     onChange={(event) =>
