@@ -40,6 +40,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @EnabledOnOs(OS.WINDOWS)
@@ -119,6 +120,9 @@ class TrackingOverrideProductTests {
 				assertFalse(packet.hasX() || packet.hasY() || packet.hasZ())
 			}
 			DatagramSocket().use { sender ->
+				fun send(bytes: ByteArray) {
+					sender.send(DatagramPacket(bytes, bytes.size, InetAddress.getLoopbackAddress(), integration.receiver.port))
+				}
 				fun feed(pose: MtpPose, sequence: Long) {
 					val sample = pose.copy(
 						sequence = sequence,
@@ -126,7 +130,7 @@ class TrackingOverrideProductTests {
 						sent_at_ns = pose.sent_at_ns + sequence,
 					)
 					val bytes = assertIs<EncodeResult.Success>(MonakaCodec.encodeEnvelope(sample)).value
-					sender.send(DatagramPacket(bytes, bytes.size, InetAddress.getLoopbackAddress(), integration.receiver.port))
+					send(bytes)
 					val deadline = System.nanoTime() + 5_000_000_000
 					while (integration.runtime.mtp.sampleFor(identity(sample))?.pose != sample && System.nanoTime() < deadline) {
 						tick()
@@ -134,6 +138,20 @@ class TrackingOverrideProductTests {
 					}
 					assertEquals(sample, integration.runtime.mtp.sampleFor(identity(sample))?.pose)
 				}
+				val unsupportedConvention = fixture.toString(Charsets.UTF_8)
+					.replace(left.coordinate_space.convention, "unsupported-convention").toByteArray(Charsets.UTF_8)
+				val rejection = assertIs<DecodeResult.Failure>(MonakaCodec.decodeEnvelope(unsupportedConvention)).code.name
+				assertFalse(integration.runtime.inbox.diagnostics().containsKey(rejection))
+				send(unsupportedConvention)
+				val deadline = System.nanoTime() + 5_000_000_000
+				while (!integration.runtime.inbox.diagnostics().containsKey(rejection) && System.nanoTime() < deadline) {
+					Thread.sleep(1)
+				}
+				assertEquals(1L, integration.runtime.inbox.diagnostics()[rejection])
+				tick()
+				assertNull(integration.runtime.mtp.sampleFor(identity(left)))
+				assertUnavailable(TrackingOverrideHand.LEFT)
+
 				bridge.messages.clear()
 				feed(left, 0)
 				assertPosition(TrackingOverrideHand.LEFT, 2.0, 4.0, 6.0)
@@ -165,14 +183,19 @@ class TrackingOverrideProductTests {
 				assertUnavailable(TrackingOverrideHand.LEFT)
 				feed(left.copy(position = listOf(9.0, 8.0, 7.0)), 6)
 				assertPosition(TrackingOverrideHand.LEFT, 10.0, 10.0, 10.0)
-				feed(left.copy(coordinate_space = left.coordinate_space.copy(id = "other-room")), 7)
-				assertUnavailable(TrackingOverrideHand.LEFT)
+				feed(left.copy(
+					coordinate_space = left.coordinate_space.copy(id = "other-room", revision = left.coordinate_space.revision + 1),
+					position = listOf(12.0, 13.0, 14.0),
+				), 7)
+				assertPosition(TrackingOverrideHand.LEFT, 13.0, 15.0, 17.0)
 				val status = ObjectMapper().readTree(integration.inputRequest(
 					"""{"type":"monaka_inputs_v1","id":"status","action":"snapshot"}""",
 				))
-				assertEquals("SPACE_MISMATCH", status.at("/trackingOverride/hands/left/sourceStatus").asText().uppercase())
+				assertEquals("FULL", status.at("/trackingOverride/hands/left/sourceStatus").asText())
+				assertTrue(status.at("/trackingOverride/hands/left/calibrationCurrent").asBoolean())
 				now += 500_000_000L
 				tick()
+				assertUnavailable(TrackingOverrideHand.LEFT)
 				assertUnavailable(TrackingOverrideHand.RIGHT)
 				val reconnected = right.copy(session_id = "33333333-3333-4333-8333-333333333333")
 				feed(reconnected, 0)

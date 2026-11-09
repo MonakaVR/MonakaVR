@@ -111,7 +111,10 @@ internal class TrackingOverrideResolver(
 		if (!declared.supportsSixDof) return unavailable(TrackingOverrideSourceStatus.CAPABILITY_UNSUPPORTED)
 		val sample = backend.sampleFor(key)
 		if (paused || sample == null) return unavailable(TrackingOverrideSourceStatus.SOURCE_UNAVAILABLE)
-		if (sample.pose.coordinate_space != expectedSpace) return unavailable(TrackingOverrideSourceStatus.SPACE_MISMATCH)
+		// The source space ID and revision are descriptive. The saved frame assertion still applies.
+		if (sample.pose.coordinate_space.convention != expectedSpace.convention) {
+			return unavailable(TrackingOverrideSourceStatus.SPACE_MISMATCH)
+		}
 		val age = nowNanos - sample.sampleTime
 		if (age < 0 || age >= timeoutNanos) return unavailable(TrackingOverrideSourceStatus.STALE)
 		if (sample.pose.modality != "full") return unavailable(TrackingOverrideSourceStatus.INCOMPLETE)
