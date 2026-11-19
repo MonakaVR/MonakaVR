@@ -50,7 +50,7 @@ def run(command, cwd, env, log):
             return 2
 
 
-def promote_distribution(output):
+def promote_distribution(output, complete=None):
     output = output.resolve()
     repository = ROOT.resolve()
     if not output.is_relative_to(repository) or output == repository:
@@ -69,16 +69,32 @@ def promote_distribution(output):
         absent.append(str(helper / "*.jar"))
     if absent:
         raise ValueError("Packaged distribution is incomplete: " + ", ".join(absent))
+    manifest = repository / "Build/provenance/windows.json"
+    previous_manifest = manifest.read_bytes() if manifest.is_file() else None
     moved = False
     if target.exists():
         backup.parent.mkdir(parents=True, exist_ok=True)
         target.rename(backup)
         moved = True
+    installed = False
     try:
         stage.rename(target)
-    except OSError:
-        if moved and not target.exists():
+        installed = True
+        if complete is not None:
+            complete()
+    except Exception:
+        # A provenance failure is a failed build too. Retain the rejected package
+        # at its staging location and put the last runnable distribution back.
+        if installed:
+            target.rename(stage)
+        if moved:
             backup.rename(target)
+        if previous_manifest is None:
+            manifest.unlink(missing_ok=True)
+        elif not manifest.is_file() or manifest.read_bytes() != previous_manifest:
+            restore = manifest.with_name(manifest.name + ".restore-" + uuid.uuid4().hex)
+            restore.write_bytes(previous_manifest)
+            os.replace(restore, manifest)
         raise
 
 
@@ -151,8 +167,8 @@ def main():
             print("Build failed at " + name + "; see " + str(logs / (name + ".log")), file=sys.stderr)
             return code
     try:
-        promote_distribution(OUTPUT)
-        finish_build(ROOT, provenance, [('Build/runtime/win-unpacked', 'win-unpacked')])
+        promote_distribution(OUTPUT, lambda: finish_build(
+            ROOT, provenance, [('Build/runtime/win-unpacked', 'win-unpacked')]))
     except (OSError, ValueError, ContractError) as error:
         print("Candidate packaging/provenance failed: " + str(error), file=sys.stderr)
         return 2

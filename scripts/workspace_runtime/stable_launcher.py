@@ -43,9 +43,6 @@ def launch_spec(workspace, product, runtime, manifest=None, profile=None, mtp=Fa
         service = runtime / 'Release/pico_ot_bridge_service.exe'
         result['argv'] = [str(gui), str(repo), '--service-exe', str(service)]
         required = [str(gui), str(service)]
-        local = os.environ.get('LOCALAPPDATA')
-        route = Path(local) / product / 'output_route.txt' if local else None
-        result['output_route'] = route.read_text(encoding='utf-8-sig').strip() if route and route.is_file() else None
     elif product == 'MonakaVR':
         distribution = runtime / 'win-unpacked'
         java = java_executable()
