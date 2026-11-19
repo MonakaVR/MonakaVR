@@ -60,7 +60,6 @@ import { ElectronContextC, provideElectron } from './hooks/electron';
 import { AppLocalizationProvider } from './i18n/config';
 import { openUrl } from './hooks/crossplatform';
 import { UdevRulesModal } from './components/onboarding/UdevRulesModal';
-import { MonakaBridgeSettings } from './components/settings/pages/MonakaBridgeSettings';
 import { MonakaInputSettings } from './components/settings/pages/MonakaInputSettings';
 
 export const GH_REPO = 'SlimeVR/SlimeVR-Server';
@@ -304,7 +303,6 @@ export default function App() {
       <AppLocalizationProvider>
         <Router>
           <Routes>
-            <Route path="/bridge" element={<MonakaBridgeSettings />} />
             <Route
               path="*"
               element={

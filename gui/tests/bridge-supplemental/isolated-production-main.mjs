@@ -8,7 +8,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const { app, Menu, session } = electron;
+const { app, ipcMain, session, Tray } = electron;
 const root = process.env.MONAKA_STARTUP_ROOT;
 if (!root || !path.isAbsolute(root))
   throw new Error('An isolated absolute data root is required.');
@@ -30,9 +30,9 @@ const evidence = {
   blockedRequests: [],
   deniedChildren: [],
   deniedSockets: [],
-  menuLabels: [],
+  trayMenus: [],
+  ipcChannels: [],
   paths: {},
-  menus: [],
 };
 globalThis.monakaStartupGuard = evidence;
 const denyChild =
@@ -60,14 +60,15 @@ globalThis.fetch = async (url) => {
   evidence.blockedRequests.push({ url: String(url), layer: 'node-fetch' });
   throw new Error('ISOLATED STARTUP: Node fetch denied');
 };
-const buildMenu = Menu.buildFromTemplate.bind(Menu);
-Menu.buildFromTemplate = (template) => {
-  const menu = buildMenu(template);
-  if (template.some((item) => item.label?.startsWith('Monaka Bridge'))) {
-    evidence.menuLabels = menu.items.map((item) => item.label || item.role);
-    evidence.menus.push(menu);
-  }
-  return menu;
+const setContextMenu = Tray.prototype.setContextMenu;
+Tray.prototype.setContextMenu = function (menu) {
+  evidence.trayMenus.push(menu.items.map(({ label, role }) => ({ label, role })));
+  return setContextMenu.call(this, menu);
+};
+const handleIpc = ipcMain.handle.bind(ipcMain);
+ipcMain.handle = (channel, listener) => {
+  evidence.ipcChannels.push(channel);
+  return handleIpc(channel, listener);
 };
 app.on('ready', () => {
   session.defaultSession.webRequest.onBeforeRequest(
@@ -98,7 +99,7 @@ app.on('before-quit', () => {
   );
   writeFileSync(
     path.join(root, 'guard-exit.json'),
-    JSON.stringify({ ...evidence, menus: undefined }, null, 2)
+    JSON.stringify(evidence, null, 2)
   );
 });
 // Existing --path selects an empty task directory. The child-process guard also

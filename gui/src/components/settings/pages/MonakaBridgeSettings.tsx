@@ -254,11 +254,7 @@ export function BridgeControlPanel({ model }: { model: BridgeController }) {
   );
 }
 
-export function MonakaBridgeSettings({
-  api = window.electronAPI?.bridge,
-}: {
-  api?: BridgeDesktopApi;
-}) {
+export function MonakaBridgeSettings({ api }: { api?: BridgeDesktopApi }) {
   const [model, setModel] = useState<BridgeController | null>(null);
   useEffect(() => {
     if (!api) return;

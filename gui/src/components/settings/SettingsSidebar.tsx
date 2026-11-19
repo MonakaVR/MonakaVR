@@ -131,7 +131,6 @@ export function SettingsSidebar() {
               to="/settings/monaka-input"
               id="settings-sidebar-monaka-input"
             />
-            <SettingsLink to="/bridge" id="settings-sidebar-monaka-bridge" />
             <SettingsLink to="/settings/serial" id="settings-sidebar-serial" />
             <SettingsLink
               to="/settings/firmware-tool"

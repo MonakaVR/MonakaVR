@@ -5,11 +5,6 @@ import {
   SaveDialogReturnValue,
 } from 'electron';
 import { DiscordPresence, GHGet, GHReturn, OSStats } from './preload/interface';
-import type {
-  BridgeConfiguration,
-  BridgeDesktopRequest,
-  BridgeHealthRead,
-} from './bridge-types';
 
 export const IPC_CHANNELS = {
   SERVER_STATUS: 'server-status',
@@ -26,14 +21,9 @@ export const IPC_CHANNELS = {
   GH_FETCH: 'gh-fetch',
   DISCORD_PRESENCE: 'discord-presence',
   IS_STEAM: 'is-steam',
-  BRIDGE_CONTROL: 'monaka-bridge-control',
-  BRIDGE_OPEN: 'monaka-bridge-open',
 } as const;
 
 export interface IpcInvokeMap {
-  [IPC_CHANNELS.BRIDGE_CONTROL]: (
-    request: BridgeDesktopRequest
-  ) => Promise<BridgeConfiguration | BridgeHealthRead | null | void>;
   [IPC_CHANNELS.OPEN_URL]: (url: string) => void;
   [IPC_CHANNELS.OS_STATS]: () => Promise<OSStats>;
   [IPC_CHANNELS.WINDOW_ACTIONS]: (

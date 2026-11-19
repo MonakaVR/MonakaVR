@@ -190,16 +190,29 @@ test('mobile settings selector has an independent input route', async ({ page })
   expect(fixture.saves).toEqual([]);
 });
 
-test('legacy Bridge screen remains accessible without embedding consumer inputs', async ({
+test('retired Bridge route has no controls or navigation and MVIP settings stay available', async ({
   page,
 }) => {
   const fixture = new CoreUiFixture();
+  await forbidBridgeApi(page);
   await fixture.install(page);
+  const retiredLinks = page.locator(
+    'a[href*="#/bridge"], a[href*="Start_MonakaBridge"], a[href*="monaka_bridge_config"]'
+  );
+  await page.goto(routeUrl);
+  await expect(page.getByLabel('Q Source', { exact: true })).toBeEnabled();
+  await expect(retiredLinks).toHaveCount(0);
+
+  const previousRequests = fixture.requests.length;
   await page.goto('/?ip=127.0.0.1&port=29992#/bridge');
-  await expect(
-    page.getByRole('heading', { name: 'Monaka Bridge', exact: true })
-  ).toBeVisible();
+  await expect(page.locator('#root > .text-standard')).toBeVisible();
+  await expect(page.locator('.settings-layout')).toHaveCount(0);
+  await expect(retiredLinks).toHaveCount(0);
+  await expect(page.locator('#bridge-policy')).toHaveCount(0);
   await expect(page.getByLabel('Q Source', { exact: true })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Return to MonakaVR' })).toBeVisible();
-  expect(fixture.requests).toEqual([]);
+  expect(fixture.requests).toHaveLength(previousRequests);
+
+  await page.goto(routeUrl);
+  await expect(page.getByLabel('Q Source', { exact: true })).toBeEnabled();
+  expect(fixture.saves).toEqual([]);
 });

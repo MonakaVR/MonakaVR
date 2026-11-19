@@ -84,23 +84,45 @@ try {
   await page.waitForURL('app://./index.html', { timeout: 10000 });
   await expect(page.locator('body')).not.toHaveText('', { timeout: 10000 });
   const initialUrl = page.url();
-  const click = await app.evaluate(() => {
-    const menu = globalThis.monakaStartupGuard.menus.find((item) =>
-      item.items.some((entry) => entry.label.startsWith('Monaka Bridge'))
+  const tray = await app.evaluate(() => {
+    const menu = globalThis.monakaStartupGuard.trayMenus.find((items) =>
+      items.some(({ role }) => role === 'quit')
     );
-    if (!menu) throw new Error('Actual production tray entry not created');
-    menu.items.find((entry) => entry.label.startsWith('Monaka Bridge')).click();
-    return menu.items.map((entry) => entry.label || entry.role);
+    if (!menu) throw new Error('Actual production tray menu not created');
+    return menu;
   });
+  assert.deepEqual(tray.map(({ label, role }) => role || label), [
+    'Show',
+    'Hide',
+    'quit',
+  ]);
+  assert.equal(
+    await page.evaluate(() => {
+      const api = window.electronAPI;
+      return typeof api?.onServerStatus === 'function' && !('bridge' in api);
+    }),
+    true,
+    'The real preload must expose the normal API without a producer API'
+  );
+  await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        window.addEventListener(
+          'hashchange',
+          () => requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          { once: true }
+        );
+        window.location.hash = '/bridge';
+      })
+  );
+  await page.waitForURL('**#/bridge');
+  await expect(page.locator('#root > .text-standard')).toBeVisible();
+  await expect(page.locator('#bridge-policy')).toHaveCount(0);
   await expect(
-    page.getByRole('heading', { name: 'Monaka Bridge', exact: true })
-  ).toBeVisible();
-  await expect(
-    page.getByLabel('Selected output policy', { exact: true })
-  ).toHaveValue('steamvr');
-  await expect(
-    page.getByText('unknown - not reported', { exact: true })
-  ).toHaveCount(2);
+    page.locator(
+      'a[href*="#/bridge"], a[href*="Start_MonakaBridge"], a[href*="monaka_bridge_config"]'
+    )
+  ).toHaveCount(0);
   await page.evaluate(() => {
     const label = document.createElement('p');
     label.textContent =
@@ -114,7 +136,6 @@ try {
     const value = globalThis.monakaStartupGuard;
     return {
       ...value,
-      menus: undefined,
       paths: Object.fromEntries(
         ['appData', 'userData', 'sessionData', 'crashDumps'].map((name) => [
           name,
@@ -124,6 +145,8 @@ try {
     };
   });
   assert.equal(guard.packaged, mode !== 'unpackaged-production');
+  assert.ok(guard.ipcChannels.includes('window-actions'));
+  assert.ok(!guard.ipcChannels.some((channel) => channel.startsWith('monaka-bridge-')));
   assert.deepEqual(guard.deniedChildren, []);
   assert.deepEqual(guard.deniedSockets, []);
   assert.ok(
@@ -144,7 +167,7 @@ try {
         result: 'PASS_GUARDED_STARTUP',
         root,
         initialUrl,
-        tray: click,
+        tray,
         guard,
         pageErrors,
         productionMainSha256: createHash('sha256')
