@@ -7,6 +7,12 @@ import dev.monaka.protocol.v2.EncodeResult
 import dev.monaka.protocol.v2.MonakaCodec
 import dev.monaka.protocol.v2.MtpPose
 import dev.monaka.protocol.v2.Validity
+import dev.monaka.protocol.v3.Confidence as C3Confidence
+import dev.monaka.protocol.v3.DecodeResult as C3DecodeResult
+import dev.monaka.protocol.v3.EncodeResult as C3EncodeResult
+import dev.monaka.protocol.v3.MonakaCodec as C3Codec
+import dev.monaka.protocol.v3.MtpPose as C3MtpPose
+import dev.monaka.protocol.v3.Validity as C3Validity
 import dev.monaka.tracking.LogicalTracker
 import dev.monaka.tracking.MonakaConfiguration
 import dev.monaka.tracking.RotationCorrectionConfig
@@ -20,11 +26,13 @@ import dev.slimevr.tracking.trackers.udp.IMUType
 import dev.slimevr.tracking.trackers.udp.UDPDevice
 import io.github.axisangles.ktmath.Quaternion
 import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.io.File
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -39,9 +47,24 @@ import dev.slimevr.tracking.trackers.TrackerStatus as LocalStatus
 class NormalPositionRuntimeTests {
 	@ParameterizedTest
 	@ValueSource(booleans = [false, true])
-	fun ordinaryAssignmentSaveReachesPositionLearningFallbackAndSolverReacquisition(legacyGeometry: Boolean, @TempDir directory: Path) {
-		val p = (MonakaCodec.decodeEnvelope(File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes()) as DecodeResult.Success).value as MtpPose
-		val key = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
+	fun ordinaryAssignmentSaveReachesPositionLearningFallbackAndSolverReacquisition(legacyGeometry: Boolean, @TempDir directory: Path) =
+		exercise(legacyGeometry, directory, c3 = false)
+
+	@Test
+	fun c3ConventionOnlyTeacherReachesSameRawHmdSolverAndOutput(@TempDir directory: Path) =
+		exercise(false, directory, c3 = true)
+
+	private fun exercise(legacyGeometry: Boolean, directory: Path, c3: Boolean) {
+		val p3 = if (c3) {
+			val bytes = File(System.getProperty("monaka.c3Fixtures"), "mtp-pose.json").readBytes()
+			(C3Codec.decodeEnvelope(bytes) as C3DecodeResult.Success).value as C3MtpPose
+		} else null
+		val p = if (!c3) {
+			val bytes = File(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").readBytes()
+			(MonakaCodec.decodeEnvelope(bytes) as DecodeResult.Success).value as MtpPose
+		} else null
+		val key = p3?.let { LogicalTracker(it.source_id, it.tracker_id, it.publisher_id) }
+			?: requireNotNull(p).let { LogicalTracker(it.source_id, it.tracker_id, it.publisher_id) }
 		val path = directory.resolve("monaka-mtp.json")
 		val bridge = NormalHmdCapture()
 		val imu = Tracker(
@@ -54,13 +77,17 @@ class NormalPositionRuntimeTests {
 		}
 		val legacy = if (legacyGeometry) {
 			RotationCorrectionConfig(
-				RotationCorrectionFrames(Quaternion.IDENTITY, imu.resetsHandler.getCorrectionReferenceRotationFrom(Quaternion.IDENTITY).inv(), p.coordinate_space, false),
+				RotationCorrectionFrames(Quaternion.IDENTITY, imu.resetsHandler.getCorrectionReferenceRotationFrom(Quaternion.IDENTITY).inv(), requireNotNull(p).coordinate_space, false),
 				RotationCorrectionTuning.normalRuntimeDefaults(),
 			)
 		} else {
 			null
 		}
-		MonakaConfiguration(p.coordinate_space, port = 0, rotationCorrection = legacy).save(path)
+		if (p3 != null) {
+			Files.writeString(path, """{"version":5,"convention":"rh_y_up_neg_z_forward","port":0,"assignments":[]}""")
+		} else {
+			MonakaConfiguration(requireNotNull(p).coordinate_space, port = 0, rotationCorrection = legacy).save(path)
+		}
 		val hpm = HumanPoseManager(listOf(bridge.hmd, imu)).also {
 			it.setLegTweaksEnabled(false)
 			it.skeleton.ikSolver.enabled = true
@@ -82,22 +109,29 @@ class NormalPositionRuntimeTests {
 				now += 20_000_000
 				imu.setRotation(Quaternion.IDENTITY)
 				if (hmd) bridge.receiveHead()
-				val pose = p.copy(
-					sequence = ++sequence,
-					modality = mode,
-					position = if (mode == "full") listOf(x, 1.0, .1) else null,
-					orientation = if (mode == "none") null else listOf(0.0, 0.0, 0.0, 1.0),
-					validity = Validity(mode == "full", mode != "none"),
-					confidence = Confidence(if (mode == "full") 1.0 else 0.0, if (mode == "none") 0.0 else 1.0),
-					tracking_state = if (mode == "full") {
-						"tracked"
-					} else if (mode == "none") {
-						"lost"
-					} else {
-						"degraded"
-					},
-				)
-				assertTrue(it.runtime.inbox.receive((MonakaCodec.encodeEnvelope(pose) as EncodeResult.Success).value, now))
+				sequence++
+				val full = mode == "full"
+				val rotated = mode != "none"
+				val position = if (full) listOf(x, 1.0, .1) else null
+				val orientation = if (rotated) listOf(0.0, 0.0, 0.0, 1.0) else null
+				val tracking = if (full) "tracked" else if (rotated) "degraded" else "lost"
+				val confidenceP = if (full) 1.0 else 0.0
+				val confidenceQ = if (rotated) 1.0 else 0.0
+				val bytes = if (p3 != null) {
+					val pose = p3.copy(
+						sequence = sequence, modality = mode, position = position, orientation = orientation,
+						validity = C3Validity(full, rotated), confidence = C3Confidence(confidenceP, confidenceQ),
+						tracking_state = tracking, input = p3.input.copy(sequence = sequence),
+					)
+					(C3Codec.encodeEnvelope(pose) as C3EncodeResult.Success).value
+				} else {
+					val pose = requireNotNull(p).copy(
+						sequence = sequence, modality = mode, position = position, orientation = orientation,
+						validity = Validity(full, rotated), confidence = Confidence(confidenceP, confidenceQ), tracking_state = tracking,
+					)
+					(MonakaCodec.encodeEnvelope(pose) as EncodeResult.Success).value
+				}
+				assertTrue(it.runtime.inbox.receive(bytes, now))
 				before!!.run()
 				hpm.update()
 				after!!.run()

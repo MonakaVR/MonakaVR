@@ -111,8 +111,7 @@ internal class TrackingOverrideResolver(
 		if (!declared.supportsSixDof) return unavailable(TrackingOverrideSourceStatus.CAPABILITY_UNSUPPORTED)
 		val sample = backend.sampleFor(key)
 		if (paused || sample == null) return unavailable(TrackingOverrideSourceStatus.SOURCE_UNAVAILABLE)
-		// The source space ID and revision are descriptive. The saved frame assertion still applies.
-		if (sample.pose.coordinate_space.convention != expectedSpace.convention) {
+		if (sample.pose.convention != expectedSpace.convention) {
 			return unavailable(TrackingOverrideSourceStatus.SPACE_MISMATCH)
 		}
 		val age = nowNanos - sample.sampleTime
@@ -121,7 +120,7 @@ internal class TrackingOverrideResolver(
 
 		// The existing admission adapter owns component validity and Float conversion.
 		// Its observation label has no relationship to the dedicated wire device.
-		val adapted = runCatching { adapter.adapt(sample.pose, hand.body, sample.sampleTime) }.getOrNull()
+		val adapted = runCatching { adapter.adapt(sample, hand.body) }.getOrNull()
 		val p = adapted?.position
 		val q = adapted?.rotation
 		if (p == null || q == null || !q.isUnitRotation()) return unavailable(TrackingOverrideSourceStatus.INCOMPLETE)

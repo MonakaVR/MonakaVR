@@ -12,3 +12,5 @@ dependencies/** -text
 *.zip binary
 third_party/monaka-protocol-v2/** -text whitespace=cr-at-eol
 dependencies/protocol-v2.1/** whitespace=cr-at-eol
+third_party/monaka-protocol-v3/** -text whitespace=cr-at-eol
+dependencies/protocol-v3.0/** whitespace=cr-at-eol

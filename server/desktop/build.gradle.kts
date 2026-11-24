@@ -43,6 +43,7 @@ tasks.withType<JavaCompile> {
 tasks.withType<Test> {
 	systemProperty("file.encoding", "UTF-8")
 	systemProperty("monaka.fixtures", rootProject.file("third_party/monaka-protocol-v2/fixtures").absolutePath)
+	systemProperty("monaka.c3Fixtures", rootProject.file("third_party/monaka-protocol-v3/fixtures/v3").absolutePath)
 	systemProperty("monaka.direct.captures", layout.buildDirectory.dir("direct-protobuf-captures").get().asFile.absolutePath)
 	outputs.dir(layout.buildDirectory.dir("direct-protobuf-captures"))
 	doFirst { systemProperty("monaka.test.classpath", sourceSets["test"].runtimeClasspath.asPath) }
@@ -149,6 +150,24 @@ tasks.register<JavaExec>("mtpProcessE2E") {
 		val output = providers.gradleProperty("monakaE2EOutput").orNull
 			?: layout.buildDirectory.dir("mtp-process-e2e/${UUID.randomUUID()}").get().asFile.absolutePath
 		args(rootProject.file(output).absolutePath)
+	}
+}
+
+// Explicit cross-product verification against a separately built, verified Bridge service.
+tasks.register<JavaExec>("bridgeC3RouteE2E") {
+	group = "verification"
+	description = "Real Bridge C3 UDP into the normal MonakaVR desktop assignment and IK"
+	dependsOn(tasks.testClasses)
+	classpath = sourceSets["test"].runtimeClasspath
+	mainClass.set("dev.monaka.tracking.desktop.BridgeC3RouteE2E")
+	javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(17)) })
+	doFirst {
+		val service = rootProject.file(providers.gradleProperty("monakaBridgeExecutable").get())
+		val expectedSha = providers.gradleProperty("monakaBridgeSha256").get()
+		val fixtures = rootProject.file("dependencies/protocol-v3.0/monaka-input-protocol-kit-v3.0.zip")
+		val output = providers.gradleProperty("monakaBridgeE2EOutput").orNull?.let { rootProject.file(it) }
+			?: layout.buildDirectory.dir("bridge-c3-route-e2e/${UUID.randomUUID()}").get().asFile
+		args(service.absolutePath, expectedSha, fixtures.absolutePath, output.absolutePath)
 	}
 }
 

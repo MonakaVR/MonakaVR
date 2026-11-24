@@ -214,7 +214,7 @@ class MvipSolverBoundaryTests {
 				// A valid repeated datagram must not make the old physical sample fresh.
 				val last = runtime.mtp.samples().getValue(key)
 				now = last.sampleTime + 500_000_001
-				submit(last.pose)
+				submit(requireNotNull(last.legacyPose))
 				val stale = step()
 				assertNull(stale.constraints[hip]?.position)
 				assertNull(stale.constraints[hip]?.rotation)

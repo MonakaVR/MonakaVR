@@ -139,7 +139,7 @@ class TrackingOverrideProductTests {
 						tick()
 						Thread.sleep(1)
 					}
-					assertEquals(sample, integration.runtime.mtp.sampleFor(identity(sample))?.pose)
+					assertEquals(sample, integration.runtime.mtp.sampleFor(identity(sample))?.legacyPose)
 				}
 				val unsupportedConvention = fixture.toString(Charsets.UTF_8)
 					.replace(left.coordinate_space.convention, "unsupported-convention").toByteArray(Charsets.UTF_8)

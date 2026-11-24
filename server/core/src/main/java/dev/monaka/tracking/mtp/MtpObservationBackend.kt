@@ -2,7 +2,7 @@ package dev.monaka.tracking.mtp
 
 import dev.monaka.protocol.v2.CoordinateSpace
 import dev.monaka.protocol.v2.MtpPose
-import dev.monaka.protocol.v2.MtpTrackerState
+import dev.monaka.protocol.v3.MtpPose as C3MtpPose
 import dev.monaka.tracking.AssignmentSnapshotAwareObservationBackend
 import dev.monaka.tracking.DeclaredTrackerCapabilities
 import dev.monaka.tracking.LogicalTracker
@@ -17,28 +17,59 @@ internal data class MtpSourceContextSnapshot(
 	val sourceEpoch: String,
 	val calibrationEpoch: String,
 	val mappingRevision: Long?,
-	val coordinateSpace: CoordinateSpace,
+	val coordinateSpace: CoordinateSpace?,
+	val convention: String = requireNotNull(coordinateSpace).convention,
 )
 
 /** Server-thread incremental cache. Watermarks survive loss/pause; pose age never changes. */
 class MtpObservationBackend(
 	private val inbox: MtpInbox,
 	private val assignments: TrackerBodyAssignments,
-	private val expectedSpace: CoordinateSpace,
+	private val expectedConvention: String,
 	override val backendId: String = "mtp",
 	override val profileId: String = "mtp",
 ) : ObservationBackend,
 	AssignmentSnapshotAwareObservationBackend {
-	data class Sample(val pose: MtpPose, val sampleTime: Long, val receivedAtNanos: Long = sampleTime)
-	private class Lifetime(val session: String, val clock: String, val peer: String, val retired: MutableSet<String>) {
+	/** Legacy callers supply their consumer-local alignment. Admission needs its convention. */
+	constructor(
+		inbox: MtpInbox,
+		assignments: TrackerBodyAssignments,
+		expectedSpace: CoordinateSpace,
+		backendId: String = "mtp",
+		profileId: String = "mtp",
+	) : this(inbox, assignments, expectedSpace.convention, backendId, profileId)
+
+	data class Sample(
+		val pose: NormalMtpPose,
+		val sampleTime: Long,
+		val receivedAtNanos: Long = sampleTime,
+		val legacyPose: MtpPose? = null,
+		val c3Pose: C3MtpPose? = null,
+		val acquisitionSequence: Long = pose.sequence,
+	) {
+		val legacySpace: CoordinateSpace? get() = legacyPose?.coordinate_space
+		val legacyMappingRevision: Long? get() = legacyPose?.mapping_revision
+	}
+
+	private class Lifetime(
+		val session: String,
+		val clock: String,
+		val peer: String,
+		val orderedAcrossTypes: Boolean,
+		val retired: MutableSet<String>,
+	) {
 		var quarantined = false
 		var lastAccepted = -1L
 	}
+
+	private data class AcquisitionStream(val source: String, val device: String, val session: String)
+
 	private class Device {
-		var space: CoordinateSpace? = null
-		var poseSequence = -1L
+		var poseOrSharedSequence = -1L
 		var stateSequence = -1L
-		var mappingRevision = -1L
+		var legacyPoseSpace: CoordinateSpace? = null
+		var legacyPoseMappingRevision: Long? = null
+		val acquisitions = mutableMapOf<AcquisitionStream, Long>()
 		var absentAt = -1L
 		var sample: Sample? = null
 		var context: MtpSourceContextSnapshot? = null
@@ -62,7 +93,7 @@ class MtpObservationBackend(
 	fun observeAdmitted(observer: ((LogicalTracker, Sample) -> Unit)?) { admittedObserver = observer }
 
 	init {
-		require(expectedSpace.convention == "rh_y_up_neg_z_forward")
+		require(expectedConvention == MTP_CONVENTION)
 	}
 
 	/** Static declaration survives absent/loss/pause; usability never follows from support. */
@@ -84,7 +115,7 @@ class MtpObservationBackend(
 				// Reuse the actual component gate, including confidence/tracking/Float checks.
 				val adapted = d.sample?.let { sample ->
 					runCatching {
-						adapter.adapt(sample.pose, dev.slimevr.tracking.trackers.TrackerPosition.HEAD, sample.sampleTime)
+						adapter.adapt(sample, dev.slimevr.tracking.trackers.TrackerPosition.HEAD)
 					}.getOrNull()
 				}
 				CapabilitySnapshot(
@@ -120,7 +151,7 @@ class MtpObservationBackend(
 	}
 
 	/**
-	 * Resume-transition drain: advance replay/session/mapping watermarks for the
+	 * Resume-transition drain: advance replay and session watermarks for the
 	 * current bounded queue while [suspended] prevents every pose becoming a sample.
 	 */
 	fun discardQueuedWhileUpdatingWatermarks(): Int {
@@ -173,7 +204,7 @@ class MtpObservationBackend(
 				return@mapNotNull null
 			}
 			try {
-				adapter.adapt(sample.pose, target, sample.sampleTime)
+				adapter.adapt(sample, target)
 			} catch (_: IllegalArgumentException) {
 				devices.getValue(key).sample = null
 				devices.getValue(key).context = null
@@ -192,25 +223,20 @@ class MtpObservationBackend(
 		}
 	}
 	private fun admit(received: MtpInbox.Received, dirty: MutableSet<LogicalTracker>) {
-		val pose = received.envelope as? MtpPose
-		val state = received.envelope as? MtpTrackerState
-		val key = if (pose != null) {
-			LogicalTracker(pose.source_id, pose.tracker_id, pose.publisher_id)
-		} else {
-			LogicalTracker(requireNotNull(state).source_id, state.tracker_id, state.publisher_id)
-		}
+		val message = received.message
+		val pose = message as? NormalMtpPose
+		val key = LogicalTracker(message.source_id, message.tracker_id, message.publisher_id)
 		// The wire identifies the publisher/sample, not transitive output origin.
 		// Do not classify opaque IDs as proof of either external or output ancestry.
-		val session = pose?.session_id ?: state!!.session_id
-		val clock = pose?.clock_id ?: state!!.clock_id
-		var lifetime = lifetimes[key.lifetimeId]
+		val session = message.session_id
+		val clock = message.clock_id
+		val lifetime = lifetimes[key.lifetimeId]
 		if (lifetime == null) {
 			if (lifetimes.size >= 64) {
 				inbox.count("SourceLimit")
 				return
 			}
-			lifetime = Lifetime(session, clock, received.peer, linkedSetOf())
-			lifetimes[key.lifetimeId] = lifetime
+			lifetimes[key.lifetimeId] = Lifetime(session, clock, received.peer, received.orderedAcrossTypes, linkedSetOf())
 		} else {
 			if (lifetime.quarantined || session in lifetime.retired) {
 				inbox.count("RetiredSession")
@@ -233,9 +259,12 @@ class MtpObservationBackend(
 					return
 				}
 				lifetime.retired += lifetime.session
-				lifetimes[key.lifetimeId] = Lifetime(session, clock, received.peer, lifetime.retired)
+				lifetimes[key.lifetimeId] = Lifetime(session, clock, received.peer, received.orderedAcrossTypes, lifetime.retired)
 				devices.keys.filter { it.lifetimeId == key.lifetimeId }.forEach { devices.remove(it) }
 				inbox.count("SessionChanged")
+			} else if (received.orderedAcrossTypes != lifetime.orderedAcrossTypes) {
+				inbox.count("WireVersionChangedInSession")
+				return
 			} else if (clock != lifetime.clock) {
 				devices[key]?.let {
 					it.sample = null
@@ -251,17 +280,15 @@ class MtpObservationBackend(
 			return
 		}
 		val device = devices.getOrPut(key) { Device() }
-		val sequence = pose?.sequence ?: state!!.sequence
-		val previous = if (pose != null) device.poseSequence else device.stateSequence
+		val sequence = message.sequence
+		val sharedOrPose = received.orderedAcrossTypes || pose != null
+		val previous = if (sharedOrPose) device.poseOrSharedSequence else device.stateSequence
 		if (sequence <= previous) {
 			inbox.count("DuplicateOrOldSequence")
 			return
 		}
-		if (pose != null) device.poseSequence = sequence else device.stateSequence = sequence
-		val space = pose?.coordinate_space ?: state!!.coordinate_space
-		// Space identity/revision describe a source generation, not permission to use
-		// a numerically valid pose. The public convention remains mandatory.
-		if (space.convention != expectedSpace.convention) {
+		if (sharedOrPose) device.poseOrSharedSequence = sequence else device.stateSequence = sequence
+		if (message.convention != expectedConvention) {
 			if (device.sample != null) historyGeneration++
 			device.sample = null
 			device.context = null
@@ -269,19 +296,7 @@ class MtpObservationBackend(
 			inbox.count("SpaceMismatch")
 			return
 		}
-		val revision = pose?.mapping_revision ?: state!!.mapping_revision
-		if (revision < device.mappingRevision) {
-			inbox.count("OldMappingRevision")
-			return
-		}
-		if (revision > device.mappingRevision) {
-			historyGeneration++
-			device.sample = null
-			device.context = null
-			removed += key.observationId
-			device.mappingRevision = revision
-		}
-		val declaration = DeclaredTrackerCapabilities(pose?.capabilities ?: state!!.capabilities)
+		val declaration = DeclaredTrackerCapabilities(message.capabilities)
 		if (device.capabilityConflict || (device.capabilities != null && device.capabilities != declaration)) {
 			device.capabilityConflict = true
 			if (device.sample != null) historyGeneration++
@@ -292,16 +307,9 @@ class MtpObservationBackend(
 			return
 		}
 		device.capabilities = declaration
-		if (device.space != null && device.space != space) {
-			historyGeneration++
-			device.sample = null
-			device.context = null
-			removed += key.observationId
-			inbox.count("SpaceDescriptionChanged")
-		}
-		device.space = space
 		if (pose == null) {
-			if (state!!.presence == "absent" || state.tracking_state in listOf("lost", "disconnected")) {
+			val state = message as NormalMtpTrackerState
+			if (state.presence == "absent" || state.tracking_state in listOf("lost", "disconnected")) {
 				device.absentAt = maxOf(device.absentAt, state.timestamp_ns)
 				if (device.sample?.pose?.timestamp_ns?.let { it <= device.absentAt } != false) {
 					if (device.sample != null) historyGeneration++
@@ -313,18 +321,62 @@ class MtpObservationBackend(
 			lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
 			return // Present/battery heartbeat cannot repair or refresh a pose.
 		}
+		if (pose.timestamp_ns <= device.absentAt) return
+		val prior = device.sample
+		var reexpression = false
+		if (received.orderedAcrossTypes) {
+			val input = pose.input
+			val stream = AcquisitionStream(input.source_id, input.device_id, input.session_id)
+			val watermark = device.acquisitions[stream]
+			if (watermark == null && device.acquisitions.size >= 256) {
+				// Keep acquisition tombstones so a previously admitted input cannot
+				// become fresh again after a remap or local pause.
+				inbox.count("AcquisitionStreamLimit")
+				return
+			}
+			if (watermark != null && input.sequence < watermark) {
+				inbox.count("OldAcquisition")
+				return
+			}
+			reexpression = watermark == input.sequence
+			if (reexpression &&
+				(prior == null || !prior.pose.input.sameAcquisition(input) || pose.timestamp_ns != prior.pose.timestamp_ns ||
+					(pose.positionValid && !prior.pose.positionValid) || (pose.orientationValid && !prior.pose.orientationValid))
+			) {
+				inbox.count("ReexpressionWithoutAcquisition")
+				return
+			}
+			device.acquisitions[stream] = input.sequence
+		}
 		dirty += key
 		device.sample = null
 		device.context = null
-		if (pose.timestamp_ns <= device.absentAt) return
 		lifetimes.getValue(key.lifetimeId).lastAccepted = received.receivedAtNanos
 		if (suspended) return
 		val age = pose.sent_at_ns - pose.timestamp_ns // Both U63, codec checked timestamp <= sent_at.
-		if (age > received.receivedAtNanos) {
+		if (!reexpression && age > received.receivedAtNanos) {
 			inbox.count("BeforeLocalEpoch")
 			return
 		}
-		device.sample = Sample(pose, received.receivedAtNanos - age, received.receivedAtNanos)
+		// A legacy description change can reset transient history only when a newly
+		// acquired pose replaces it. State alone cannot invalidate healthy geometry.
+		val legacySpace = received.legacyPose?.coordinate_space
+		val legacyMappingRevision = received.legacyPose?.mapping_revision
+		if (device.legacyPoseSpace != null &&
+			(device.legacyPoseSpace != legacySpace || device.legacyPoseMappingRevision != legacyMappingRevision)
+		) {
+			historyGeneration++
+			if (device.legacyPoseSpace != legacySpace) inbox.count("SpaceDescriptionChanged")
+		}
+		device.legacyPoseSpace = legacySpace
+		device.legacyPoseMappingRevision = legacyMappingRevision
+		device.sample = if (reexpression) {
+			// A new publication sequence can express new geometry on the same acquired
+			// input. The admitted receipt and sample age belong to that acquisition.
+			requireNotNull(prior).copy(pose = pose, c3Pose = received.c3Pose)
+		} else {
+			Sample(pose, received.receivedAtNanos - age, received.receivedAtNanos, received.legacyPose, received.c3Pose)
+		}
 		// Descriptive metadata follows admitted public messages, independently of
 		// component usability. Existing observation gates continue to own tracking.
 		displayNames.remove(key)
@@ -334,8 +386,9 @@ class MtpObservationBackend(
 			key,
 			"${pose.session_id}:${pose.clock_id}",
 			pose.input.session_id,
-			pose.mapping_revision,
-			pose.coordinate_space,
+			legacyMappingRevision,
+			legacySpace,
+			pose.convention,
 		)
 		inbox.count("WireOriginUnknown")
 		inbox.count("PoseAccepted")

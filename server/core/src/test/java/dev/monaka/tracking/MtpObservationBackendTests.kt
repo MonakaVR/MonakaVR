@@ -20,7 +20,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class MtpObservationBackendTests {
-	@Test fun compatibleDescriptionIsFreshAfterRestartAndRejectedOldMappingCannotClearHealthyPose() {
+	@Test fun compatibleDescriptionIsFreshAfterRestartAndLowerMappingDoesNotGateNewPose() {
 		val p = pose().copy(mapping_revision = 10)
 		val configPath = java.nio.file.Files.createTempFile("retained-assignment", ".json")
 		try {
@@ -33,18 +33,18 @@ class MtpObservationBackendTests {
 			val admitted = MtpObservationBackend(inbox, loaded.assignments, loaded.space)
 			submit(inbox, p)
 			admitted.poll(1_000_000_000)
-			val before = admitted.samples()
-			val context = admitted.sourceContexts()
 			val history = admitted.historyGeneration
 			val changed = p.coordinate_space.copy(id = "new-description", revision = p.coordinate_space.revision + 1)
 			submit(inbox, p.copy(sequence = p.sequence + 1, mapping_revision = 9, coordinate_space = changed))
-			admitted.poll(1_000_000_000)
-			assertEquals(before, admitted.samples())
-			assertEquals(context, admitted.sourceContexts())
-			assertEquals(history, admitted.historyGeneration)
+			assertEquals(1, admitted.poll(1_000_000_000).size)
+			assertEquals(p.sequence + 1, admitted.samples().getValue(key(p)).pose.sequence)
+			assertEquals(9L, admitted.sourceContexts().getValue(key(p)).mappingRevision)
+			assertEquals(changed, admitted.sourceContexts().getValue(key(p)).coordinateSpace)
+			assertTrue(admitted.historyGeneration > history)
+			val changedHistory = admitted.historyGeneration
 			submit(inbox, p.copy(sequence = p.sequence + 2, coordinate_space = changed))
 			assertEquals(1, admitted.poll(1_000_000_000).size)
-			assertTrue(admitted.historyGeneration > history)
+			assertTrue(admitted.historyGeneration > changedHistory)
 			assertEquals(changed, admitted.sourceContexts().getValue(key(p)).coordinateSpace)
 			assertEquals(assignments.snapshot().targets, MonakaConfiguration.load(configPath).assignments.snapshot().targets)
 		} finally {
@@ -81,7 +81,7 @@ class MtpObservationBackendTests {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = ["clock", "mapping", "absent", "lost", "disconnected", "overflow", "beforeEpoch", "invalidate", "close", "pause"])
+	@ValueSource(strings = ["clock", "absent", "lost", "disconnected", "overflow", "beforeEpoch", "invalidate", "close", "pause"])
 	fun contextClearedWheneverCurrentSampleIsInvalidated(case: String) {
 		val p = pose()
 		val inbox = MtpInbox()
@@ -91,8 +91,6 @@ class MtpObservationBackendTests {
 		assertEquals(1, backend.sourceContexts().size)
 		when (case) {
 			"clock" -> submit(inbox, p.copy(sequence = p.sequence + 1, clock_id = "44444444-4444-4444-4444-444444444444"))
-			"space" -> submit(inbox, p.copy(sequence = p.sequence + 1, coordinate_space = p.coordinate_space.copy(revision = p.coordinate_space.revision + 1)))
-			"mapping" -> submit(inbox, state(p.copy(mapping_revision = p.mapping_revision + 1)))
 			"absent" -> submit(inbox, state(p, presence = "absent"))
 			"lost", "disconnected" -> submit(inbox, state(p, tracking = case))
 			"overflow" -> submit(inbox, p.copy(sequence = p.sequence + 1, position = listOf(Double.MAX_VALUE, 0.0, 0.0)))
@@ -126,15 +124,23 @@ class MtpObservationBackendTests {
 		assertEquals(current, backend.sourceContexts().getValue(key(p)))
 	}
 
-	@Test fun mappingAdvanceClearsUntilPoseWithNewRevisionAndResumeRequiresNewPose() {
+	@Test fun stateOnlyDescriptionChangeRetainsPoseAndResumeRequiresNewPose() {
 		val p = pose()
 		val inbox = MtpInbox()
 		val backend = MtpObservationBackend(inbox, TrackerBodyAssignments(mapOf(key(p) to TrackerPosition.HIP)), p.coordinate_space)
 		submit(inbox, p)
 		backend.poll(1_000_000_000)
-		submit(inbox, state(p.copy(mapping_revision = p.mapping_revision + 1)))
-		backend.poll(1_000_000_000)
-		assertTrue(backend.sourceContexts().isEmpty())
+		val original = backend.samples()
+		val context = backend.sourceContexts()
+		val history = backend.historyGeneration
+		submit(inbox, state(p.copy(
+			mapping_revision = p.mapping_revision + 1,
+			coordinate_space = p.coordinate_space.copy(id = "new-description", revision = p.coordinate_space.revision + 1),
+		)), 1_050_000_000)
+		assertTrue(backend.poll(1_050_000_000).isEmpty())
+		assertEquals(original, backend.samples())
+		assertEquals(context, backend.sourceContexts())
+		assertEquals(history, backend.historyGeneration)
 		val next = p.copy(sequence = p.sequence + 1, mapping_revision = p.mapping_revision + 1)
 		submit(inbox, next)
 		backend.poll(1_000_000_000)

@@ -208,7 +208,9 @@ class HipRotationCorrection(
 			goodRecoveryPairs = 0
 		}
 		// Application integrity is checked independently of teacher synchronization.
-		if (expectedSpace.convention != frames.assertedSpace.convention || (ip?.space != null && ip.space.convention != expectedSpace.convention)) {
+		if (expectedSpace.convention != frames.assertedSpace.convention ||
+			(ip?.coordinateConvention != null && ip.coordinateConvention != expectedSpace.convention)
+		) {
 			return blockApplication("space_mismatch")
 		}
 		if (imu == null || ip == null || currentImuKey == null) return blockApplication("provenance_missing")
@@ -242,7 +244,7 @@ class HipRotationCorrection(
 		if (modality != TrackingModality.NONE &&
 			main != null &&
 			mp != null &&
-			(mp.space == null || mp.space.convention == expectedSpace.convention)
+			(mp.coordinateConvention == null || mp.coordinateConvention == expectedSpace.convention)
 		) {
 			tryLearn(main, mp, imuRotation, ip, now, modality)
 		} else if (modality != TrackingModality.NONE) {

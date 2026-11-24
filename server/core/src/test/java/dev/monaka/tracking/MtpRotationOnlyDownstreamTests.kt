@@ -117,7 +117,7 @@ class MtpRotationOnlyDownstreamTests {
 				now = last.sampleTime + 499_999_999
 				assertNotNull(step().rotation)
 				// Duplicate and present metadata do not renew the last sample during silence.
-				assertTrue(r.inbox.receive(assertIs<EncodeResult.Success>(MonakaCodec.encodeEnvelope(last.pose)).value, now))
+				assertTrue(r.inbox.receive(assertIs<EncodeResult.Success>(MonakaCodec.encodeEnvelope(requireNotNull(last.legacyPose))).value, now))
 				val metadata = MtpTrackerState(
 					p.version, p.source_id, p.session_id, p.clock_id, 0, last.pose.timestamp_ns, last.pose.sent_at_ns,
 					p.timestamp_kind, p.tracker_id, "present", "degraded", p.coordinate_space, p.capabilities,

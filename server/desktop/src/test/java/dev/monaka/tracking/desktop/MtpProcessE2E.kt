@@ -150,7 +150,7 @@ private class Scenario(private val directory: File) {
 	private fun accept(publisher: Publisher, p: MtpPose) {
 		send(publisher, p)
 		val identity = LogicalTracker(p.source_id, p.tracker_id, p.publisher_id)
-		await("accept ${p.session_id}/${p.sequence}") { runtime.mtp.samples()[identity]?.pose == p }
+		await("accept ${p.session_id}/${p.sequence}") { runtime.mtp.samples()[identity]?.legacyPose == p }
 	}
 	private fun reject(publisher: Publisher, p: MtpPose, reason: String) {
 		val before = runtime.mtp.samples()

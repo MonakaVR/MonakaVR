@@ -7,6 +7,8 @@ import dev.monaka.protocol.v2.EncodeResult
 import dev.monaka.protocol.v2.MonakaCodec
 import dev.monaka.protocol.v2.ObservationDeviceState
 import dev.monaka.protocol.v2.TrackerObservation
+import dev.monaka.protocol.v3.EncodeResult as C3EncodeResult
+import dev.monaka.protocol.v3.MonakaCodec as C3Codec
 import dev.monaka.tracking.MonakaConfiguration
 import dev.monaka.tracking.MonakaRuntime
 import java.net.DatagramPacket
@@ -125,9 +127,11 @@ internal class MtpHilCaptureSession(config: MonakaConfiguration, directory: Path
 				)
 			},
 			"accepted_samples" to runtime.mtp.samples().values.map { sample ->
+				val bytes = sample.legacyPose?.let { (MonakaCodec.encodeEnvelope(it) as EncodeResult.Success).value }
+					?: (C3Codec.encodeEnvelope(requireNotNull(sample.c3Pose)) as C3EncodeResult.Success).value
 				mapOf(
 					"sample_ns" to sample.sampleTime.toString(),
-					"wire" to document((MonakaCodec.encodeEnvelope(sample.pose) as EncodeResult.Success).value),
+					"wire" to document(bytes),
 				)
 			},
 			"diagnostics" to runtime.inbox.diagnostics(),

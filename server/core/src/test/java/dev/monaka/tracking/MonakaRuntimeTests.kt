@@ -63,8 +63,10 @@ class MonakaRuntimeTests {
 			assertEquals(Vector3(1f, 2f, 3f), result.position!!.value)
 			assertEquals(Quaternion.IDENTITY, result.rotation!!.value)
 			assertEquals(clock.now - 100, result.position!!.observedAtNanos)
-			assertEquals(p.confidence, r.mtp.samples().getValue(key).pose.confidence)
-			assertEquals(p.input, r.mtp.samples().getValue(key).pose.input)
+			val sample = r.mtp.samples().getValue(key)
+			assertEquals(p.confidence.position, sample.pose.positionConfidence)
+			assertEquals(p.confidence.orientation, sample.pose.orientationConfidence)
+			assertEquals(p.input, sample.legacyPose?.input)
 		}
 	}
 

@@ -1,8 +1,8 @@
 package dev.monaka.tracking.desktop
 
-import dev.monaka.protocol.v2.MtpPose
 import dev.monaka.tracking.*
 import dev.monaka.tracking.mtp.MtpObservationBackend
+import dev.monaka.tracking.mtp.NormalMtpPose
 import dev.slimevr.tracking.processor.BoneType
 import dev.slimevr.tracking.processor.skeleton.HumanSkeleton
 import dev.slimevr.tracking.trackers.TrackerPosition
@@ -12,10 +12,16 @@ import io.github.axisangles.ktmath.Quaternion
 class QJumpDiagnostics(val recorder: QJumpRecorder) : AutoCloseable {
 	data class Pending(val tick: MonakaResolvedTickSnapshot, val samples: List<Map<String, Any?>>, val selected: Map<TrackerPosition, Map<String, String>>, val contexts: Map<TrackerPosition, Map<String, Any?>>, val richState: () -> Map<String, Map<String, Any?>>)
 	private fun q(value: Quaternion?) = value?.let { listOf(it.x, it.y, it.z, it.w).map { n -> n.takeIf(Float::isFinite) } }
-	private fun identity(p: MtpPose) = mapOf("publisher_id" to p.publisher_id, "source_id" to p.source_id, "tracker_id" to p.tracker_id,
-		"session_id" to p.session_id, "clock_id" to p.clock_id, "sequence" to p.sequence.toString(), "mapping_revision" to p.mapping_revision.toString(),
-		"space_id" to p.coordinate_space.id, "space_revision" to p.coordinate_space.revision.toString())
-	private fun input(p: MtpPose) = mapOf("source_id" to p.input.source_id, "device_id" to p.input.device_id, "session_id" to p.input.session_id, "sequence" to p.input.sequence.toString())
+	private fun identity(value: MtpObservationBackend.Sample): Map<String, String> {
+		val p = value.pose
+		val common = mapOf("publisher_id" to p.publisher_id, "source_id" to p.source_id, "tracker_id" to p.tracker_id,
+			"session_id" to p.session_id, "clock_id" to p.clock_id, "sequence" to p.sequence.toString())
+		return common + (value.legacyPose?.let {
+			mapOf("mapping_revision" to it.mapping_revision.toString(),
+				"space_id" to it.coordinate_space.id, "space_revision" to it.coordinate_space.revision.toString())
+		} ?: mapOf("convention" to p.convention))
+	}
+	private fun input(p: NormalMtpPose) = mapOf("source_id" to p.input.source_id, "device_id" to p.input.device_id, "session_id" to p.input.session_id, "sequence" to p.input.sequence.toString())
 	private fun sample(stage: String, lane: String, identity: Map<String, String>, rotation: Any?, context: Map<String, Any?>,
 		validity: Map<String, Any?> = emptyMap(), timestamps: Map<String, Any?> = emptyMap(), links: Map<String, Any?> = mapOf("mvip" to identity)) =
 		mapOf("stage" to stage, "stream_id" to lane, "identity" to identity, "q" to rotation, "context" to context, "validity" to validity, "timestamps" to timestamps, "links" to links)
@@ -25,12 +31,12 @@ class QJumpDiagnostics(val recorder: QJumpRecorder) : AutoCloseable {
 		val selectedSources = assignment.targets.values.flatMap { listOfNotNull(it.mainTracker, it.rotationFallbackTracker) }.distinct().take(16)
 		if (selectedSources.none { it.observationId == key.observationId }) { recorder.dropped.incrementAndGet(); return }
 		val p = value.pose
-			recorder.offer(listOf(sample("admitted", "admitted:${key.observationId}", identity(p), p.orientation,
+		recorder.offer(listOf(sample("admitted", "admitted:${key.observationId}", identity(value), p.orientation,
 			mapOf("targets" to targets.keys.map { it.name }, "assignment_generation" to assignment.generation.toString(), "orientation_evidence" to p.input.orientation_evidence),
-			mapOf("position" to p.validity.position, "rotation" to p.validity.orientation, "modality" to p.modality, "status" to p.tracking_state, "fresh" to null, "freshness_basis" to "ADMISSION_NOT_ELIGIBILITY"),
+			mapOf("position" to p.positionValid, "rotation" to p.orientationValid, "modality" to p.modality, "status" to p.tracking_state, "fresh" to null, "freshness_basis" to "ADMISSION_NOT_ELIGIBILITY"),
 			mapOf("source_timestamp_ns" to p.timestamp_ns.toString(), "sent_at_ns" to p.sent_at_ns.toString(), "source_clock_domain" to p.clock_id, "timestamp_kind" to p.timestamp_kind,
 				"receipt_ns" to value.receivedAtNanos.toString(), "derived_sample_ns" to value.sampleTime.toString(), "receipt_clock_domain" to "consumer_monotonic"),
-			mapOf("mvip" to identity(p), "input" to input(p))) + mapOf("retention" to "TRIGGER_ONLY")))
+			mapOf("mvip" to identity(value), "input" to input(p))) + mapOf("retention" to "TRIGGER_ONLY")))
 	}
 	fun before(tick: MonakaResolvedTickSnapshot, runtime: MonakaRuntime, poses: Map<TrackerPosition, ResolvedTrackingPose>, composition: MonakaSolverComposition): Pending {
 		val targets = tick.assignment.targets.entries.take(16)
@@ -46,7 +52,7 @@ class QJumpDiagnostics(val recorder: QJumpRecorder) : AutoCloseable {
 			val pose = poses[target]
 			val owner = pose?.rotationOwner ?: raw?.rotation?.sourceId ?: relation.mainTracker.observationId
 			val admitted = accepted[owner]
-			val id = admitted?.pose?.let(::identity) ?: emptyMap()
+			val id = admitted?.let(::identity) ?: emptyMap()
 			selected[target] = id
 			val proxy = proxies[target]
 			val lifecycle = mapOf("assignment_generation" to tick.assignment.generation.toString(), "q_source" to relation.sourceSelection?.qSource?.observationId,
@@ -61,11 +67,11 @@ class QJumpDiagnostics(val recorder: QJumpRecorder) : AutoCloseable {
 				"physical_receipt_cutoff_system_ns" to tick.trackerReceiptCutoffSystemNanos.toString())
 			admitted?.let { acceptedSample ->
 				val p = acceptedSample.pose
-				samples += sample("admitted", "admitted_selected:${target.name}", identity(p), p.orientation, compact,
-					mapOf("position" to p.validity.position, "rotation" to p.validity.orientation, "fresh" to (raw?.rotation != null), "modality" to p.modality, "status" to p.tracking_state),
+				samples += sample("admitted", "admitted_selected:${target.name}", id, p.orientation, compact,
+					mapOf("position" to p.positionValid, "rotation" to p.orientationValid, "fresh" to (raw?.rotation != null), "modality" to p.modality, "status" to p.tracking_state),
 					timestamps + mapOf("source_timestamp_ns" to p.timestamp_ns.toString(), "sent_at_ns" to p.sent_at_ns.toString(), "source_clock_domain" to p.clock_id,
 						"receipt_ns" to acceptedSample.receivedAtNanos.toString(), "derived_sample_ns" to acceptedSample.sampleTime.toString(), "receipt_clock_domain" to "consumer_monotonic"),
-					mapOf("mvip" to identity(p), "input" to input(p)))
+					mapOf("mvip" to id, "input" to input(p)))
 			}
 			samples += sample("resolved", "resolved:${target.name}", id, q(raw?.rotation?.value), compact + mapOf("rotation_owner" to owner, "position_owner" to pose?.positionOwner),
 				mapOf("position" to (raw?.position != null), "rotation" to (raw?.rotation != null), "fresh" to (raw?.rotation != null)), timestamps)

@@ -132,7 +132,7 @@ class ParallelRegressionTests {
 			send(r, p.copy(sequence = 99))
 			r.tick()
 			assertEquals(reconnect.session_id, r.mtp.samples().getValue(ref(p).mtp!!).pose.session_id)
-			assertEquals(sibling, r.mtp.samples().getValue(ref(sibling).mtp!!).pose)
+			assertEquals(sibling, r.mtp.samples().getValue(ref(sibling).mtp!!).legacyPose)
 			assertEquals(1, r.inbox.diagnostics()["RetiredSession"])
 			assertEquals(saved, c.assignments.snapshot())
 			assertEquals(saved.targets, MonakaConfiguration.load(path).assignments.snapshot().targets)

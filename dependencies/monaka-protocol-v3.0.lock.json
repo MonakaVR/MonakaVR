@@ -1,0 +1,13 @@
+{
+  "artifact_path": "dependencies/protocol-v3.0/monaka-input-protocol-kit-v3.0.zip",
+  "sha256": "5c45e49b85fd28bac6e99b37c8d629c53b8506997828309dceca3e45442b9e6f",
+  "manifest_path": "dependencies/protocol-v3.0/handoff-v3.json",
+  "manifest_sha256": "5115d2c55ece9f003aa0c96fc40fb29b2c4b07f9be7aa9c9be20c739c3a69c0b",
+  "source_commit": "b7f38b7abb406b055d4ff8d5fd4c4241585290f5",
+  "source_content_sha256": "7073468b51ece98d94c3862d4740aaf73d9c0e346d0a676b6a554acc739d1f33",
+  "wire_version": {
+    "major": 3,
+    "minor": 0
+  },
+  "jar_sha256": "e754c9000ba95d9a0d7bbb48113fa477c7eba41660068a60b28deef3c832b11b"
+}

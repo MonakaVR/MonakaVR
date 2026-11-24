@@ -58,10 +58,11 @@ internal class NormalPositionCorrectionRuntime(
 				(q.modality == TrackingModality.FULL && (q.position == null || !q.positionQuality.usable)) ||
 				p.sampleAtNanos > tick.nowNanos ||
 				tick.nowNanos - p.sampleAtNanos > (saved?.predictorPolicy?.maxImuSampleAgeNanos ?: RotationCorrectionTuning.normalRuntimeDefaults().maxImuSampleAgeNanos) ||
-				(p.space != null && p.space.convention != space.convention)
+				(p.coordinateConvention != null && p.coordinateConvention != space.convention)
 			) return null
 			// Preserve the admitted Q lineage, including its original space description.
-			val provenance = p.copy(space = space, calibrationEpoch = "${p.calibrationEpoch}|${p.space}")
+			val calibration = p.space?.let { "${p.calibrationEpoch}|$it" } ?: p.calibrationEpoch
+			val provenance = p.copy(space = space, calibrationEpoch = calibration)
 			return runCatching { RawImuOrientationInput(RawSourceIdentity(q.sourceId, RawSourceKind.RAW_IMU), q.correctionRotation, space, provenance) }.getOrNull()
 		}
 		val rawImu = usableQ(hip.rotationFallbackTracker) ?: usableQ(mainRef)
@@ -95,7 +96,7 @@ internal class NormalPositionCorrectionRuntime(
 				space, tick.assignment, hmd.provenance.sourceEpoch, hmd.provenance.calibrationEpoch,
 				hmd.source.sourceId, hmd.provenance.mappingRevision, hmd.provenance.commonWorldEpoch, body.identity,
 				fixed.identity, mount.identity, continuityContext?.sourceEpoch, continuityContext?.calibrationEpoch,
-				continuityContext?.mappingRevision, continuityContext?.coordinateSpace,
+				continuityContext?.mappingRevision, continuityContext?.coordinateSpace, continuityContext?.convention,
 			)
 		} else {
 			null
@@ -112,12 +113,13 @@ internal class NormalPositionCorrectionRuntime(
 		}
 		val active = orchestrator ?: return null
 		val rawMain = sources.observationsBySource[mainRef.observationId]?.takeIf {
-			it.provenance?.space?.convention == space.convention
+			it.provenance?.coordinateConvention == space.convention
 		}?.let {
 			val p = requireNotNull(it.provenance)
 			// Saved coordinate interpretation is stable. A changed source description
 			// still changes transient teacher lineage and cannot reuse old pair history.
-			it.copy(provenance = p.copy(space = space, calibrationEpoch = "${p.calibrationEpoch}|${p.space}"))
+			val calibration = p.space?.let { "${p.calibrationEpoch}|$it" } ?: p.calibrationEpoch
+			it.copy(provenance = p.copy(space = space, calibrationEpoch = calibration))
 		}
 		val teacher = rawMain?.let { MainTrackerMountToHipCenter.normalize(it, RawSourceIdentity(it.sourceId, RawSourceKind.RAW_BACKEND), mount) }
 			?.let { it as? MainHipCenterTeacherResult.Available }?.teacher

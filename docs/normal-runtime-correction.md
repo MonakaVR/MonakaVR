@@ -1,5 +1,28 @@
 # Normal input and correction semantics (Issue17)
 
+New MTP configurations use version 5. The normal desktop startup reads
+`monaka-mtp.json` beside the selected server configuration, or from the explicit
+`monaka.mtp.config` property. Enable MTP through the existing opt-in. A new
+configuration may start with an empty assignment catalog for selection in the
+normal input UI.
+
+```json
+{
+  "version": 5,
+  "convention": "rh_y_up_neg_z_forward",
+  "assignments": []
+}
+```
+
+Normal C3 MTP is already expressed in Standing coordinates. The consumer accepts
+pose and tracker state through the verified C3 codec and maintains a shared
+sequence watermark per publisher, source, tracker and session. It keeps the
+original acquisition time on a geometry re-expression. Present state leaves
+pose receipt and freshness untouched. Existing v1–4 configuration and C2
+packet paths remain supported, with C2's independent pose and state sequence
+streams. A C2 description or mapping number in a state message leaves a healthy
+pose usable until its actual loss or expiry.
+
 Compatible coordinate-space IDs/revisions are source descriptions, not physical-quality permissions. The declared coordinate convention, codec/math validation, identity/session/clock sequencing and actual component validity remain mandatory. An admitted description change clears transient history. Saved body/Q/6DoF choices and geometric interpretation survive reconnect/restart.
 
 The normal explicit Q/6DoF assignment connects independently accepted physical IMU orientation to `BodyRotationGuidance` for each supported body target. The complete usable Main retains paired pose ownership; FULL samples continuously teach correction. On loss, a fresh independent Q uses the learned correction. Reacquired Main rotation converges at the solver input as well as visible output. Q supplies no measured position. HIP's optional historical configured learner is exclusive with the normal body learner for that target.

@@ -242,6 +242,27 @@ class PromotionTests(unittest.TestCase):
             self.assertEqual(launcher.main(product, self.workspace, []), 2)
             start.assert_not_called()
 
+    def test_bridge_c3_configuration_uses_fixed_native_owner(self):
+        product = 'MonakaBridge'
+        repo = self.workspace / product
+        runtime = repo / 'Build/runtime'
+        config = repo / 'config/bridge.json'
+        config.parent.mkdir(parents=True)
+        config.write_text(json.dumps({'namespace': 'monaka.bridge', 'version': 3}))
+        for relative in ('Release/monaka_bridge_service.exe',
+                         'control/Release/monaka_bridge_control.exe',
+                         'Release/monaka_bridge_config.exe'):
+            payload = runtime / relative
+            payload.parent.mkdir(parents=True, exist_ok=True)
+            payload.write_bytes(b'fixture')
+
+        with patch.object(launcher.subprocess, 'Popen') as start:
+            self.assertEqual(launcher.main(product, self.workspace, ['--check']), 0)
+            start.assert_not_called()
+            command = launcher.launch_spec(self.workspace, product, runtime)['argv']
+            self.assertEqual(command[:3], [str(runtime / 'Release/monaka_bridge_service.exe'),
+                                           '--native-owner', str(config)])
+
     def test_monaka_profile_is_directory_and_arguments_are_preserved(self):
         fixed = self.repo / 'Build/runtime/win-unpacked'
         fixed.mkdir(parents=True)

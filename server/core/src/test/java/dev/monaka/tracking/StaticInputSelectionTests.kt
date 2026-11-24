@@ -288,7 +288,7 @@ class StaticInputSelectionTests {
 			val result = r.tick().getValue(TrackerPosition.HIP)
 			assertNull(result.position)
 			assertNotNull(result.rotation)
-			assertEquals(p, r.mtp.samples().values.single().pose)
+			assertEquals(p, r.mtp.samples().values.single().legacyPose)
 		}
 	}
 

@@ -63,6 +63,7 @@ allprojects {
 dependencies {
 	// Exact JVM codec from the accepted Task 1 artifact (never a local codec fork).
 	api(files(rootProject.file("third_party/monaka-protocol-v2/jvm/libs/monaka-protocol-jvm-0.1.0.jar")))
+	api(files(rootProject.file("third_party/monaka-protocol-v3/jvm/libs/monaka-input-protocol-v3.jar")))
 	implementation(files(rootProject.file("third_party/monaka-protocol-v2/jvm/libs/gson-2.11.0.jar")))
 	implementation(project(":solarxr-protocol"))
 
@@ -119,7 +120,11 @@ val verifyMonakaUpstream by tasks.registering(Exec::class) {
 	workingDir(rootProject.projectDir)
 	commandLine("python", "scripts/verify_protocol_v21.py")
 }
-tasks.named("compileKotlin") { dependsOn(verifyMonakaUpstream) }
+val verifyMonakaC3 by tasks.registering(Exec::class) {
+	workingDir(rootProject.projectDir)
+	commandLine("python", "scripts/verify_protocol_v3.py")
+}
+tasks.named("compileKotlin") { dependsOn(verifyMonakaUpstream, verifyMonakaC3) }
 
 // Standalone local Core harness. Does not launch VRServer or connect any backend.
 val corePocHilPackage by tasks.registering(Sync::class) {

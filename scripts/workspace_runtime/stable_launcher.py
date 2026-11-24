@@ -31,8 +31,8 @@ def launch_spec(workspace, product, runtime, manifest=None, profile=None, mtp=Fa
     if product == 'MonakaBridge':
         config = repo / 'config/bridge.json'
         value = json.loads(config.read_text(encoding='utf-8-sig'))
-        if value.get('namespace') != 'monaka.bridge' or value.get('version') != 2:
-            raise ContractError('Bridge requires its existing explicit v2 configuration')
+        if value.get('namespace') != 'monaka.bridge' or value.get('version') not in (2, 3):
+            raise ContractError('Bridge requires a monaka.bridge v2 or v3 configuration')
         native = runtime / 'Release'
         result['argv'] = [str(native / 'monaka_bridge_service.exe'), '--native-owner', str(config),
                           str(runtime / 'control/Release/monaka_bridge_control.exe'),

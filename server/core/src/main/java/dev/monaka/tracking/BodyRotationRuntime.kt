@@ -139,7 +139,7 @@ internal class BodyRotationRuntime(
 			val main = mainRef.mtp?.let(sources.mtpContexts::get)
 			val q = sources.observationsBySource[qRef.observationId]?.provenance
 			val mainEpoch = main ?: r.mainEpoch
-			val semantic = listOf(tick.assignment.generation, relation, mainEpoch, q?.sourceEpoch, q?.calibrationEpoch, q?.mappingRevision, q?.space)
+			val semantic = listOf(tick.assignment.generation, relation, mainEpoch, q?.sourceEpoch, q?.calibrationEpoch, q?.mappingRevision, q?.space, q?.coordinateConvention)
 			if (r.semantic != null && r.semantic != semantic) {
 				r = Recovery().also { recovery[target] = it }
 			}
@@ -179,8 +179,9 @@ internal class BodyRotationRuntime(
 				it.sourceEpoch,
 				it.sourceEpoch,
 				it.calibrationEpoch,
-				it.mappingRevision ?: 0,
-				it.space ?: space,
+				it.mappingRevision,
+				it.space,
+				it.coordinateConvention ?: space.convention,
 			),
 		)
 	}
@@ -194,7 +195,7 @@ internal class BodyRotationRuntime(
 			p.sampleAtNanos
 		} else {
 			mtpSample?.takeIf {
-				it.pose.sequence == p.sequence && it.sampleTime == p.sampleAtNanos
+				it.acquisitionSequence == p.sequence && it.sampleTime == p.sampleAtNanos
 			}?.receivedAtNanos ?: return null
 		}
 		val receipt = GuidanceReceipt(p.sequence, p.sampleAtNanos, receivedAt, source.epoch)

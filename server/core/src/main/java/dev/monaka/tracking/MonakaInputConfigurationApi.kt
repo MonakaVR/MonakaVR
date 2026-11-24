@@ -253,7 +253,7 @@ class MonakaInputConfigurationApi(
 		val changed = validateMode(target, mode)
 		if (changed == current.targets[target]) return@synchronized
 		val document = mapper.readTree(expectedFile) as ObjectNode
-		require(document["version"].asInt() in 2..4) { "Migrate legacy configuration explicitly before mode editing" }
+		require(document["version"].asInt() in 2..MonakaConfiguration.STANDING_VERSION) { "Migrate legacy configuration explicitly before mode editing" }
 		val row = document["assignments"].single { it["body"].asText() == target.name } as ObjectNode
 		// Patch only these three fields. In particular, never serialize/replace sourceSelection or references.
 		row.put("outputMode", changed.outputMode.name.lowercase())
@@ -292,8 +292,9 @@ class MonakaInputConfigurationApi(
 		}
 		val selections = overrideSelections + (hand to next)
 		val document = mapper.readTree(expectedFile) as ObjectNode
-		require(document["version"].asInt() in 2..4) { "Migrate legacy configuration before editing tracking overrides" }
-		document.put("version", 4)
+		val version = document["version"].asInt()
+		require(version in 2..MonakaConfiguration.STANDING_VERSION) { "Migrate legacy configuration before editing tracking overrides" }
+		document.put("version", maxOf(version, 4))
 		document.set<JsonNode>("trackingOverride", mapper.valueToTree(TrackingOverrideConfigJson.write(selections)))
 		commit { mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(document) }
 		overrideSelections = Collections.unmodifiableMap(selections)

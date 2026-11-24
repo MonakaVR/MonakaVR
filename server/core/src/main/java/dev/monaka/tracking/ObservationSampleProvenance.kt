@@ -12,7 +12,11 @@ data class ObservationSampleProvenance(
 	val space: CoordinateSpace? = null,
 	/** Null is legacy/unavailable. Never infer a live world from numeric space revision. */
 	val commonWorldEpoch: String? = null,
+	/** Convention-only normal tracking has no source space identifier or mapping revision. */
+	val convention: String? = null,
 ) {
+	val coordinateConvention: String? get() = convention ?: space?.convention
+
 	init {
 		require(sequence >= 0 && sampleAtNanos >= 0 && sourceEpoch.isNotBlank() && calibrationEpoch.isNotBlank())
 		require(commonWorldEpoch == null || commonWorldEpoch.isNotBlank())

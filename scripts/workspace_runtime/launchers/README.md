@@ -6,6 +6,7 @@
 | 入口 | 起動対象 |
 |---|---|
 | `Start_PicoMotionTrackerBridge.cmd` | `PicoMotionTrackerBridge/Build/runtime` のReceiver trayと、その所有service |
+| `Start_ViveUltimateTrackerBridge.cmd` | アルトラ側の起動スクリプトを経由して `ViveUltimateTrackerBridge/Build/runtime` のトレイと、その所有サービスを起動 |
 | `Start_MonakaBridge.cmd` | `MonakaBridge/Build/runtime` のnative owner。GUIを所有情報付きで開く |
 | `Start_MonakaVR.cmd` | `MonakaVR/Build/runtime/win-unpacked` のdesktop GUIと、そのGUIが所有するJava server |
 
@@ -20,8 +21,6 @@ EXE／JAR直接起動や別Java環境を通常入口として追加しない。
 
 必要変更をdevへ統合・commitし、sourceと既存成果物の対応を先に判断する。
 内容とbuild/dependency入力が同一なら既存検収結果と成果物を再利用し、SHAが変わっただけで再Buildしない。
-Buildが必要な製品だけ、そのrepoの `python -B scripts/build_runtime.py` を明示実行する。
+Buildが必要な製品だけ、そのrepoのビルド入口を明示実行する。アルトラの入口は `Build_Runtime.cmd`、ほかの3製品は `python -B scripts/build_runtime.py`。
 MonakaVRの `--offline` は既存の固定依存物を使う場合に指定する。
-明示Buildは前後のsource一致と `Build/provenance/<channel>.json` を記録する。通常起動はその記録からsourceを逆選定しない。
-
-VIVEは今回の3製品是正対象外。既存 `Start_ViveUltimateTrackerBridge.cmd` は保持する。
+Pythonのビルド入口では、前後のsource一致と `Build/provenance/<channel>.json` を記録する。通常起動はその記録からsourceを逆選定しない。

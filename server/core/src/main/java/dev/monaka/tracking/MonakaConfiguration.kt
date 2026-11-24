@@ -3,6 +3,7 @@ package dev.monaka.tracking
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import dev.monaka.protocol.v2.CoordinateSpace
+import dev.monaka.tracking.mtp.MTP_CONVENTION
 import dev.slimevr.tracking.trackers.TrackerPosition
 import io.github.axisangles.ktmath.Quaternion
 import java.nio.channels.FileChannel
@@ -22,12 +23,14 @@ data class MonakaConfiguration(
 	val rotationCorrection: RotationCorrectionConfig? = null,
 	val positionCorrection: PositionCorrectionConfig? = null,
 	val trackingOverride: Map<TrackingOverrideHand, TrackingOverrideSelection> = emptyMap(),
+	private val standingOutput: Boolean = false,
 ) {
 	// A loaded writer must not overwrite a newer API transaction with its old runtime state.
 	private var loadedPath: Path? = null
 	private var loadedBytes: ByteArray? = null
 	init {
-		require(space.id.isNotBlank() && space.convention == "rh_y_up_neg_z_forward" && space.revision in 0..4294967295L)
+		require(space.id.isNotBlank() && space.convention == MTP_CONVENTION && space.revision in 0..4294967295L)
+		require(!standingOutput || space == STANDING_OUTPUT_ALIGNMENT)
 		require(port in 0..65535 && timeoutNanos >= 0)
 		require(backgroundIkSharedSpace == null || backgroundIkSharedSpace.convention == space.convention) { "Background IK must use the supported coordinate convention" }
 		positionCorrection?.validateBinding(space, assignments.snapshot().targets[TrackerPosition.HIP])
@@ -70,7 +73,7 @@ data class MonakaConfiguration(
 				require(unchanged()) { "Configuration changed before commit" }
 				if (assignments.snapshot().targets.values.any { it.sourceSelection != null } && preimage?.isNotEmpty() == true) {
 					val version = ObjectMapper().readTree(preimage)["version"]
-					require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 2..4) {
+					require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 2..STANDING_VERSION) {
 						"Validate/migrate legacy configuration before saving capability selections"
 					}
 					if (version.asInt() < 4) {
@@ -106,10 +109,13 @@ data class MonakaConfiguration(
 			mapOf("kind" to "slime", "name" to ref.observationId.removePrefix("slime:"))
 		}
 		val document = mapOf(
-			"version" to (if (trackingOverride.isNotEmpty() || assignmentSnapshot.targets.values.any { it.sourceSelection != null }) 4 else 3),
+			"version" to when {
+				standingOutput -> STANDING_VERSION
+				trackingOverride.isNotEmpty() || assignmentSnapshot.targets.values.any { it.sourceSelection != null } -> 4
+				else -> 3
+			},
 			"port" to port,
 			"timeout_ns" to timeoutNanos.toString(),
-			"space" to mapOf("id" to space.id, "revision" to space.revision, "convention" to space.convention),
 			"backgroundIkAlignment" to backgroundIkSharedSpace?.let {
 				mapOf("kind" to "confirmed_same_space", "space" to mapOf("id" to it.id, "revision" to it.revision, "convention" to it.convention))
 			},
@@ -140,6 +146,9 @@ data class MonakaConfiguration(
 						)
 			},
 		) +
+			(if (standingOutput) mapOf("convention" to space.convention) else {
+				mapOf("space" to mapOf("id" to space.id, "revision" to space.revision, "convention" to space.convention))
+			}) +
 			(
 				rotationCorrection?.let { correction ->
 					mapOf(
@@ -179,7 +188,7 @@ data class MonakaConfiguration(
 		Files.createDirectories(absolute.parent)
 		if (assignmentSnapshot.targets.values.any { it.sourceSelection != null } && Files.exists(absolute)) {
 			val previousVersion = ObjectMapper().readTree(absolute.toFile())["version"]
-			require(previousVersion?.isIntegralNumber == true && previousVersion.canConvertToInt() && previousVersion.asInt() in 2..4) {
+			require(previousVersion?.isIntegralNumber == true && previousVersion.canConvertToInt() && previousVersion.asInt() in 2..STANDING_VERSION) {
 				"Validate/migrate legacy configuration before saving capability selections"
 			}
 			if (previousVersion.asInt() < 4) {
@@ -191,6 +200,11 @@ data class MonakaConfiguration(
 		Files.move(temporary, absolute, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
 	}
 	companion object {
+		internal const val STANDING_VERSION = 5
+		// The local solver/HMD/output interfaces share one Standing alignment. This
+		// descriptor belongs to the consumer and never represents sender identity.
+		private val STANDING_OUTPUT_ALIGNMENT = CoordinateSpace("monaka-standing", MTP_CONVENTION, 0)
+
 		internal fun <T> withWriteLock(path: Path, block: () -> T): T {
 			val lockPath = path.resolveSibling(path.fileName.toString() + ".input-write.lock")
 			val channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
@@ -223,12 +237,21 @@ data class MonakaConfiguration(
 		internal fun loadBytes(path: Path, bytes: ByteArray, legacyMapping: Map<Pair<String, String>, LogicalTracker> = emptyMap()): MonakaConfiguration {
 			val root = ObjectMapper().readTree(bytes)
 			val version = root["version"]
-			require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 1..4)
+			require(version?.isIntegralNumber == true && version.canConvertToInt() && version.asInt() in 1..STANDING_VERSION)
 			require(version.asInt() >= 3 || !root.has("positionCorrection")) { "Position correction requires schema v3+" }
-			require(version.asInt() == 4 || !root.has("trackingOverride")) { "Tracking override requires schema v4" }
-			val space = requireNotNull(root["space"])
-			val revision = space["revision"]
-			require(revision != null && revision.isIntegralNumber && revision.canConvertToLong())
+			require(version.asInt() >= 4 || !root.has("trackingOverride")) { "Tracking override requires schema v4+" }
+			val standingOutput = version.asInt() == STANDING_VERSION
+			val expectedSpace = if (standingOutput) {
+				require(!root.has("space") && text(root, "convention") == MTP_CONVENTION) {
+					"Standing output requires the supported convention"
+				}
+				STANDING_OUTPUT_ALIGNMENT
+			} else {
+				val space = requireNotNull(root["space"])
+				val revision = space["revision"]
+				require(revision != null && revision.isIntegralNumber && revision.canConvertToLong())
+				CoordinateSpace(text(space, "id"), text(space, "convention"), revision.asLong())
+			}
 			val entries = requireNotNull(root["assignments"])
 			require(entries.isArray)
 			val assignments = TrackerBodyAssignments()
@@ -264,7 +287,7 @@ data class MonakaConfiguration(
 						}
 					} ?: if (mode == OutputMode.HYBRID) ContinuityPolicy.BACKGROUND_IK else ContinuityPolicy.NONE
 					val selection = it["sourceSelection"]?.let { selected ->
-						require(version.asInt() == 4 && selected.isObject) { "sourceSelection requires config v4" }
+						require(version.asInt() >= 4 && selected.isObject) { "sourceSelection requires config v4+" }
 						require(selected.fieldNames().asSequence().toSet() == setOf("qSource", "sixDofSource", "sixDofManuallySelected"))
 						val manual = requireNotNull(selected["sixDofManuallySelected"])
 						require(manual.isBoolean)
@@ -310,7 +333,6 @@ data class MonakaConfiguration(
 					duration("fallbackBlendMs", defaults.fallbackBlendMs),
 				)
 			} ?: ContinuityTuning()
-			val expectedSpace = CoordinateSpace(text(space, "id"), text(space, "convention"), revision.asLong())
 			val correction = root["rotationCorrection"]?.takeUnless { it.isNull }?.let { node ->
 				require(node.isObject && node["enabled"]?.isBoolean == true) { "rotationCorrection.enabled must be boolean" }
 				if (!node["enabled"].booleanValue()) {
@@ -355,7 +377,7 @@ data class MonakaConfiguration(
 			val trackingOverride = root["trackingOverride"]?.let {
 				TrackingOverrideConfigJson.read(it, assignments.snapshot().targets, expectedSpace)
 			}.orEmpty()
-			return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction, positionCorrection, trackingOverride).also {
+			return MonakaConfiguration(expectedSpace, assignments, port, timeout, shared, tuning, correction, positionCorrection, trackingOverride, standingOutput).also {
 				it.loadedPath = path.toAbsolutePath().normalize()
 				it.loadedBytes = bytes
 			}

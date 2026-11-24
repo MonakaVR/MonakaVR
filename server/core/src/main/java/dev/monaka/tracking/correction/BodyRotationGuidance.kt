@@ -17,8 +17,9 @@ data class GuidanceEpoch(
 	val session: String,
 	val sourceEpoch: String,
 	val calibrationEpoch: String,
-	val mappingRevision: Long,
-	val space: CoordinateSpace,
+	val mappingRevision: Long?,
+	val space: CoordinateSpace?,
+	val convention: String = requireNotNull(space).convention,
 )
 data class GuidanceSource(val identity: GuidanceIdentity, val epoch: GuidanceEpoch)
 data class GuidanceFrames(
@@ -329,10 +330,9 @@ object BodyRotationGuidance {
 	private fun validEpoch(e: GuidanceEpoch) = e.session.isNotBlank() &&
 		e.sourceEpoch.isNotBlank() &&
 		e.calibrationEpoch.isNotBlank() &&
-		e.mappingRevision >= 0 &&
-		e.space.id.isNotBlank() &&
-		e.space.revision >= 0 &&
-		e.space.convention == "rh_y_up_neg_z_forward"
+		(e.mappingRevision == null || e.mappingRevision >= 0) &&
+		(e.space == null || (e.space.id.isNotBlank() && e.space.revision >= 0 && e.space.convention == e.convention)) &&
+		e.convention == "rh_y_up_neg_z_forward"
 	private fun validateBinding(b: GuidanceBinding): GuidanceReason = when {
 		b.bodyId.isBlank() ||
 			b.assignmentRevision < 0 ||
@@ -341,7 +341,7 @@ object BodyRotationGuidance {
 			!validIdentity(b.imu.identity) ||
 			!validEpoch(b.main.epoch) ||
 			!validEpoch(b.imu.epoch) ||
-			b.main.epoch.space.convention != b.imu.epoch.space.convention -> GuidanceReason.BINDING_INVALID
+			b.main.epoch.convention != b.imu.epoch.convention -> GuidanceReason.BINDING_INVALID
 
 		// These are saved geometric transforms. Historical approval labels and
 		// transport epochs cannot revoke their ordinary runtime use.

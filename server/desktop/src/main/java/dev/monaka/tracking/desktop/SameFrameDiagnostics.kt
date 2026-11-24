@@ -352,14 +352,16 @@ class SameFrameDiagnostics internal constructor(
 					"source" to identity(p.source_id), "tracker" to identity(p.tracker_id), "session" to identity(p.session_id),
 					"clock" to identity(p.clock_id), "sequence" to p.sequence.toString(), "remote_timestamp_ns" to p.timestamp_ns.toString(),
 					"remote_sent_at_ns" to p.sent_at_ns.toString(), "local_sample_ns" to sample.sampleTime.toString(),
-					"mapping_revision" to p.mapping_revision.toString(), "space_id" to identity(p.coordinate_space.id),
-					"space_revision" to p.coordinate_space.revision.toString(), "convention" to p.coordinate_space.convention,
+					"convention" to p.convention,
 					"input_source" to identity(p.input.source_id), "input_device" to identity(p.input.device_id),
 					"input_sequence" to p.input.sequence.toString(), "orientation_evidence" to p.input.orientation_evidence,
 					"timestamp_kind" to p.timestamp_kind,
 					"input_session" to identity(p.input.session_id), "modality" to p.modality,
-					"validity" to mapOf("position" to p.validity.position, "orientation" to p.validity.orientation),
-				)
+					"validity" to mapOf("position" to p.positionValid, "orientation" to p.orientationValid),
+				) + sample.legacyPose?.let {
+					mapOf("mapping_revision" to it.mapping_revision.toString(), "space_id" to identity(it.coordinate_space.id),
+						"space_revision" to it.coordinate_space.revision.toString())
+				}.orEmpty()
 			},
 			"resolved" to poses.values.map { p ->
 				mapOf(
@@ -425,7 +427,7 @@ class SameFrameDiagnostics internal constructor(
 				"gui_orientation_available" to false, "gui_orientation_unavailable_reason" to "CATALOG_ONLY_NO_ORIENTATION_DISPLAY",
 				"rotation_xyzw" to p.orientation?.map { it.takeIf(Double::isFinite) },
 				"selected_rotation_xyzw" to quaternion(selectedRotation?.value),
-				"has_position" to p.validity.position, "has_rotation" to p.validity.orientation,
+				"has_position" to p.positionValid, "has_rotation" to p.orientationValid,
 				"rotation_selected" to (selectedRotation != null), "ingested_rotation_quality" to observation?.rotationQuality?.name,
 				"selection_basis" to "PINNED_TICK_CONSTRAINT", "freshness_evaluation" to "NOT_REEVALUATED_DIAGNOSTIC",
 				"modality" to p.modality, "sequence" to p.sequence.toString(),

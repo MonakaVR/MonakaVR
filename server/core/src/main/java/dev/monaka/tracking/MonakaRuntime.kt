@@ -36,7 +36,7 @@ class MonakaRuntime(
 		eligibility = { observation, now -> assignedImuFreshness?.apply(observation, now) ?: observation },
 		pinnedEligibility = { observation, now, assignment -> assignedImuFreshness?.apply(observation, now, assignment) ?: observation },
 	)
-	val mtp = MtpObservationBackend(inbox, assignments, expectedSpace)
+	val mtp = MtpObservationBackend(inbox, assignments, expectedSpace.convention)
 	private val trackingOverride = TrackingOverrideResolver(mtp, expectedSpace, timeoutNanos)
 	val runner = ObservationBackendRunner(
 		pipeline,

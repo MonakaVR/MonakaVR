@@ -163,7 +163,8 @@ internal class PositionCorrectionNonHmdProductionAdapter(
 		if (context.logicalTracker != logical) {
 			return reject(PositionCorrectionProductionTeacherRejection.MTP_CONTEXT_IDENTITY_MISMATCH)
 		}
-		if (context.coordinateSpace != foundation.rawImuBinding.space) {
+		val contextSpace = context.coordinateSpace
+		if (contextSpace == null || contextSpace != foundation.rawImuBinding.space) {
 			return reject(PositionCorrectionProductionTeacherRejection.MTP_CONTEXT_SPACE_MISMATCH)
 		}
 		// Authority is established by typed identity + runner ownership + current backend context.
@@ -177,7 +178,7 @@ internal class PositionCorrectionNonHmdProductionAdapter(
 			context.sourceEpoch,
 			context.calibrationEpoch,
 			context.mappingRevision,
-			context.coordinateSpace,
+			contextSpace,
 			tick.assignment.generation,
 			PositionBodyReference.HIP_CENTER,
 			mount.identity,
