@@ -3,6 +3,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { LocalizationProvider, ReactLocalization } from '@fluent/react';
 import { FluentBundle, FluentResource } from '@fluent/bundle';
 import { HomeInputCatalog } from '../../src/components/home/HomeInputCatalog';
+import { ConfigContextC } from '../../src/hooks/config';
+import { LangContext } from '../../src/i18n/config';
 import type { InputSnapshot } from '../../src/monaka-input/controller';
 import { snapshot } from './fixtures';
 import '../../src/index.scss';
@@ -69,11 +71,23 @@ bundle.addResource(
 );
 createRoot(document.getElementById('root')!).render(
   <LocalizationProvider l10n={new ReactLocalization([bundle])}>
-    <MemoryRouter>
-      <main className="p-4">
-        <p>SOFTWARE FIXTURE — fake Core WebSocket, no devices</p>
-        <HomeInputCatalog />
-      </main>
-    </MemoryRouter>
+    <ConfigContextC.Provider
+      value={{
+        config: null,
+        setConfig: async () => {},
+        saveConfig: async () => {},
+      }}
+    >
+      <LangContext.Provider
+        value={{ currentLocales: ['ja'], changeLocales: async () => {} }}
+      >
+        <MemoryRouter>
+          <main className="p-4">
+            <p>SOFTWARE FIXTURE — fake Core WebSocket, no devices</p>
+            <HomeInputCatalog />
+          </main>
+        </MemoryRouter>
+      </LangContext.Provider>
+    </ConfigContextC.Provider>
   </LocalizationProvider>
 );

@@ -34,8 +34,8 @@ async function open(page: Page, fixture: CoreUiFixture, language = 'en') {
   await page.locator('.control#HIP').click();
   await expect(page.getByTestId('unified-assignment')).toBeVisible();
 }
-const qName = 'Q Source: device-publisher-a';
-const sixName = '6DoF Source: device-publisher-a';
+const qName = 'Q Source: same-name · publisher-a';
+const sixName = '6DoF Source: same-name · publisher-a';
 
 test('MVIP picker offers live identities and retains offline choices only on their saved body', async ({
   page,
@@ -71,21 +71,22 @@ test('MVIP picker offers live identities and retains offline choices only on the
   const save = picker.getByRole('button', { name: 'Save input choices', exact: true });
   const readback = picker.getByTestId('assignment-readback');
 
-  await expect(q(previous.id)).toHaveAccessibleName('Q Source: Shared device');
+  await expect(q(previous.id)).toHaveAccessibleName('Q Source: same-name');
+  await expect(row(previous.id).locator('summary')).toContainText('Physical ID: Shared device');
   await q(previous.id).check();
   await expect(six(previous.id)).toBeChecked();
 
   fixture.snapshot.candidates = [offline(previous), current];
   await expect(row(previous.id)).toHaveCount(0);
-  await expect(q(current.id)).toHaveAccessibleName('Q Source: Shared device');
+  await expect(q(current.id)).toHaveAccessibleName('Q Source: same-name');
   await expect(six(current.id)).toBeEnabled();
   await expect(save).toBeDisabled();
   await expect(picker.getByText(/A newly selected input is unavailable/)).toBeVisible();
   expect(fixture.saves).toHaveLength(0);
 
   fixture.snapshot.candidates.push(otherPublisher);
-  await expect(q(current.id)).toHaveAccessibleName('Q Source: Shared device · publisher-a');
-  await expect(q(otherPublisher.id)).toHaveAccessibleName('Q Source: Shared device · publisher-b');
+  await expect(q(current.id)).toHaveAccessibleName('Q Source: same-name · publisher-a');
+  await expect(q(otherPublisher.id)).toHaveAccessibleName('Q Source: same-name · publisher-b');
   await picker.getByRole('button', { name: 'Cancel input changes', exact: true }).click();
   await q(current.id).check();
   await expect(six(current.id)).toBeChecked();
@@ -102,7 +103,7 @@ test('MVIP picker offers live identities and retains offline choices only on the
   await close.click();
   await page.locator('.control#CHEST').click();
   await expect(row(current.id)).toHaveCount(0);
-  await expect(q(otherPublisher.id)).toHaveAccessibleName('Q Source: Shared device');
+  await expect(q(otherPublisher.id)).toHaveAccessibleName('Q Source: same-name');
   await close.click();
   await page.locator('.control#HIP').click();
 
@@ -378,13 +379,13 @@ test('Q-only and old-Core Slime association fail closed while manual clear survi
   ).toBeDisabled();
   await page
     .getByRole('radio', {
-      name: 'Q Source: device-q-only',
+      name: 'Q Source: same-name · q-only',
       exact: true,
     })
     .check();
   await expect(
     page.getByRole('radio', {
-      name: '6DoF Source: device-q-only',
+      name: '6DoF Source: same-name · q-only',
       exact: true,
     })
   ).toBeDisabled();
@@ -434,12 +435,14 @@ test('Japanese normal picker remains operable at narrow width', async ({ page })
   await page.setViewportSize({ width: 390, height: 844 });
   const fixture = new CoreUiFixture();
   await open(page, fixture, 'ja');
-  await page
-    .getByRole('radio', {
-      name: 'Q入力元: device-publisher-a',
-      exact: true,
-    })
-    .check();
+  const q = page.getByRole('radio', {
+    name: 'Q入力元: same-name · publisher-a',
+    exact: true,
+  });
+  await expect(q.locator('xpath=ancestor::tr').locator('summary')).toContainText(
+    '物理ID: device-publisher-a'
+  );
+  await q.check();
   await page.getByRole('button', { name: '入力の選択を保存', exact: true }).click();
   await expect(page.getByTestId('assignment-readback')).toContainText('publisher-a');
   await page.screenshot({ path: 'build/r4-unified-mobile.png', fullPage: true });

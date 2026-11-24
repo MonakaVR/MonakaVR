@@ -866,6 +866,7 @@ monaka-input-title = Qと6DoFの入力元
 monaka-input-semantics = 6DoF Mainが使用可能な間は、その位置と回転を使用します。Mainが使えない場合はQ入力元の回転を使用します。回転への対応だけでは独立したIMUであると判断できません。未校正の入力も使用でき、保存変換がなければ既知の座標規約でIdentityとして扱います。必要に応じて任意に再校正してください。承認操作は不要です。
 monaka-input-unassigned = 未割り当て
 monaka-input-saved-offline = 保存済みの入力元（オフライン）
+monaka-input-physical-id = 物理ID
 monaka-input-support-unknown = 対応機能が不明
 monaka-input-conflict = 識別情報が競合しているため選択できません
 monaka-input-body = 身体の部位

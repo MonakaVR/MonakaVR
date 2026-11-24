@@ -11,8 +11,9 @@ import type { UnifiedAssignment } from '@/hooks/unified-assignment';
 import { sourceOtherBody } from '@/monaka-input/assignment';
 import { isMvipAssignmentReady } from '@/monaka-input/controller';
 import {
-  selectedSourceLabel,
   selectedSourceDetails,
+  selectedTrackerSourceLabel,
+  sourcePhysicalId,
 } from '@/monaka-input/source-label';
 import { InputSourceDetails } from '@/components/commons/InputSourceDetails';
 import {
@@ -172,7 +173,7 @@ function UnifiedChoices({
       )
     : [];
   const label = (id: string | null | undefined) => {
-    return selectedSourceLabel(
+    return selectedTrackerSourceLabel(
       id,
       visibleSources,
       text('none'),
@@ -250,6 +251,7 @@ function UnifiedChoices({
             </tr>
             {candidates.map((entry) => {
               const { source } = entry;
+              const physicalId = sourcePhysicalId(source);
               const other = sourceOtherBody(
                 snapshot,
                 source.id,
@@ -274,6 +276,14 @@ function UnifiedChoices({
                   >
                     <span className="break-all">{label(source.id)}</span>
                     <InputSourceDetails
+                      physicalId={
+                        physicalId
+                          ? {
+                              label: l10n.getString('monaka-input-physical-id'),
+                              value: physicalId,
+                            }
+                          : undefined
+                      }
                       text={selectedSourceDetails(
                         source.id,
                         snapshot.candidates

@@ -8,8 +8,11 @@ import {
 import {
   sourceLabel,
   sourceDetails,
+  sourcePhysicalId,
+  trackerSourceLabel,
   selectedSourceLabel,
   selectedSourceDetails,
+  selectedTrackerSourceLabel,
 } from '../../src/monaka-input/source-label.js';
 
 function candidate(id: string, name: string | null = 'device-17'): InputCandidate {
@@ -36,6 +39,26 @@ test('public device ID is primary; full immutable identity is available only in 
   assert.ok(sourceDetails(a).includes(a.tracker));
   assert.equal(selectedSourceLabel(a.id, [a]), 'device-17');
   assert.equal(selectedSourceDetails(a.id, [a]), sourceDetails(a));
+});
+test('tracker labels opt into the logical ID and use only declared physical metadata', () => {
+  const a = candidate('a', ' serial-080 ');
+  const b = { ...candidate('b', 'serial-081'), publisher: a.publisher, tracker: a.tracker };
+  assert.equal(sourcePhysicalId(a), ' serial-080 ');
+  assert.equal(trackerSourceLabel(a, [a]), 'logical-a');
+  assert.equal(trackerSourceLabel(a, [a, b]), 'logical-a · source-a');
+  assert.equal(trackerSourceLabel(b, [b, a]), 'logical-a · source-b');
+  assert.equal(selectedTrackerSourceLabel(b.id, [a, b]), 'logical-a · source-b');
+  assert.equal(sourceLabel(a, [a, b]), 'serial-080');
+  const legacy = { ...a, origin: 'slime_orientation_stream' };
+  assert.equal(sourcePhysicalId(legacy), undefined);
+  assert.equal(trackerSourceLabel(legacy, [legacy]), 'serial-080');
+  for (const displayName of [undefined, null, '  ']) {
+    const missing = { ...a, displayName };
+    assert.equal(trackerSourceLabel(missing, [missing]), 'logical-a');
+    assert.equal(sourcePhysicalId(missing), undefined);
+  }
+  assert.equal(selectedTrackerSourceLabel(a.id, [], 'None', 'Offline'), 'Offline');
+  assert.equal(selectedTrackerSourceLabel(null, [], 'None', 'Offline'), 'None');
 });
 test('duplicate names disambiguate only when needed and never collapse IDs', () => {
   const sources = [candidate('left'), candidate('right')];

@@ -30,7 +30,7 @@ const { TrackerCard } =
 const { ConfigContextC } = await import('../../src/hooks/config');
 const { LangContext } = await import('../../src/i18n/config');
 
-test('Japanese cards show name, unique saved body and input status; technical information stays in collapsed details', async () => {
+test('Japanese cards show logical IDs and optional physical IDs; technical information stays in collapsed details', async () => {
   const bundle = new FluentBundle('ja', { useIsolating: false });
   bundle.addResource(
     new FluentResource(readFileSync('public/i18n/ja/translation.ftl', 'utf8'))
@@ -38,8 +38,15 @@ test('Japanese cards show name, unique saved body and input status; technical in
   const reader = new HomeInputCatalogReader({
     request: async () =>
       snapshot([
-        source('opaque-one', { displayName: '入力実機' }),
-        source('opaque-two', { displayName: '入力実機' }),
+        source('opaque-one', { tracker: 'logical-hips', displayName: null }),
+        source('opaque-two', {
+          tracker: 'logical-left',
+          displayName: '入力実機',
+        }),
+        source('opaque-three', {
+          tracker: 'logical-right',
+          displayName: '入力実機',
+        }),
       ]),
   });
   await reader.load();
@@ -68,22 +75,24 @@ test('Japanese cards show name, unique saved body and input status; technical in
         search="?ip=test.invalid&amp;port=2222"
       />
     );
-    assert.equal([...html.matchAll(/data-input-id=/g)].length, 2);
+    assert.equal([...html.matchAll(/data-input-id=/g)].length, 3);
     const visible = html
       .replace(/(<\/summary>)[\s\S]*?<\/details>/g, '$1</details>')
       .replace(/<[^>]+>/g, '');
-    assert.match(visible, /入力実機/);
+    assert.match(visible, /logical-hips/);
+    assert.match(visible, /logical-left.*物理ID入力実機/);
+    assert.match(visible, /logical-right.*物理ID入力実機/);
     assert.match(visible, /入力有効/);
     assert.doesNotMatch(visible, /左膝/);
     assert.match(html, /title="保存済みの身体部位: 左膝"/);
     assert.doesNotMatch(
       visible,
-      /INPUT:|Q|6DoF|MVIP|静的対応能力|Identity:|opaque-one|opaque-two|入力経路|割当済みでも|保存済みの身体部位/
+      /INPUT:|Q|6DoF|MVIP|静的対応能力|Identity:|opaque-one|opaque-two|opaque-three|入力経路|割当済みでも|保存済みの身体部位/
     );
-    assert.equal([...html.matchAll(/<details\b/g)].length, 2);
+    assert.equal([...html.matchAll(/<details\b/g)].length, 3);
     assert.doesNotMatch(html, /<details[^>]*\bopen\b/);
     assert.match(html, /<summary[^>]*aria-label="[^"]*詳細"/);
-    assert.equal([...html.matchAll(/h-\[70px\]/g)].length, 2);
+    assert.equal([...html.matchAll(/h-\[70px\]/g)].length, 3);
     assert.match(html, /grid sm:grid-cols-1 md:grid-cols-2 gap-4 px-5 my-5/);
     assert.match(html, /\[&amp;::-webkit-details-marker\]:hidden/);
     assert.match(html, /focus-visible:outline/);
@@ -91,18 +100,20 @@ test('Japanese cards show name, unique saved body and input status; technical in
     assert.match(html, /位置 \+ 回転/);
     assert.match(html, /opaque-one/);
     assert.match(html, /opaque-two/);
+    assert.match(html, /opaque-three/);
     assert.match(html, /割当済みでも/);
     assert.match(html, /左膝 \(Q\), 左膝 \(6DoF\)/);
     assert.doesNotMatch(html, /<(button|input|select|form)\b/);
-    assert.match(html, /\/settings\/monaka-input\?ip=test.invalid/);
+    assert.match(html, /\/onboarding\/trackers-assign\?ip=test.invalid/);
     const tracker = new TrackerDataT();
     tracker.info = new TrackerInfoT();
-    tracker.info.customName = '入力実機 · 1';
+    tracker.info.customName = 'logical-hips';
     tracker.info.bodyPart = BodyPart.LEFT_UPPER_LEG;
     tracker.status = TrackerStatusEnum.OK;
     const legacy = render(<TrackerCard tracker={tracker} smol interactable />);
     const compact = html.match(/<summary[^>]*>([\s\S]*?)<\/summary>/)![1];
-    // Both real adapters render the identical shared content, except status wording.
+    assert.doesNotMatch(compact, /物理ID/);
+    // The Home row without a physical ID uses the same compact layout as SolarXR.
     assert.ok(
       legacy
         .replace(

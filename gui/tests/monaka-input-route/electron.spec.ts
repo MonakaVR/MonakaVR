@@ -151,7 +151,7 @@ test('hand Override starts before the normal chooser and its mapping remains rec
       const chooser = page.getByTestId('unified-assignment');
       await expect(chooser).toBeVisible();
       await chooser
-        .getByRole('radio', { name: '6DoF Source: device-' + publisher, exact: true })
+        .getByRole('radio', { name: `6DoF Source: same-name · ${publisher}`, exact: true })
         .check();
       await chooser
         .getByRole('button', { name: 'Save input choices', exact: true })

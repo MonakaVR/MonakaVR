@@ -2,8 +2,8 @@ import { useLocalization } from '@fluent/react';
 import classNames from 'classnames';
 import { useMemo, useState, useEffect } from 'react';
 import {
-  selectedSourceLabel,
   selectedSourceDetails,
+  selectedTrackerSourceLabel,
 } from '@/monaka-input/source-label';
 import { useForm } from 'react-hook-form';
 import {
@@ -98,7 +98,7 @@ export function TrackersAssignPage() {
   const inputSummaries = useMemo(() => {
     const snapshot = unified.state.snapshot;
     const label = (id: string | null) => {
-      return selectedSourceLabel(
+      return selectedTrackerSourceLabel(
         id,
         snapshot?.candidates ?? [],
         '—',

@@ -9,7 +9,12 @@ import {
   TrackerStatusPresentation,
 } from '@/components/tracker/TrackerCardPresentation';
 import { MonakaInputSocket } from '@/monaka-input/socket';
-import { sourceDetails, sourceLabel } from '@/monaka-input/source-label';
+import {
+  sourceDetails,
+  sourceLabel,
+  sourcePhysicalId,
+  trackerSourceLabel,
+} from '@/monaka-input/source-label';
 import { bodyPartForInput } from '@/monaka-input/roles';
 import {
   buildHomeInputCatalog,
@@ -35,6 +40,11 @@ export function HomeInputCatalogPanel({
   const text = (key: string) => l10n.getString(`home-input-${key}`);
   const rows = buildHomeInputCatalog(state.snapshot, state.fresh);
   const candidates = rows.map((row) => row.candidate);
+  const publicCandidates = rows
+    .filter((row) => row.route === 'mvip' && !row.conflict)
+    .map((row) => row.candidate);
+  const unknown = l10n.getString('monaka-input-unknown');
+  const physicalIdLabel = l10n.getString('monaka-input-physical-id');
   const bodyLabel = (body: string) => {
     const part = bodyPartForInput(body);
     return part === undefined
@@ -96,11 +106,13 @@ export function HomeInputCatalogPanel({
               : status === 'conflict'
                 ? 'bg-status-warning'
                 : 'bg-background-30';
-          const name = sourceLabel(
-            row.candidate,
-            candidates,
-            l10n.getString('monaka-input-unknown')
-          );
+          const hasPublicIdentity = row.route === 'mvip' && !row.conflict;
+          const name = hasPublicIdentity
+            ? trackerSourceLabel(row.candidate, publicCandidates, unknown)
+            : sourceLabel(row.candidate, candidates, unknown);
+          const physicalId = hasPublicIdentity
+            ? sourcePhysicalId(row.candidate)
+            : undefined;
           return (
             <li
               key={row.id}
@@ -111,7 +123,7 @@ export function HomeInputCatalogPanel({
                 <summary
                   className="list-none [&::-webkit-details-marker]:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-background-40 focus-visible:-outline-offset-2"
                   title={`${text('saved-roles')}: ${savedRoles}`}
-                  aria-label={`${name}; ${text(status)}; ${text('saved-roles')}: ${savedRoles}; ${text('details')}`}
+                  aria-label={`${name}${physicalId ? `; ${physicalIdLabel}: ${physicalId}` : ''}; ${text(status)}; ${text('saved-roles')}: ${savedRoles}; ${text('details')}`}
                 >
                   <TrackerCompactContent
                     bodyPart={bodyPart}
@@ -121,6 +133,17 @@ export function HomeInputCatalogPanel({
                         label={text(status)}
                         statusClass={statusClass}
                       />
+                    }
+                    telemetry={
+                      physicalId && (
+                        <span
+                          className="flex max-w-[42%] shrink-0 flex-col justify-center text-right text-xs text-background-30"
+                          title={`${physicalIdLabel}: ${physicalId}`}
+                        >
+                          <span>{physicalIdLabel}</span>
+                          <span className="truncate">{physicalId}</span>
+                        </span>
+                      )
                     }
                   />
                 </summary>
