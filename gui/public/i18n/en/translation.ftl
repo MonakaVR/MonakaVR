@@ -1780,7 +1780,6 @@ monaka-input-title = Q and 6DoF sources
 monaka-input-semantics = 6DoF Main supplies its paired pose while usable. The Q source provides rotation when Main is unavailable. Orientation support does not establish an independent IMU. Uncalibrated inputs remain usable: absent saved transforms use Identity after known-axis conversion. Observe alignment and recalibrate when needed; no approval is required.
 monaka-input-unassigned = Unassigned
 monaka-input-saved-offline = Saved source (offline)
-monaka-input-physical-id = Physical ID
 monaka-input-support-unknown = support unknown
 monaka-input-conflict = conflicting identity; selection unavailable
 monaka-input-body = Body target

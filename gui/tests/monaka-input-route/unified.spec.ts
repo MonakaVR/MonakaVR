@@ -72,7 +72,7 @@ test('MVIP picker offers live identities and retains offline choices only on the
   const readback = picker.getByTestId('assignment-readback');
 
   await expect(q(previous.id)).toHaveAccessibleName('Q Source: same-name');
-  await expect(row(previous.id).locator('summary')).toContainText('Physical ID: Shared device');
+  await expect(row(previous.id).locator('summary')).toHaveText('▶ID : Shared device');
   await q(previous.id).check();
   await expect(six(previous.id)).toBeChecked();
 
@@ -439,8 +439,8 @@ test('Japanese normal picker remains operable at narrow width', async ({ page })
     name: 'Q入力元: same-name · publisher-a',
     exact: true,
   });
-  await expect(q.locator('xpath=ancestor::tr').locator('summary')).toContainText(
-    '物理ID: device-publisher-a'
+  await expect(q.locator('xpath=ancestor::tr').locator('summary')).toHaveText(
+    '▶ID : device-publisher-a'
   );
   await q.check();
   await page.getByRole('button', { name: '入力の選択を保存', exact: true }).click();

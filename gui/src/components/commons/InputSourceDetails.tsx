@@ -4,27 +4,24 @@ export function InputSourceDetails({
   physicalId,
 }: {
   text: string | undefined;
-  physicalId?: { label: string; value: string };
+  physicalId?: string;
 }) {
   if (!text) return null;
   return (
     <details className="group min-w-0 text-xs font-normal">
       {physicalId ? (
-        <summary className="flex cursor-pointer justify-between gap-2 [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer gap-1 [&::-webkit-details-marker]:hidden">
           <span className="shrink-0">
             <span
               aria-hidden="true"
-              className="mr-1 inline-block group-open:rotate-90"
+              className="inline-block group-open:rotate-90"
             >
-              ▸
+              ▶
             </span>
-            ID
-          </span>
-          <span
-            className="min-w-0 truncate text-right"
-            title={physicalId.value}
-          >
-            {physicalId.label}: {physicalId.value}
+            ID :
+          </span>{' '}
+          <span className="min-w-0 truncate" title={physicalId}>
+            {physicalId}
           </span>
         </summary>
       ) : (

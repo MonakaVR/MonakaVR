@@ -44,7 +44,6 @@ export function HomeInputCatalogPanel({
     .filter((row) => row.route === 'mvip' && !row.conflict)
     .map((row) => row.candidate);
   const unknown = l10n.getString('monaka-input-unknown');
-  const physicalIdLabel = l10n.getString('monaka-input-physical-id');
   const bodyLabel = (body: string) => {
     const part = bodyPartForInput(body);
     return part === undefined
@@ -113,6 +112,7 @@ export function HomeInputCatalogPanel({
           const physicalId = hasPublicIdentity
             ? sourcePhysicalId(row.candidate)
             : undefined;
+          const compactId = physicalId ? `ID : ${physicalId}` : undefined;
           return (
             <li
               key={row.id}
@@ -123,7 +123,7 @@ export function HomeInputCatalogPanel({
                 <summary
                   className="list-none [&::-webkit-details-marker]:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-background-40 focus-visible:-outline-offset-2"
                   title={`${text('saved-roles')}: ${savedRoles}`}
-                  aria-label={`${name}${physicalId ? `; ${physicalIdLabel}: ${physicalId}` : ''}; ${text(status)}; ${text('saved-roles')}: ${savedRoles}; ${text('details')}`}
+                  aria-label={`${name}${compactId ? `; ${compactId}` : ''}; ${text(status)}; ${text('saved-roles')}: ${savedRoles}; ${text('details')}`}
                 >
                   <TrackerCompactContent
                     bodyPart={bodyPart}
@@ -135,13 +135,18 @@ export function HomeInputCatalogPanel({
                       />
                     }
                     telemetry={
-                      physicalId && (
+                      compactId && (
                         <span
-                          className="flex max-w-[42%] shrink-0 flex-col justify-center text-right text-xs text-background-30"
-                          title={`${physicalIdLabel}: ${physicalId}`}
+                          className="flex max-w-[42%] shrink-0 items-center gap-1 text-xs text-background-30"
+                          title={compactId}
                         >
-                          <span>{physicalIdLabel}</span>
-                          <span className="truncate">{physicalId}</span>
+                          <span
+                            aria-hidden="true"
+                            className="shrink-0 [details[open]_&]:rotate-90"
+                          >
+                            ▶
+                          </span>
+                          <span className="truncate">{compactId}</span>
                         </span>
                       )
                     }

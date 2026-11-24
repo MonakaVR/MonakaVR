@@ -63,7 +63,7 @@ test('logical labels, physical disclosure headers and exact selection IDs work a
     });
     await expect(option).toBeEnabled();
     await expect(option.locator('xpath=ancestor::tr').locator('summary')).toHaveText(
-      new RegExp(`Physical ID: HappyPC/device/${side}$`)
+      `▶ID : HappyPC/device/${side}`
     );
   }
   const bare = picker.getByRole('radio', {
@@ -74,10 +74,12 @@ test('logical labels, physical disclosure headers and exact selection IDs work a
   const disclosure = q.locator('xpath=ancestor::tr').locator('details');
   const summary = disclosure.locator('summary');
   const details = disclosure.locator('pre');
-  const physicalLabel = summary.getByText(`Physical ID: ${physical}`, {
+  const physicalLabel = summary.getByText(physical, {
     exact: true,
   });
+  await expect(summary).toHaveText(`▶ID : ${physical}`);
   await expect(physicalLabel).toBeVisible();
+  await expect(physicalLabel).toHaveAttribute('title', physical);
   await expect(details).toBeHidden();
   const toggleBox = (await summary.locator(':scope > span').first().boundingBox())!;
   const physicalBox = (await physicalLabel.boundingBox())!;
@@ -183,10 +185,10 @@ test('normal assignment picker and body summary show logical names and retain ph
   ).toBe(true);
   const leftDetails = left.locator('xpath=ancestor::tr').locator('details');
   const leftHeader = leftDetails.locator('summary');
-  await expect(leftHeader.getByText('Physical ID: HappyPC/device/left')).toBeVisible();
+  await expect(leftHeader).toHaveText('▶ID : HappyPC/device/left');
   await expect(leftDetails.locator('pre')).toBeHidden();
   await leftHeader.click();
-  await expect(leftHeader.getByText('Physical ID: HappyPC/device/left')).toBeVisible();
+  await expect(leftHeader).toHaveText('▶ID : HappyPC/device/left');
   await expect(leftDetails.locator('pre')).toBeVisible();
   await left.check();
   await expect(left).toBeChecked();

@@ -276,14 +276,7 @@ function UnifiedChoices({
                   >
                     <span className="break-all">{label(source.id)}</span>
                     <InputSourceDetails
-                      physicalId={
-                        physicalId
-                          ? {
-                              label: l10n.getString('monaka-input-physical-id'),
-                              value: physicalId,
-                            }
-                          : undefined
-                      }
+                      physicalId={physicalId}
                       text={selectedSourceDetails(
                         source.id,
                         snapshot.candidates

@@ -30,7 +30,7 @@ const { TrackerCard } =
 const { ConfigContextC } = await import('../../src/hooks/config');
 const { LangContext } = await import('../../src/i18n/config');
 
-test('Japanese cards show logical IDs and optional physical IDs; technical information stays in collapsed details', async () => {
+test('Japanese cards show logical IDs and optional compact IDs; technical information stays in collapsed details', async () => {
   const bundle = new FluentBundle('ja', { useIsolating: false });
   bundle.addResource(
     new FluentResource(readFileSync('public/i18n/ja/translation.ftl', 'utf8'))
@@ -80,8 +80,9 @@ test('Japanese cards show logical IDs and optional physical IDs; technical infor
       .replace(/(<\/summary>)[\s\S]*?<\/details>/g, '$1</details>')
       .replace(/<[^>]+>/g, '');
     assert.match(visible, /logical-hips/);
-    assert.match(visible, /logical-left.*物理ID入力実機/);
-    assert.match(visible, /logical-right.*物理ID入力実機/);
+    assert.match(visible, /logical-left.*▶ID : 入力実機/);
+    assert.match(visible, /logical-right.*▶ID : 入力実機/);
+    assert.doesNotMatch(visible, /物理ID/);
     assert.match(visible, /入力有効/);
     assert.doesNotMatch(visible, /左膝/);
     assert.match(html, /title="保存済みの身体部位: 左膝"/);
@@ -112,7 +113,7 @@ test('Japanese cards show logical IDs and optional physical IDs; technical infor
     tracker.status = TrackerStatusEnum.OK;
     const legacy = render(<TrackerCard tracker={tracker} smol interactable />);
     const compact = html.match(/<summary[^>]*>([\s\S]*?)<\/summary>/)![1];
-    assert.doesNotMatch(compact, /物理ID/);
+    assert.doesNotMatch(compact, /▶ID :/);
     // The Home row without a physical ID uses the same compact layout as SolarXR.
     assert.ok(
       legacy

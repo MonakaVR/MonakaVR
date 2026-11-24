@@ -92,7 +92,7 @@ test('real Home catalog wrapper: absent producer, arbitrary publishers, dedup, c
   expect(errors).toEqual([]);
 });
 
-test('Home headers keep physical IDs on the right as logical trackers are expanded and collapsed', async ({
+test('Home headers keep compact IDs on the right as logical trackers are expanded and collapsed', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 375, height: 900 });
@@ -145,22 +145,23 @@ test('Home headers keep physical IDs on the right as logical trackers are expand
   await expect(right.locator('h2')).toHaveText('logical-right');
   await expect(otherLeft.locator('h2')).toHaveText('logical-left · arbitrary-b');
   await expect(missing.locator('h2')).toHaveText('logical-alone');
-  await expect(missing.getByText('物理ID', { exact: true })).toHaveCount(0);
+  await expect(missing.locator('[title]')).toHaveCount(0);
   await expect(missingBoth.locator('h2')).toHaveText('不明');
-  await expect(missingBoth.getByText('物理ID', { exact: true })).toHaveCount(0);
-  await expect(left.getByText(physicalId, { exact: true })).toBeVisible();
-  await expect(right.getByText(physicalId, { exact: true })).toBeVisible();
-  await expect(otherLeft.getByText('sensor-84', { exact: true })).toBeVisible();
+  await expect(missingBoth.locator('[title]')).toHaveCount(0);
+  await expect(left.locator('[title]')).toHaveText(`▶ID : ${physicalId}`);
+  await expect(right.locator('[title]')).toHaveText(`▶ID : ${physicalId}`);
+  await expect(otherLeft.locator('[title]')).toHaveText('▶ID : sensor-84');
 
   const longRow = panel.locator('[data-input-id="opaque-long"]');
   const longHeader = longRow.locator('summary');
   const longDevice = longHeader.locator('[title]');
+  const arrow = longDevice.getByText('▶', { exact: true });
   await expect(longHeader.locator('h2')).toHaveText(/^logical-tracker-.*-end$/);
-  await expect(longDevice).toHaveAttribute('title', `物理ID: ${longPhysicalId}`);
-  await expect(longDevice.getByText(longPhysicalId, { exact: true })).toBeVisible();
+  await expect(longDevice).toHaveAttribute('title', `ID : ${longPhysicalId}`);
+  await expect(longDevice).toHaveText(`▶ID : ${longPhysicalId}`);
   await expect(longHeader).toHaveAttribute(
     'aria-label',
-    new RegExp(`物理ID: ${longPhysicalId}`)
+    new RegExp(`ID : ${longPhysicalId}`)
   );
   const expectLongIdsFit = async () => {
     const bounds = await longHeader.evaluate((summary) => {
@@ -180,14 +181,18 @@ test('Home headers keep physical IDs on the right as logical trackers are expand
     expect(bounds.documentWidth).toBe(bounds.viewportWidth);
   };
   await expect(longRow.locator('pre')).toBeHidden();
+  await expect(arrow).toHaveCSS('transform', 'none');
   await expectLongIdsFit();
   await longHeader.focus();
   await longHeader.press('Enter');
   await expect(longRow.locator('pre')).toBeVisible();
   await expect(longRow.locator('pre')).toContainText(`Tracker: ${longLogicalId}`);
+  await expect(longRow.locator('pre')).toContainText(`Input device: ${longPhysicalId}`);
   await expect(longDevice).toBeVisible();
+  await expect(arrow).toHaveCSS('transform', 'matrix(0, 1, -1, 0, 0, 0)');
   await expectLongIdsFit();
   await longHeader.press('Space');
   await expect(longRow.locator('pre')).toBeHidden();
   await expect(longDevice).toBeVisible();
+  await expect(arrow).toHaveCSS('transform', 'none');
 });
