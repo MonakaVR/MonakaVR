@@ -114,6 +114,11 @@ export function HomeInputCatalogPanel({
             : undefined;
           const compactId = physicalId ? `ID : ${physicalId}` : undefined;
           const logicalId = hasPublicIdentity ? row.candidate.tracker : '';
+          const hasIdentityComponents = !!(
+            logicalId?.trim() &&
+            row.candidate.publisher?.trim() &&
+            row.candidate.source?.trim()
+          );
           return (
             <li
               key={row.id}
@@ -198,6 +203,7 @@ export function HomeInputCatalogPanel({
                           `${sourceDetails(candidate, {
                             includeTracker: !logicalId,
                             includeInputDevice: !physicalId,
+                            includeIdentity: !hasIdentityComponents,
                           })}\nOrigin: ${candidate.origin}\nCapabilities: ${candidate.capabilities?.join(', ') ?? l10n.getString('monaka-input-support-unknown')}`
                       )
                       .join('\n\n')}

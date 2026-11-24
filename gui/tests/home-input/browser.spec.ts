@@ -34,7 +34,9 @@ test('real Home catalog wrapper: absent producer, arbitrary publishers, dedup, c
   await expect(panel.locator('[data-input-id="exact-a"]')).toContainText('現在有効');
   await panel.locator('[data-input-id="exact-a"] summary').click();
   const details = panel.locator('[data-input-id="exact-a"] pre');
-  await expect(details).toContainText('Identity: exact-a');
+  await expect(details).toContainText('Publisher: unknown-publisher-one');
+  await expect(details).toContainText('Source: source');
+  await expect(details).not.toContainText('Identity:');
   await expect(details).not.toContainText('Tracker:');
   await expect(details).not.toContainText('Input device:');
   await page.screenshot({
@@ -55,6 +57,7 @@ test('real Home catalog wrapper: absent producer, arbitrary publishers, dedup, c
   await expect(details).toContainText('Tracker: other-tracker');
   await expect(details).toContainText('Input device: 同名の実機');
   await expect(details).toContainText('Input device: conflict');
+  await expect(details).toContainText('Identity: exact-a');
   await page.evaluate(() => {
     window.homeInputTest.pause = true;
     window.homeInputTest.disconnect();
@@ -127,8 +130,16 @@ test('Home headers keep compact IDs on the right as logical trackers are expande
       displayName: null,
     }),
     source('opaque-missing-both', {
-      tracker: '',
+      tracker: undefined,
       displayName: '  ',
+    }),
+    source('opaque-missing-publisher', {
+      publisher: null,
+      tracker: 'logical-without-publisher',
+    }),
+    source('opaque-blank-source', {
+      source: '  ',
+      tracker: 'logical-without-source',
     }),
     source('opaque-long', {
       tracker: longLogicalId,
@@ -138,7 +149,7 @@ test('Home headers keep compact IDs on the right as logical trackers are expande
   await page.evaluate((value) => {
     window.homeInputTest.snapshot = value;
   }, input);
-  await expect(panel.locator('[data-input-id]')).toHaveCount(6);
+  await expect(panel.locator('[data-input-id]')).toHaveCount(8);
 
   const header = (id: string) => panel.locator(`[data-input-id="${id}"] summary`);
   const left = header('opaque-left');
@@ -166,6 +177,17 @@ test('Home headers keep compact IDs on the right as logical trackers are expande
   await expect(otherLeft.locator('[title^="ID : "]')).toHaveText(
     '▶ID : sensor-84'
   );
+  for (const id of [
+    'opaque-missing-both',
+    'opaque-missing-publisher',
+    'opaque-blank-source',
+  ]) {
+    await header(id).click();
+    await expect(panel.locator(`[data-input-id="${id}"] pre`)).toContainText(
+      `Identity: ${id}`
+    );
+    await header(id).click();
+  }
 
   const longRow = panel.locator('[data-input-id="opaque-long"]');
   const longHeader = longRow.locator('summary');
@@ -207,7 +229,7 @@ test('Home headers keep compact IDs on the right as logical trackers are expande
   await longHeader.focus();
   await longHeader.press('Enter');
   await expect(longRow.locator('pre')).toBeVisible();
-  await expect(longRow.locator('pre')).toContainText('Identity: opaque-long');
+  await expect(longRow.locator('pre')).not.toContainText('Identity:');
   await expect(longRow.locator('pre')).not.toContainText('Tracker:');
   await expect(longRow.locator('pre')).not.toContainText('Input device:');
   await expect(longDevice).toBeVisible();

@@ -255,6 +255,11 @@ function UnifiedChoices({
               const logicalId =
                 source.origin === 'mvip_pose' ? source.tracker : undefined;
               const physicalId = sourcePhysicalId(source);
+              const showIdentity =
+                source.conflict ||
+                !source.publisher?.trim() ||
+                !source.source?.trim() ||
+                !logicalId?.trim();
               const other = sourceOtherBody(
                 snapshot,
                 source.id,
@@ -285,6 +290,7 @@ function UnifiedChoices({
                       text={sourceDetails(source, {
                         includeTracker: !logicalId,
                         includeInputDevice: !physicalId,
+                        includeIdentity: showIdentity,
                       })}
                     />
                     <span className="block text-sm">

@@ -99,9 +99,12 @@ test('Japanese cards show logical IDs and optional compact IDs; technical inform
     assert.match(html, /focus-visible:outline/);
     assert.doesNotMatch(html, /LEFT_UPPER_LEG/);
     assert.match(html, /位置 \+ 回転/);
-    assert.match(html, /opaque-one/);
-    assert.match(html, /opaque-two/);
-    assert.match(html, /opaque-three/);
+    assert.match(html, /data-input-id="opaque-one"/);
+    assert.match(html, /data-input-id="opaque-two"/);
+    assert.match(html, /data-input-id="opaque-three"/);
+    assert.match(html, /Publisher: arbitrary-a/);
+    assert.match(html, /Source: source/);
+    assert.doesNotMatch(html, /Identity:/);
     assert.match(html, /割当済みでも/);
     assert.match(html, /左膝 \(Q\), 左膝 \(6DoF\)/);
     assert.doesNotMatch(html, /<(button|input|select|form)\b/);

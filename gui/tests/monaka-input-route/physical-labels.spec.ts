@@ -31,6 +31,7 @@ function fixture() {
     },
     {
       ...candidate('no-physical-id'),
+      source: null,
       tracker: longLogicalId,
       displayName: undefined,
     },
@@ -81,6 +82,7 @@ test('logical labels, physical disclosure headers and exact selection IDs work a
   await expect(bareHeader.locator('summary')).toHaveText('ID');
   await expect(bareLabel).not.toHaveText(longLogicalId);
   await expect(bareLabel).toHaveAttribute('title', longLogicalId);
+  await expect(bareHeader.locator('pre')).toContainText('Identity: no-physical-id');
   const sourceHeader = q.locator('xpath=ancestor::tr').locator('th');
   const disclosure = sourceHeader.locator('details');
   const summary = disclosure.locator('summary');
@@ -105,8 +107,12 @@ test('logical labels, physical disclosure headers and exact selection IDs work a
     'Publisher: 11111111-1111-4111-8111-111111111111'
   );
   await expect(details).toContainText('Source: 22222222-2222-4222-8222-222222222222');
-  await expect(details).toContainText(`Identity: ${persistent}`);
+  await expect(details).not.toContainText('Identity:');
   await expect(sourceHeader).toHaveAttribute('title', /Tracker: random-logical-key/);
+  await expect(sourceHeader).toHaveAttribute(
+    'title',
+    new RegExp(`Identity: ${persistent}`)
+  );
   expect(
     await picker.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)
   ).toBe(true);
@@ -121,6 +127,7 @@ test('logical labels, physical disclosure headers and exact selection IDs work a
   const legacyDetails = legacyDisclosure.locator('pre');
   await expect(legacyDetails).toContainText('Tracker: legacy-tracker-key');
   await expect(legacyDetails).toContainText('Input device: Legacy input');
+  await expect(legacyDetails).toContainText('Identity: legacy-input');
   await q.check();
   await page.getByRole('button', { name: 'Save input choices', exact: true }).click();
   await expect(
@@ -136,7 +143,7 @@ test('logical labels, physical disclosure headers and exact selection IDs work a
   ).toBe(true);
   await expect(picker.getByTestId('assignment-readback')).toHaveAttribute(
     'title',
-    /random-logical-key/
+    new RegExp(`Identity: ${persistent}`)
   );
   core.snapshot.candidates = [];
   await page.reload();
@@ -152,7 +159,10 @@ test('logical labels, physical disclosure headers and exact selection IDs work a
   );
   await expect(picker.getByTestId('assignment-readback')).toHaveAttribute(
     'title',
-    /Saved identity: mtp:36:/
+    new RegExp(`Saved identity: ${persistent}`)
+  );
+  await expect(picker.locator('details pre')).toHaveText(
+    `Saved identity: ${persistent}`
   );
   expect(core.saves).toHaveLength(1);
 });

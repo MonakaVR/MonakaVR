@@ -30,10 +30,10 @@ export function sourcePhysicalId(
     : undefined;
 }
 
-/** Exact identity remains available without occupying the primary label. */
+/** Include exact identity by default for detailed diagnostics. */
 export function sourceDetails(
   source: LabelSource,
-  { includeTracker = true, includeInputDevice = true } = {}
+  { includeTracker = true, includeInputDevice = true, includeIdentity = true } = {}
 ): string {
   return [
     includeInputDevice &&
@@ -42,7 +42,7 @@ export function sourceDetails(
     source.publisher && `Publisher: ${source.publisher}`,
     source.source && `Source: ${source.source}`,
     includeTracker && `Tracker: ${source.tracker}`,
-    `Identity: ${source.id}`,
+    includeIdentity && `Identity: ${source.id}`,
   ]
     .filter(Boolean)
     .join('\n');
