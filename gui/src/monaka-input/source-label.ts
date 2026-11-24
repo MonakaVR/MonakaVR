@@ -31,12 +31,17 @@ export function sourcePhysicalId(
 }
 
 /** Exact identity remains available without occupying the primary label. */
-export function sourceDetails(source: LabelSource): string {
+export function sourceDetails(
+  source: LabelSource,
+  { includeTracker = true, includeInputDevice = true } = {}
+): string {
   return [
-    source.displayName && `Input device: ${source.displayName}`,
+    includeInputDevice &&
+      source.displayName &&
+      `Input device: ${source.displayName}`,
     source.publisher && `Publisher: ${source.publisher}`,
     source.source && `Source: ${source.source}`,
-    `Tracker: ${source.tracker}`,
+    includeTracker && `Tracker: ${source.tracker}`,
     `Identity: ${source.id}`,
   ]
     .filter(Boolean)

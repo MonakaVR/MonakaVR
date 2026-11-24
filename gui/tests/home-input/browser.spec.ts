@@ -33,9 +33,10 @@ test('real Home catalog wrapper: absent producer, arbitrary publishers, dedup, c
   await expect(panel.locator('[data-input-id="exact-a"]')).toContainText('位置 + 回転');
   await expect(panel.locator('[data-input-id="exact-a"]')).toContainText('現在有効');
   await panel.locator('[data-input-id="exact-a"] summary').click();
-  await expect(panel.locator('[data-input-id="exact-a"] pre')).toContainText(
-    'Identity: exact-a'
-  );
+  const details = panel.locator('[data-input-id="exact-a"] pre');
+  await expect(details).toContainText('Identity: exact-a');
+  await expect(details).not.toContainText('Tracker:');
+  await expect(details).not.toContainText('Input device:');
   await page.screenshot({
     path: testInfo.outputPath('home-input-catalog-ja.png'),
     fullPage: true,
@@ -44,12 +45,16 @@ test('real Home catalog wrapper: absent producer, arbitrary publishers, dedup, c
     (value) => {
       window.homeInputTest.snapshot = value;
     },
-    snapshot([a, { ...a, displayName: 'conflict' }, b])
+    snapshot([a, { ...a, tracker: 'other-tracker', displayName: 'conflict' }, b])
   );
   await expect(panel.locator('[data-input-id="exact-a"]')).toContainText('入力競合');
   await expect(panel.locator('[data-input-id="exact-a"]')).toContainText(
     'Q 不明, 6DoF 不明'
   );
+  await expect(details).toContainText('Tracker: tracker');
+  await expect(details).toContainText('Tracker: other-tracker');
+  await expect(details).toContainText('Input device: 同名の実機');
+  await expect(details).toContainText('Input device: conflict');
   await page.evaluate(() => {
     window.homeInputTest.pause = true;
     window.homeInputTest.disconnect();
@@ -145,18 +150,32 @@ test('Home headers keep compact IDs on the right as logical trackers are expande
   await expect(right.locator('h2')).toHaveText('logical-right');
   await expect(otherLeft.locator('h2')).toHaveText('logical-left · arbitrary-b');
   await expect(missing.locator('h2')).toHaveText('logical-alone');
-  await expect(missing.locator('[title]')).toHaveCount(0);
+  await expect(missing.locator('h2 [title]')).toHaveAttribute(
+    'title',
+    'logical-alone'
+  );
+  await expect(missing.locator('[title^="ID : "]')).toHaveCount(0);
   await expect(missingBoth.locator('h2')).toHaveText('不明');
   await expect(missingBoth.locator('[title]')).toHaveCount(0);
-  await expect(left.locator('[title]')).toHaveText(`▶ID : ${physicalId}`);
-  await expect(right.locator('[title]')).toHaveText(`▶ID : ${physicalId}`);
-  await expect(otherLeft.locator('[title]')).toHaveText('▶ID : sensor-84');
+  await expect(left.locator('[title^="ID : "]')).toHaveText(
+    `▶ID : ${physicalId}`
+  );
+  await expect(right.locator('[title^="ID : "]')).toHaveText(
+    `▶ID : ${physicalId}`
+  );
+  await expect(otherLeft.locator('[title^="ID : "]')).toHaveText(
+    '▶ID : sensor-84'
+  );
 
   const longRow = panel.locator('[data-input-id="opaque-long"]');
   const longHeader = longRow.locator('summary');
-  const longDevice = longHeader.locator('[title]');
+  const longDevice = longHeader.locator('[title^="ID : "]');
   const arrow = longDevice.getByText('▶', { exact: true });
   await expect(longHeader.locator('h2')).toHaveText(/^logical-tracker-.*-end$/);
+  await expect(longHeader.locator('h2 [title]')).toHaveAttribute(
+    'title',
+    longLogicalId
+  );
   await expect(longDevice).toHaveAttribute('title', `ID : ${longPhysicalId}`);
   await expect(longDevice).toHaveText(`▶ID : ${longPhysicalId}`);
   await expect(longHeader).toHaveAttribute(
@@ -166,7 +185,9 @@ test('Home headers keep compact IDs on the right as logical trackers are expande
   const expectLongIdsFit = async () => {
     const bounds = await longHeader.evaluate((summary) => {
       const heading = summary.querySelector('h2')!.getBoundingClientRect();
-      const device = summary.querySelector('[title]')!.getBoundingClientRect();
+      const device = summary
+        .querySelector('[title^="ID : "]')!
+        .getBoundingClientRect();
       return {
         headingRight: heading.right,
         deviceLeft: device.left,
@@ -186,8 +207,9 @@ test('Home headers keep compact IDs on the right as logical trackers are expande
   await longHeader.focus();
   await longHeader.press('Enter');
   await expect(longRow.locator('pre')).toBeVisible();
-  await expect(longRow.locator('pre')).toContainText(`Tracker: ${longLogicalId}`);
-  await expect(longRow.locator('pre')).toContainText(`Input device: ${longPhysicalId}`);
+  await expect(longRow.locator('pre')).toContainText('Identity: opaque-long');
+  await expect(longRow.locator('pre')).not.toContainText('Tracker:');
+  await expect(longRow.locator('pre')).not.toContainText('Input device:');
   await expect(longDevice).toBeVisible();
   await expect(arrow).toHaveCSS('transform', 'matrix(0, 1, -1, 0, 0, 0)');
   await expectLongIdsFit();

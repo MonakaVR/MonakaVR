@@ -114,6 +114,8 @@ test('Japanese cards show logical IDs and optional compact IDs; technical inform
     const legacy = render(<TrackerCard tracker={tracker} smol interactable />);
     const compact = html.match(/<summary[^>]*>([\s\S]*?)<\/summary>/)![1];
     assert.doesNotMatch(compact, /▶ID :/);
+    const logicalIdWithTitle = '<span title="logical-hips">logical-hips</span>';
+    assert.ok(compact.includes(logicalIdWithTitle));
     // The Home row without a physical ID uses the same compact layout as SolarXR.
     assert.ok(
       legacy
@@ -121,7 +123,7 @@ test('Japanese cards show logical IDs and optional compact IDs; technical inform
           bundle.getMessage('tracker-status-ok')!.value as string,
           '入力有効'
         )
-        .includes(compact)
+        .includes(compact.replace(logicalIdWithTitle, 'logical-hips'))
     );
     assert.match(
       legacy,

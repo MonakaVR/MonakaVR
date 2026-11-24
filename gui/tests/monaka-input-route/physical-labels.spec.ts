@@ -4,6 +4,7 @@ import { CoreUiFixture, candidate, forbidBridgeApi, routeUrl } from './fixtures'
 const persistent =
   'mtp:36:11111111-1111-4111-8111-11111111111136:22222222-2222-4222-8222-22222222222218:random-logical-key';
 const physical = `HappyPC/${'測'.repeat(80)}`;
+const longLogicalId = `logical-only-${'測'.repeat(80)}`;
 function fixture() {
   const core = new CoreUiFixture();
   core.snapshot.candidates = [
@@ -30,8 +31,14 @@ function fixture() {
     },
     {
       ...candidate('no-physical-id'),
-      tracker: 'logical-only',
+      tracker: longLogicalId,
       displayName: undefined,
+    },
+    {
+      ...candidate('legacy-input', ['orientation']),
+      origin: 'slime_orientation_stream',
+      tracker: 'legacy-tracker-key',
+      displayName: 'Legacy input',
     },
   ];
   return core;
@@ -67,11 +74,15 @@ test('logical labels, physical disclosure headers and exact selection IDs work a
     );
   }
   const bare = picker.getByRole('radio', {
-    name: 'Q Source: logical-only',
-    exact: true,
+    name: /^Q Source: logical-only-/,
   });
-  await expect(bare.locator('xpath=ancestor::tr').locator('summary')).toHaveText('ID');
-  const disclosure = q.locator('xpath=ancestor::tr').locator('details');
+  const bareHeader = bare.locator('xpath=ancestor::tr').locator('th');
+  const bareLabel = bareHeader.locator(':scope > span').first();
+  await expect(bareHeader.locator('summary')).toHaveText('ID');
+  await expect(bareLabel).not.toHaveText(longLogicalId);
+  await expect(bareLabel).toHaveAttribute('title', longLogicalId);
+  const sourceHeader = q.locator('xpath=ancestor::tr').locator('th');
+  const disclosure = sourceHeader.locator('details');
   const summary = disclosure.locator('summary');
   const details = disclosure.locator('pre');
   const physicalLabel = summary.getByText(physical, {
@@ -88,14 +99,28 @@ test('logical labels, physical disclosure headers and exact selection IDs work a
   await summary.press('Enter');
   await expect(physicalLabel).toBeVisible();
   await expect(details).toBeVisible();
-  await expect(details).toContainText(`Input device: ${physical}`);
+  await expect(details).not.toContainText('Input device:');
+  await expect(details).not.toContainText('Tracker:');
+  await expect(details).toContainText(
+    'Publisher: 11111111-1111-4111-8111-111111111111'
+  );
+  await expect(details).toContainText('Source: 22222222-2222-4222-8222-222222222222');
   await expect(details).toContainText(`Identity: ${persistent}`);
+  await expect(sourceHeader).toHaveAttribute('title', /Tracker: random-logical-key/);
   expect(
     await picker.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)
   ).toBe(true);
   await summary.press('Enter');
   await expect(physicalLabel).toBeVisible();
   await expect(details).toBeHidden();
+  const legacyDisclosure = picker
+    .getByRole('radio', { name: 'Q Source: Legacy input', exact: true })
+    .locator('xpath=ancestor::tr')
+    .locator('details');
+  await legacyDisclosure.locator('summary').click();
+  const legacyDetails = legacyDisclosure.locator('pre');
+  await expect(legacyDetails).toContainText('Tracker: legacy-tracker-key');
+  await expect(legacyDetails).toContainText('Input device: Legacy input');
   await q.check();
   await page.getByRole('button', { name: 'Save input choices', exact: true }).click();
   await expect(

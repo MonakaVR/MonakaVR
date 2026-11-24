@@ -113,6 +113,7 @@ export function HomeInputCatalogPanel({
             ? sourcePhysicalId(row.candidate)
             : undefined;
           const compactId = physicalId ? `ID : ${physicalId}` : undefined;
+          const logicalId = hasPublicIdentity ? row.candidate.tracker : '';
           return (
             <li
               key={row.id}
@@ -127,7 +128,9 @@ export function HomeInputCatalogPanel({
                 >
                   <TrackerCompactContent
                     bodyPart={bodyPart}
-                    name={name}
+                    name={
+                      logicalId ? <span title={logicalId}>{name}</span> : name
+                    }
                     status={
                       <TrackerStatusPresentation
                         label={text(status)}
@@ -192,7 +195,10 @@ export function HomeInputCatalogPanel({
                     {row.variants
                       .map(
                         (candidate) =>
-                          `${sourceDetails(candidate)}\nOrigin: ${candidate.origin}\nCapabilities: ${candidate.capabilities?.join(', ') ?? l10n.getString('monaka-input-support-unknown')}`
+                          `${sourceDetails(candidate, {
+                            includeTracker: !logicalId,
+                            includeInputDevice: !physicalId,
+                          })}\nOrigin: ${candidate.origin}\nCapabilities: ${candidate.capabilities?.join(', ') ?? l10n.getString('monaka-input-support-unknown')}`
                       )
                       .join('\n\n')}
                   </pre>

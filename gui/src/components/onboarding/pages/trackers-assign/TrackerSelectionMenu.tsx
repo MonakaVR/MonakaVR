@@ -13,6 +13,7 @@ import { isMvipAssignmentReady } from '@/monaka-input/controller';
 import {
   selectedSourceDetails,
   selectedTrackerSourceLabel,
+  sourceDetails,
   sourcePhysicalId,
 } from '@/monaka-input/source-label';
 import { InputSourceDetails } from '@/components/commons/InputSourceDetails';
@@ -251,6 +252,8 @@ function UnifiedChoices({
             </tr>
             {candidates.map((entry) => {
               const { source } = entry;
+              const logicalId =
+                source.origin === 'mvip_pose' ? source.tracker : undefined;
               const physicalId = sourcePhysicalId(source);
               const other = sourceOtherBody(
                 snapshot,
@@ -274,13 +277,15 @@ function UnifiedChoices({
                       snapshot.candidates
                     )}
                   >
-                    <span className="break-all">{label(source.id)}</span>
+                    <span className="break-all" title={logicalId || undefined}>
+                      {label(source.id)}
+                    </span>
                     <InputSourceDetails
                       physicalId={physicalId}
-                      text={selectedSourceDetails(
-                        source.id,
-                        snapshot.candidates
-                      )}
+                      text={sourceDetails(source, {
+                        includeTracker: !logicalId,
+                        includeInputDevice: !physicalId,
+                      })}
                     />
                     <span className="block text-sm">
                       {entry.kind === 'slime' ? text('slime') : 'MVIP'} ·{' '}
