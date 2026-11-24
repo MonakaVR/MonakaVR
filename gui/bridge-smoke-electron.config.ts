@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
 
-// No production main, Core launcher, or renderer inputs in this test build.
+// Main and preload are built from isolated smoke fixture inputs.
 export default {
   main: defineConfig({
     build: {
@@ -9,6 +9,16 @@ export default {
       rollupOptions: {
         input: resolve(__dirname, 'tests/bridge-smoke/electron-main.ts'),
         output: { format: 'cjs', entryFileNames: 'main.cjs' },
+      },
+    },
+  }),
+  preload: defineConfig({
+    build: {
+      outDir: 'build/bridge-native',
+      emptyOutDir: false,
+      rollupOptions: {
+        input: resolve(__dirname, 'tests/bridge-smoke/electron-preload.ts'),
+        output: { format: 'cjs', entryFileNames: 'preload.cjs' },
       },
     },
   }),

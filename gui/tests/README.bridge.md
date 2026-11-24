@@ -35,18 +35,20 @@ fault injection is explicit in test constructors. `bridge-smoke.tsconfig.json`
 checks browser and native fixtures separately from the existing product lint.
 
 The browser suite uses installed Edge in an independent headless profile. The
-Electron suite uses the actual product preload, private IPC handler, service,
-native validator and tray MenuItem. Only the native file dialog is replaced by a
-cancel response. The tray item is invoked programmatically; manual OS tray
-clicks, file picker interaction and packaged-app startup are not claimed.
+Electron suite builds an isolated preload alongside the smoke main and uses the
+legacy IPC handler, service, native validator and tray MenuItem. The fixture
+preload supplies the Bridge API to the test renderer. Only the native file
+dialog is replaced by a cancel response. The tray item is invoked
+programmatically; manual OS tray clicks, file picker interaction and packaged-app
+startup are not claimed.
 
 The earlier unadopted WPF proposal's 55 policy/health and 22 tray assertions are
 preserved at `MonakaBridge` commit `6700d6304fac6ce7af5dd51ec41b32537c9ad35c`.
 Behavior coverage is traced in the Desktop implementation report. The port does
-not delete tests or relax Bridge gates. This app has one Bridge control panel,
-so its tray navigates to that panel instead of owning a second status/writer
-model. Existing legacy Bridge tray/CLI writers remain external writers; the
-Desktop byte-conflict checks cannot make their final rename atomic with ours.
+not delete tests or relax Bridge gates. The legacy smoke fixture has one Bridge
+control panel, and its tray navigates to that panel. The legacy Bridge tray and
+CLI write externally. The Desktop byte-conflict checks cannot make those final
+renames atomic with the Desktop commit.
 
 Screenshots, TAP, Playwright JSON and build logs are written under ignored
 `build/`. Selected final receipts are archived in `docs/gui-desktop-20261015/`.

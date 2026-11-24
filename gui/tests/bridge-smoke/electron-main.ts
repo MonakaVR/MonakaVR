@@ -1,11 +1,12 @@
 // TEST ENTRY ONLY. Deliberately never imports the production main/paths/logger,
 // starts Core or touches user preferences. Built separately from product inputs.
 import { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage } from 'electron';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { bridgeControlHandler } from '../../electron/main/monaka-bridge-ipc';
 import { MonakaBridgeService } from '../../electron/main/monaka-bridge-service';
 import { bridgeTrayEntry } from '../../electron/main/monaka-bridge-tray';
 import { IPC_CHANNELS } from '../../electron/shared';
+import { BRIDGE_SMOKE_CHANNELS } from './electron-shared';
 
 const fixtureRoot = process.env.MONAKA_DESKTOP_E2E_ROOT;
 const validator = process.env.MONAKA_BRIDGE_TEST_P2R_VALIDATOR;
@@ -28,7 +29,7 @@ app.whenReady().then(async () => {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: resolve('out/preload/index.js'),
+      preload: join(__dirname, 'preload.cjs'),
     },
   });
   const handle = bridgeControlHandler(
@@ -36,7 +37,7 @@ app.whenReady().then(async () => {
     () => control,
     async () => null
   );
-  ipcMain.handle(IPC_CHANNELS.BRIDGE_CONTROL, (event, request) =>
+  ipcMain.handle(BRIDGE_SMOKE_CHANNELS.CONTROL, (event, request) =>
     handle(event.sender.id, request)
   );
   ipcMain.handle(IPC_CHANNELS.WINDOW_ACTIONS, (_event, action) => {
@@ -45,7 +46,7 @@ app.whenReady().then(async () => {
   const menu = Menu.buildFromTemplate([
     bridgeTrayEntry(
       () => window.show(),
-      () => window.webContents.send(IPC_CHANNELS.BRIDGE_OPEN)
+      () => window.webContents.send(BRIDGE_SMOKE_CHANNELS.OPEN)
     ),
   ]);
   const tray = new Tray(
