@@ -1,5 +1,6 @@
 package dev.monaka.tracking
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import dev.monaka.protocol.v2.Confidence
 import dev.monaka.protocol.v2.DecodeResult
@@ -30,6 +31,26 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class StaticInputSelectionTests {
+	private val mapper = ObjectMapper()
+	private fun rpc(api: MonakaInputConfigurationApi, now: Long, fields: Map<String, Any?>): JsonNode = mapper.readTree(
+		api.handleJson(mapper.writeValueAsString(mapOf("type" to "monaka_inputs_v1", "id" to "picker") + fields), now),
+	)
+	private fun rpcSnapshot(api: MonakaInputConfigurationApi, now: Long) =
+		rpc(api, now, mapOf("action" to "snapshot")).also { assertTrue(it["ok"].asBoolean(), it.toString()) }
+	private fun rpcSave(
+		api: MonakaInputConfigurationApi,
+		now: Long,
+		snapshot: JsonNode,
+		q: String?,
+		six: String?,
+		manualSix: Boolean = true,
+	) = rpc(
+		api, now, mapOf(
+			"action" to "save", "body" to "HIP", "generation" to snapshot["generation"].asText(),
+			"qSource" to q, "sixDofSource" to six, "manualSix" to manualSix,
+		),
+	)
+
 	private fun fixture() = (MonakaCodec.decodeEnvelope(Path.of(System.getProperty("monaka.fixtures"), "v2/mtp-pose.json").toFile().readBytes()) as DecodeResult.Success).value as MtpPose
 	private fun ref(p: MtpPose) = TrackerReference.mtp(LogicalTracker(p.source_id, p.tracker_id, p.publisher_id))
 	private fun state(p: MtpPose, seq: Long = 0, presence: String = "present", tracking: String = "initializing") = MtpTrackerState(
@@ -49,6 +70,106 @@ class StaticInputSelectionTests {
 		confidence = Confidence(0.0, 1.0),
 		tracking_state = "degraded",
 	)
+
+	@Test fun rpcRejectsStateOnlyAbsentAndExpiredInputsAndAcceptsRecoveredRotationOnlyPosQ(@TempDir dir: Path) {
+		var now = 1_000_000_000L
+		val p = fixture()
+		val id = ref(p).observationId
+		val c = MonakaConfiguration(p.coordinate_space)
+		val path = dir.resolve("inputs.json")
+		c.save(path)
+		val original = Files.readAllBytes(path)
+		MonakaRuntime({ emptyList() }, p.coordinate_space, c.assignments, clock = { now }).use { r ->
+			val api = MonakaInputConfigurationApi(c, r.mtp, { emptyList() }, path)
+			fun assertUnavailable(saved: JsonNode, slot: String) {
+				assertFalse(saved["ok"].asBoolean(), saved.toString())
+				assertTrue(saved["reloadRequired"].asBoolean())
+				assertTrue(saved["error"].asText().startsWith("$slot Source is offline"), saved.toString())
+				assertContentEquals(original, Files.readAllBytes(path))
+				assertTrue(c.assignments.snapshot().targets.isEmpty())
+			}
+			send(r, state(p), now)
+			val stateOnly = rpcSnapshot(api, now)
+			val declared = stateOnly["candidates"].single()
+			assertTrue(declared["sixDofSelectable"].asBoolean())
+			assertFalse(declared["qUsableNow"].asBoolean())
+			assertUnavailable(rpcSave(api, now, stateOnly, id, null), "Q")
+
+			send(r, p, now)
+			val picker = rpcSnapshot(api, now)
+			assertTrue(picker["candidates"].single()["qUsableNow"].asBoolean())
+			now += 10_000_000
+			send(r, state(p, 1, "absent", "lost"), now)
+			assertUnavailable(rpcSave(api, now, picker, id, null), "Q")
+			assertUnavailable(rpcSave(api, now, picker, null, id), "6DoF")
+
+			val returned = p.copy(sequence = 1, timestamp_ns = p.timestamp_ns + 1, sent_at_ns = p.sent_at_ns + 1)
+			send(r, returned, now)
+			val ready = rpcSnapshot(api, now)
+			assertTrue(ready["candidates"].single()["qUsableNow"].asBoolean())
+			now += c.timeoutNanos
+			send(r, state(returned, 2), now)
+			assertUnavailable(rpcSave(api, now, ready, null, id), "6DoF")
+
+			val rotationOnly = q(returned, p.tracker_id).copy(sequence = 2, capabilities = p.capabilities)
+			send(r, rotationOnly, now)
+			val recovered = rpcSnapshot(api, now)
+			val candidate = recovered["candidates"].single()
+			assertEquals(id, candidate["id"].asText())
+			assertTrue(candidate["qUsableNow"].asBoolean())
+			assertTrue(candidate["sixDofSelectable"].asBoolean())
+			assertFalse(candidate["sixDofUsableNow"].asBoolean())
+			val saved = rpcSave(api, now, recovered, id, id, manualSix = false)
+			assertTrue(saved["ok"].asBoolean(), saved.toString())
+			val selection = MonakaConfiguration.load(path).assignments.snapshot().targets.getValue(TrackerPosition.HIP).sourceSelection
+			assertEquals(QSixDofSourceSelection(ref(p), ref(p), false), selection)
+		}
+	}
+
+	@Test fun rpcPreservesOfflineFieldAcrossIdentityChangeAndKeepsSameLabelPublishersDistinct(@TempDir dir: Path) {
+		var now = 1_000_000_000L
+		val p = fixture()
+		val oldId = ref(p).observationId
+		val independent = p.copy(publisher_id = "other-public-publisher")
+		val otherId = ref(independent).observationId
+		val replacement = p.copy(tracker_id = "replacement-channel", session_id = "33333333-3333-4333-8333-333333333333")
+		val newId = ref(replacement).observationId
+		val c = MonakaConfiguration(p.coordinate_space)
+		val path = dir.resolve("inputs.json")
+		c.save(path)
+		MonakaRuntime({ emptyList() }, p.coordinate_space, c.assignments, clock = { now }).use { r ->
+			val api = MonakaInputConfigurationApi(c, r.mtp, { emptyList() }, path)
+			send(r, p, now)
+			send(r, independent, now)
+			val picker = rpcSnapshot(api, now)
+			val rows = picker["candidates"].toList()
+			assertEquals(setOf(oldId, otherId), rows.map { it["id"].asText() }.toSet())
+			assertEquals(setOf(p.input.device_id), rows.map { it["displayName"].asText() }.toSet())
+			val assigned = rpcSave(api, now, picker, oldId, null)
+			assertTrue(assigned["ok"].asBoolean(), assigned.toString())
+			val stored = Files.readAllBytes(path)
+
+			now += 600_000_000
+			send(r, independent.copy(sequence = 1), now)
+			send(r, replacement, now)
+			val current = rpcSnapshot(api, now)
+			assertEquals(setOf(newId, otherId), current["candidates"].map { it["id"].asText() }.toSet())
+			assertTrue(current["candidates"].all { it["qUsableNow"].asBoolean() && it["displayName"].asText() == p.input.device_id })
+			val retained = current["assignments"].single()
+			assertEquals(oldId, retained["qSource"].asText())
+			assertEquals(oldId, retained["savedQSource"].asText())
+			assertContentEquals(stored, Files.readAllBytes(path))
+
+			val wrongSlot = rpcSave(api, now, assigned, oldId, oldId)
+			assertFalse(wrongSlot["ok"].asBoolean(), wrongSlot.toString())
+			assertTrue(wrongSlot["error"].asText().contains("6DoF Source"))
+			assertContentEquals(stored, Files.readAllBytes(path))
+			val saved = rpcSave(api, now, current, oldId, newId)
+			assertTrue(saved["ok"].asBoolean(), saved.toString())
+			val selection = MonakaConfiguration.load(path).assignments.snapshot().targets.getValue(TrackerPosition.HIP).sourceSelection
+			assertEquals(QSixDofSourceSelection(ref(p), ref(replacement), true), selection)
+		}
+	}
 
 	@Test fun stateFirstCatalogKeepsSupportWithoutPoseAndNeverAssigns(@TempDir dir: Path) {
 		var now = 1_000_000_000L

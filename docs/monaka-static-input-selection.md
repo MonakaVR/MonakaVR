@@ -10,11 +10,19 @@ latest pose. Pose and TrackerState share the same declaration for the admitted
 publisher/source/tracker/session lifetime. Conflicting declarations quarantine
 samples and remain visible in diagnostics/catalog metadata. Current modality,
 tracking, validity, confidence and freshness continue through the existing
-adapter and input profile. Lost/stale metadata never establishes support.
+adapter and input profile. A declaration can precede the first pose or survive
+pose loss. TrackerState heartbeats do not refresh an admitted sample's age.
 
-The GUI lists full persistent source identities, including unassigned sources.
-Q requires declared orientation; 6DoF requires declared position and orientation.
-Unknown/conflicting support cannot create a new assignment. Legacy tracker
+The picker offers new MVIP assignments only while an admitted sample has usable
+orientation. The catalog retains static declarations and diagnostic rows for
+state-only, lost and stale inputs. The picker still shows existing saved and
+active selections for their body and field while offline. A fresh sample for the
+same full persistent identity restores eligibility. Descriptive labels do not
+merge identities.
+
+Q requires declared orientation. 6DoF requires declared position and orientation,
+even when the usable sample is currently rotation-only. Unknown or conflicting
+support cannot create a new assignment. Legacy tracker
 candidates use their immutable position/orientation declarations.
 Orientation-only inputs remain Q candidates only; inputs declaring both are also
 6DoF candidates. Neither declaration proves independent IMU authenticity. Their
@@ -35,7 +43,9 @@ The product settings page uses the existing GUI WebSocket with bounded namespace
 The handler exists only for explicitly enabled Monaka runtime startup. Opening
 the UI never activates a receiver or rewrites configuration.
 
-Save validates static support, expected assignment generation, configuration
+Save rechecks current usability for newly selected MVIP sources and permits an
+offline reference to stay in its existing field. It also validates static
+support, expected assignment generation, configuration
 bytes, a nonblocking file lock and existing configuration validators. It writes
 an exact preimage backup and atomically replaces the file before applying live
 assignments. Unknown root and assignment members survive. Cancel performs no

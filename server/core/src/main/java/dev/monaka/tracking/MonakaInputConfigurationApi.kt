@@ -172,6 +172,13 @@ class MonakaInputConfigurationApi(
 		val currentSix = current?.let { sixDofSource(it, snapshot.candidates) }
 		require(q == null || qCandidate?.qSelectable == true || q == currentQ) { "Q Source has unknown/conflicting orientation support" }
 		require(six == null || sixCandidate?.sixDofSelectable == true || six == currentSix) { "6DoF Source requires declared position and orientation" }
+		require(q?.mtp == null || q == currentQ || qCandidate?.qUsableNow == true) {
+			"Q Source is offline or has no current usable orientation; reload candidates"
+		}
+		// A live orientation-only sample is eligible for a source that declares Pos+Q.
+		require(six?.mtp == null || six == currentSix || sixCandidate?.qUsableNow == true) {
+			"6DoF Source is offline or has no current usable orientation; reload candidates"
+		}
 		if (!manualSix) {
 			val permitted = if (current == null) {
 				q?.takeIf { qCandidate?.capabilities?.supportsSixDof == true }

@@ -920,6 +920,7 @@ assignment-discard = 保存していない入力選択を破棄しますか？
 assignment-source-roles = { $count } 部位のCore入力選択が保存されています
 assignment-none = 未割当
 assignment-offline = 保存済み入力元がオフライン
+assignment-draft-offline = 新たに選択した入力元は現在利用できません。利用可能な入力元を選ぶか、選択を解除してください。
 assignment-select-help = この部位のQと6DoFを選択します。初回のPos+Q選択は両方を補完します。明示的な6DoF選択・解除は保持されます。保存すると適用されます。
 assignment-sources = この部位の入力候補
 assignment-source = 入力元と現在の可用性

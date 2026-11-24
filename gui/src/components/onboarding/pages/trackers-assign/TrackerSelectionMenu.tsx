@@ -9,6 +9,7 @@ import { useLocalization } from '@fluent/react';
 import { useAtomValue } from 'jotai';
 import type { UnifiedAssignment } from '@/hooks/unified-assignment';
 import { sourceOtherBody } from '@/monaka-input/assignment';
+import { isMvipAssignmentReady } from '@/monaka-input/controller';
 import {
   selectedSourceLabel,
   selectedSourceDetails,
@@ -148,8 +149,23 @@ function UnifiedChoices({
   const saved = snapshot.assignments.find(
     (row) => row.body === state.draft.body
   );
+  const retained = new Set(
+    [
+      saved?.qSource,
+      saved?.sixDofSource,
+      saved?.savedQSource,
+      saved?.savedSixDofSource,
+    ].filter((id): id is string => !!id)
+  );
+  const candidates = unified.candidates.filter(
+    ({ source }) =>
+      source.origin !== 'mvip_pose' ||
+      (state.snapshotFresh && isMvipAssignmentReady(source)) ||
+      retained.has(source.id)
+  );
+  const visibleSources = candidates.map(({ source }) => source);
   const inherited = !saved
-    ? unified.candidates.filter(
+    ? candidates.filter(
         (entry) =>
           entry.kind === 'slime' &&
           entry.tracker?.tracker.info?.bodyPart === bodyPart
@@ -158,17 +174,28 @@ function UnifiedChoices({
   const label = (id: string | null | undefined) => {
     return selectedSourceLabel(
       id,
-      snapshot.candidates,
+      visibleSources,
       text('none'),
       text('offline')
     );
   };
-  const unavailable = [state.draft.qSource, state.draft.sixDofSource].filter(
-    (id, index, all): id is string =>
-      !!id &&
-      all.indexOf(id) === index &&
-      !snapshot.candidates.some((c) => c.id === id)
-  );
+  const unavailable = [
+    ...new Set([
+      ...retained,
+      ...[state.draft.qSource, state.draft.sixDofSource].filter(
+        (id): id is string => !!id && !model.isDraftMvipSource(id)
+      ),
+    ]),
+  ].filter((id) => !snapshot.candidates.some((c) => c.id === id));
+  const draftHasUnavailableMvip = model.draftHasUnavailableMvip;
+  const readbackLabel = (id: string | null | undefined) => {
+    const source = visibleSources.find((candidate) => candidate.id === id);
+    if (source?.origin !== 'mvip_pose') return label(id);
+    if (!state.snapshotFresh) return `${label(id)} · ${text('unknown')}`;
+    return isMvipAssignmentReady(source)
+      ? label(id)
+      : `${label(id)} · ${text('offline')}`;
+  };
   return (
     <div
       className="w-full max-w-3xl min-w-0 min-h-0 flex flex-col gap-3 overflow-y-auto p-3 rounded-xl bg-background-80 text-background-10 break-words"
@@ -221,7 +248,7 @@ function UnifiedChoices({
                 />
               </td>
             </tr>
-            {unified.candidates.map((entry) => {
+            {candidates.map((entry) => {
               const { source } = entry;
               const other = sourceOtherBody(
                 snapshot,
@@ -232,7 +259,10 @@ function UnifiedChoices({
                 entry.kind === 'slime' &&
                 (!entry.tracker ||
                   entry.tracker.tracker.info?.editable !== true);
-              const disabled = !unified.canEdit || !!other || unsafeSlime;
+              const unavailableMvip =
+                source.origin === 'mvip_pose' && !isMvipAssignmentReady(source);
+              const disabled =
+                !unified.canEdit || !!other || unsafeSlime || unavailableMvip;
               return (
                 <tr key={source.id} className="border-t border-background-50">
                   <th
@@ -267,6 +297,9 @@ function UnifiedChoices({
                           : text('unusable')
                         : text('unknown')}
                     </span>
+                    {state.snapshotFresh && unavailableMvip && (
+                      <span className="block">{text('offline')}</span>
+                    )}
                     {other && (
                       <span className="block">
                         {text('other-body')}: {other}
@@ -340,8 +373,8 @@ function UnifiedChoices({
             .filter(Boolean)
             .join('\n\n')}
         >
-          {text('active')}: Q = {label(saved?.qSource)}; 6DoF ={' '}
-          {label(saved?.sixDofSource)}
+          {text('active')}: Q = {readbackLabel(saved?.qSource)}; 6DoF ={' '}
+          {readbackLabel(saved?.sixDofSource)}
         </p>
       )}
       {(saved || inherited.length === 0) && (
@@ -365,13 +398,13 @@ function UnifiedChoices({
             .join('\n\n')}
         >
           {text('saved')}: Q ={' '}
-          {label(
+          {readbackLabel(
             saved?.savedQSource === undefined
               ? saved?.qSource
               : saved.savedQSource
           )}
           ; 6DoF ={' '}
-          {label(
+          {readbackLabel(
             saved?.savedSixDofSource === undefined
               ? saved?.sixDofSource
               : saved.savedSixDofSource
@@ -386,6 +419,9 @@ function UnifiedChoices({
       )}
       {(state.error || unified.detail) && (
         <p role="alert">{state.error || unified.detail}</p>
+      )}
+      {draftHasUnavailableMvip && (
+        <p role="status">{text('draft-offline')}</p>
       )}
       {unified.status && !state.dirty && !unified.needsReview && (
         <p role="status">{text(`status-${unified.status}`)}</p>
@@ -417,7 +453,7 @@ function UnifiedChoices({
       <div className="flex flex-wrap gap-2">
         <Button
           variant="primary"
-          disabled={!unified.canEdit || !state.dirty}
+          disabled={!unified.canEdit || !state.dirty || draftHasUnavailableMvip}
           onClick={() => unified.save(bodyPart)}
         >
           {l10n.getString('monaka-input-save')}

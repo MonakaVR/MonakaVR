@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { CoreUiFixture, forbidBridgeApi } from './fixtures';
+import { CoreUiFixture, candidate, forbidBridgeApi } from './fixtures';
 import { Builder, ByteBuffer } from 'flatbuffers';
 import {
   AssignTrackerRequestT,
@@ -36,6 +36,96 @@ async function open(page: Page, fixture: CoreUiFixture, language = 'en') {
 }
 const qName = 'Q Source: device-publisher-a';
 const sixName = '6DoF Source: device-publisher-a';
+
+test('MVIP picker offers live identities and retains offline choices only on their saved body', async ({
+  page,
+}) => {
+  const fixture = new CoreUiFixture();
+  const previous = {
+    ...candidate('previous-identity'),
+    publisher: 'publisher-a',
+    displayName: 'Shared device',
+  };
+  const current = {
+    ...previous,
+    id: 'current-identity',
+    sixDofUsableNow: false,
+  };
+  const otherPublisher = {
+    ...previous,
+    id: 'independent-identity',
+    publisher: 'publisher-b',
+  };
+  const offline = (source: typeof previous) => ({
+    ...source,
+    qUsableNow: false,
+    sixDofUsableNow: false,
+  });
+  fixture.snapshot.candidates = [previous];
+  await open(page, fixture);
+  const picker = page.getByTestId('unified-assignment');
+  const row = (id: string) =>
+    picker.getByRole('row').filter({ has: page.locator(`[title$="Identity: ${id}"]`) });
+  const q = (id: string) => row(id).getByRole('radio', { name: /^Q Source:/ });
+  const six = (id: string) => row(id).getByRole('radio', { name: /^6DoF Source:/ });
+  const save = picker.getByRole('button', { name: 'Save input choices', exact: true });
+  const readback = picker.getByTestId('assignment-readback');
+
+  await expect(q(previous.id)).toHaveAccessibleName('Q Source: Shared device');
+  await q(previous.id).check();
+  await expect(six(previous.id)).toBeChecked();
+
+  fixture.snapshot.candidates = [offline(previous), current];
+  await expect(row(previous.id)).toHaveCount(0);
+  await expect(q(current.id)).toHaveAccessibleName('Q Source: Shared device');
+  await expect(six(current.id)).toBeEnabled();
+  await expect(save).toBeDisabled();
+  await expect(picker.getByText(/A newly selected input is unavailable/)).toBeVisible();
+  expect(fixture.saves).toHaveLength(0);
+
+  fixture.snapshot.candidates.push(otherPublisher);
+  await expect(q(current.id)).toHaveAccessibleName('Q Source: Shared device · publisher-a');
+  await expect(q(otherPublisher.id)).toHaveAccessibleName('Q Source: Shared device · publisher-b');
+  await picker.getByRole('button', { name: 'Cancel input changes', exact: true }).click();
+  await q(current.id).check();
+  await expect(six(current.id)).toBeChecked();
+  await save.click();
+  await expect(readback).toHaveAttribute('title', /Identity: current-identity/);
+  expect(fixture.saves[0]).toMatchObject({ qSource: current.id, sixDofSource: current.id });
+
+  fixture.snapshot.candidates = [offline(previous), offline(current), otherPublisher];
+  await expect(row(current.id)).toContainText('Saved source offline');
+  await expect(q(current.id)).toBeChecked();
+  await expect(q(current.id)).toBeDisabled();
+  await expect(q(otherPublisher.id)).toBeEnabled();
+  const close = picker.getByRole('button', { name: 'Close', exact: true });
+  await close.click();
+  await page.locator('.control#CHEST').click();
+  await expect(row(current.id)).toHaveCount(0);
+  await expect(q(otherPublisher.id)).toHaveAccessibleName('Q Source: Shared device');
+  await close.click();
+  await page.locator('.control#HIP').click();
+
+  fixture.snapshot.candidates = [offline(previous), otherPublisher];
+  await expect(readback).toHaveAttribute('title', /Saved identity: current-identity/);
+  await expect(readback).toContainText('Saved source offline');
+  fixture.snapshot.candidates = [offline(previous), current, otherPublisher];
+  await expect(q(current.id)).toBeEnabled();
+  await expect(q(current.id)).toBeChecked();
+  await expect(readback).not.toContainText('Saved source offline');
+
+  fixture.snapshot.candidates = [offline(previous), offline(current), otherPublisher];
+  await expect(q(current.id)).toBeDisabled();
+  await picker.getByRole('radio', { name: 'Q Source: Unassigned', exact: true }).check();
+  await save.click();
+  await expect(save).toBeDisabled();
+  expect(fixture.saves[1]).toMatchObject({ qSource: null, sixDofSource: current.id });
+  await picker.getByRole('radio', { name: '6DoF Source: Unassigned', exact: true }).check();
+  await save.click();
+  await picker.getByRole('button', { name: 'Confirm and save', exact: true }).click();
+  await expect(row(current.id)).toHaveCount(0);
+  expect(fixture.saves[2]).toMatchObject({ qSource: null, sixDofSource: null });
+});
 
 test('inherited assignment is visible without creating or saving an override', async ({
   page,

@@ -17,7 +17,7 @@ function candidate(id: string, six = false, origin = 'mvip_pose'): InputCandidat
     conflict: false,
     qSelectable: true,
     sixDofSelectable: six,
-    qUsableNow: false,
+    qUsableNow: origin === 'mvip_pose',
     sixDofUsableNow: false,
     origin,
   };
@@ -117,7 +117,7 @@ test('explicit reload blocks editing and survives an in-flight metadata request'
   model.selectSix('publisher-b');
   assert.equal(model.state.draft.sixDofSource, 'publisher-b');
 });
-test('first Pos+Q selection uses static support even while invalid; manual clear persists', async () => {
+test('first Pos+Q selection uses static support with live orientation only; manual clear persists', async () => {
   const api = new Api(),
     model = new InputSelectionController(api);
   await model.load();

@@ -22,8 +22,9 @@ export function candidate(
     conflict: false,
     qSelectable: capabilities?.includes('orientation') ?? false,
     sixDofSelectable: capabilities?.includes('position') ?? false,
-    qUsableNow: false,
-    sixDofUsableNow: false,
+    qUsableNow: capabilities?.includes('orientation') ?? false,
+    sixDofUsableNow:
+      capabilities?.includes('orientation') === true && capabilities.includes('position'),
   };
 }
 

@@ -104,7 +104,11 @@ test('long Unicode names remain bounded and old APIs or cold offline references 
   assert.equal(selectedSourceLabel(null, [], 'Unassigned'), 'Unassigned');
 });
 test('display metadata changes do not change generation, selection IDs, or save payloads', async () => {
-  const a = candidate('exact-persistent-key');
+  const a = {
+    ...candidate('exact-persistent-key'),
+    qUsableNow: true,
+    sixDofUsableNow: true,
+  };
   let snapshot: InputSnapshot = {
     generation: '7',
     bodies: ['HIP'],

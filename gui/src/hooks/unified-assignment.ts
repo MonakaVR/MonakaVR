@@ -115,6 +115,10 @@ export function useUnifiedAssignment() {
 
   const perform = async (plan: AssignmentPlan) => {
     if (working || needsReview) return;
+    if (!model.canEdit || model.draftHasUnavailableMvip) {
+      setConfirmation(null);
+      return;
+    }
     setWorking(true);
     setConfirmation(null);
     setDetail('');
@@ -177,7 +181,14 @@ export function useUnifiedAssignment() {
   };
 
   const save = (body: BodyPart) => {
-    if (!model.canEdit || !state.dirty || working || needsReview) return;
+    if (
+      !model.canEdit ||
+      !state.dirty ||
+      model.draftHasUnavailableMvip ||
+      working ||
+      needsReview
+    )
+      return;
     try {
       if (
         !state.snapshot ||

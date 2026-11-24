@@ -41,6 +41,21 @@ export interface InputSnapshot {
 export interface InputApi {
   request(fields: Record<string, unknown>): Promise<InputSnapshot>;
 }
+
+export function isMvipAssignmentReady(source: InputCandidate) {
+  return !source.conflict && source.qSelectable && source.qUsableNow === true;
+}
+
+function allowsAssignment(
+  source: InputCandidate,
+  slot: 'qSource' | 'sixDofSource'
+) {
+  return (
+    (source.origin !== 'mvip_pose' || isMvipAssignmentReady(source)) &&
+    (slot === 'qSource' ? source.qSelectable : source.sixDofSelectable)
+  );
+}
+
 export class InputSelectionController {
   state: {
     snapshot: InputSnapshot | null;
@@ -72,6 +87,7 @@ export class InputSelectionController {
   private listeners = new Set<() => void>();
   private epoch = 0;
   private autoConsidered = false;
+  private selectedMvipIds = new Set<string>();
   private loading = false;
   private reloadRequested = false;
   constructor(private api: InputApi) {}
@@ -83,6 +99,22 @@ export class InputSelectionController {
       !this.state.busy &&
       !this.state.needsReload
     );
+  }
+  get draftHasUnavailableMvip() {
+    const { dirty, draft, snapshot, snapshotFresh } = this.state;
+    if (!dirty || !snapshot || !snapshotFresh) return false;
+    const assignment = snapshot.assignments.find((row) => row.body === draft.body);
+    return (['qSource', 'sixDofSource'] as const).some((slot) => {
+      const id = draft[slot];
+      if (id === null || id === assignment?.[slot]) return false;
+      const source = snapshot.candidates.find((row) => row.id === id);
+      return source
+        ? source.origin === 'mvip_pose' && !allowsAssignment(source, slot)
+        : this.selectedMvipIds.has(id);
+    });
+  }
+  isDraftMvipSource(id: string) {
+    return this.selectedMvipIds.has(id);
   }
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -104,6 +136,7 @@ export class InputSelectionController {
         }
       : { body, qSource: null, sixDofSource: null, manualSix: false, mode: 'ik' };
     this.autoConsidered = !!saved;
+    this.selectedMvipIds.clear();
     this.state.generation = this.state.snapshot?.generation ?? '0';
     this.state.dirty = false;
     this.state.qEdited = false;
@@ -164,11 +197,13 @@ export class InputSelectionController {
   selectQ(id: string | null) {
     if (!this.canEdit || !this.state.snapshot) return;
     const source = this.state.snapshot.candidates.find((x) => x.id === id);
-    if (id !== null && !source?.qSelectable) return;
+    if (id !== null && (!source || !allowsAssignment(source, 'qSource')))
+      return;
+    if (source?.origin === 'mvip_pose') this.selectedMvipIds.add(source.id);
     const draft = { ...this.state.draft, qSource: id };
     if (!this.autoConsidered && !draft.manualSix && id !== null) {
       draft.sixDofSource =
-        source?.sixDofSelectable ? id : null;
+        source && allowsAssignment(source, 'sixDofSource') ? id : null;
       this.autoConsidered = true;
     }
     this.state.draft = draft;
@@ -178,11 +213,10 @@ export class InputSelectionController {
   }
   selectSix(id: string | null) {
     if (!this.canEdit || !this.state.snapshot) return;
-    if (
-      id !== null &&
-      !this.state.snapshot.candidates.find((x) => x.id === id)?.sixDofSelectable
-    )
+    const source = this.state.snapshot.candidates.find((x) => x.id === id);
+    if (id !== null && (!source || !allowsAssignment(source, 'sixDofSource')))
       return;
+    if (source?.origin === 'mvip_pose') this.selectedMvipIds.add(source.id);
     this.state.draft = { ...this.state.draft, sixDofSource: id, manualSix: true };
     this.autoConsidered = true;
     this.state.dirty = true;
@@ -199,6 +233,7 @@ export class InputSelectionController {
     if (
       !this.canEdit ||
       !this.state.dirty ||
+      this.draftHasUnavailableMvip ||
       this.state.busy ||
       this.state.needsReload ||
       !this.state.snapshot

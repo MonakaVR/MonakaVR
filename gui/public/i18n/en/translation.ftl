@@ -1834,6 +1834,7 @@ assignment-discard = Discard unsaved input choices?
 assignment-source-roles = Core input choices saved for { $count } body roles
 assignment-none = Unassigned
 assignment-offline = Saved source offline
+assignment-draft-offline = A newly selected input is unavailable. Select an available source or clear the choice.
 assignment-select-help = Select Orientation/Q and Position/6DoF for this body. The first Pos+Q choice fills both; an explicit Position choice or clear is preserved. Save to apply.
 assignment-sources = Input candidates for this body
 assignment-source = Source and current availability
